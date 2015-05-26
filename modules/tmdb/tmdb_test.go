@@ -1,0 +1,206 @@
+package tmdb
+
+import (
+	"log"
+	"reflect"
+	"testing"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/ryanbradynd05/go-tmdb"
+	"gitlab.quimbo.fr/odwrtw/polochon/lib"
+)
+
+// Fake TmDB pointer to run the tests
+var fakeLogger = logrus.New()
+var fakeTmDB = &TmDB{log: logrus.NewEntry(fakeLogger)}
+
+func TestTmdbInvalidMovieArgument(t *testing.T) {
+	m := polochon.NewShowEpisode()
+	_, err := fakeTmDB.getMovieArgument(m)
+	if err != ErrInvalidArgument {
+		log.Fatalf("Got %q, expected %q", err, ErrInvalidArgument)
+	}
+}
+
+func TestTmdbSearchByTitleArguments(t *testing.T) {
+	m := polochon.NewMovie()
+
+	tmdbSearchMovie = func(title string, options map[string]string) (*tmdb.MovieSearchResults, error) {
+		return &tmdb.MovieSearchResults{}, nil
+	}
+
+	// No movie title should produce an error
+	err := fakeTmDB.searchByTitle(m)
+	if err != ErrNoMovieTitle {
+		log.Fatalf("Got %q, expected %q", err, ErrNoMovieTitle)
+	}
+
+	// Nothing to do if the id is already found
+	m.Title = "Matrix"
+	m.TmdbID = 12345
+	err = fakeTmDB.searchByTitle(m)
+	if err != nil {
+		log.Fatal("Search the Tmdb ID of movie with a tmdb ID should not produce an error", err)
+	}
+}
+
+func TestTmdbSearchByTitle(t *testing.T) {
+	m := &polochon.Movie{Title: "Matrix"}
+
+	tmdbSearchMovie = func(title string, options map[string]string) (*tmdb.MovieSearchResults, error) {
+		return &tmdb.MovieSearchResults{
+			Results: []tmdb.MovieShort{
+				{Title: "The Simpsons", ID: 1000},
+				{Title: "The Matrix", ID: 2000},
+				{Title: "Titanic", ID: 3000},
+			},
+		}, nil
+	}
+
+	// No movie title should produce an error
+	err := fakeTmDB.searchByTitle(m)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if m.TmdbID != 2000 {
+		t.Errorf("Failed to find tmdb id, expected 1000, got %d", m.TmdbID)
+	}
+}
+
+func TestTmdbSearchByTitleNoResult(t *testing.T) {
+	m := &polochon.Movie{Title: "Matrix"}
+
+	tmdbSearchMovie = func(title string, options map[string]string) (*tmdb.MovieSearchResults, error) {
+		return &tmdb.MovieSearchResults{Results: []tmdb.MovieShort{}}, nil
+	}
+
+	err := fakeTmDB.searchByTitle(m)
+	if err != ErrNoMovieFound {
+		log.Fatalf("Got %q, expected %q", err, ErrNoMovieFound)
+	}
+}
+
+func TestTmdbSearchByImdbIDArguments(t *testing.T) {
+	m := polochon.NewMovie()
+
+	tmdbSearchByImdbID = func(id, source string, options map[string]string) (*tmdb.FindResults, error) {
+		return &tmdb.FindResults{}, nil
+	}
+
+	// No movie title should produce an error
+	err := fakeTmDB.searchByImdbID(m)
+	if err != ErrNoMovieImDBID {
+		log.Fatalf("Got %q, expected %q", err, ErrNoMovieImDBID)
+	}
+
+	// Nothing to do if the id is already found
+	m.ImdbID = "tt0133093"
+	m.TmdbID = 12345
+	err = fakeTmDB.searchByImdbID(m)
+	if err != nil {
+		log.Fatal("Search the Tmdb ID of movie with a tmdb ID should not produce an error", err)
+	}
+}
+
+func TestTmdbSearchByImdbIDNoResults(t *testing.T) {
+	m := &polochon.Movie{ImdbID: "tt0133093"}
+
+	tmdbSearchByImdbID = func(id, source string, options map[string]string) (*tmdb.FindResults, error) {
+		return &tmdb.FindResults{}, nil
+	}
+
+	err := fakeTmDB.searchByImdbID(m)
+	if err != ErrNoMovieFound {
+		log.Fatalf("Got %q, expected %q", err, ErrNoMovieFound)
+	}
+}
+
+func TestTmdbSearchByImdbID(t *testing.T) {
+	m := &polochon.Movie{ImdbID: "tt0133093"}
+
+	tmdbSearchByImdbID = func(id, source string, options map[string]string) (*tmdb.FindResults, error) {
+		return &tmdb.FindResults{
+			MovieResults: []tmdb.MovieShort{
+				{Title: "The Matrix", ID: 1000},
+			},
+		}, nil
+	}
+
+	err := fakeTmDB.searchByImdbID(m)
+	if err != nil {
+		log.Fatalf("Expected no error, got %q", err)
+	}
+
+	if m.TmdbID != 1000 {
+		t.Errorf("Failed to find tmdb id, expected 1000, got %d", m.TmdbID)
+	}
+}
+
+func TestTmdbFailedToGetDetails(t *testing.T) {
+	m := &polochon.Movie{Title: "The Matrix", ImdbID: "tt0133093"}
+
+	tmdbSearchByImdbID = func(id, source string, options map[string]string) (*tmdb.FindResults, error) {
+		return &tmdb.FindResults{}, nil
+	}
+
+	tmdbSearchMovie = func(title string, options map[string]string) (*tmdb.MovieSearchResults, error) {
+		return &tmdb.MovieSearchResults{Results: []tmdb.MovieShort{}}, nil
+	}
+
+	err := fakeTmDB.GetDetails(m)
+	if err != ErrFailedToGetDetails {
+		log.Fatalf("Got %q, expected %q", err, ErrFailedToGetDetails)
+	}
+}
+
+func TestTmdbGetDetails(t *testing.T) {
+	m := &polochon.Movie{TmdbID: 603}
+	tm := &TmDB{}
+
+	tmdbGetMovieInfo = func(tmdbID int, options map[string]string) (*tmdb.Movie, error) {
+		return &tmdb.Movie{
+			ID:               603,
+			ImdbID:           "tt0133093",
+			OriginalLanguage: "en",
+			OriginalTitle:    "The Matrix",
+			Overview:         "Awesome plot",
+			Status:           "Released",
+			Tagline:          "Welcome to the Real World.",
+			Title:            "The Matrix",
+			Video:            false,
+			VoteAverage:      7.599999904632568,
+			VoteCount:        0x1086,
+			Runtime:          0x88,
+			ReleaseDate:      "1999-03-30",
+			BackdropPath:     "/7u3pxc0K1wx32IleAkLv78MKgrw.jpg",
+			Popularity:       3.1354422569274902,
+			PosterPath:       "/ZPMhHXEhYB33YoTZZNNmezth0V.jpg",
+		}, nil
+	}
+
+	err := tm.GetDetails(m)
+	if err != nil {
+		log.Fatalf("Expected no error, got %q", err)
+	}
+
+	expected := &polochon.Movie{
+		ImdbID:        "tt0133093",
+		OriginalTitle: "The Matrix",
+		Plot:          "Awesome plot",
+		Rating:        7.6,
+		Runtime:       136,
+		SortTitle:     "The Matrix",
+		Tagline:       "Welcome to the Real World.",
+		Thumb:         "https://image.tmdb.org/t/p/original/ZPMhHXEhYB33YoTZZNNmezth0V.jpg",
+		Fanart:        "https://image.tmdb.org/t/p/original/7u3pxc0K1wx32IleAkLv78MKgrw.jpg",
+		Title:         "The Matrix",
+		TmdbID:        603,
+		Votes:         4230,
+		Year:          1999,
+	}
+
+	if !reflect.DeepEqual(m, expected) {
+		t.Errorf("Failed to get movie details\nGot: %+v\nExpected: %+v", m, expected)
+	}
+}

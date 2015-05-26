@@ -1,0 +1,36 @@
+watcher:
+  timer: 30s
+  fsnotifier: fsnotify
+  dir: /home/user/downloads
+downloader:
+  download_dir: /home/user/downloads
+video:
+  guesser: openguessit
+  exclude_file_containing:
+  - sample
+  allowed_file_extensions:
+  - .avi
+  - .mkv
+  - .mp4
+  allowed_file_extensions_to_delete:
+  - .srt
+  - .nfo
+  - .txt
+  - .jpg
+  - .jpeg
+modules_params:
+  - name: pushover
+    user: 9327a472s3947234792
+    key: sdf7as8f8ds7f9sf
+show:
+  dir: /home/user/tvshows
+  torrenters:
+    - eztv
+  detailers:
+    - tvdb
+movie:
+  dir: /home/user/movies
+  torrenters:
+    - yts
+  detailers:
+    - tmdb
