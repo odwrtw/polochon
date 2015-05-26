@@ -1,6 +1,7 @@
 package polochon
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -15,6 +16,10 @@ watcher:
   dir: /home/user/downloads
 downloader:
   download_dir: /home/user/downloads
+http_server:
+  port: 8080
+  host: localhost
+  enable: true
 video:
   exclude_file_containing:
   - sample
@@ -28,7 +33,7 @@ video:
   - .txt
   - .jpg
   - .jpeg
-modules:
+modules_params:
   - name: pushover
     user: 9327a472s3947234792
     key: sdf7as8f8ds7f9sf
@@ -55,13 +60,18 @@ var configStructExample = &Config{
 	Downloader: DownloaderConfig{
 		DownloadDir: "/home/user/downloads",
 	},
+	HTTPServer: HTTPServerConfig{
+		Enable: true,
+		Port:   8080,
+		Host:   "localhost",
+	},
 	Video: VideoConfig{
 		ExcludeFileContaining:     []string{"sample"},
 		VideoExtentions:           []string{".avi", ".mkv", ".mp4"},
 		AllowedExtentionsToDelete: []string{".srt", ".nfo", ".txt", ".jpg", ".jpeg"},
 	},
 	ModulesParams: []map[string]string{
-		map[string]string{
+		{
 			"name": "pushover",
 			"user": "9327a472s3947234792",
 			"key":  "sdf7as8f8ds7f9sf",
@@ -98,5 +108,18 @@ func TestWriteReadConfig(t *testing.T) {
 
 	if !reflect.DeepEqual(got, configStructExample) {
 		t.Errorf("Invalid config")
+	}
+}
+
+func TestReadConfig(t *testing.T) {
+	b := bytes.NewBuffer(configFileExample)
+
+	got, err := readConfig(b)
+	if err != nil {
+		t.Fatalf("failed to read config from file: %q", err)
+	}
+
+	if !reflect.DeepEqual(got, configStructExample) {
+		t.Errorf("Didn't get expected config \n %+v \n %+v", got, configStructExample)
 	}
 }

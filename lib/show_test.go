@@ -62,7 +62,7 @@ func TestShowReader(t *testing.T) {
 	expected.log = nil
 	expected.config = nil
 
-	got, err := readShowSeasonNFO(bytes.NewBuffer(seasonNFOContent))
+	got, err := readShowNFO(bytes.NewBuffer(seasonNFOContent))
 	if err != nil {
 		t.Fatal(err)
 	}

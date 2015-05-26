@@ -21,22 +21,22 @@ var (
 
 // Movie represents a movie
 type Movie struct {
-	XMLName       xml.Name  `xml:"movie"`
-	ImdbID        string    `xml:"id"`
-	OriginalTitle string    `xml:"originaltitle"`
-	Plot          string    `xml:"plot"`
-	Rating        float32   `xml:"rating"`
-	Runtime       int       `xml:"runtime"`
-	SortTitle     string    `xml:"sorttitle"`
-	Tagline       string    `xml:"tagline"`
-	Thumb         string    `xml:"thumb"`
-	Fanart        string    `xml:"customfanart"`
-	Title         string    `xml:"title"`
-	TmdbID        int       `xml:"tmdbid"`
-	Votes         int       `xml:"votes"`
-	Year          int       `xml:"year"`
-	Torrents      []Torrent `xml:"-"`
-	File          *File     `xml:"-"`
+	XMLName       xml.Name  `xml:"movie" json:"-"`
+	ImdbID        string    `xml:"id" json:"imdb_id"`
+	OriginalTitle string    `xml:"originaltitle" json:"original_title"`
+	Plot          string    `xml:"plot" json:"plot"`
+	Rating        float32   `xml:"rating" json:"rating"`
+	Runtime       int       `xml:"runtime" json:"runtime"`
+	SortTitle     string    `xml:"sorttitle" json:"sort_title"`
+	Tagline       string    `xml:"tagline" json:"tag_line"`
+	Thumb         string    `xml:"thumb" json:"thumb"`
+	Fanart        string    `xml:"customfanart" json:"fanart"`
+	Title         string    `xml:"title" json:"title"`
+	TmdbID        int       `xml:"tmdbid" json:"tmdb_id"`
+	Votes         int       `xml:"votes" json:"votes"`
+	Year          int       `xml:"year" json:"year"`
+	Torrents      []Torrent `xml:"-" json:"-"`
+	File          *File     `xml:"-" json:"-"`
 	log           *logrus.Entry
 	config        *MovieConfig
 }

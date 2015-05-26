@@ -69,6 +69,11 @@ func (a *App) Run() {
 		go a.Stop()
 	}
 
+	// Only run the HTTP server if specified
+	if a.config.HTTPServer.Enable {
+		go a.HTTPServer()
+	}
+
 	for {
 		select {
 		case <-a.stop:

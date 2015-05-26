@@ -15,6 +15,7 @@ import (
 type Config struct {
 	Watcher       WatcherConfig       `yaml:"watcher"`
 	Downloader    DownloaderConfig    `yaml:"downloader"`
+	HTTPServer    HTTPServerConfig    `yaml:"http_server"`
 	ModulesParams []map[string]string `yaml:"modules_params"`
 	Video         VideoConfig         `yaml:"video"`
 	Show          ShowConfig          `yaml:"show"`
@@ -61,6 +62,13 @@ type MovieConfig struct {
 // DownloaderConfig represents the configuration for the downloader
 type DownloaderConfig struct {
 	DownloadDir string `yaml:"download_dir"`
+}
+
+// HTTPServerConfig represents the configuration for the HTTP Server
+type HTTPServerConfig struct {
+	Enable bool   `yaml:"enable"`
+	Port   int    `yaml:"port"`
+	Host   string `yaml:"host"`
 }
 
 // readConfig helps read the config
