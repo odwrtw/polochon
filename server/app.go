@@ -205,5 +205,10 @@ func (a *App) Organize(filePath string) error {
 		return videoFile.Ignore()
 	}
 
+	// Notify
+	if err := video.Notify(); err != nil {
+		log.Errorf("failed to notify: %q", err)
+	}
+
 	return nil
 }

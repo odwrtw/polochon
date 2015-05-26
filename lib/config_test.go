@@ -21,6 +21,8 @@ http_server:
   host: localhost
   enable: true
 video:
+  notifiers:
+  - pushover
   exclude_file_containing:
   - sample
   allowed_file_extensions:
@@ -69,6 +71,7 @@ var configStructExample = &Config{
 		ExcludeFileContaining:     []string{"sample"},
 		VideoExtentions:           []string{".avi", ".mkv", ".mp4"},
 		AllowedExtentionsToDelete: []string{".srt", ".nfo", ".txt", ".jpg", ".jpeg"},
+		NotifierNames:             []string{"pushover"},
 	},
 	ModulesParams: []map[string]string{
 		{

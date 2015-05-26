@@ -107,6 +107,20 @@ func (s *ShowEpisode) GetTorrents() error {
 	return err
 }
 
+// Notify sends a notification
+func (s *ShowEpisode) Notify() error {
+	var err error
+	for _, n := range s.config.Notifiers {
+		err = n.Notify(s)
+		if err == nil {
+			break
+		}
+
+		s.log.Warnf("failed to send a notification from notifier: %q", err)
+	}
+	return err
+}
+
 //  create the show nfo if it doesn't exists yet
 func (s *ShowEpisode) storePath() string {
 	return filepath.Join(s.config.Dir, s.ShowTitle, fmt.Sprintf("Season %d", s.Season))

@@ -24,8 +24,8 @@ video:
   - .jpeg
 modules_params:
   - name: pushover
-    user: 9327a472s3947234792
     key: sdf7as8f8ds7f9sf
+    recipient: 9327a472s3947234792
 show:
   dir: /home/user/tvshows
   torrenters:

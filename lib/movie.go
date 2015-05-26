@@ -107,6 +107,20 @@ func (m *Movie) GetTorrents() error {
 	return err
 }
 
+// Notify sends a notification
+func (m *Movie) Notify() error {
+	var err error
+	for _, n := range m.config.Notifiers {
+		err = n.Notify(m)
+		if err == nil {
+			break
+		}
+
+		m.log.Warnf("failed to send a notification from notifier: %q", err)
+	}
+	return err
+}
+
 // storePath returns the movie store path from the config
 func (m *Movie) storePath() string {
 	if m.Year != 0 {
