@@ -65,7 +65,6 @@ func (fs *FsNotify) eventHandler(ctx polochon.FsNotifierCtx) {
 			fs.log.Info("fsnotify is done watching")
 			return
 		case ev := <-fs.watcher.Events:
-			fs.log.Info("event:", ev)
 			if ev.Op != fsnotify.Create && ev.Op != fsnotify.Chmod {
 				continue
 			}
