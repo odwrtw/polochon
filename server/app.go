@@ -133,6 +133,13 @@ func (a *App) StartFsNotifier() error {
 			}
 		}
 	}()
+
+	// Send a notification to organize the whole folder on app start
+	go func() {
+		a.config.Log.Info("Organize the watched folder")
+		a.event <- a.config.Watcher.Dir
+	}()
+
 	return nil
 }
 
@@ -187,6 +194,8 @@ func (a *App) Organize(filePath string) error {
 func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 	a.wg.Add(1)
 	defer a.wg.Done()
+
+	log = log.WithField("filePath", filePath)
 
 	// Create a file
 	videoFile := polochon.NewFileWithConfig(filePath, a.config)
