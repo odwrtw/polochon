@@ -52,12 +52,9 @@ func (vs *VideoStore) ScanMovies() ([]*Movie, error) {
 		}
 
 		var movieFile File
+		basePath := RemoveExt(filePath)
 		//Get related movie file path
 		for _, ext := range vs.config.Video.VideoExtentions {
-			// Rebuild path
-			l := len(filePath) - 4
-			basePath := filePath[:l]
-			// Check if exist
 			if _, err := os.Stat(basePath + ext); err == nil {
 				movieFile = File{Path: basePath + ext, config: vs.config}
 			}

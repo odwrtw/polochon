@@ -166,10 +166,15 @@ func (f *File) MovieFanartPath() string {
 
 // filePathWithoutExt returns the file path without the file extension
 func (f *File) filePathWithoutExt() string {
+	return RemoveExt(f.Path)
+}
+
+// RemoveExt returns file path without the extention
+func RemoveExt(filepath string) string {
 	// Extention
-	ext := path.Ext(f.Path)
+	ext := path.Ext(filepath)
 	// File length without the extension
-	l := len(f.Path) - len(ext)
+	l := len(filepath) - len(ext)
 	// Rebuild path
-	return f.Path[:l]
+	return filepath[:l]
 }
