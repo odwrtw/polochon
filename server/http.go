@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -33,6 +34,41 @@ func (a *App) showStore(w http.ResponseWriter, req *http.Request) {
 	a.writeResponse(w, shows)
 }
 
+func (a *App) serveFiles(w http.ResponseWriter, req *http.Request) {
+	var fileServer http.Handler
+
+	token := req.FormValue("token")
+	if token != a.config.HTTPServer.ServeFilesToken {
+		http.Error(w, "401 unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	vtype := req.FormValue("type")
+	if vtype != "movie" && vtype != "show" {
+		http.Error(w, "400 bad request", http.StatusBadRequest)
+		return
+	}
+	rfile := req.FormValue("file")
+	if rfile == "" {
+		http.Error(w, "400 bad request", http.StatusBadRequest)
+		return
+	}
+
+	if vtype == "movie" {
+		fileServer = http.FileServer(http.Dir(a.config.Movie.Dir))
+	}
+	if vtype == "show" {
+		fileServer = http.FileServer(http.Dir(a.config.Show.Dir))
+	}
+
+	freq, err := http.NewRequest("GET", rfile, &bufio.Reader{})
+	if err != nil {
+		http.Error(w, "500 internal server error", http.StatusInternalServerError)
+	}
+
+	fileServer.ServeHTTP(w, freq)
+}
+
 // HTTPServer handles the HTTP requests
 func (a *App) HTTPServer() {
 	addr := fmt.Sprintf("%s:%d", a.config.HTTPServer.Host, a.config.HTTPServer.Port)
@@ -41,6 +77,10 @@ func (a *App) HTTPServer() {
 	}
 	http.HandleFunc("/videos/movies", a.movieStore)
 	http.HandleFunc("/videos/shows", a.showStore)
+
+	if a.config.HTTPServer.ServeFiles {
+		http.HandleFunc("/files", a.serveFiles)
+	}
 
 	// Serve HTTP
 	if err := s.ListenAndServe(); err != nil {

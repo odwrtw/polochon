@@ -70,9 +70,11 @@ type DownloaderConfig struct {
 
 // HTTPServerConfig represents the configuration for the HTTP Server
 type HTTPServerConfig struct {
-	Enable bool   `yaml:"enable"`
-	Port   int    `yaml:"port"`
-	Host   string `yaml:"host"`
+	Enable          bool   `yaml:"enable"`
+	Port            int    `yaml:"port"`
+	Host            string `yaml:"host"`
+	ServeFiles      bool   `yaml:"serve_files"`
+	ServeFilesToken string `yaml:"serve_files_token"`
 }
 
 // readConfig helps read the config

@@ -2,8 +2,10 @@ package polochon
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -31,6 +33,41 @@ func NewFileWithConfig(path string, config *Config) *File {
 		Path:   path,
 		config: config,
 	}
+}
+
+// MarshalJSON custon marshal return path
+func (f File) MarshalJSON() ([]byte, error) {
+	var path string
+	var b bool
+	var err error
+
+	b, err = filepath.Match(f.config.Movie.Dir+"/*/*", f.Path)
+	if err != nil {
+		return []byte{}, nil
+	}
+	if b {
+		path, err = filepath.Rel(f.config.Movie.Dir, f.Path)
+		if err != nil {
+			return []byte{}, nil
+		}
+	}
+
+	b, err = filepath.Match(f.config.Show.Dir+"/*/*/*", f.Path)
+	if err != nil {
+		return []byte{}, nil
+	}
+	if b {
+		path, err = filepath.Rel(f.config.Show.Dir, f.Path)
+		if err != nil {
+			return []byte{}, nil
+		}
+	}
+
+	if path == "" {
+		return []byte{}, errors.New("Unexpected file path")
+	}
+
+	return []byte(fmt.Sprintf(`{"path":"%s"}`, path)), nil
 }
 
 // Exists returns true is the file exists

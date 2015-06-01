@@ -51,6 +51,24 @@ func (vs *VideoStore) ScanMovies() ([]*Movie, error) {
 			return nil
 		}
 
+		var movieFile File
+		//Get related movie file path
+		for _, ext := range vs.config.Video.VideoExtentions {
+			// Rebuild path
+			l := len(filePath) - 4
+			basePath := filePath[:l]
+			// Check if exist
+			if _, err := os.Stat(basePath + ext); err == nil {
+				movieFile = File{Path: basePath + ext, config: vs.config}
+			}
+		}
+
+		if movieFile.Path == "" {
+			vs.log.Errorf("video store: can't find movie file for NFO: %q", filePath)
+			return nil
+		}
+		movie.File = &movieFile
+
 		movies = append(movies, movie)
 
 		return nil
