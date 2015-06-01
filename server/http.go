@@ -37,7 +37,7 @@ func (a *App) showStore(w http.ResponseWriter, req *http.Request) {
 func (a *App) serveFiles(w http.ResponseWriter, req *http.Request) {
 	var fileServer http.Handler
 
-	token := req.FormValue("token")
+	token := req.Header.Get("X-Auth-Token")
 	if token != a.config.HTTPServer.ServeFilesToken {
 		http.Error(w, "401 unauthorized", http.StatusUnauthorized)
 		return
