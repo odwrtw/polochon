@@ -16,6 +16,7 @@ func init() {
 		Torrenters:  make(map[string]func(params map[string]string, log *logrus.Entry) (Torrenter, error)),
 		Guessers:    make(map[string]func(params map[string]string, log *logrus.Entry) (Guesser, error)),
 		FsNotifiers: make(map[string]func(params map[string]string, log *logrus.Entry) (FsNotifier, error)),
+		Notifiers:   make(map[string]func(params map[string]string, log *logrus.Entry) (Notifier, error)),
 	}
 }
 
@@ -34,6 +35,7 @@ const (
 	TypeDetailer        = "detailer"
 	TypeGuesser         = "guesser"
 	TypeFsNotifier      = "fsnotifier"
+	TypeNotifier        = "notifier"
 )
 
 // Link strings and types
@@ -42,6 +44,7 @@ var typeStr = map[string]Type{
 	"detailer":   TypeDetailer,
 	"guesser":    TypeGuesser,
 	"fsnotifier": TypeFsNotifier,
+	"notifier":   TypeNotifier,
 }
 
 // TypeFromString returns a module type from a string
@@ -60,6 +63,7 @@ type RegisteredModules struct {
 	Torrenters  map[string]func(params map[string]string, log *logrus.Entry) (Torrenter, error)
 	Guessers    map[string]func(params map[string]string, log *logrus.Entry) (Guesser, error)
 	FsNotifiers map[string]func(params map[string]string, log *logrus.Entry) (FsNotifier, error)
+	Notifiers   map[string]func(params map[string]string, log *logrus.Entry) (Notifier, error)
 }
 
 // Modules holds the configured modules
@@ -69,6 +73,7 @@ type Modules struct {
 	Torrenters  map[string]Torrenter
 	Guessers    map[string]Guesser
 	FsNotifiers map[string]FsNotifier
+	Notifiers   map[string]Notifier
 }
 
 // NewModules returns a new set of modules
@@ -79,6 +84,7 @@ func NewModules(logger *logrus.Entry) *Modules {
 		Torrenters:  make(map[string]Torrenter),
 		Guessers:    make(map[string]Guesser),
 		FsNotifiers: make(map[string]FsNotifier),
+		Notifiers:   make(map[string]Notifier),
 	}
 }
 
@@ -142,7 +148,7 @@ func (m *Modules) ConfigureGuesser(name string, params map[string]string) error 
 	return nil
 }
 
-// ConfigureFsNotifier configures a notifier
+// ConfigureFsNotifier configures a fs notifier
 func (m *Modules) ConfigureFsNotifier(name string, params map[string]string) error {
 	f, ok := registeredModules.FsNotifiers[name]
 	if !ok {
@@ -162,6 +168,26 @@ func (m *Modules) ConfigureFsNotifier(name string, params map[string]string) err
 	return nil
 }
 
+// ConfigureNotifier configures a notifier
+func (m *Modules) ConfigureNotifier(name string, params map[string]string) error {
+	f, ok := registeredModules.Notifiers[name]
+	if !ok {
+		return ErrModuleNotFound
+	}
+
+	// Setup the logs
+	log := m.Logger.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeNotifier})
+
+	// Configure the module
+	module, err := f(params, log)
+	if err != nil {
+		return err
+	}
+	m.Notifiers[name] = module
+
+	return nil
+}
+
 // Detailer gets a configured Detailer
 func (m *Modules) Detailer(name string) (Detailer, error) {
 	module, ok := m.Detailers[name]
@@ -175,6 +201,16 @@ func (m *Modules) Detailer(name string) (Detailer, error) {
 // Torrenter gets a configured Torrenter
 func (m *Modules) Torrenter(name string) (Torrenter, error) {
 	module, ok := m.Torrenters[name]
+	if !ok {
+		return nil, ErrModuleNotFound
+	}
+
+	return module, nil
+}
+
+// Notifier gets a configured Notifier
+func (m *Modules) Notifier(name string) (Notifier, error) {
+	module, ok := m.Notifiers[name]
 	if !ok {
 		return nil, ErrModuleNotFound
 	}

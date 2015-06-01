@@ -4,6 +4,10 @@ watcher:
   dir: /home/user/downloads
 downloader:
   download_dir: /home/user/downloads
+http_server:
+  port: 8080
+  host: localhost
+  enable: true
 video:
   guesser: openguessit
   exclude_file_containing:
@@ -20,8 +24,8 @@ video:
   - .jpeg
 modules_params:
   - name: pushover
-    user: 9327a472s3947234792
     key: sdf7as8f8ds7f9sf
+    recipient: 9327a472s3947234792
 show:
   dir: /home/user/tvshows
   torrenters:

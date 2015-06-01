@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"sync"
 
 	"github.com/Sirupsen/logrus"
@@ -69,6 +70,11 @@ func (a *App) Run() {
 		go a.Stop()
 	}
 
+	// Only run the HTTP server if specified
+	if a.config.HTTPServer.Enable {
+		go a.HTTPServer()
+	}
+
 	for {
 		select {
 		case <-a.stop:
@@ -127,6 +133,13 @@ func (a *App) StartFsNotifier() error {
 			}
 		}
 	}()
+
+	// Send a notification to organize the whole folder on app start
+	go func() {
+		a.config.Log.Info("Organize the watched folder")
+		a.event <- a.config.Watcher.Dir
+	}()
+
 	return nil
 }
 
@@ -153,6 +166,36 @@ func (a *App) Organize(filePath string) error {
 		"filepath": filePath,
 		"function": "organizer",
 	})
+
+	// Get the file infos from the path
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		return err
+	}
+
+	// If it's a dir we need to walk the dir to organize each file. If it's
+	// only a file, organize it.
+	if fileInfo.IsDir() {
+		log.Debug("Organize folder")
+		err = a.organizeFolder(filePath, log)
+	} else {
+		log.Debug("Organize file")
+		err = a.organizeFile(filePath, log)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// OrganizeFile stores the videos in the video library
+func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
+	a.wg.Add(1)
+	defer a.wg.Done()
+
+	log = log.WithField("filePath", filePath)
 
 	// Create a file
 	videoFile := polochon.NewFileWithConfig(filePath, a.config)
@@ -198,6 +241,37 @@ func (a *App) Organize(filePath string) error {
 	if err := video.Store(); err != nil {
 		log.Errorf("failed to store video: %q", err)
 		return videoFile.Ignore()
+	}
+
+	// Notify
+	if err := video.Notify(); err != nil {
+		log.Errorf("failed to notify: %q", err)
+	}
+
+	return nil
+}
+
+// OrganizeFolder organize each file  in a folder
+func (a *App) organizeFolder(folderPath string, log *logrus.Entry) error {
+	a.wg.Add(1)
+	defer a.wg.Done()
+
+	// Walk movies
+	err := filepath.Walk(folderPath, func(filePath string, file os.FileInfo, err error) error {
+		// Nothing to do on dir
+		if file.IsDir() {
+			return nil
+		}
+
+		// Organize the file
+		if err := a.organizeFile(filePath, log); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil

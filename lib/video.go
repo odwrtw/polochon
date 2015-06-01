@@ -81,9 +81,9 @@ type Torrent struct {
 type Video interface {
 	GetDetails() error
 	GetTorrents() error
+	Notify() error
 	Type() VideoType
 	Store() error
 	SetFile(f *File)
 	SetConfig(c *Config)
-	// Torrents() []Torrent
 }

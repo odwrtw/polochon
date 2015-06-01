@@ -17,19 +17,19 @@ var (
 
 // Show represents a tv show
 type Show struct {
-	XMLName   xml.Name       `xml:"tvshow"`
-	Title     string         `xml:"title"`
-	ShowTitle string         `xml:"showtitle"`
-	Rating    float32        `xml:"rating"`
-	Plot      string         `xml:"plot"`
-	URL       string         `xml:"episodeguide>url"`
-	TvdbID    int            `xml:"tvdbid"`
-	ImdbID    string         `xml:"imdbid"`
-	Year      int            `xml:"year"`
-	Banner    string         `xml:"-"`
-	Fanart    string         `xml:"-"`
-	Poster    string         `xml:"-"`
-	Episodes  []*ShowEpisode `xml:"-"`
+	XMLName   xml.Name       `xml:"tvshow" json:"-"`
+	Title     string         `xml:"title" json:"title"`
+	ShowTitle string         `xml:"showtitle" json:"-"`
+	Rating    float32        `xml:"rating" json:"rating"`
+	Plot      string         `xml:"plot" json:"plot"`
+	URL       string         `xml:"episodeguide>url" json:"-"`
+	TvdbID    int            `xml:"tvdbid" json:"tvdb_id"`
+	ImdbID    string         `xml:"imdbid" json:"imdb_id"`
+	Year      int            `xml:"year" json:"year"`
+	Banner    string         `xml:"-" json:"banner"`
+	Fanart    string         `xml:"-" json:"fanart"`
+	Poster    string         `xml:"-" json:"poster"`
+	Episodes  []*ShowEpisode `xml:"-" json:"episodes"`
 	config    *ShowConfig
 	log       *logrus.Entry
 }
@@ -41,8 +41,8 @@ func NewShow() *Show {
 	}
 }
 
-// readShowSeasonNFO deserialized a XML file into a ShowSeason
-func readShowSeasonNFO(r io.Reader) (*Show, error) {
+// readShowNFO deserialized a XML file into a ShowSeason
+func readShowNFO(r io.Reader) (*Show, error) {
 	s := &Show{}
 
 	if err := readNFO(r, s); err != nil {

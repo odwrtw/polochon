@@ -20,20 +20,20 @@ var (
 
 // ShowEpisode represents a tvshow episode
 type ShowEpisode struct {
-	XMLName       xml.Name  `xml:"episodedetails"`
-	Title         string    `xml:"title"`
-	ShowTitle     string    `xml:"showtitle"`
-	Season        int       `xml:"season"`
-	Episode       int       `xml:"episode"`
-	TvdbID        int       `xml:"uniqueid"`
-	Aired         string    `xml:"aired"`
-	Plot          string    `xml:"plot"`
-	Runtime       int       `xml:"runtime"`
-	Thumb         string    `xml:"thumb"`
-	Rating        float32   `xml:"rating"`
-	ShowImdbID    string    `xml:"showimdbid"`
-	ShowTvdbID    int       `xml:"showtvdbid"`
-	EpisodeImdbID string    `xml:"episodeimdbid"`
+	XMLName       xml.Name  `xml:"episodedetails" json:"-"`
+	Title         string    `xml:"title" json:"title"`
+	ShowTitle     string    `xml:"showtitle" json:"-"`
+	Season        int       `xml:"season" json:"season"`
+	Episode       int       `xml:"episode" json:"episode"`
+	TvdbID        int       `xml:"uniqueid" json:"tvdb_id"`
+	Aired         string    `xml:"aired" json:"aired"`
+	Plot          string    `xml:"plot" json:"plot"`
+	Runtime       int       `xml:"runtime" json:"runtime"`
+	Thumb         string    `xml:"thumb" json:"thumb"`
+	Rating        float32   `xml:"rating" json:"rating"`
+	ShowImdbID    string    `xml:"showimdbid" json:"-"`
+	ShowTvdbID    int       `xml:"showtvdbid" json:"-"`
+	EpisodeImdbID string    `xml:"episodeimdbid" json:"imdb_id"`
 	Torrents      []Torrent `xml:"-"`
 	File          *File     `xml:"-"`
 	Show          *Show     `xml:"-"`
@@ -103,6 +103,20 @@ func (s *ShowEpisode) GetTorrents() error {
 		}
 
 		s.log.Warnf("failed to get torrents from torrenter: %q", err)
+	}
+	return err
+}
+
+// Notify sends a notification
+func (s *ShowEpisode) Notify() error {
+	var err error
+	for _, n := range s.config.Notifiers {
+		err = n.Notify(s)
+		if err == nil {
+			break
+		}
+
+		s.log.Warnf("failed to send a notification from notifier: %q", err)
 	}
 	return err
 }

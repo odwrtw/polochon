@@ -45,16 +45,16 @@ func NewOpenGuessit(params map[string]string, log *logrus.Entry) (polochon.Guess
 func (og *OpenGuessit) Guess(filePath string) (polochon.Video, error) {
 	g, err := NewGuesser(filePath, og.log)
 	if err != nil {
-		og.log.Errorf("failed to get the file: %q", err)
+		return nil, fmt.Errorf("failed to get the file: %q", err)
 	}
 
 	guess, err := g.Guess()
 	if err != nil {
-		og.log.Errorf("failed to find the best guess: %q", err)
+		return nil, fmt.Errorf("failed to find the best guess: %q", err)
 	}
 
 	if guess == nil {
-		og.log.Info("failed guess the file, nothing was found")
+		return nil, fmt.Errorf("failed guess the file, nothing was found")
 	}
 
 	// Return the right video format
@@ -402,7 +402,7 @@ func (g *Guesser) UpdateFromGuessit() error {
 func (g *Guesser) Guess() (*Guess, error) {
 	// If nothing was found on imdb and guessit we're done
 	if g.Guessit == nil && len(g.OpenSubtitle) == 0 {
-		return nil, nil
+		return nil, fmt.Errorf("openguessit: guessit and opensub failed to guess this file")
 	}
 
 	// If only guessit was found

@@ -15,6 +15,7 @@ import (
 type Config struct {
 	Watcher       WatcherConfig       `yaml:"watcher"`
 	Downloader    DownloaderConfig    `yaml:"downloader"`
+	HTTPServer    HTTPServerConfig    `yaml:"http_server"`
 	ModulesParams []map[string]string `yaml:"modules_params"`
 	Video         VideoConfig         `yaml:"video"`
 	Show          ShowConfig          `yaml:"show"`
@@ -33,11 +34,13 @@ type WatcherConfig struct {
 
 // VideoConfig represents the configuration for the detailers
 type VideoConfig struct {
-	GuesserName               string   `yaml:"guesser"`
-	Guesser                   Guesser  `yaml:"-"`
-	ExcludeFileContaining     []string `yaml:"exclude_file_containing"`
-	VideoExtentions           []string `yaml:"allowed_file_extensions"`
-	AllowedExtentionsToDelete []string `yaml:"allowed_file_extensions_to_delete"`
+	GuesserName               string     `yaml:"guesser"`
+	Guesser                   Guesser    `yaml:"-"`
+	NotifierNames             []string   `yaml:"notifiers"`
+	Notifiers                 []Notifier `yaml:"-"`
+	ExcludeFileContaining     []string   `yaml:"exclude_file_containing"`
+	VideoExtentions           []string   `yaml:"allowed_file_extensions"`
+	AllowedExtentionsToDelete []string   `yaml:"allowed_file_extensions_to_delete"`
 }
 
 // ShowConfig represents the configuration for a show and its show episodes
@@ -47,6 +50,7 @@ type ShowConfig struct {
 	Torrenters     []Torrenter `yaml:"-"`
 	DetailerNames  []string    `yaml:"detailers"`
 	Detailers      []Detailer  `yaml:"-"`
+	Notifiers      []Notifier  `yaml:"-"`
 }
 
 // MovieConfig represents the configuration for a movie
@@ -56,11 +60,19 @@ type MovieConfig struct {
 	Torrenters     []Torrenter `yaml:"-"`
 	DetailerNames  []string    `yaml:"detailers"`
 	Detailers      []Detailer  `yaml:"-"`
+	Notifiers      []Notifier  `yaml:"-"`
 }
 
 // DownloaderConfig represents the configuration for the downloader
 type DownloaderConfig struct {
 	DownloadDir string `yaml:"download_dir"`
+}
+
+// HTTPServerConfig represents the configuration for the HTTP Server
+type HTTPServerConfig struct {
+	Enable bool   `yaml:"enable"`
+	Port   int    `yaml:"port"`
+	Host   string `yaml:"host"`
 }
 
 // readConfig helps read the config
@@ -218,6 +230,25 @@ func (c *Config) initVideo() error {
 		return err
 	}
 	c.Video.Guesser = g
+
+	for _, notifierName := range c.Video.NotifierNames {
+		moduleParams, err := c.moduleParams(notifierName)
+		if err != nil {
+			return err
+		}
+
+		if err := c.Modules.ConfigureNotifier(notifierName, moduleParams); err != nil {
+			return err
+		}
+
+		n, err := c.Modules.Notifier(notifierName)
+		if err != nil {
+			return err
+		}
+		c.Video.Notifiers = append(c.Video.Notifiers, n)
+	}
+	c.Movie.Notifiers = c.Video.Notifiers
+	c.Show.Notifiers = c.Video.Notifiers
 
 	return nil
 }
