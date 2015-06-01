@@ -1,10 +1,11 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path"
+	"path/filepath"
 
 	"gitlab.quimbo.fr/odwrtw/polochon/lib"
 )
@@ -35,42 +36,27 @@ func (a *App) showStore(w http.ResponseWriter, req *http.Request) {
 }
 
 func (a *App) serveFiles(w http.ResponseWriter, req *http.Request) {
-	var fileServer http.Handler
+	var basePath string
 
 	user, pwd, ok := req.BasicAuth()
-	if ok != true {
-		http.Error(w, "401 unauthorized", http.StatusUnauthorized)
-		return
-	}
-	if user != a.config.HTTPServer.ServeFilesUser || pwd != a.config.HTTPServer.ServeFilesPwd {
+	if ok != true || user != a.config.HTTPServer.ServeFilesUser || pwd != a.config.HTTPServer.ServeFilesPwd {
+		w.Header().Set("WWW-Authenticate", "Basic realm=\"User Auth\"")
 		http.Error(w, "401 unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	vtype := req.FormValue("type")
-	if vtype != "movie" && vtype != "show" {
+	if req.URL.Path == "/file/movie" {
+		basePath = a.config.Movie.Dir
+	} else if req.URL.Path == "/file/show" {
+		basePath = a.config.Show.Dir
+	} else {
 		http.Error(w, "400 bad request", http.StatusBadRequest)
 		return
 	}
+
 	rfile := req.FormValue("file")
-	if rfile == "" {
-		http.Error(w, "400 bad request", http.StatusBadRequest)
-		return
-	}
-
-	if vtype == "movie" {
-		fileServer = http.FileServer(http.Dir(a.config.Movie.Dir))
-	}
-	if vtype == "show" {
-		fileServer = http.FileServer(http.Dir(a.config.Show.Dir))
-	}
-
-	freq, err := http.NewRequest("GET", rfile, &bufio.Reader{})
-	if err != nil {
-		http.Error(w, "500 internal server error", http.StatusInternalServerError)
-	}
-
-	fileServer.ServeHTTP(w, freq)
+	rPath := filepath.Join(basePath, filepath.FromSlash(path.Clean("/"+rfile)))
+	http.ServeFile(w, req, rPath)
 }
 
 // HTTPServer handles the HTTP requests
@@ -83,7 +69,7 @@ func (a *App) HTTPServer() {
 	http.HandleFunc("/videos/shows", a.showStore)
 
 	if a.config.HTTPServer.ServeFiles {
-		http.HandleFunc("/files", a.serveFiles)
+		http.HandleFunc("/file/", a.serveFiles)
 	}
 
 	// Serve HTTP
