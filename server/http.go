@@ -45,11 +45,12 @@ func (a *App) serveFiles(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if req.URL.Path == "/file/movie" {
+	switch req.URL.Path {
+	case "/files/movies":
 		basePath = a.config.Movie.Dir
-	} else if req.URL.Path == "/file/show" {
+	case "/files/shows":
 		basePath = a.config.Show.Dir
-	} else {
+	default:
 		http.Error(w, "400 bad request", http.StatusBadRequest)
 		return
 	}
@@ -69,7 +70,7 @@ func (a *App) HTTPServer() {
 	http.HandleFunc("/videos/shows", a.showStore)
 
 	if a.config.HTTPServer.ServeFiles {
-		http.HandleFunc("/file/", a.serveFiles)
+		http.HandleFunc("/files/", a.serveFiles)
 	}
 
 	// Serve HTTP

@@ -167,6 +167,21 @@ func (vs *VideoStore) scanEpisodes(showPath string) ([]*ShowEpisode, error) {
 			return nil
 		}
 
+		var episodeFile File
+		basePath := RemoveExt(filePath)
+		//Get related episode file path
+		for _, ext := range vs.config.Video.VideoExtentions {
+			if _, err := os.Stat(basePath + ext); err == nil {
+				episodeFile = File{Path: basePath + ext, config: vs.config}
+			}
+		}
+
+		if episodeFile.Path == "" {
+			vs.log.Errorf("video store: can't find episode file for NFO: %q", filePath)
+			return nil
+		}
+		showEpisode.File = &episodeFile
+
 		showEpisodes = append(showEpisodes, showEpisode)
 		return nil
 	})

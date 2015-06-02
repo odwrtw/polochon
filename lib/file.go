@@ -38,25 +38,25 @@ func NewFileWithConfig(path string, config *Config) *File {
 // MarshalJSON custon marshal return path
 func (f File) MarshalJSON() ([]byte, error) {
 	var path string
-	var b bool
+	var ok bool
 	var err error
 
-	b, err = filepath.Match(f.config.Movie.Dir+"/*/*", f.Path)
+	ok, err = filepath.Match(f.config.Movie.Dir+"/*/*", f.Path)
 	if err != nil {
 		return []byte{}, nil
 	}
-	if b {
+	if ok {
 		path, err = filepath.Rel(f.config.Movie.Dir, f.Path)
 		if err != nil {
 			return []byte{}, nil
 		}
 	}
 
-	b, err = filepath.Match(f.config.Show.Dir+"/*/*/*", f.Path)
+	ok, err = filepath.Match(f.config.Show.Dir+"/*/*/*", f.Path)
 	if err != nil {
 		return []byte{}, nil
 	}
-	if b {
+	if ok {
 		path, err = filepath.Rel(f.config.Show.Dir, f.Path)
 		if err != nil {
 			return []byte{}, nil
@@ -72,10 +72,7 @@ func (f File) MarshalJSON() ([]byte, error) {
 
 // Exists returns true is the file exists
 func (f *File) Exists() bool {
-	if _, err := os.Stat(f.Path); os.IsNotExist(err) {
-		return false
-	}
-	return true
+	return Exists(f.Path)
 }
 
 // IsVideo returns true is the file is considered as a video, using the allowed
@@ -177,4 +174,12 @@ func RemoveExt(filepath string) string {
 	l := len(filepath) - len(ext)
 	// Rebuild path
 	return filepath[:l]
+}
+
+// Exists tests if file exists
+func Exists(path string) bool {
+	if _, err := os.Stat(path); err == nil {
+		return true
+	}
+	return false
 }
