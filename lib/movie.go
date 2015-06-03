@@ -36,7 +36,7 @@ type Movie struct {
 	Votes         int       `xml:"votes" json:"votes"`
 	Year          int       `xml:"year" json:"year"`
 	Torrents      []Torrent `xml:"-" json:"-"`
-	File          *File     `xml:"-" json:"-"`
+	File          *File     `xml:"-" json:"file"`
 	log           *logrus.Entry
 	config        *MovieConfig
 }

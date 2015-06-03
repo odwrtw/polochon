@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path"
+	"path/filepath"
 
 	"gitlab.quimbo.fr/odwrtw/polochon/lib"
 )
@@ -33,6 +35,31 @@ func (a *App) showStore(w http.ResponseWriter, req *http.Request) {
 	a.writeResponse(w, shows)
 }
 
+func (a *App) serveFiles(w http.ResponseWriter, req *http.Request) {
+	var basePath string
+
+	user, pwd, ok := req.BasicAuth()
+	if ok != true || user != a.config.HTTPServer.ServeFilesUser || pwd != a.config.HTTPServer.ServeFilesPwd {
+		w.Header().Set("WWW-Authenticate", "Basic realm=\"User Auth\"")
+		http.Error(w, "401 unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	switch req.URL.Path {
+	case "/files/movies":
+		basePath = a.config.Movie.Dir
+	case "/files/shows":
+		basePath = a.config.Show.Dir
+	default:
+		http.Error(w, "400 bad request", http.StatusBadRequest)
+		return
+	}
+
+	rfile := req.FormValue("file")
+	rPath := filepath.Join(basePath, filepath.FromSlash(path.Clean("/"+rfile)))
+	http.ServeFile(w, req, rPath)
+}
+
 // HTTPServer handles the HTTP requests
 func (a *App) HTTPServer() {
 	addr := fmt.Sprintf("%s:%d", a.config.HTTPServer.Host, a.config.HTTPServer.Port)
@@ -41,6 +68,10 @@ func (a *App) HTTPServer() {
 	}
 	http.HandleFunc("/videos/movies", a.movieStore)
 	http.HandleFunc("/videos/shows", a.showStore)
+
+	if a.config.HTTPServer.ServeFiles {
+		http.HandleFunc("/files/", a.serveFiles)
+	}
 
 	// Serve HTTP
 	if err := s.ListenAndServe(); err != nil {

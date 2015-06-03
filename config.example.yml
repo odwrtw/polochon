@@ -8,6 +8,9 @@ http_server:
   port: 8080
   host: localhost
   enable: true
+  serve_files: true
+  serve_files_user: toto
+  serve_files_pwd: tata
 video:
   guesser: openguessit
   exclude_file_containing:

@@ -51,6 +51,22 @@ func (vs *VideoStore) ScanMovies() ([]*Movie, error) {
 			return nil
 		}
 
+		var movieFile File
+		basePath := RemoveExt(filePath)
+		//Get related movie file path
+		for _, ext := range vs.config.Video.VideoExtentions {
+			if _, err := os.Stat(basePath + ext); err == nil {
+				movieFile = File{Path: basePath + ext, config: vs.config}
+				break
+			}
+		}
+
+		if movieFile.Path == "" {
+			vs.log.Errorf("video store: can't find movie file for NFO: %q", filePath)
+			return nil
+		}
+		movie.File = &movieFile
+
 		movies = append(movies, movie)
 
 		return nil
@@ -151,6 +167,22 @@ func (vs *VideoStore) scanEpisodes(showPath string) ([]*ShowEpisode, error) {
 			vs.log.Errorf("video store: failed to read tv show episode NFO: %q", err)
 			return nil
 		}
+
+		var episodeFile File
+		basePath := RemoveExt(filePath)
+		//Get related episode file path
+		for _, ext := range vs.config.Video.VideoExtentions {
+			if _, err := os.Stat(basePath + ext); err == nil {
+				episodeFile = File{Path: basePath + ext, config: vs.config}
+				break
+			}
+		}
+
+		if episodeFile.Path == "" {
+			vs.log.Errorf("video store: can't find episode file for NFO: %q", filePath)
+			return nil
+		}
+		showEpisode.File = &episodeFile
 
 		showEpisodes = append(showEpisodes, showEpisode)
 		return nil

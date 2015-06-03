@@ -20,6 +20,9 @@ http_server:
   port: 8080
   host: localhost
   enable: true
+  serve_files: true
+  serve_files_user: toto
+  serve_files_pwd: tata
 video:
   notifiers:
   - pushover
@@ -63,9 +66,12 @@ var configStructExample = &Config{
 		DownloadDir: "/home/user/downloads",
 	},
 	HTTPServer: HTTPServerConfig{
-		Enable: true,
-		Port:   8080,
-		Host:   "localhost",
+		Enable:         true,
+		Port:           8080,
+		Host:           "localhost",
+		ServeFiles:     true,
+		ServeFilesUser: "toto",
+		ServeFilesPwd:  "tata",
 	},
 	Video: VideoConfig{
 		ExcludeFileContaining:     []string{"sample"},

@@ -2,8 +2,10 @@ package polochon
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -33,12 +35,44 @@ func NewFileWithConfig(path string, config *Config) *File {
 	}
 }
 
+// MarshalJSON custon marshal return path
+func (f File) MarshalJSON() ([]byte, error) {
+	var path string
+	var ok bool
+	var err error
+
+	ok, err = filepath.Match(f.config.Movie.Dir+"/*/*", f.Path)
+	if err != nil {
+		return []byte{}, nil
+	}
+	if ok {
+		path, err = filepath.Rel(f.config.Movie.Dir, f.Path)
+		if err != nil {
+			return []byte{}, nil
+		}
+	}
+
+	ok, err = filepath.Match(f.config.Show.Dir+"/*/*/*", f.Path)
+	if err != nil {
+		return []byte{}, nil
+	}
+	if ok {
+		path, err = filepath.Rel(f.config.Show.Dir, f.Path)
+		if err != nil {
+			return []byte{}, nil
+		}
+	}
+
+	if path == "" {
+		return []byte{}, errors.New("Unexpected file path")
+	}
+
+	return []byte(fmt.Sprintf(`{"path":"%s"}`, path)), nil
+}
+
 // Exists returns true is the file exists
 func (f *File) Exists() bool {
-	if _, err := os.Stat(f.Path); os.IsNotExist(err) {
-		return false
-	}
-	return true
+	return Exists(f.Path)
 }
 
 // IsVideo returns true is the file is considered as a video, using the allowed
@@ -129,10 +163,23 @@ func (f *File) MovieFanartPath() string {
 
 // filePathWithoutExt returns the file path without the file extension
 func (f *File) filePathWithoutExt() string {
+	return RemoveExt(f.Path)
+}
+
+// RemoveExt returns file path without the extention
+func RemoveExt(filepath string) string {
 	// Extention
-	ext := path.Ext(f.Path)
+	ext := path.Ext(filepath)
 	// File length without the extension
-	l := len(f.Path) - len(ext)
+	l := len(filepath) - len(ext)
 	// Rebuild path
-	return f.Path[:l]
+	return filepath[:l]
+}
+
+// Exists tests if file exists
+func Exists(path string) bool {
+	if _, err := os.Stat(path); err == nil {
+		return true
+	}
+	return false
 }
