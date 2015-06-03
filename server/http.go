@@ -40,7 +40,7 @@ func (a *App) serveFiles(w http.ResponseWriter, req *http.Request) {
 
 	user, pwd, ok := req.BasicAuth()
 	if ok != true || user != a.config.HTTPServer.ServeFilesUser || pwd != a.config.HTTPServer.ServeFilesPwd {
-		w.Header().Set("WWW-Authenticate", "Basic realm=\"User Auth\"")
+		w.Header().Set("WWW-Authenticate", `Basic realm="User Auth"`)
 		http.Error(w, "401 unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -57,6 +57,10 @@ func (a *App) serveFiles(w http.ResponseWriter, req *http.Request) {
 
 	rfile := req.FormValue("file")
 	rPath := filepath.Join(basePath, filepath.FromSlash(path.Clean("/"+rfile)))
+
+	// Force the downloaded filename
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filepath.Base(rfile)))
+
 	http.ServeFile(w, req, rPath)
 }
 
