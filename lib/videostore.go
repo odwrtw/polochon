@@ -57,6 +57,7 @@ func (vs *VideoStore) ScanMovies() ([]*Movie, error) {
 		for _, ext := range vs.config.Video.VideoExtentions {
 			if _, err := os.Stat(basePath + ext); err == nil {
 				movieFile = File{Path: basePath + ext, config: vs.config}
+				break
 			}
 		}
 
@@ -173,6 +174,7 @@ func (vs *VideoStore) scanEpisodes(showPath string) ([]*ShowEpisode, error) {
 		for _, ext := range vs.config.Video.VideoExtentions {
 			if _, err := os.Stat(basePath + ext); err == nil {
 				episodeFile = File{Path: basePath + ext, config: vs.config}
+				break
 			}
 		}
 
