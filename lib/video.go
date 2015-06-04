@@ -18,23 +18,6 @@ const (
 	ShowType                  = "show"
 )
 
-// StringToVideoType converts a string to a VideoType
-var stringToVideoType = map[string]VideoType{
-	"movie":   MovieType,
-	"episode": ShowEpisodeType,
-	"show":    ShowType,
-}
-
-// Video type returns the video type from a string
-func videoType(s string) (VideoType, error) {
-	t, ok := stringToVideoType[s]
-	if !ok {
-		return "", ErrInvalidVideoType
-	}
-
-	return t, nil
-}
-
 // Quality represents the qualities of a video
 type Quality string
 
@@ -61,14 +44,6 @@ func GetQuality(s string) (Quality, error) {
 	}
 
 	return q, nil
-}
-
-// Default qualities in order
-var defaultQualities = []Quality{
-	Quality3D,
-	Quality1080p,
-	Quality720p,
-	Quality480p,
 }
 
 // Torrent represents a torrent file
