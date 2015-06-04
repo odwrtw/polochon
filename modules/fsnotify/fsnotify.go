@@ -2,11 +2,15 @@ package fsnotify
 
 import (
 	"os"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"gitlab.quimbo.fr/odwrtw/polochon/lib"
 	"gopkg.in/fsnotify.v1"
 )
+
+// Time to wait before sending an event
+const DELAY time.Duration = 100 * time.Millisecond
 
 // Register fsnotify as a FsNotifier
 func init() {
@@ -68,7 +72,15 @@ func (fs *FsNotify) eventHandler(ctx polochon.FsNotifierCtx) {
 			if ev.Op != fsnotify.Create && ev.Op != fsnotify.Chmod {
 				continue
 			}
-			ctx.Event <- ev.Name
+
+			// Wait for the delay time before sending an event.
+			// Transmission creates the folder and move the files afterwards.
+			// We need to wait for the file to be moved in before sending the
+			// event. Delay is the estimated time to wait.
+			go func() {
+				time.Sleep(DELAY)
+				ctx.Event <- ev.Name
+			}()
 		case err := <-fs.watcher.Errors:
 			ctx.Errc <- err
 		}
