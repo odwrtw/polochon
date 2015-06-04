@@ -2,7 +2,6 @@ package polochon
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/Sirupsen/logrus"
 )
@@ -26,36 +25,17 @@ var (
 	ErrModuleNotFound = errors.New("modules: module not found")
 )
 
-// Type holds modules type
-type Type string
+// ModuleType holds modules type
+type ModuleType string
 
 // Available modules types
 const (
-	TypeTorrenter  Type = "torrenter"
-	TypeDetailer        = "detailer"
-	TypeGuesser         = "guesser"
-	TypeFsNotifier      = "fsnotifier"
-	TypeNotifier        = "notifier"
+	TypeTorrenter  ModuleType = "torrenter"
+	TypeDetailer              = "detailer"
+	TypeGuesser               = "guesser"
+	TypeFsNotifier            = "fsnotifier"
+	TypeNotifier              = "notifier"
 )
-
-// Link strings and types
-var typeStr = map[string]Type{
-	"torrenter":  TypeTorrenter,
-	"detailer":   TypeDetailer,
-	"guesser":    TypeGuesser,
-	"fsnotifier": TypeFsNotifier,
-	"notifier":   TypeNotifier,
-}
-
-// TypeFromString returns a module type from a string
-func TypeFromString(s string) (Type, error) {
-	t, ok := typeStr[s]
-	if !ok {
-		return "", fmt.Errorf("modules: invalid module type %q", s)
-	}
-
-	return t, nil
-}
 
 // RegisteredModules holds the modules registered during the init process
 type RegisteredModules struct {
