@@ -151,6 +151,11 @@ func (f *File) NfoPath() string {
 	return f.filePathWithoutExt() + ".nfo"
 }
 
+// SubtitlePath is an helper to get the subtitle path from the  filename
+func (f *File) SubtitlePath() string {
+	return f.filePathWithoutExt() + ".srt"
+}
+
 // IgnorePath is an helper to get the ignore file path
 func (f *File) IgnorePath() string {
 	return f.Path + ".ignore"

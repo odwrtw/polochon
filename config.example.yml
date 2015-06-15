@@ -29,12 +29,16 @@ modules_params:
   - name: pushover
     key: sdf7as8f8ds7f9sf
     recipient: 9327a472s3947234792
+  - name: addicted
+    lang: fr_FR
 show:
   dir: /home/user/tvshows
   torrenters:
     - eztv
   detailers:
     - tvdb
+  subtitilers:
+    - addicted
 movie:
   dir: /home/user/movies
   torrenters:

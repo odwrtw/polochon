@@ -5,6 +5,7 @@ import (
 	"log"
 
 	// Modules
+	_ "gitlab.quimbo.fr/odwrtw/polochon/modules/addicted"
 	_ "gitlab.quimbo.fr/odwrtw/polochon/modules/eztv"
 	_ "gitlab.quimbo.fr/odwrtw/polochon/modules/fsnotify"
 	_ "gitlab.quimbo.fr/odwrtw/polochon/modules/openguessit"

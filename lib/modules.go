@@ -16,6 +16,7 @@ func init() {
 		Guessers:    make(map[string]func(params map[string]string, log *logrus.Entry) (Guesser, error)),
 		FsNotifiers: make(map[string]func(params map[string]string, log *logrus.Entry) (FsNotifier, error)),
 		Notifiers:   make(map[string]func(params map[string]string, log *logrus.Entry) (Notifier, error)),
+		Subtitilers: make(map[string]func(params map[string]string, log *logrus.Entry) (Subtitiler, error)),
 	}
 }
 
@@ -35,6 +36,7 @@ const (
 	TypeGuesser               = "guesser"
 	TypeFsNotifier            = "fsnotifier"
 	TypeNotifier              = "notifier"
+	TypeSubtitiler            = "subtitiler"
 )
 
 // RegisteredModules holds the modules registered during the init process
@@ -44,6 +46,7 @@ type RegisteredModules struct {
 	Guessers    map[string]func(params map[string]string, log *logrus.Entry) (Guesser, error)
 	FsNotifiers map[string]func(params map[string]string, log *logrus.Entry) (FsNotifier, error)
 	Notifiers   map[string]func(params map[string]string, log *logrus.Entry) (Notifier, error)
+	Subtitilers map[string]func(params map[string]string, log *logrus.Entry) (Subtitiler, error)
 }
 
 // Modules holds the configured modules
@@ -54,6 +57,7 @@ type Modules struct {
 	Guessers    map[string]Guesser
 	FsNotifiers map[string]FsNotifier
 	Notifiers   map[string]Notifier
+	Subtitilers map[string]Subtitiler
 }
 
 // NewModules returns a new set of modules
@@ -65,6 +69,7 @@ func NewModules(logger *logrus.Entry) *Modules {
 		Guessers:    make(map[string]Guesser),
 		FsNotifiers: make(map[string]FsNotifier),
 		Notifiers:   make(map[string]Notifier),
+		Subtitilers: make(map[string]Subtitiler),
 	}
 }
 
@@ -84,6 +89,26 @@ func (m *Modules) ConfigureDetailer(name string, params map[string]string) error
 		return err
 	}
 	m.Detailers[name] = module
+
+	return nil
+}
+
+// ConfigureSubtitler configures a subtitiler
+func (m *Modules) ConfigureSubtitler(name string, params map[string]string) error {
+	f, ok := registeredModules.Subtitilers[name]
+	if !ok {
+		return ErrModuleNotFound
+	}
+
+	// Setup the logs
+	log := m.Logger.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeSubtitiler})
+
+	// Configure the module
+	module, err := f(params, log)
+	if err != nil {
+		return err
+	}
+	m.Subtitilers[name] = module
 
 	return nil
 }
@@ -191,6 +216,16 @@ func (m *Modules) Torrenter(name string) (Torrenter, error) {
 // Notifier gets a configured Notifier
 func (m *Modules) Notifier(name string) (Notifier, error) {
 	module, ok := m.Notifiers[name]
+	if !ok {
+		return nil, ErrModuleNotFound
+	}
+
+	return module, nil
+}
+
+// Subtitiler gets a configured Subtitiler
+func (m *Modules) Subtitiler(name string) (Subtitiler, error) {
+	module, ok := m.Subtitilers[name]
 	if !ok {
 		return nil, ErrModuleNotFound
 	}

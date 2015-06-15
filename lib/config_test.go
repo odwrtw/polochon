@@ -42,12 +42,16 @@ modules_params:
   - name: pushover
     user: 9327a472s3947234792
     key: sdf7as8f8ds7f9sf
+  - name: addicted
+    lang: fr_FR
 show:
   dir: /home/user/tvshows
   torrenters:
     - eztv
   detailers:
     - tvdb
+  subtitilers:
+    - addicted
 movie:
   dir: /home/user/movies
   torrenters:
@@ -85,6 +89,10 @@ var configStructExample = &Config{
 			"user": "9327a472s3947234792",
 			"key":  "sdf7as8f8ds7f9sf",
 		},
+		{
+			"name": "addicted",
+			"lang": "fr_FR",
+		},
 	},
 	Movie: MovieConfig{
 		Dir:            "/home/user/movies",
@@ -95,6 +103,7 @@ var configStructExample = &Config{
 		Dir:            "/home/user/tvshows",
 		TorrenterNames: []string{"eztv"},
 		DetailerNames:  []string{"tvdb"},
+		SubtitlerNames: []string{"addicted"},
 	},
 }
 

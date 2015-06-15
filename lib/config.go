@@ -45,12 +45,14 @@ type VideoConfig struct {
 
 // ShowConfig represents the configuration for a show and its show episodes
 type ShowConfig struct {
-	Dir            string      `yaml:"dir"`
-	TorrenterNames []string    `yaml:"torrenters"`
-	Torrenters     []Torrenter `yaml:"-"`
-	DetailerNames  []string    `yaml:"detailers"`
-	Detailers      []Detailer  `yaml:"-"`
-	Notifiers      []Notifier  `yaml:"-"`
+	Dir            string       `yaml:"dir"`
+	TorrenterNames []string     `yaml:"torrenters"`
+	Torrenters     []Torrenter  `yaml:"-"`
+	DetailerNames  []string     `yaml:"detailers"`
+	SubtitlerNames []string     `yaml:"subtitilers"`
+	Detailers      []Detailer   `yaml:"-"`
+	Notifiers      []Notifier   `yaml:"-"`
+	Subtitilers    []Subtitiler `yaml:"-"`
 }
 
 // MovieConfig represents the configuration for a movie
@@ -349,6 +351,24 @@ func (c *Config) initShow() error {
 		}
 
 		c.Show.Torrenters = append(c.Show.Torrenters, t)
+	}
+
+	for _, subtitlerName := range c.Show.SubtitlerNames {
+		moduleParams, err := c.moduleParams(subtitlerName)
+		if err != nil {
+			return err
+		}
+
+		if err := c.Modules.ConfigureSubtitler(subtitlerName, moduleParams); err != nil {
+			return err
+		}
+
+		s, err := c.Modules.Subtitiler(subtitlerName)
+		if err != nil {
+			return err
+		}
+
+		c.Show.Subtitilers = append(c.Show.Subtitilers, s)
 	}
 
 	return nil

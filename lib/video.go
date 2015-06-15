@@ -56,6 +56,7 @@ type Torrent struct {
 type Video interface {
 	GetDetails() error
 	GetTorrents() error
+	GetSubtitle() error
 	Notify() error
 	Type() VideoType
 	Store() error

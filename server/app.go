@@ -243,6 +243,11 @@ func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 		return videoFile.Ignore()
 	}
 
+	// Get subtitle
+	if err := video.GetSubtitle(); err != nil {
+		log.Errorf("failed to get subtitle")
+	}
+
 	// Notify
 	if err := video.Notify(); err != nil {
 		log.Errorf("failed to notify: %q", err)

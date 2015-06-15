@@ -225,3 +225,9 @@ func (m *Movie) downloadImages() error {
 
 	return nil
 }
+
+// GetSubtitle implements the subtitle interface
+func (m *Movie) GetSubtitle() error {
+
+	return nil
+}

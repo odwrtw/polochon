@@ -233,3 +233,32 @@ func (s *ShowEpisode) Store() error {
 
 	return nil
 }
+
+// GetSubtitle implements the subtitle interface
+func (s *ShowEpisode) GetSubtitle() error {
+	var err error
+	var subtitle Subtitle
+	for _, subtitiler := range s.config.Subtitilers {
+		subtitle, err = subtitiler.GetShowSubtitle(s)
+		if err == nil {
+			break
+		}
+
+		s.log.Warnf("failed to get subtitles from subtitiler: %q", err)
+	}
+
+	if err == nil {
+		file, err := os.Create(s.File.SubtitlePath())
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		defer subtitle.Close()
+
+		if _, err := io.Copy(file, subtitle); err != nil {
+			return err
+		}
+	}
+
+	return err
+}
