@@ -52,6 +52,18 @@ type Torrent struct {
 	URL     string
 }
 
+// VideoConfig represents the configuration for video object
+type VideoConfig struct {
+	GuesserName               string   `yaml:"guesser"`
+	NotifierNames             []string `yaml:"notifiers"`
+	ExcludeFileContaining     []string `yaml:"exclude_file_containing"`
+	VideoExtentions           []string `yaml:"allowed_file_extensions"`
+	AllowedExtentionsToDelete []string `yaml:"allowed_file_extensions_to_delete"`
+	// TODO: delete it
+	Guesser   Guesser    `yaml:"-"`
+	Notifiers []Notifier `yaml:"-"`
+}
+
 // Video represents a generic video type
 type Video interface {
 	GetDetails() error

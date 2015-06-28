@@ -16,6 +16,7 @@ var (
 
 // File handles polochon files
 type File struct {
+	VideoConfig
 	Path   string
 	config *Config
 }
@@ -30,8 +31,9 @@ func NewFile(path string) *File {
 // NewFileWithConfig returs a new file from a path
 func NewFileWithConfig(path string, config *Config) *File {
 	return &File{
-		Path:   path,
-		config: config,
+		VideoConfig: config.Video,
+		Path:        path,
+		config:      config,
 	}
 }
 
@@ -82,7 +84,8 @@ func (f *File) IsVideo() bool {
 	ext := path.Ext(strings.ToLower(f.Path))
 
 	// Check in the video extentions
-	for _, e := range f.config.Video.VideoExtentions {
+	// for _, e := range f.config.Video.VideoExtentions {
+	for _, e := range f.VideoExtentions {
 		if e == ext {
 			return true
 		}
@@ -102,7 +105,8 @@ func (f *File) IsIgnored() bool {
 func (f *File) IsExcluded() bool {
 	fileName := strings.ToLower(path.Base(f.Path))
 
-	for _, excluded := range f.config.Video.ExcludeFileContaining {
+	// for _, excluded := range f.config.Video.ExcludeFileContaining {
+	for _, excluded := range f.ExcludeFileContaining {
 		if strings.Contains(fileName, excluded) {
 			return true
 		}
@@ -122,28 +126,8 @@ func (f *File) Ignore() error {
 }
 
 // Guess video information from file
-func (f *File) Guess(g Guesser) (Video, error) {
-	guess, err := g.Guess(f.Path)
-	if err != nil {
-		return nil, err
-	}
-
-	if guess == nil {
-		return nil, nil
-	}
-
-	video, ok := guess.(Video)
-	if !ok {
-		return nil, ErrInvalidGuessType
-	}
-
-	video.SetFile(f)
-
-	if f.config != nil {
-		video.SetConfig(f.config)
-	}
-
-	return video, nil
+func (f *File) Guess() (Video, error) {
+	return f.Guesser.Guess(*f)
 }
 
 // NfoPath is an helper to get the nfo filename from the video filename

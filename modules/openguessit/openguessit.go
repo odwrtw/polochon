@@ -42,8 +42,8 @@ func NewOpenGuessit(params map[string]string, log *logrus.Entry) (polochon.Guess
 }
 
 // Guess implements the Guesser interface
-func (og *OpenGuessit) Guess(filePath string) (polochon.Video, error) {
-	g, err := NewGuesser(filePath, og.log)
+func (og *OpenGuessit) Guess(file polochon.File) (polochon.Video, error) {
+	g, err := NewGuesser(file.Path, og.log)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the file: %q", err)
 	}
@@ -92,6 +92,8 @@ func (og *OpenGuessit) Guess(filePath string) (polochon.Video, error) {
 			Year:      year,
 		}
 
+		video.SetFile(&file)
+
 		return video, nil
 	case MovieType:
 		video := polochon.NewMovie()
@@ -104,12 +106,12 @@ func (og *OpenGuessit) Guess(filePath string) (polochon.Video, error) {
 		}
 		video.Year = year
 
+		video.SetFile(&file)
+
 		return video, nil
-	default:
-		og.log.Errorf("Failed to guess video type: %q", err)
 	}
 
-	return nil, nil
+	return nil, errors.New("Failed to guess video type")
 }
 
 // Guesser represents a new guesser

@@ -15,20 +15,34 @@ var (
 	ErrMissingShowImageURL = errors.New("show: missing URL to download show images")
 )
 
+// ShowConfig represents the configuration for a show and its show episodes
+type ShowConfig struct {
+	Dir            string   `yaml:"dir"`
+	TorrenterNames []string `yaml:"torrenters"`
+	DetailerNames  []string `yaml:"detailers"`
+	SubtitlerNames []string `yaml:"subtitilers"`
+	// TODO: delete it
+	Detailers   []Detailer   `yaml:"-"`
+	Notifiers   []Notifier   `yaml:"-"`
+	Subtitilers []Subtitiler `yaml:"-"`
+	Torrenters  []Torrenter  `yaml:"-"`
+}
+
 // Show represents a tv show
 type Show struct {
-	XMLName   xml.Name       `xml:"tvshow" json:"-"`
-	Title     string         `xml:"title" json:"title"`
-	ShowTitle string         `xml:"showtitle" json:"-"`
-	Rating    float32        `xml:"rating" json:"rating"`
-	Plot      string         `xml:"plot" json:"plot"`
-	URL       string         `xml:"episodeguide>url" json:"-"`
-	TvdbID    int            `xml:"tvdbid" json:"tvdb_id"`
-	ImdbID    string         `xml:"imdbid" json:"imdb_id"`
-	Year      int            `xml:"year" json:"year"`
-	Banner    string         `xml:"-" json:"banner"`
-	Fanart    string         `xml:"-" json:"fanart"`
-	Poster    string         `xml:"-" json:"poster"`
+	XMLName   xml.Name `xml:"tvshow" json:"-"`
+	Title     string   `xml:"title" json:"title"`
+	ShowTitle string   `xml:"showtitle" json:"-"`
+	Rating    float32  `xml:"rating" json:"rating"`
+	Plot      string   `xml:"plot" json:"plot"`
+	URL       string   `xml:"episodeguide>url" json:"-"`
+	TvdbID    int      `xml:"tvdbid" json:"tvdb_id"`
+	ImdbID    string   `xml:"imdbid" json:"imdb_id"`
+	Year      int      `xml:"year" json:"year"`
+	Banner    string   `xml:"-" json:"banner"`
+	Fanart    string   `xml:"-" json:"fanart"`
+	Poster    string   `xml:"-" json:"poster"`
+	Modules   *Modules
 	Episodes  []*ShowEpisode `xml:"-" json:"episodes"`
 	config    *ShowConfig
 	log       *logrus.Entry

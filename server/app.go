@@ -198,49 +198,51 @@ func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 	log = log.WithField("filePath", filePath)
 
 	// Create a file
-	videoFile := polochon.NewFileWithConfig(filePath, a.config)
+	file := polochon.NewFileWithConfig(filePath, a.config)
 
 	// Check if file really exists
-	if !videoFile.Exists() {
+	if !file.Exists() {
 		log.Warning("the file has been removed")
 		return nil
 	}
 
 	// Check if file is a video
-	if !videoFile.IsVideo() {
+	if !file.IsVideo() {
 		log.Debug("the file is not a video")
 		return nil
 	}
 
 	// Check if file is ignored
-	if videoFile.IsIgnored() {
+	if file.IsIgnored() {
 		log.Debug("the file is ignored")
 		return nil
 	}
 
 	// Check if file is ignored
-	if videoFile.IsExcluded() {
+	if file.IsExcluded() {
 		log.Debug("the file is excluded")
-		return videoFile.Ignore()
+		return file.Ignore()
 	}
 
 	// Guess the video inforamtion
-	video, err := videoFile.Guess(a.config.Video.Guesser)
+	video, err := file.Guess()
 	if err != nil {
 		log.Errorf("failed to guess video file: %q", err)
-		return videoFile.Ignore()
+		return file.Ignore()
 	}
+
+	video.SetConfig(a.config)
 
 	// Get video details
 	if err := video.GetDetails(); err != nil {
 		log.Errorf("failed to get video details: %q", err)
-		return videoFile.Ignore()
+		return file.Ignore()
 	}
 
 	// Store the video
 	if err := video.Store(); err != nil {
 		log.Errorf("failed to store video: %q", err)
-		return videoFile.Ignore()
+		return file.Ignore()
 	}
 
 	// Get subtitle

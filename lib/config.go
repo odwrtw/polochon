@@ -32,29 +32,6 @@ type WatcherConfig struct {
 	FsNotifier     FsNotifier    `yaml:"-"`
 }
 
-// VideoConfig represents the configuration for the detailers
-type VideoConfig struct {
-	GuesserName               string     `yaml:"guesser"`
-	Guesser                   Guesser    `yaml:"-"`
-	NotifierNames             []string   `yaml:"notifiers"`
-	Notifiers                 []Notifier `yaml:"-"`
-	ExcludeFileContaining     []string   `yaml:"exclude_file_containing"`
-	VideoExtentions           []string   `yaml:"allowed_file_extensions"`
-	AllowedExtentionsToDelete []string   `yaml:"allowed_file_extensions_to_delete"`
-}
-
-// ShowConfig represents the configuration for a show and its show episodes
-type ShowConfig struct {
-	Dir            string       `yaml:"dir"`
-	TorrenterNames []string     `yaml:"torrenters"`
-	Torrenters     []Torrenter  `yaml:"-"`
-	DetailerNames  []string     `yaml:"detailers"`
-	SubtitlerNames []string     `yaml:"subtitilers"`
-	Detailers      []Detailer   `yaml:"-"`
-	Notifiers      []Notifier   `yaml:"-"`
-	Subtitilers    []Subtitiler `yaml:"-"`
-}
-
 // MovieConfig represents the configuration for a movie
 type MovieConfig struct {
 	Dir            string      `yaml:"dir"`
@@ -165,7 +142,8 @@ func (c *Config) initLogger() error {
 }
 
 func (c *Config) initModules() error {
-	c.Modules = NewModules(c.Log)
+	c.Modules = NewModules()
+	// c.Modules = NewModules(c.Log)
 	return nil
 }
 
@@ -200,7 +178,7 @@ func (c *Config) initWatcher() error {
 	}
 
 	// Configure
-	if err := c.Modules.ConfigureFsNotifier(c.Watcher.FsNotifierName, moduleParams); err != nil {
+	if err := c.Modules.ConfigureFsNotifier(c.Watcher.FsNotifierName, moduleParams, c.Log); err != nil {
 		return err
 	}
 
@@ -226,7 +204,7 @@ func (c *Config) initVideo() error {
 	}
 
 	// Configure
-	if err := c.Modules.ConfigureGuesser(c.Video.GuesserName, moduleParams); err != nil {
+	if err := c.Modules.ConfigureGuesser(c.Video.GuesserName, moduleParams, c.Log); err != nil {
 		return err
 	}
 
@@ -242,7 +220,7 @@ func (c *Config) initVideo() error {
 			return err
 		}
 
-		if err := c.Modules.ConfigureNotifier(notifierName, moduleParams); err != nil {
+		if err := c.Modules.ConfigureNotifier(notifierName, moduleParams, c.Log); err != nil {
 			return err
 		}
 
@@ -270,7 +248,7 @@ func (c *Config) initMovie() error {
 			return err
 		}
 
-		if err := c.Modules.ConfigureDetailer(detailerName, moduleParams); err != nil {
+		if err := c.Modules.ConfigureDetailer(detailerName, moduleParams, c.Log); err != nil {
 			return err
 		}
 
@@ -293,7 +271,7 @@ func (c *Config) initMovie() error {
 			return err
 		}
 
-		if err := c.Modules.ConfigureTorrenter(torrenterName, moduleParams); err != nil {
+		if err := c.Modules.ConfigureTorrenter(torrenterName, moduleParams, c.Log); err != nil {
 			return err
 		}
 
@@ -320,7 +298,7 @@ func (c *Config) initShow() error {
 			return err
 		}
 
-		if err := c.Modules.ConfigureDetailer(detailerName, moduleParams); err != nil {
+		if err := c.Modules.ConfigureDetailer(detailerName, moduleParams, c.Log); err != nil {
 			return err
 		}
 
@@ -342,7 +320,7 @@ func (c *Config) initShow() error {
 			return err
 		}
 
-		if err := c.Modules.ConfigureTorrenter(torrenterName, moduleParams); err != nil {
+		if err := c.Modules.ConfigureTorrenter(torrenterName, moduleParams, c.Log); err != nil {
 			return err
 		}
 
@@ -360,7 +338,7 @@ func (c *Config) initShow() error {
 			return err
 		}
 
-		if err := c.Modules.ConfigureSubtitler(subtitlerName, moduleParams); err != nil {
+		if err := c.Modules.ConfigureSubtitler(subtitlerName, moduleParams, c.Log); err != nil {
 			return err
 		}
 

@@ -8,6 +8,7 @@ import (
 
 // Registerd modules
 var registeredModules *RegisteredModules
+var configuredModules *Modules = NewModules()
 
 func init() {
 	registeredModules = &RegisteredModules{
@@ -51,7 +52,6 @@ type RegisteredModules struct {
 
 // Modules holds the configured modules
 type Modules struct {
-	Logger      *logrus.Entry
 	Detailers   map[string]Detailer
 	Torrenters  map[string]Torrenter
 	Guessers    map[string]Guesser
@@ -61,9 +61,8 @@ type Modules struct {
 }
 
 // NewModules returns a new set of modules
-func NewModules(logger *logrus.Entry) *Modules {
+func NewModules() *Modules {
 	return &Modules{
-		Logger:      logger,
 		Detailers:   make(map[string]Detailer),
 		Torrenters:  make(map[string]Torrenter),
 		Guessers:    make(map[string]Guesser),
@@ -74,17 +73,17 @@ func NewModules(logger *logrus.Entry) *Modules {
 }
 
 // ConfigureDetailer configures a detailer
-func (m *Modules) ConfigureDetailer(name string, params map[string]string) error {
+func (m *Modules) ConfigureDetailer(name string, params map[string]string, log *logrus.Entry) error {
 	f, ok := registeredModules.Detailers[name]
 	if !ok {
 		return ErrModuleNotFound
 	}
 
 	// Setup the logs
-	log := m.Logger.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeDetailer})
+	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeDetailer})
 
 	// Configure the module
-	module, err := f(params, log)
+	module, err := f(params, logger)
 	if err != nil {
 		return err
 	}
@@ -94,17 +93,17 @@ func (m *Modules) ConfigureDetailer(name string, params map[string]string) error
 }
 
 // ConfigureSubtitler configures a subtitiler
-func (m *Modules) ConfigureSubtitler(name string, params map[string]string) error {
+func (m *Modules) ConfigureSubtitler(name string, params map[string]string, log *logrus.Entry) error {
 	f, ok := registeredModules.Subtitilers[name]
 	if !ok {
 		return ErrModuleNotFound
 	}
 
 	// Setup the logs
-	log := m.Logger.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeSubtitiler})
+	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeDetailer})
 
 	// Configure the module
-	module, err := f(params, log)
+	module, err := f(params, logger)
 	if err != nil {
 		return err
 	}
@@ -114,17 +113,17 @@ func (m *Modules) ConfigureSubtitler(name string, params map[string]string) erro
 }
 
 // ConfigureTorrenter configures a torrenter
-func (m *Modules) ConfigureTorrenter(name string, params map[string]string) error {
+func (m *Modules) ConfigureTorrenter(name string, params map[string]string, log *logrus.Entry) error {
 	f, ok := registeredModules.Torrenters[name]
 	if !ok {
 		return ErrModuleNotFound
 	}
 
 	// Setup the logs
-	log := m.Logger.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeTorrenter})
+	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeDetailer})
 
 	// Configure the module
-	module, err := f(params, log)
+	module, err := f(params, logger)
 	if err != nil {
 		return err
 	}
@@ -134,17 +133,17 @@ func (m *Modules) ConfigureTorrenter(name string, params map[string]string) erro
 }
 
 // ConfigureGuesser configures a guesser
-func (m *Modules) ConfigureGuesser(name string, params map[string]string) error {
+func (m *Modules) ConfigureGuesser(name string, params map[string]string, log *logrus.Entry) error {
 	f, ok := registeredModules.Guessers[name]
 	if !ok {
 		return ErrModuleNotFound
 	}
 
 	// Setup the logs
-	log := m.Logger.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeGuesser})
+	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeDetailer})
 
 	// Configure the module
-	module, err := f(params, log)
+	module, err := f(params, logger)
 	if err != nil {
 		return err
 	}
@@ -154,17 +153,17 @@ func (m *Modules) ConfigureGuesser(name string, params map[string]string) error 
 }
 
 // ConfigureFsNotifier configures a fs notifier
-func (m *Modules) ConfigureFsNotifier(name string, params map[string]string) error {
+func (m *Modules) ConfigureFsNotifier(name string, params map[string]string, log *logrus.Entry) error {
 	f, ok := registeredModules.FsNotifiers[name]
 	if !ok {
 		return ErrModuleNotFound
 	}
 
 	// Setup the logs
-	log := m.Logger.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeFsNotifier})
+	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeDetailer})
 
 	// Configure the module
-	module, err := f(params, log)
+	module, err := f(params, logger)
 	if err != nil {
 		return err
 	}
@@ -174,17 +173,17 @@ func (m *Modules) ConfigureFsNotifier(name string, params map[string]string) err
 }
 
 // ConfigureNotifier configures a notifier
-func (m *Modules) ConfigureNotifier(name string, params map[string]string) error {
+func (m *Modules) ConfigureNotifier(name string, params map[string]string, log *logrus.Entry) error {
 	f, ok := registeredModules.Notifiers[name]
 	if !ok {
 		return ErrModuleNotFound
 	}
 
 	// Setup the logs
-	log := m.Logger.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeNotifier})
+	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeDetailer})
 
 	// Configure the module
-	module, err := f(params, log)
+	module, err := f(params, logger)
 	if err != nil {
 		return err
 	}
