@@ -204,9 +204,9 @@ func (c *Config) initWatcher() error {
 		return err
 	}
 
-	n, err := c.Modules.FsNotifier(c.Watcher.FsNotifierName)
-	if err != nil {
-		return err
+	n, ok := c.Modules.FsNotifiers[c.Watcher.FsNotifierName]
+	if !ok {
+		return ErrModuleNotFound
 	}
 	c.Watcher.FsNotifier = n
 
@@ -230,9 +230,9 @@ func (c *Config) initVideo() error {
 		return err
 	}
 
-	g, err := c.Modules.Guesser(c.Video.GuesserName)
-	if err != nil {
-		return err
+	g, ok := c.Modules.Guessers[c.Video.GuesserName]
+	if !ok {
+		return ErrModuleNotFound
 	}
 	c.Video.Guesser = g
 
@@ -246,9 +246,9 @@ func (c *Config) initVideo() error {
 			return err
 		}
 
-		n, err := c.Modules.Notifier(notifierName)
-		if err != nil {
-			return err
+		n, ok := c.Modules.Notifiers[notifierName]
+		if !ok {
+			return ErrModuleNotFound
 		}
 		c.Video.Notifiers = append(c.Video.Notifiers, n)
 	}
@@ -274,10 +274,11 @@ func (c *Config) initMovie() error {
 			return err
 		}
 
-		d, err := c.Modules.Detailer(detailerName)
-		if err != nil {
-			return err
+		d, ok := c.Modules.Detailers[detailerName]
+		if !ok {
+			return ErrModuleNotFound
 		}
+
 		c.Movie.Detailers = append(c.Movie.Detailers, d)
 	}
 
@@ -296,9 +297,9 @@ func (c *Config) initMovie() error {
 			return err
 		}
 
-		t, err := c.Modules.Torrenter(torrenterName)
-		if err != nil {
-			return err
+		t, ok := c.Modules.Torrenters[torrenterName]
+		if !ok {
+			return ErrModuleNotFound
 		}
 
 		c.Movie.Torrenters = append(c.Movie.Torrenters, t)
@@ -323,9 +324,9 @@ func (c *Config) initShow() error {
 			return err
 		}
 
-		d, err := c.Modules.Detailer(detailerName)
-		if err != nil {
-			return err
+		d, ok := c.Modules.Detailers[detailerName]
+		if !ok {
+			return ErrModuleNotFound
 		}
 		c.Show.Detailers = append(c.Show.Detailers, d)
 	}
@@ -345,9 +346,9 @@ func (c *Config) initShow() error {
 			return err
 		}
 
-		t, err := c.Modules.Torrenter(torrenterName)
-		if err != nil {
-			return err
+		t, ok := c.Modules.Torrenters[torrenterName]
+		if !ok {
+			return ErrModuleNotFound
 		}
 
 		c.Show.Torrenters = append(c.Show.Torrenters, t)
@@ -363,9 +364,9 @@ func (c *Config) initShow() error {
 			return err
 		}
 
-		s, err := c.Modules.Subtitiler(subtitlerName)
-		if err != nil {
-			return err
+		s, ok := c.Modules.Subtitilers[subtitlerName]
+		if !ok {
+			return ErrModuleNotFound
 		}
 
 		c.Show.Subtitilers = append(c.Show.Subtitilers, s)
