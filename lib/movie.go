@@ -59,12 +59,12 @@ func (m *Movie) SetFile(f *File) {
 }
 
 // SetConfig implements the video interface
-func (m *Movie) SetConfig(c *Config) {
+func (m *Movie) SetConfig(c *VideoConfig, log *logrus.Logger) {
 	// Only keep movie config from global config
 	m.config = &c.Movie
 
 	// Set logger
-	m.log = c.Log.WithFields(logrus.Fields{
+	m.log = log.WithFields(logrus.Fields{
 		"type": "movie",
 	})
 }

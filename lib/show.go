@@ -15,19 +15,6 @@ var (
 	ErrMissingShowImageURL = errors.New("show: missing URL to download show images")
 )
 
-// ShowConfig represents the configuration for a show and its show episodes
-type ShowConfig struct {
-	Dir            string   `yaml:"dir"`
-	TorrenterNames []string `yaml:"torrenters"`
-	DetailerNames  []string `yaml:"detailers"`
-	SubtitlerNames []string `yaml:"subtitilers"`
-	// TODO: delete it
-	Detailers   []Detailer   `yaml:"-"`
-	Notifiers   []Notifier   `yaml:"-"`
-	Subtitilers []Subtitiler `yaml:"-"`
-	Torrenters  []Torrenter  `yaml:"-"`
-}
-
 // Show represents a tv show
 type Show struct {
 	XMLName   xml.Name `xml:"tvshow" json:"-"`

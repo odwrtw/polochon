@@ -12,7 +12,7 @@ import (
 
 // hello world, the web server
 func (a *App) movieStore(w http.ResponseWriter, req *http.Request) {
-	vs := polochon.NewVideoStore(a.config)
+	vs := polochon.NewVideoStore(a.config, a.logger)
 
 	movies, err := vs.ScanMovies()
 	if err != nil {
@@ -24,7 +24,7 @@ func (a *App) movieStore(w http.ResponseWriter, req *http.Request) {
 }
 
 func (a *App) showStore(w http.ResponseWriter, req *http.Request) {
-	vs := polochon.NewVideoStore(a.config)
+	vs := polochon.NewVideoStore(a.config, a.logger)
 
 	shows, err := vs.ScanShows()
 	if err != nil {
@@ -47,9 +47,9 @@ func (a *App) serveFiles(w http.ResponseWriter, req *http.Request) {
 
 	switch req.URL.Path {
 	case "/files/movies":
-		basePath = a.config.Movie.Dir
+		basePath = a.config.Video.Movie.Dir
 	case "/files/shows":
-		basePath = a.config.Show.Dir
+		basePath = a.config.Video.Show.Dir
 	default:
 		http.Error(w, "400 bad request", http.StatusBadRequest)
 		return
@@ -79,7 +79,7 @@ func (a *App) HTTPServer() {
 
 	// Serve HTTP
 	if err := s.ListenAndServe(); err != nil {
-		a.config.Log.Error("Couldn't start the HTTP server : ", err)
+		a.logger.Error("Couldn't start the HTTP server : ", err)
 		a.Stop()
 	}
 }
@@ -97,6 +97,6 @@ func (a *App) writeResponse(w http.ResponseWriter, v interface{}) {
 }
 
 func (a *App) writeError(w http.ResponseWriter, msg string) {
-	a.config.Log.Errorf(msg)
+	a.logger.Errorf(msg)
 	http.Error(w, msg, http.StatusInternalServerError)
 }

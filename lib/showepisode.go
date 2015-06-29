@@ -59,12 +59,12 @@ func (s *ShowEpisode) SetFile(f *File) {
 }
 
 // SetConfig implements the video interface
-func (s *ShowEpisode) SetConfig(c *Config) {
+func (s *ShowEpisode) SetConfig(c *VideoConfig, log *logrus.Logger) {
 	// Only keep show config
 	s.config = &c.Show
 
 	// Set logger
-	s.log = c.Log.WithFields(logrus.Fields{
+	s.log = log.WithFields(logrus.Fields{
 		"type": "show_episode",
 	})
 }

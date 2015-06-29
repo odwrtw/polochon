@@ -8,7 +8,7 @@ import (
 
 // Registerd modules
 var registeredModules *RegisteredModules
-var configuredModules *Modules = NewModules()
+var ConfiguredModules *Modules = NewModules()
 
 func init() {
 	registeredModules = &RegisteredModules{

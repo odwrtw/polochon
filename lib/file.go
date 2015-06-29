@@ -16,7 +16,7 @@ var (
 
 // File handles polochon files
 type File struct {
-	VideoConfig
+	FileConfig
 	Path   string
 	config *Config
 }
@@ -31,9 +31,9 @@ func NewFile(path string) *File {
 // NewFileWithConfig returs a new file from a path
 func NewFileWithConfig(path string, config *Config) *File {
 	return &File{
-		VideoConfig: config.Video,
-		Path:        path,
-		config:      config,
+		FileConfig: config.File,
+		Path:       path,
+		config:     config,
 	}
 }
 
@@ -43,23 +43,23 @@ func (f File) MarshalJSON() ([]byte, error) {
 	var ok bool
 	var err error
 
-	ok, err = filepath.Match(f.config.Movie.Dir+"/*/*", f.Path)
+	ok, err = filepath.Match(f.config.Video.Movie.Dir+"/*/*", f.Path)
 	if err != nil {
 		return []byte{}, nil
 	}
 	if ok {
-		path, err = filepath.Rel(f.config.Movie.Dir, f.Path)
+		path, err = filepath.Rel(f.config.Video.Movie.Dir, f.Path)
 		if err != nil {
 			return []byte{}, nil
 		}
 	}
 
-	ok, err = filepath.Match(f.config.Show.Dir+"/*/*/*", f.Path)
+	ok, err = filepath.Match(f.config.Video.Show.Dir+"/*/*/*", f.Path)
 	if err != nil {
 		return []byte{}, nil
 	}
 	if ok {
-		path, err = filepath.Rel(f.config.Show.Dir, f.Path)
+		path, err = filepath.Rel(f.config.Video.Show.Dir, f.Path)
 		if err != nil {
 			return []byte{}, nil
 		}
@@ -84,7 +84,6 @@ func (f *File) IsVideo() bool {
 	ext := path.Ext(strings.ToLower(f.Path))
 
 	// Check in the video extentions
-	// for _, e := range f.config.Video.VideoExtentions {
 	for _, e := range f.VideoExtentions {
 		if e == ext {
 			return true
@@ -105,7 +104,6 @@ func (f *File) IsIgnored() bool {
 func (f *File) IsExcluded() bool {
 	fileName := strings.ToLower(path.Base(f.Path))
 
-	// for _, excluded := range f.config.Video.ExcludeFileContaining {
 	for _, excluded := range f.ExcludeFileContaining {
 		if strings.Contains(fileName, excluded) {
 			return true

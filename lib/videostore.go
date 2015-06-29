@@ -15,10 +15,10 @@ type VideoStore struct {
 }
 
 // NewVideoStore returns a list of videos
-func NewVideoStore(c *Config) *VideoStore {
+func NewVideoStore(c *Config, log *logrus.Logger) *VideoStore {
 	return &VideoStore{
 		config: c,
-		log:    c.Log.WithField("function", "videoStore"),
+		log:    log.WithField("function", "videoStore"),
 	}
 }
 
@@ -27,7 +27,7 @@ func (vs *VideoStore) ScanMovies() ([]*Movie, error) {
 	movies := []*Movie{}
 
 	// Walk movies
-	err := filepath.Walk(vs.config.Movie.Dir, func(filePath string, file os.FileInfo, err error) error {
+	err := filepath.Walk(vs.config.Video.Movie.Dir, func(filePath string, file os.FileInfo, err error) error {
 		// Nothing to do on dir
 		if file.IsDir() {
 			return nil
@@ -54,7 +54,7 @@ func (vs *VideoStore) ScanMovies() ([]*Movie, error) {
 		var movieFile File
 		basePath := RemoveExt(filePath)
 		//Get related movie file path
-		for _, ext := range vs.config.Video.VideoExtentions {
+		for _, ext := range vs.config.File.VideoExtentions {
 			if _, err := os.Stat(basePath + ext); err == nil {
 				movieFile = File{Path: basePath + ext, config: vs.config}
 				break
@@ -106,7 +106,7 @@ func (vs *VideoStore) scanShows() (map[string]*Show, error) {
 	showPath := make(map[string]*Show)
 
 	// Walk movies
-	err := filepath.Walk(vs.config.Show.Dir, func(filePath string, file os.FileInfo, err error) error {
+	err := filepath.Walk(vs.config.Video.Show.Dir, func(filePath string, file os.FileInfo, err error) error {
 		if file.Name() != "tvshow.nfo" {
 			return nil
 		}
@@ -171,7 +171,7 @@ func (vs *VideoStore) scanEpisodes(showPath string) ([]*ShowEpisode, error) {
 		var episodeFile File
 		basePath := RemoveExt(filePath)
 		//Get related episode file path
-		for _, ext := range vs.config.Video.VideoExtentions {
+		for _, ext := range vs.config.File.VideoExtentions {
 			if _, err := os.Stat(basePath + ext); err == nil {
 				episodeFile = File{Path: basePath + ext, config: vs.config}
 				break
