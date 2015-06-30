@@ -8,7 +8,6 @@ import (
 
 // Registerd modules
 var registeredModules *RegisteredModules
-var ConfiguredModules *Modules = NewModules()
 
 func init() {
 	registeredModules = &RegisteredModules{
@@ -50,33 +49,11 @@ type RegisteredModules struct {
 	Subtitilers map[string]func(params map[string]string, log *logrus.Entry) (Subtitiler, error)
 }
 
-// Modules holds the configured modules
-type Modules struct {
-	Detailers   map[string]Detailer
-	Torrenters  map[string]Torrenter
-	Guessers    map[string]Guesser
-	FsNotifiers map[string]FsNotifier
-	Notifiers   map[string]Notifier
-	Subtitilers map[string]Subtitiler
-}
-
-// NewModules returns a new set of modules
-func NewModules() *Modules {
-	return &Modules{
-		Detailers:   make(map[string]Detailer),
-		Torrenters:  make(map[string]Torrenter),
-		Guessers:    make(map[string]Guesser),
-		FsNotifiers: make(map[string]FsNotifier),
-		Notifiers:   make(map[string]Notifier),
-		Subtitilers: make(map[string]Subtitiler),
-	}
-}
-
 // ConfigureDetailer configures a detailer
-func (m *Modules) ConfigureDetailer(name string, params map[string]string, log *logrus.Entry) error {
+func ConfigureDetailer(name string, params map[string]string, log *logrus.Entry) (Detailer, error) {
 	f, ok := registeredModules.Detailers[name]
 	if !ok {
-		return ErrModuleNotFound
+		return nil, ErrModuleNotFound
 	}
 
 	// Setup the logs
@@ -85,18 +62,17 @@ func (m *Modules) ConfigureDetailer(name string, params map[string]string, log *
 	// Configure the module
 	module, err := f(params, logger)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	m.Detailers[name] = module
 
-	return nil
+	return module, nil
 }
 
 // ConfigureSubtitler configures a subtitiler
-func (m *Modules) ConfigureSubtitler(name string, params map[string]string, log *logrus.Entry) error {
+func ConfigureSubtitler(name string, params map[string]string, log *logrus.Entry) (Subtitiler, error) {
 	f, ok := registeredModules.Subtitilers[name]
 	if !ok {
-		return ErrModuleNotFound
+		return nil, ErrModuleNotFound
 	}
 
 	// Setup the logs
@@ -105,18 +81,17 @@ func (m *Modules) ConfigureSubtitler(name string, params map[string]string, log 
 	// Configure the module
 	module, err := f(params, logger)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	m.Subtitilers[name] = module
 
-	return nil
+	return module, nil
 }
 
 // ConfigureTorrenter configures a torrenter
-func (m *Modules) ConfigureTorrenter(name string, params map[string]string, log *logrus.Entry) error {
+func ConfigureTorrenter(name string, params map[string]string, log *logrus.Entry) (Torrenter, error) {
 	f, ok := registeredModules.Torrenters[name]
 	if !ok {
-		return ErrModuleNotFound
+		return nil, ErrModuleNotFound
 	}
 
 	// Setup the logs
@@ -125,18 +100,17 @@ func (m *Modules) ConfigureTorrenter(name string, params map[string]string, log 
 	// Configure the module
 	module, err := f(params, logger)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	m.Torrenters[name] = module
 
-	return nil
+	return module, nil
 }
 
 // ConfigureGuesser configures a guesser
-func (m *Modules) ConfigureGuesser(name string, params map[string]string, log *logrus.Entry) error {
+func ConfigureGuesser(name string, params map[string]string, log *logrus.Entry) (Guesser, error) {
 	f, ok := registeredModules.Guessers[name]
 	if !ok {
-		return ErrModuleNotFound
+		return nil, ErrModuleNotFound
 	}
 
 	// Setup the logs
@@ -145,18 +119,17 @@ func (m *Modules) ConfigureGuesser(name string, params map[string]string, log *l
 	// Configure the module
 	module, err := f(params, logger)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	m.Guessers[name] = module
 
-	return nil
+	return module, nil
 }
 
 // ConfigureFsNotifier configures a fs notifier
-func (m *Modules) ConfigureFsNotifier(name string, params map[string]string, log *logrus.Entry) error {
+func ConfigureFsNotifier(name string, params map[string]string, log *logrus.Entry) (FsNotifier, error) {
 	f, ok := registeredModules.FsNotifiers[name]
 	if !ok {
-		return ErrModuleNotFound
+		return nil, ErrModuleNotFound
 	}
 
 	// Setup the logs
@@ -165,18 +138,17 @@ func (m *Modules) ConfigureFsNotifier(name string, params map[string]string, log
 	// Configure the module
 	module, err := f(params, logger)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	m.FsNotifiers[name] = module
 
-	return nil
+	return module, nil
 }
 
 // ConfigureNotifier configures a notifier
-func (m *Modules) ConfigureNotifier(name string, params map[string]string, log *logrus.Entry) error {
+func ConfigureNotifier(name string, params map[string]string, log *logrus.Entry) (Notifier, error) {
 	f, ok := registeredModules.Notifiers[name]
 	if !ok {
-		return ErrModuleNotFound
+		return nil, ErrModuleNotFound
 	}
 
 	// Setup the logs
@@ -185,9 +157,8 @@ func (m *Modules) ConfigureNotifier(name string, params map[string]string, log *
 	// Configure the module
 	module, err := f(params, logger)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	m.Notifiers[name] = module
 
-	return nil
+	return module, nil
 }

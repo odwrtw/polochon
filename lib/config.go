@@ -11,7 +11,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// ConfigFileMain represents polochon's config file
+// ConfigFileRoot represents polochon's config file
 type ConfigFileRoot struct {
 	Watcher       ConfigFileWatcher    `yaml:"watcher"`
 	Downloader    ConfigFileDownloader `yaml:"downloader"`
@@ -22,7 +22,7 @@ type ConfigFileRoot struct {
 	Movie         ConfigFileMovie      `yaml:"movie"`
 }
 
-// moduleParams returuns the modules params set in the configuration.
+// moduleParams returns the modules params set in the configuration.
 func (c *ConfigFileRoot) moduleParams(moduleName string) (map[string]string, error) {
 	for _, p := range c.ModulesParams {
 		// Is the name of the module missing in the conf ?
@@ -41,6 +41,7 @@ func (c *ConfigFileRoot) moduleParams(moduleName string) (map[string]string, err
 	return map[string]string{}, nil
 }
 
+// ConfigFileVideo represents the configuration for the video in the configuration file
 type ConfigFileVideo struct {
 	GuesserName               string   `yaml:"guesser"`
 	NotifierNames             []string `yaml:"notifiers"`
@@ -49,18 +50,21 @@ type ConfigFileVideo struct {
 	AllowedExtentionsToDelete []string `yaml:"allowed_file_extensions_to_delete"`
 }
 
+// ConfigFileWatcher represents the configuration for the file watcher in the configuration file
 type ConfigFileWatcher struct {
 	Timer          time.Duration `yaml:"timer"`
 	Dir            string        `yaml:"dir"`
 	FsNotifierName string        `yaml:"fsnotifier"`
 }
 
+// ConfigFileMovie represents the configuration for movies in the configuration file
 type ConfigFileMovie struct {
 	Dir            string   `yaml:"dir"`
 	TorrenterNames []string `yaml:"torrenters"`
 	DetailerNames  []string `yaml:"detailers"`
 }
 
+// ConfigFileShow represents the configuration for file in the configuration file
 type ConfigFileShow struct {
 	Dir            string   `yaml:"dir"`
 	TorrenterNames []string `yaml:"torrenters"`
@@ -68,12 +72,12 @@ type ConfigFileShow struct {
 	SubtitlerNames []string `yaml:"subtitilers"`
 }
 
-// DownloaderConfig represents the configuration for the downloader
+// ConfigFileDownloader represents the configuration for the downloader in the configuration file
 type ConfigFileDownloader struct {
 	DownloadDir string `yaml:"download_dir"`
 }
 
-// HTTPServerConfig represents the configuration for the HTTP Server
+// ConfigFileHTTPServer represents the configuration for the HTTP Server in the configuration file
 type ConfigFileHTTPServer struct {
 	Enable         bool   `yaml:"enable"`
 	Port           int    `yaml:"port"`
@@ -83,6 +87,7 @@ type ConfigFileHTTPServer struct {
 	ServeFilesPwd  string `yaml:"serve_files_pwd"`
 }
 
+// Config represents the configuration for polochon
 type Config struct {
 	Watcher       WatcherConfig
 	Downloader    DownloaderConfig
@@ -138,6 +143,7 @@ type MovieConfig struct {
 	Notifiers  []Notifier
 }
 
+// FileConfig represents the configuration for a file
 type FileConfig struct {
 	ExcludeFileContaining     []string
 	VideoExtentions           []string
@@ -170,7 +176,7 @@ func readConfig(r io.Reader, log *logrus.Entry) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	conf.Watcher.FsNotifier = *fsNotifier
+	conf.Watcher.FsNotifier = fsNotifier
 
 	conf.Downloader = DownloaderConfig{
 		DownloadDir: cf.Downloader.DownloadDir,
@@ -218,13 +224,13 @@ func readConfig(r io.Reader, log *logrus.Entry) (*Config, error) {
 		ExcludeFileContaining:     cf.Video.ExcludeFileContaining,
 		VideoExtentions:           cf.Video.VideoExtentions,
 		AllowedExtentionsToDelete: cf.Video.AllowedExtentionsToDelete,
-		Guesser:                   *guesser,
+		Guesser:                   guesser,
 	}
 
 	return conf, nil
 }
 
-func (c *ConfigFileRoot) loadWatcher(log *logrus.Entry) (*FsNotifier, error) {
+func (c *ConfigFileRoot) loadWatcher(log *logrus.Entry) (FsNotifier, error) {
 	if c.Watcher.FsNotifierName == "" {
 		return nil, fmt.Errorf("config: missing watcher fsnotifier name")
 	}
@@ -236,18 +242,14 @@ func (c *ConfigFileRoot) loadWatcher(log *logrus.Entry) (*FsNotifier, error) {
 	}
 
 	// Configure
-	if err := ConfiguredModules.ConfigureFsNotifier(c.Watcher.FsNotifierName, moduleParams, log); err != nil {
+	fsNotifier, err := ConfigureFsNotifier(c.Watcher.FsNotifierName, moduleParams, log)
+	if err != nil {
 		return nil, err
 	}
 
-	n, ok := ConfiguredModules.FsNotifiers[c.Watcher.FsNotifierName]
-	if !ok {
-		return nil, ErrModuleNotFound
-	}
-
-	return &n, nil
+	return fsNotifier, nil
 }
-func (c *ConfigFileRoot) initFile(log *logrus.Entry) (*Guesser, error) {
+func (c *ConfigFileRoot) initFile(log *logrus.Entry) (Guesser, error) {
 	// Get video guesser
 	if c.Video.GuesserName == "" {
 		return nil, fmt.Errorf("config: missing video guesser name")
@@ -260,15 +262,12 @@ func (c *ConfigFileRoot) initFile(log *logrus.Entry) (*Guesser, error) {
 	}
 
 	// Configure
-	if err := ConfiguredModules.ConfigureGuesser(c.Video.GuesserName, moduleParams, log); err != nil {
+	guesser, err := ConfigureGuesser(c.Video.GuesserName, moduleParams, log)
+	if err != nil {
 		return nil, err
 	}
 
-	g, ok := ConfiguredModules.Guessers[c.Video.GuesserName]
-	if !ok {
-		return nil, ErrModuleNotFound
-	}
-	return &g, nil
+	return guesser, nil
 }
 
 func (c *ConfigFileRoot) initVideo(log *logrus.Entry) (*VideoConfig, error) {
@@ -281,15 +280,11 @@ func (c *ConfigFileRoot) initVideo(log *logrus.Entry) (*VideoConfig, error) {
 			return nil, err
 		}
 
-		if err := ConfiguredModules.ConfigureNotifier(notifierName, moduleParams, log); err != nil {
+		notifier, err := ConfigureNotifier(notifierName, moduleParams, log)
+		if err != nil {
 			return nil, err
 		}
-
-		n, ok := ConfiguredModules.Notifiers[notifierName]
-		if !ok {
-			return nil, ErrModuleNotFound
-		}
-		videoConf.Notifiers = append(videoConf.Notifiers, n)
+		videoConf.Notifiers = append(videoConf.Notifiers, notifier)
 	}
 
 	return videoConf, nil
@@ -307,15 +302,12 @@ func (c *ConfigFileRoot) initShow(log *logrus.Entry) (*ShowConfig, error) {
 			return nil, err
 		}
 
-		if err := ConfiguredModules.ConfigureDetailer(detailerName, moduleParams, log); err != nil {
+		detailer, err := ConfigureDetailer(detailerName, moduleParams, log)
+		if err != nil {
 			return nil, err
 		}
 
-		d, ok := ConfiguredModules.Detailers[detailerName]
-		if !ok {
-			return nil, ErrModuleNotFound
-		}
-		showConf.Detailers = append(showConf.Detailers, d)
+		showConf.Detailers = append(showConf.Detailers, detailer)
 	}
 
 	// Get show torrenter
@@ -329,16 +321,11 @@ func (c *ConfigFileRoot) initShow(log *logrus.Entry) (*ShowConfig, error) {
 			return nil, err
 		}
 
-		if err := ConfiguredModules.ConfigureTorrenter(torrenterName, moduleParams, log); err != nil {
+		torrenter, err := ConfigureTorrenter(torrenterName, moduleParams, log)
+		if err != nil {
 			return nil, err
 		}
-
-		t, ok := ConfiguredModules.Torrenters[torrenterName]
-		if !ok {
-			return nil, ErrModuleNotFound
-		}
-
-		showConf.Torrenters = append(showConf.Torrenters, t)
+		showConf.Torrenters = append(showConf.Torrenters, torrenter)
 	}
 
 	for _, subtitlerName := range c.Show.SubtitlerNames {
@@ -347,16 +334,11 @@ func (c *ConfigFileRoot) initShow(log *logrus.Entry) (*ShowConfig, error) {
 			return nil, err
 		}
 
-		if err := ConfiguredModules.ConfigureSubtitler(subtitlerName, moduleParams, log); err != nil {
+		subtitiler, err := ConfigureSubtitler(subtitlerName, moduleParams, log)
+		if err != nil {
 			return nil, err
 		}
-
-		s, ok := ConfiguredModules.Subtitilers[subtitlerName]
-		if !ok {
-			return nil, ErrModuleNotFound
-		}
-
-		showConf.Subtitilers = append(showConf.Subtitilers, s)
+		showConf.Subtitilers = append(showConf.Subtitilers, subtitiler)
 	}
 
 	return showConf, nil
@@ -376,16 +358,11 @@ func (c *ConfigFileRoot) initMovie(log *logrus.Entry) (*MovieConfig, error) {
 			return nil, err
 		}
 
-		if err := ConfiguredModules.ConfigureDetailer(detailerName, moduleParams, log); err != nil {
+		detailer, err := ConfigureDetailer(detailerName, moduleParams, log)
+		if err != nil {
 			return nil, err
 		}
-
-		d, ok := ConfiguredModules.Detailers[detailerName]
-		if !ok {
-			return nil, ErrModuleNotFound
-		}
-
-		movieConf.Detailers = append(movieConf.Detailers, d)
+		movieConf.Detailers = append(movieConf.Detailers, detailer)
 	}
 
 	// Get movie torrenter
@@ -399,38 +376,17 @@ func (c *ConfigFileRoot) initMovie(log *logrus.Entry) (*MovieConfig, error) {
 			return nil, err
 		}
 
-		if err := ConfiguredModules.ConfigureTorrenter(torrenterName, moduleParams, log); err != nil {
+		torrenter, err := ConfigureTorrenter(torrenterName, moduleParams, log)
+		if err != nil {
 			return nil, err
 		}
-
-		t, ok := ConfiguredModules.Torrenters[torrenterName]
-		if !ok {
-			return nil, ErrModuleNotFound
-		}
-
-		movieConf.Torrenters = append(movieConf.Torrenters, t)
+		movieConf.Torrenters = append(movieConf.Torrenters, torrenter)
 	}
 
 	return movieConf, nil
 }
 
-// writeConfig helps writes the config
-// func (c *Config) write(w io.Writer) error {
-// 	b, err := yaml.Marshal(c)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	_, err = w.Write(b)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-
-// }
-
-// ReadConfigFile reads a file from a path and returns a config
+// LoadConfigFile reads a file from a path and returns a config
 func LoadConfigFile(path string, log *logrus.Entry) (*Config, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -440,14 +396,3 @@ func LoadConfigFile(path string, log *logrus.Entry) (*Config, error) {
 
 	return readConfig(file, log)
 }
-
-// WriteConfigFile writes the config into file
-// func (c *Config) WriteConfigFile(path string) error {
-// 	file, err := os.Create(path)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer file.Close()
-
-// 	return c.write(file)
-// }
