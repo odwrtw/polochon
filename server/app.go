@@ -234,7 +234,7 @@ func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 	}
 
 	// Guess the video inforamtion
-	video, err := file.Guess()
+	video, err := file.Guess(a.config.Video)
 	if err != nil {
 		log.Errorf("failed to guess video file: %q", err)
 		return file.Ignore()

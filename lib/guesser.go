@@ -9,7 +9,7 @@ import (
 // Guesser is an interface which allows to get inforamtions to create a video
 // from a file
 type Guesser interface {
-	Guess(file File) (Video, error)
+	Guess(conf VideoConfig, file File) (Video, error)
 }
 
 // RegisterGuesser helps register a new detailer

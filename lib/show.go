@@ -17,28 +17,28 @@ var (
 
 // Show represents a tv show
 type Show struct {
-	XMLName   xml.Name `xml:"tvshow" json:"-"`
-	Title     string   `xml:"title" json:"title"`
-	ShowTitle string   `xml:"showtitle" json:"-"`
-	Rating    float32  `xml:"rating" json:"rating"`
-	Plot      string   `xml:"plot" json:"plot"`
-	URL       string   `xml:"episodeguide>url" json:"-"`
-	TvdbID    int      `xml:"tvdbid" json:"tvdb_id"`
-	ImdbID    string   `xml:"imdbid" json:"imdb_id"`
-	Year      int      `xml:"year" json:"year"`
-	Banner    string   `xml:"-" json:"banner"`
-	Fanart    string   `xml:"-" json:"fanart"`
-	Poster    string   `xml:"-" json:"poster"`
-	Modules   *Modules
+	ShowConfig
+	XMLName   xml.Name       `xml:"tvshow" json:"-"`
+	Title     string         `xml:"title" json:"title"`
+	ShowTitle string         `xml:"showtitle" json:"-"`
+	Rating    float32        `xml:"rating" json:"rating"`
+	Plot      string         `xml:"plot" json:"plot"`
+	URL       string         `xml:"episodeguide>url" json:"-"`
+	TvdbID    int            `xml:"tvdbid" json:"tvdb_id"`
+	ImdbID    string         `xml:"imdbid" json:"imdb_id"`
+	Year      int            `xml:"year" json:"year"`
+	Banner    string         `xml:"-" json:"banner"`
+	Fanart    string         `xml:"-" json:"fanart"`
+	Poster    string         `xml:"-" json:"poster"`
 	Episodes  []*ShowEpisode `xml:"-" json:"episodes"`
-	config    *ShowConfig
 	log       *logrus.Entry
 }
 
 // NewShow returns a new show
-func NewShow() *Show {
+func NewShow(showConf ShowConfig) *Show {
 	return &Show{
-		XMLName: xml.Name{Space: "", Local: "tvshow"},
+		ShowConfig: showConf,
+		XMLName:    xml.Name{Space: "", Local: "tvshow"},
 	}
 }
 
@@ -56,7 +56,7 @@ func readShowNFO(r io.Reader) (*Show, error) {
 // GetDetails helps getting infos for a show
 func (s *Show) GetDetails() error {
 	var err error
-	for _, d := range s.config.Detailers {
+	for _, d := range s.Detailers {
 		err = d.GetDetails(s)
 		if err == nil {
 			break
@@ -68,7 +68,7 @@ func (s *Show) GetDetails() error {
 
 // storePath returns the show store path from the config
 func (s *Show) storePath() string {
-	return filepath.Join(s.config.Dir, s.ShowTitle)
+	return filepath.Join(s.Dir, s.ShowTitle)
 }
 
 // nfoPath returns the show nfo path

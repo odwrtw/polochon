@@ -124,8 +124,8 @@ func (f *File) Ignore() error {
 }
 
 // Guess video information from file
-func (f *File) Guess() (Video, error) {
-	return f.Guesser.Guess(*f)
+func (f *File) Guess(conf VideoConfig) (Video, error) {
+	return f.Guesser.Guess(conf, *f)
 }
 
 // NfoPath is an helper to get the nfo filename from the video filename

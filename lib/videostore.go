@@ -65,7 +65,7 @@ func (vs *VideoStore) ScanMovies() ([]*Movie, error) {
 			vs.log.Errorf("video store: can't find movie file for NFO: %q", filePath)
 			return nil
 		}
-		movie.File = &movieFile
+		movie.SetFile(&movieFile)
 
 		movies = append(movies, movie)
 
@@ -182,7 +182,7 @@ func (vs *VideoStore) scanEpisodes(showPath string) ([]*ShowEpisode, error) {
 			vs.log.Errorf("video store: can't find episode file for NFO: %q", filePath)
 			return nil
 		}
-		showEpisode.File = &episodeFile
+		showEpisode.SetFile(&episodeFile)
 
 		showEpisodes = append(showEpisodes, showEpisode)
 		return nil

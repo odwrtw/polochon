@@ -198,6 +198,7 @@ func readConfig(r io.Reader, log *logrus.Entry) (*Config, error) {
 		return nil, err
 	}
 	showConf.Dir = cf.Show.Dir
+	showConf.Notifiers = conf.Video.Notifiers
 	conf.Video.Show = *showConf
 
 	movieConf, err := cf.initMovie(log)
@@ -205,6 +206,7 @@ func readConfig(r io.Reader, log *logrus.Entry) (*Config, error) {
 		return nil, err
 	}
 	movieConf.Dir = cf.Movie.Dir
+	movieConf.Notifiers = conf.Video.Notifiers
 	conf.Video.Movie = *movieConf
 
 	guesser, err := cf.initFile(log)

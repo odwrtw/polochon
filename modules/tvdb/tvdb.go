@@ -107,7 +107,7 @@ func updateShow(s *polochon.Show, tvSeries *tvdb.Series) error {
 	s.Episodes = []*polochon.ShowEpisode{}
 	for _, episodeList := range tvSeries.Seasons {
 		for _, e := range episodeList {
-			episode := polochon.NewShowEpisode()
+			episode := polochon.NewShowEpisode(polochon.ShowConfig{})
 			episode.Title = e.EpisodeName
 			episode.ShowTitle = s.Title
 			episode.Season = int(e.SeasonNumber)
@@ -227,7 +227,7 @@ func getShowEpisodeDetails(s *polochon.ShowEpisode) error {
 	if s.Show != nil {
 		show = s.Show
 	} else {
-		show = polochon.NewShow()
+		show = polochon.NewShow(polochon.ShowConfig{})
 	}
 	show.Title = s.ShowTitle
 	show.ImdbID = s.ShowImdbID
