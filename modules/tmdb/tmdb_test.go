@@ -15,7 +15,7 @@ var fakeLogger = logrus.New()
 var fakeTmDB = &TmDB{log: logrus.NewEntry(fakeLogger)}
 
 func TestTmdbInvalidMovieArgument(t *testing.T) {
-	m := polochon.NewShowEpisode()
+	m := polochon.NewShowEpisode(polochon.ShowConfig{})
 	_, err := fakeTmDB.getMovieArgument(m)
 	if err != ErrInvalidArgument {
 		log.Fatalf("Got %q, expected %q", err, ErrInvalidArgument)
@@ -23,7 +23,7 @@ func TestTmdbInvalidMovieArgument(t *testing.T) {
 }
 
 func TestTmdbSearchByTitleArguments(t *testing.T) {
-	m := polochon.NewMovie()
+	m := polochon.NewMovie(polochon.MovieConfig{})
 
 	tmdbSearchMovie = func(title string, options map[string]string) (*tmdb.MovieSearchResults, error) {
 		return &tmdb.MovieSearchResults{}, nil
@@ -82,7 +82,7 @@ func TestTmdbSearchByTitleNoResult(t *testing.T) {
 }
 
 func TestTmdbSearchByImdbIDArguments(t *testing.T) {
-	m := polochon.NewMovie()
+	m := polochon.NewMovie(polochon.MovieConfig{})
 
 	tmdbSearchByImdbID = func(id, source string, options map[string]string) (*tmdb.FindResults, error) {
 		return &tmdb.FindResults{}, nil

@@ -20,6 +20,8 @@ var (
 
 // ShowEpisode represents a tvshow episode
 type ShowEpisode struct {
+	ShowConfig `xml:"-" json:"-"`
+	File
 	XMLName       xml.Name  `xml:"episodedetails" json:"-"`
 	Title         string    `xml:"title" json:"title"`
 	ShowTitle     string    `xml:"showtitle" json:"-"`
@@ -34,17 +36,42 @@ type ShowEpisode struct {
 	ShowImdbID    string    `xml:"showimdbid" json:"-"`
 	ShowTvdbID    int       `xml:"showtvdbid" json:"-"`
 	EpisodeImdbID string    `xml:"episodeimdbid" json:"imdb_id"`
-	Torrents      []Torrent `xml:"-"`
-	File          *File     `xml:"-"`
-	Show          *Show     `xml:"-"`
-	config        *ShowConfig
+	Torrents      []Torrent `xml:"-" json:"-"`
+	Show          *Show     `xml:"-" json:"-"`
 	log           *logrus.Entry
 }
 
+// PrepareForJSON return a copy of the object clean for the API
+func (s ShowEpisode) PrepareForJSON() (ShowEpisode, error) {
+	ok, err := filepath.Match(s.Dir+"/*/*/*", s.Path)
+	if err != nil {
+		return s, err
+	}
+	if !ok {
+		return s, errors.New("Unexpected file path")
+	}
+	path, err := filepath.Rel(s.Dir, s.Path)
+	if err != nil {
+		return s, err
+	}
+	s.Path = path
+
+	return s, nil
+}
+
 // NewShowEpisode returns a new show episode
-func NewShowEpisode() *ShowEpisode {
+func NewShowEpisode(showConf ShowConfig) *ShowEpisode {
 	return &ShowEpisode{
-		XMLName: xml.Name{Space: "", Local: "episodedetails"},
+		ShowConfig: showConf,
+		XMLName:    xml.Name{Space: "", Local: "episodedetails"},
+	}
+}
+
+func NewShowEpisodeFromFile(showConf ShowConfig, file File) *ShowEpisode {
+	return &ShowEpisode{
+		ShowConfig: showConf,
+		File:       file,
+		XMLName:    xml.Name{Space: "", Local: "episodedetails"},
 	}
 }
 
@@ -55,23 +82,30 @@ func (s *ShowEpisode) Type() VideoType {
 
 // SetFile implements the video interface
 func (s *ShowEpisode) SetFile(f *File) {
-	s.File = f
+	s.Path = f.Path
+	s.ExcludeFileContaining = f.ExcludeFileContaining
+	s.VideoExtentions = f.VideoExtentions
+	s.AllowedExtentionsToDelete = f.AllowedExtentionsToDelete
+	s.Guesser = f.Guesser
 }
 
 // SetConfig implements the video interface
-func (s *ShowEpisode) SetConfig(c *Config) {
-	// Only keep show config
-	s.config = &c.Show
+func (s *ShowEpisode) SetConfig(c *VideoConfig, log *logrus.Logger) {
+	s.Dir = c.Show.Dir
+	s.Detailers = c.Show.Detailers
+	s.Notifiers = c.Show.Notifiers
+	s.Subtitilers = c.Show.Subtitilers
+	s.Torrenters = c.Show.Torrenters
 
 	// Set logger
-	s.log = c.Log.WithFields(logrus.Fields{
+	s.log = log.WithFields(logrus.Fields{
 		"type": "show_episode",
 	})
 }
 
 // readShowEpisodeNFO deserialized a XML file into a ShowEpisode
-func readShowEpisodeNFO(r io.Reader) (*ShowEpisode, error) {
-	s := &ShowEpisode{}
+func readShowEpisodeNFO(r io.Reader, conf ShowConfig) (*ShowEpisode, error) {
+	s := NewShowEpisode(conf)
 
 	if err := readNFO(r, s); err != nil {
 		return nil, err
@@ -83,7 +117,7 @@ func readShowEpisodeNFO(r io.Reader) (*ShowEpisode, error) {
 // GetDetails helps getting infos for a show
 func (s *ShowEpisode) GetDetails() error {
 	var err error
-	for _, d := range s.config.Detailers {
+	for _, d := range s.Detailers {
 		err = d.GetDetails(s)
 		if err == nil {
 			break
@@ -96,7 +130,7 @@ func (s *ShowEpisode) GetDetails() error {
 // GetTorrents helps getting the torrent files for a movie
 func (s *ShowEpisode) GetTorrents() error {
 	var err error
-	for _, t := range s.config.Torrenters {
+	for _, t := range s.Torrenters {
 		err = t.GetTorrents(s)
 		if err == nil {
 			break
@@ -110,7 +144,7 @@ func (s *ShowEpisode) GetTorrents() error {
 // Notify sends a notification
 func (s *ShowEpisode) Notify() error {
 	var err error
-	for _, n := range s.config.Notifiers {
+	for _, n := range s.Notifiers {
 		err = n.Notify(s)
 		if err == nil {
 			break
@@ -123,7 +157,7 @@ func (s *ShowEpisode) Notify() error {
 
 //  create the show nfo if it doesn't exists yet
 func (s *ShowEpisode) storePath() string {
-	return filepath.Join(s.config.Dir, s.ShowTitle, fmt.Sprintf("Season %d", s.Season))
+	return filepath.Join(s.Dir, s.ShowTitle, fmt.Sprintf("Season %d", s.Season))
 }
 
 // createShowDir creates a new show and stores it
@@ -133,8 +167,14 @@ func (s *ShowEpisode) createShowDir() error {
 		ShowTitle: s.ShowTitle,
 		TvdbID:    s.ShowTvdbID,
 		ImdbID:    s.ShowImdbID,
-		config:    s.config,
-		log:       s.log,
+		ShowConfig: ShowConfig{
+			Dir:         s.Dir,
+			Detailers:   s.Detailers,
+			Notifiers:   s.Notifiers,
+			Subtitilers: s.Subtitilers,
+			Torrenters:  s.Torrenters,
+		},
+		log: s.log,
 	}
 
 	// If the show nfo does not exist yet, create it
@@ -174,33 +214,33 @@ func (s *ShowEpisode) move() error {
 	storePath := s.storePath()
 
 	// If the show episode already in the right dir there is nothing to do
-	if path.Dir(s.File.Path) == storePath {
+	if path.Dir(s.Path) == storePath {
 		s.log.Debug("show episode already in the destination folder")
 		return nil
 	}
 
 	// Move the episode into the folder
-	newPath := filepath.Join(storePath, path.Base(s.File.Path))
+	newPath := filepath.Join(storePath, path.Base(s.Path))
 	s.log.Debug("Moving episode to folder")
-	s.log.Debugf("Old path: %q", s.File.Path)
+	s.log.Debugf("Old path: %q", s.Path)
 	s.log.Debugf("New path: %q", newPath)
-	if err := os.Rename(s.File.Path, newPath); err != nil {
+	if err := os.Rename(s.Path, newPath); err != nil {
 		return err
 	}
 
 	// Set the new movie path
-	s.File.Path = newPath
+	s.Path = newPath
 
 	return nil
 }
 
 // Store create the show episode nfo and download the images
 func (s *ShowEpisode) Store() error {
-	if s.File == nil {
+	if s.Path == "" {
 		return ErrMissingShowEpisodeFilePath
 	}
 
-	if s.config == nil || s.config.Dir == "" {
+	if s.Dir == "" {
 		return ErrMissingShowEpisodeDir
 	}
 
@@ -227,7 +267,7 @@ func (s *ShowEpisode) Store() error {
 	}
 
 	// Create show NFO if necessary
-	if err := MarshalInFile(s, s.File.NfoPath()); err != nil {
+	if err := MarshalInFile(s, s.NfoPath()); err != nil {
 		return err
 	}
 
@@ -238,7 +278,7 @@ func (s *ShowEpisode) Store() error {
 func (s *ShowEpisode) GetSubtitle() error {
 	var err error
 	var subtitle Subtitle
-	for _, subtitiler := range s.config.Subtitilers {
+	for _, subtitiler := range s.Subtitilers {
 		subtitle, err = subtitiler.GetShowSubtitle(s)
 		if err == nil {
 			break
@@ -248,7 +288,7 @@ func (s *ShowEpisode) GetSubtitle() error {
 	}
 
 	if err == nil {
-		file, err := os.Create(s.File.SubtitlePath())
+		file, err := os.Create(s.SubtitlePath())
 		if err != nil {
 			return err
 		}

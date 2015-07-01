@@ -14,7 +14,7 @@ import (
 )
 
 func newFakeMovie() *Movie {
-	m := NewMovie()
+	m := NewMovie(MovieConfig{})
 	m.ImdbID = "tt2562232"
 	m.OriginalTitle = "Birdman"
 	m.Plot = "Awesome plot"
@@ -64,7 +64,7 @@ func TestMovieNFOWriter(t *testing.T) {
 func TestMovieNFOReader(t *testing.T) {
 	expected := newFakeMovie()
 
-	got, err := readMovieNFO(bytes.NewBuffer(movieNFOContent))
+	got, err := readMovieNFO(bytes.NewBuffer(movieNFOContent), MovieConfig{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,13 +75,13 @@ func TestMovieNFOReader(t *testing.T) {
 }
 
 func TestMovieStoreMissingArguments(t *testing.T) {
-	m := NewMovie()
+	m := NewMovie(MovieConfig{})
 
 	if err := m.Store(); err != ErrMissingMovieFilePath {
 		t.Errorf("Expected %q, got %q", ErrMissingMovieFilePath, err)
 	}
 
-	m.File = NewFile("fakepath")
+	m.File = *NewFile("fakepath")
 	if err := m.Store(); err != ErrMissingMovieDir {
 		t.Errorf("Expected %q, got %q", ErrMissingMovieDir, err)
 	}
@@ -89,7 +89,7 @@ func TestMovieStoreMissingArguments(t *testing.T) {
 
 func TestMovieStorePath(t *testing.T) {
 	m := newFakeMovie()
-	m.config = &MovieConfig{Dir: "/movies"}
+	m.MovieConfig = MovieConfig{Dir: "/movies"}
 
 	// New movie has a year in its data, we expect to find it in the store path
 	got := m.storePath()
@@ -117,18 +117,17 @@ func TestMovieStore(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	fakeLogger := logrus.NewEntry(logrus.New())
-	c := &Config{Movie: MovieConfig{Dir: tmpDir}, Log: fakeLogger}
+	fakeLogger := logrus.New()
+	c := VideoConfig{Movie: MovieConfig{Dir: tmpDir}}
 	m := newFakeMovie()
-	m.SetConfig(c)
-	m.log = fakeLogger
+	m.SetConfig(&c, fakeLogger)
 
 	// Create a fake movie file
 	file, err := ioutil.TempFile(os.TempDir(), "polochon-fake-movie")
 	if err != nil {
 		t.Fatalf("failed to create fake movie file in movie store test")
 	}
-	m.File = NewFile(file.Name())
+	m.File = *NewFile(file.Name())
 
 	// Create a tmp folder in where the movie should be stored.
 	// It should be removed when storing the movie

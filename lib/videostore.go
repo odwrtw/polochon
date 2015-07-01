@@ -15,10 +15,10 @@ type VideoStore struct {
 }
 
 // NewVideoStore returns a list of videos
-func NewVideoStore(c *Config) *VideoStore {
+func NewVideoStore(c *Config, log *logrus.Logger) *VideoStore {
 	return &VideoStore{
 		config: c,
-		log:    c.Log.WithField("function", "videoStore"),
+		log:    log.WithField("function", "videoStore"),
 	}
 }
 
@@ -27,48 +27,42 @@ func (vs *VideoStore) ScanMovies() ([]*Movie, error) {
 	movies := []*Movie{}
 
 	// Walk movies
-	err := filepath.Walk(vs.config.Movie.Dir, func(filePath string, file os.FileInfo, err error) error {
+	err := filepath.Walk(vs.config.Video.Movie.Dir, func(filePath string, file os.FileInfo, err error) error {
 		// Nothing to do on dir
 		if file.IsDir() {
 			return nil
 		}
 
-		// Only check nfo files
-		if ext := path.Ext(filePath); ext != ".nfo" {
+		// search for movie type
+		ext := path.Ext(filePath)
+
+		var movieFile *File
+		for _, mext := range vs.config.File.VideoExtentions {
+			if ext == mext {
+				movieFile = NewFileWithConfig(filePath, vs.config)
+				break
+			}
+		}
+
+		if movieFile == nil {
 			return nil
 		}
 
-		// Read the nfo
-		nfoFile, err := os.Open(filePath)
+		// load nfo
+		nfoFile, err := os.Open(movieFile.NfoPath())
 		if err != nil {
 			vs.log.Errorf("video store: failed to open file %q", filePath)
 			return nil
 		}
 
-		movie, err := readMovieNFO(nfoFile)
+		movie, err := readMovieNFO(nfoFile, vs.config.Video.Movie)
 		if err != nil {
 			vs.log.Errorf("video store: failed to read movie NFO: %q", err)
 			return nil
 		}
 
-		var movieFile File
-		basePath := RemoveExt(filePath)
-		//Get related movie file path
-		for _, ext := range vs.config.Video.VideoExtentions {
-			if _, err := os.Stat(basePath + ext); err == nil {
-				movieFile = File{Path: basePath + ext, config: vs.config}
-				break
-			}
-		}
-
-		if movieFile.Path == "" {
-			vs.log.Errorf("video store: can't find movie file for NFO: %q", filePath)
-			return nil
-		}
-		movie.File = &movieFile
-
+		movie.SetFile(movieFile)
 		movies = append(movies, movie)
-
 		return nil
 	})
 	if err != nil {
@@ -106,7 +100,7 @@ func (vs *VideoStore) scanShows() (map[string]*Show, error) {
 	showPath := make(map[string]*Show)
 
 	// Walk movies
-	err := filepath.Walk(vs.config.Show.Dir, func(filePath string, file os.FileInfo, err error) error {
+	err := filepath.Walk(vs.config.Video.Show.Dir, func(filePath string, file os.FileInfo, err error) error {
 		if file.Name() != "tvshow.nfo" {
 			return nil
 		}
@@ -117,7 +111,7 @@ func (vs *VideoStore) scanShows() (map[string]*Show, error) {
 			return nil
 		}
 
-		show, err := readShowNFO(nfoFile)
+		show, err := readShowNFO(nfoFile, vs.config.Video.Show)
 		if err != nil {
 			vs.log.Errorf("video store: failed to read tv show NFO: %q", err)
 			return nil
@@ -147,44 +141,36 @@ func (vs *VideoStore) scanEpisodes(showPath string) ([]*ShowEpisode, error) {
 			return nil
 		}
 
-		// Only check nfo files
-		if ext := path.Ext(filePath); ext != ".nfo" {
-			return nil
-		}
+		// search for movie type
+		ext := path.Ext(filePath)
 
-		if file.Name() == "tvshow.nfo" {
-			return nil
-		}
-
-		nfoFile, err := os.Open(filePath)
-		if err != nil {
-			vs.log.Errorf("video store: failed to open tv show episode NFO: %q", err)
-			return nil
-		}
-
-		showEpisode, err := readShowEpisodeNFO(nfoFile)
-		if err != nil {
-			vs.log.Errorf("video store: failed to read tv show episode NFO: %q", err)
-			return nil
-		}
-
-		var episodeFile File
-		basePath := RemoveExt(filePath)
-		//Get related episode file path
-		for _, ext := range vs.config.Video.VideoExtentions {
-			if _, err := os.Stat(basePath + ext); err == nil {
-				episodeFile = File{Path: basePath + ext, config: vs.config}
+		var epFile *File
+		for _, mext := range vs.config.File.VideoExtentions {
+			if ext == mext {
+				epFile = NewFileWithConfig(filePath, vs.config)
 				break
 			}
 		}
 
-		if episodeFile.Path == "" {
-			vs.log.Errorf("video store: can't find episode file for NFO: %q", filePath)
+		if epFile == nil {
 			return nil
 		}
-		showEpisode.File = &episodeFile
 
-		showEpisodes = append(showEpisodes, showEpisode)
+		// load nfo
+		nfoFile, err := os.Open(epFile.NfoPath())
+		if err != nil {
+			vs.log.Errorf("video store: failed to open file %q", filePath)
+			return nil
+		}
+
+		episode, err := readShowEpisodeNFO(nfoFile, vs.config.Video.Show)
+		if err != nil {
+			vs.log.Errorf("video store: failed to read episode NFO: %q", err)
+			return nil
+		}
+
+		episode.SetFile(epFile)
+		showEpisodes = append(showEpisodes, episode)
 		return nil
 	})
 	if err != nil {

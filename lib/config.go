@@ -11,166 +11,19 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Config represents polochon's config
-type Config struct {
-	Watcher       WatcherConfig       `yaml:"watcher"`
-	Downloader    DownloaderConfig    `yaml:"downloader"`
-	HTTPServer    HTTPServerConfig    `yaml:"http_server"`
-	ModulesParams []map[string]string `yaml:"modules_params"`
-	Video         VideoConfig         `yaml:"video"`
-	Show          ShowConfig          `yaml:"show"`
-	Movie         MovieConfig         `yaml:"movie"`
-	Modules       *Modules            `yaml:"-"`
-	Log           *logrus.Entry       `yaml:"-"`
+// ConfigFileRoot represents polochon's config file
+type ConfigFileRoot struct {
+	Watcher       ConfigFileWatcher    `yaml:"watcher"`
+	Downloader    ConfigFileDownloader `yaml:"downloader"`
+	HTTPServer    ConfigFileHTTPServer `yaml:"http_server"`
+	ModulesParams []map[string]string  `yaml:"modules_params"`
+	Video         ConfigFileVideo      `yaml:"video"`
+	Show          ConfigFileShow       `yaml:"show"`
+	Movie         ConfigFileMovie      `yaml:"movie"`
 }
 
-// WatcherConfig represents the configuration for the detailers
-type WatcherConfig struct {
-	Timer          time.Duration `yaml:"timer"`
-	Dir            string        `yaml:"dir"`
-	FsNotifierName string        `yaml:"fsnotifier"`
-	FsNotifier     FsNotifier    `yaml:"-"`
-}
-
-// VideoConfig represents the configuration for the detailers
-type VideoConfig struct {
-	GuesserName               string     `yaml:"guesser"`
-	Guesser                   Guesser    `yaml:"-"`
-	NotifierNames             []string   `yaml:"notifiers"`
-	Notifiers                 []Notifier `yaml:"-"`
-	ExcludeFileContaining     []string   `yaml:"exclude_file_containing"`
-	VideoExtentions           []string   `yaml:"allowed_file_extensions"`
-	AllowedExtentionsToDelete []string   `yaml:"allowed_file_extensions_to_delete"`
-}
-
-// ShowConfig represents the configuration for a show and its show episodes
-type ShowConfig struct {
-	Dir            string       `yaml:"dir"`
-	TorrenterNames []string     `yaml:"torrenters"`
-	Torrenters     []Torrenter  `yaml:"-"`
-	DetailerNames  []string     `yaml:"detailers"`
-	SubtitlerNames []string     `yaml:"subtitilers"`
-	Detailers      []Detailer   `yaml:"-"`
-	Notifiers      []Notifier   `yaml:"-"`
-	Subtitilers    []Subtitiler `yaml:"-"`
-}
-
-// MovieConfig represents the configuration for a movie
-type MovieConfig struct {
-	Dir            string      `yaml:"dir"`
-	TorrenterNames []string    `yaml:"torrenters"`
-	Torrenters     []Torrenter `yaml:"-"`
-	DetailerNames  []string    `yaml:"detailers"`
-	Detailers      []Detailer  `yaml:"-"`
-	Notifiers      []Notifier  `yaml:"-"`
-}
-
-// DownloaderConfig represents the configuration for the downloader
-type DownloaderConfig struct {
-	DownloadDir string `yaml:"download_dir"`
-}
-
-// HTTPServerConfig represents the configuration for the HTTP Server
-type HTTPServerConfig struct {
-	Enable         bool   `yaml:"enable"`
-	Port           int    `yaml:"port"`
-	Host           string `yaml:"host"`
-	ServeFiles     bool   `yaml:"serve_files"`
-	ServeFilesUser string `yaml:"serve_files_user"`
-	ServeFilesPwd  string `yaml:"serve_files_pwd"`
-}
-
-// readConfig helps read the config
-func readConfig(r io.Reader) (*Config, error) {
-	c := &Config{}
-
-	b, err := ioutil.ReadAll(r)
-	if err != nil {
-		return nil, err
-	}
-
-	err = yaml.Unmarshal(b, c)
-	if err != nil {
-		return nil, err
-	}
-
-	return c, nil
-}
-
-// writeConfig helps writes the config
-func (c *Config) write(w io.Writer) error {
-	b, err := yaml.Marshal(c)
-	if err != nil {
-		return err
-	}
-
-	_, err = w.Write(b)
-	if err != nil {
-		return err
-	}
-
-	return nil
-
-}
-
-// Init the configuration
-func (c *Config) Init() error {
-	// Configure the modules
-	if err := c.initLogger(); err != nil {
-		return err
-	}
-
-	// Configure the modules
-	if err := c.initModules(); err != nil {
-		return err
-	}
-
-	// Init watcher
-	if err := c.initWatcher(); err != nil {
-		return err
-	}
-
-	// Init video
-	if err := c.initVideo(); err != nil {
-		return err
-	}
-
-	// Init movie
-	if err := c.initMovie(); err != nil {
-		return err
-	}
-
-	// Init show
-	if err := c.initShow(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *Config) initLogger() error {
-	// Setup the logger
-	logger := logrus.New()
-	logger.Level = logrus.DebugLevel
-	logger.Out = os.Stderr
-	logger.Formatter = &logrus.TextFormatter{
-		ForceColors:   true,
-		FullTimestamp: true,
-	}
-
-	// Add it to the config
-	c.Log = logrus.NewEntry(logger)
-
-	return nil
-}
-
-func (c *Config) initModules() error {
-	c.Modules = NewModules(c.Log)
-	return nil
-}
-
-// moduleParams returuns the modules params set in the configuration.
-func (c *Config) moduleParams(moduleName string) (map[string]string, error) {
+// moduleParams returns the modules params set in the configuration.
+func (c *ConfigFileRoot) moduleParams(moduleName string) (map[string]string, error) {
 	for _, p := range c.ModulesParams {
 		// Is the name of the module missing in the conf ?
 		name, ok := p["name"]
@@ -188,210 +41,365 @@ func (c *Config) moduleParams(moduleName string) (map[string]string, error) {
 	return map[string]string{}, nil
 }
 
-func (c *Config) initWatcher() error {
+// ConfigFileVideo represents the configuration for the video in the configuration file
+type ConfigFileVideo struct {
+	GuesserName               string   `yaml:"guesser"`
+	NotifierNames             []string `yaml:"notifiers"`
+	ExcludeFileContaining     []string `yaml:"exclude_file_containing"`
+	VideoExtentions           []string `yaml:"allowed_file_extensions"`
+	AllowedExtentionsToDelete []string `yaml:"allowed_file_extensions_to_delete"`
+}
+
+// ConfigFileWatcher represents the configuration for the file watcher in the configuration file
+type ConfigFileWatcher struct {
+	Timer          time.Duration `yaml:"timer"`
+	Dir            string        `yaml:"dir"`
+	FsNotifierName string        `yaml:"fsnotifier"`
+}
+
+// ConfigFileMovie represents the configuration for movies in the configuration file
+type ConfigFileMovie struct {
+	Dir            string   `yaml:"dir"`
+	TorrenterNames []string `yaml:"torrenters"`
+	DetailerNames  []string `yaml:"detailers"`
+}
+
+// ConfigFileShow represents the configuration for file in the configuration file
+type ConfigFileShow struct {
+	Dir            string   `yaml:"dir"`
+	TorrenterNames []string `yaml:"torrenters"`
+	DetailerNames  []string `yaml:"detailers"`
+	SubtitlerNames []string `yaml:"subtitilers"`
+}
+
+// ConfigFileDownloader represents the configuration for the downloader in the configuration file
+type ConfigFileDownloader struct {
+	DownloadDir string `yaml:"download_dir"`
+}
+
+// ConfigFileHTTPServer represents the configuration for the HTTP Server in the configuration file
+type ConfigFileHTTPServer struct {
+	Enable         bool   `yaml:"enable"`
+	Port           int    `yaml:"port"`
+	Host           string `yaml:"host"`
+	ServeFiles     bool   `yaml:"serve_files"`
+	ServeFilesUser string `yaml:"serve_files_user"`
+	ServeFilesPwd  string `yaml:"serve_files_pwd"`
+}
+
+// Config represents the configuration for polochon
+type Config struct {
+	Watcher       WatcherConfig
+	Downloader    DownloaderConfig
+	HTTPServer    HTTPServerConfig
+	ModulesParams []map[string]string
+	Video         VideoConfig
+	File          FileConfig
+}
+
+// WatcherConfig represents the configuration for the detailers
+type WatcherConfig struct {
+	Timer      time.Duration
+	Dir        string
+	FsNotifier FsNotifier
+}
+
+// DownloaderConfig represents the configuration for the downloader
+type DownloaderConfig struct {
+	DownloadDir string
+}
+
+// HTTPServerConfig represents the configuration for the HTTP Server
+type HTTPServerConfig struct {
+	Enable         bool
+	Port           int
+	Host           string
+	ServeFiles     bool
+	ServeFilesUser string
+	ServeFilesPwd  string
+}
+
+// VideoConfig represents the configuration for video object
+type VideoConfig struct {
+	Notifiers []Notifier
+	Show      ShowConfig
+	Movie     MovieConfig
+}
+
+// ShowConfig represents the configuration for a show and its show episodes
+type ShowConfig struct {
+	Dir         string
+	Detailers   []Detailer
+	Notifiers   []Notifier
+	Subtitilers []Subtitiler
+	Torrenters  []Torrenter
+}
+
+// MovieConfig represents the configuration for a movie
+type MovieConfig struct {
+	Dir        string
+	Torrenters []Torrenter
+	Detailers  []Detailer
+	Notifiers  []Notifier
+}
+
+// FileConfig represents the configuration for a file
+type FileConfig struct {
+	ExcludeFileContaining     []string
+	VideoExtentions           []string
+	AllowedExtentionsToDelete []string
+	Guesser                   Guesser
+}
+
+// readConfig helps read the config
+func readConfig(r io.Reader) (*ConfigFileRoot, error) {
+	cf := &ConfigFileRoot{}
+
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+
+	err = yaml.Unmarshal(b, cf)
+	if err != nil {
+		return nil, err
+	}
+
+	return cf, nil
+}
+
+func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
+	conf := &Config{}
+
+	conf.Watcher = WatcherConfig{
+		Timer: cf.Watcher.Timer,
+		Dir:   cf.Watcher.Dir,
+	}
+
+	fsNotifier, err := cf.loadWatcher(log)
+	if err != nil {
+		return nil, err
+	}
+	conf.Watcher.FsNotifier = fsNotifier
+
+	conf.Downloader = DownloaderConfig{
+		DownloadDir: cf.Downloader.DownloadDir,
+	}
+
+	conf.HTTPServer = HTTPServerConfig{
+		Enable:         cf.HTTPServer.Enable,
+		Port:           cf.HTTPServer.Port,
+		Host:           cf.HTTPServer.Host,
+		ServeFiles:     cf.HTTPServer.ServeFiles,
+		ServeFilesUser: cf.HTTPServer.ServeFilesUser,
+		ServeFilesPwd:  cf.HTTPServer.ServeFilesPwd,
+	}
+
+	conf.ModulesParams = cf.ModulesParams
+
+	videoConf, err := cf.initVideo(log)
+	if err != nil {
+		return nil, err
+	}
+	conf.Video = *videoConf
+
+	showConf, err := cf.initShow(log)
+	if err != nil {
+		return nil, err
+	}
+	showConf.Dir = cf.Show.Dir
+	showConf.Notifiers = conf.Video.Notifiers
+	conf.Video.Show = *showConf
+
+	movieConf, err := cf.initMovie(log)
+	if err != nil {
+		return nil, err
+	}
+	movieConf.Dir = cf.Movie.Dir
+	movieConf.Notifiers = conf.Video.Notifiers
+	conf.Video.Movie = *movieConf
+
+	guesser, err := cf.initFile(log)
+	if err != nil {
+		return nil, err
+	}
+
+	conf.File = FileConfig{
+		ExcludeFileContaining:     cf.Video.ExcludeFileContaining,
+		VideoExtentions:           cf.Video.VideoExtentions,
+		AllowedExtentionsToDelete: cf.Video.AllowedExtentionsToDelete,
+		Guesser:                   guesser,
+	}
+
+	return conf, nil
+}
+
+func (c *ConfigFileRoot) loadWatcher(log *logrus.Entry) (FsNotifier, error) {
 	if c.Watcher.FsNotifierName == "" {
-		return fmt.Errorf("config: missing watcher fsnotifier name")
+		return nil, fmt.Errorf("config: missing watcher fsnotifier name")
 	}
 
 	// get params
 	moduleParams, err := c.moduleParams(c.Watcher.FsNotifierName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Configure
-	if err := c.Modules.ConfigureFsNotifier(c.Watcher.FsNotifierName, moduleParams); err != nil {
-		return err
-	}
-
-	n, err := c.Modules.FsNotifier(c.Watcher.FsNotifierName)
+	fsNotifier, err := ConfigureFsNotifier(c.Watcher.FsNotifierName, moduleParams, log)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	c.Watcher.FsNotifier = n
 
-	return nil
+	return fsNotifier, nil
 }
-
-func (c *Config) initVideo() error {
+func (c *ConfigFileRoot) initFile(log *logrus.Entry) (Guesser, error) {
 	// Get video guesser
 	if c.Video.GuesserName == "" {
-		return fmt.Errorf("config: missing video guesser name")
+		return nil, fmt.Errorf("config: missing video guesser name")
 	}
 
 	// get params
 	moduleParams, err := c.moduleParams(c.Video.GuesserName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Configure
-	if err := c.Modules.ConfigureGuesser(c.Video.GuesserName, moduleParams); err != nil {
-		return err
+	guesser, err := ConfigureGuesser(c.Video.GuesserName, moduleParams, log)
+	if err != nil {
+		return nil, err
 	}
 
-	g, err := c.Modules.Guesser(c.Video.GuesserName)
-	if err != nil {
-		return err
-	}
-	c.Video.Guesser = g
+	return guesser, nil
+}
+
+func (c *ConfigFileRoot) initVideo(log *logrus.Entry) (*VideoConfig, error) {
+
+	videoConf := &VideoConfig{}
 
 	for _, notifierName := range c.Video.NotifierNames {
 		moduleParams, err := c.moduleParams(notifierName)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		if err := c.Modules.ConfigureNotifier(notifierName, moduleParams); err != nil {
-			return err
-		}
-
-		n, err := c.Modules.Notifier(notifierName)
+		notifier, err := ConfigureNotifier(notifierName, moduleParams, log)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		c.Video.Notifiers = append(c.Video.Notifiers, n)
+		videoConf.Notifiers = append(videoConf.Notifiers, notifier)
 	}
-	c.Movie.Notifiers = c.Video.Notifiers
-	c.Show.Notifiers = c.Video.Notifiers
 
-	return nil
+	return videoConf, nil
 }
 
-func (c *Config) initMovie() error {
-	// Get movie detailer
-	if len(c.Movie.DetailerNames) == 0 {
-		return fmt.Errorf("config: missing movie detailer names")
-	}
-
-	for _, detailerName := range c.Movie.DetailerNames {
-		moduleParams, err := c.moduleParams(detailerName)
-		if err != nil {
-			return err
-		}
-
-		if err := c.Modules.ConfigureDetailer(detailerName, moduleParams); err != nil {
-			return err
-		}
-
-		d, err := c.Modules.Detailer(detailerName)
-		if err != nil {
-			return err
-		}
-		c.Movie.Detailers = append(c.Movie.Detailers, d)
-	}
-
-	// Get movie torrenter
-	if len(c.Movie.TorrenterNames) == 0 {
-		return fmt.Errorf("config: missing movie torrenter names")
-	}
-
-	for _, torrenterName := range c.Movie.TorrenterNames {
-		moduleParams, err := c.moduleParams(torrenterName)
-		if err != nil {
-			return err
-		}
-
-		if err := c.Modules.ConfigureTorrenter(torrenterName, moduleParams); err != nil {
-			return err
-		}
-
-		t, err := c.Modules.Torrenter(torrenterName)
-		if err != nil {
-			return err
-		}
-
-		c.Movie.Torrenters = append(c.Movie.Torrenters, t)
-	}
-
-	return nil
-}
-
-func (c *Config) initShow() error {
+func (c *ConfigFileRoot) initShow(log *logrus.Entry) (*ShowConfig, error) {
 	// Get show detailer
 	if len(c.Show.DetailerNames) == 0 {
-		return fmt.Errorf("config: missing show detailer names")
+		return nil, fmt.Errorf("config: missing show detailer names")
 	}
-
+	showConf := &ShowConfig{}
 	for _, detailerName := range c.Show.DetailerNames {
 		moduleParams, err := c.moduleParams(detailerName)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		if err := c.Modules.ConfigureDetailer(detailerName, moduleParams); err != nil {
-			return err
-		}
-
-		d, err := c.Modules.Detailer(detailerName)
+		detailer, err := ConfigureDetailer(detailerName, moduleParams, log)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		c.Show.Detailers = append(c.Show.Detailers, d)
+
+		showConf.Detailers = append(showConf.Detailers, detailer)
 	}
 
 	// Get show torrenter
 	if len(c.Show.TorrenterNames) == 0 {
-		return fmt.Errorf("config: missing movie torrenter names")
+		return nil, fmt.Errorf("config: missing movie torrenter names")
 	}
 
 	for _, torrenterName := range c.Show.TorrenterNames {
 		moduleParams, err := c.moduleParams(torrenterName)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		if err := c.Modules.ConfigureTorrenter(torrenterName, moduleParams); err != nil {
-			return err
-		}
-
-		t, err := c.Modules.Torrenter(torrenterName)
+		torrenter, err := ConfigureTorrenter(torrenterName, moduleParams, log)
 		if err != nil {
-			return err
+			return nil, err
 		}
-
-		c.Show.Torrenters = append(c.Show.Torrenters, t)
+		showConf.Torrenters = append(showConf.Torrenters, torrenter)
 	}
 
 	for _, subtitlerName := range c.Show.SubtitlerNames {
 		moduleParams, err := c.moduleParams(subtitlerName)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		if err := c.Modules.ConfigureSubtitler(subtitlerName, moduleParams); err != nil {
-			return err
-		}
-
-		s, err := c.Modules.Subtitiler(subtitlerName)
+		subtitiler, err := ConfigureSubtitler(subtitlerName, moduleParams, log)
 		if err != nil {
-			return err
+			return nil, err
 		}
-
-		c.Show.Subtitilers = append(c.Show.Subtitilers, s)
+		showConf.Subtitilers = append(showConf.Subtitilers, subtitiler)
 	}
 
-	return nil
+	return showConf, nil
 }
 
-// ReadConfigFile reads a file from a path and returns a config
-func ReadConfigFile(path string) (*Config, error) {
+func (c *ConfigFileRoot) initMovie(log *logrus.Entry) (*MovieConfig, error) {
+	// Get movie detailer
+	if len(c.Movie.DetailerNames) == 0 {
+		return nil, fmt.Errorf("config: missing movie detailer names")
+	}
+
+	movieConf := &MovieConfig{}
+
+	for _, detailerName := range c.Movie.DetailerNames {
+		moduleParams, err := c.moduleParams(detailerName)
+		if err != nil {
+			return nil, err
+		}
+
+		detailer, err := ConfigureDetailer(detailerName, moduleParams, log)
+		if err != nil {
+			return nil, err
+		}
+		movieConf.Detailers = append(movieConf.Detailers, detailer)
+	}
+
+	// Get movie torrenter
+	if len(c.Movie.TorrenterNames) == 0 {
+		return nil, fmt.Errorf("config: missing movie torrenter names")
+	}
+
+	for _, torrenterName := range c.Movie.TorrenterNames {
+		moduleParams, err := c.moduleParams(torrenterName)
+		if err != nil {
+			return nil, err
+		}
+
+		torrenter, err := ConfigureTorrenter(torrenterName, moduleParams, log)
+		if err != nil {
+			return nil, err
+		}
+		movieConf.Torrenters = append(movieConf.Torrenters, torrenter)
+	}
+
+	return movieConf, nil
+}
+
+// LoadConfigFile reads a file from a path and returns a config
+func LoadConfigFile(path string, log *logrus.Entry) (*Config, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
-
-	return readConfig(file)
-}
-
-// WriteConfigFile writes the config into file
-func (c *Config) WriteConfigFile(path string) error {
-	file, err := os.Create(path)
+	cf, err := readConfig(file)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer file.Close()
-
-	return c.write(file)
+	return loadConfig(cf, log)
 }

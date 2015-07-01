@@ -2,10 +2,8 @@ package polochon
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 )
 
@@ -16,8 +14,8 @@ var (
 
 // File handles polochon files
 type File struct {
-	Path   string
-	config *Config
+	FileConfig `xml:"-" json:"-"`
+	Path       string `xml:"-"`
 }
 
 // NewFile returs a new file from a path
@@ -30,44 +28,9 @@ func NewFile(path string) *File {
 // NewFileWithConfig returs a new file from a path
 func NewFileWithConfig(path string, config *Config) *File {
 	return &File{
-		Path:   path,
-		config: config,
+		FileConfig: config.File,
+		Path:       path,
 	}
-}
-
-// MarshalJSON custon marshal return path
-func (f File) MarshalJSON() ([]byte, error) {
-	var path string
-	var ok bool
-	var err error
-
-	ok, err = filepath.Match(f.config.Movie.Dir+"/*/*", f.Path)
-	if err != nil {
-		return []byte{}, nil
-	}
-	if ok {
-		path, err = filepath.Rel(f.config.Movie.Dir, f.Path)
-		if err != nil {
-			return []byte{}, nil
-		}
-	}
-
-	ok, err = filepath.Match(f.config.Show.Dir+"/*/*/*", f.Path)
-	if err != nil {
-		return []byte{}, nil
-	}
-	if ok {
-		path, err = filepath.Rel(f.config.Show.Dir, f.Path)
-		if err != nil {
-			return []byte{}, nil
-		}
-	}
-
-	if path == "" {
-		return []byte{}, errors.New("Unexpected file path")
-	}
-
-	return []byte(fmt.Sprintf(`{"path":"%s"}`, path)), nil
 }
 
 // Exists returns true is the file exists
@@ -82,7 +45,7 @@ func (f *File) IsVideo() bool {
 	ext := path.Ext(strings.ToLower(f.Path))
 
 	// Check in the video extentions
-	for _, e := range f.config.Video.VideoExtentions {
+	for _, e := range f.VideoExtentions {
 		if e == ext {
 			return true
 		}
@@ -102,7 +65,7 @@ func (f *File) IsIgnored() bool {
 func (f *File) IsExcluded() bool {
 	fileName := strings.ToLower(path.Base(f.Path))
 
-	for _, excluded := range f.config.Video.ExcludeFileContaining {
+	for _, excluded := range f.ExcludeFileContaining {
 		if strings.Contains(fileName, excluded) {
 			return true
 		}
@@ -122,28 +85,8 @@ func (f *File) Ignore() error {
 }
 
 // Guess video information from file
-func (f *File) Guess(g Guesser) (Video, error) {
-	guess, err := g.Guess(f.Path)
-	if err != nil {
-		return nil, err
-	}
-
-	if guess == nil {
-		return nil, nil
-	}
-
-	video, ok := guess.(Video)
-	if !ok {
-		return nil, ErrInvalidGuessType
-	}
-
-	video.SetFile(f)
-
-	if f.config != nil {
-		video.SetConfig(f.config)
-	}
-
-	return video, nil
+func (f *File) Guess(conf VideoConfig) (Video, error) {
+	return f.Guesser.Guess(conf, *f)
 }
 
 // NfoPath is an helper to get the nfo filename from the video filename

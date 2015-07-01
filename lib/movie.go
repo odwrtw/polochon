@@ -21,6 +21,8 @@ var (
 
 // Movie represents a movie
 type Movie struct {
+	MovieConfig `xml:"-" json:"-"`
+	File
 	XMLName       xml.Name  `xml:"movie" json:"-"`
 	ImdbID        string    `xml:"id" json:"imdb_id"`
 	OriginalTitle string    `xml:"originaltitle" json:"original_title"`
@@ -36,15 +38,40 @@ type Movie struct {
 	Votes         int       `xml:"votes" json:"votes"`
 	Year          int       `xml:"year" json:"year"`
 	Torrents      []Torrent `xml:"-" json:"-"`
-	File          *File     `xml:"-" json:"file"`
 	log           *logrus.Entry
-	config        *MovieConfig
+}
+
+// PrepareForJSON return a copy of the object clean for the API
+func (m Movie) PrepareForJSON() (Movie, error) {
+	ok, err := filepath.Match(m.Dir+"/*/*", m.Path)
+	if err != nil {
+		return m, err
+	}
+	if !ok {
+		return m, errors.New("Unexpected file path")
+	}
+	path, err := filepath.Rel(m.Dir, m.Path)
+	if err != nil {
+		return m, err
+	}
+	m.Path = path
+
+	return m, nil
 }
 
 // NewMovie returns a new movie
-func NewMovie() *Movie {
+func NewMovie(movieConfig MovieConfig) *Movie {
 	return &Movie{
-		XMLName: xml.Name{Space: "", Local: "movie"},
+		MovieConfig: movieConfig,
+		XMLName:     xml.Name{Space: "", Local: "movie"},
+	}
+}
+
+func NewMovieFromFile(movieConfig MovieConfig, file File) *Movie {
+	return &Movie{
+		MovieConfig: movieConfig,
+		File:        file,
+		XMLName:     xml.Name{Space: "", Local: "movie"},
 	}
 }
 
@@ -55,23 +82,30 @@ func (m *Movie) Type() VideoType {
 
 // SetFile implements the video interface
 func (m *Movie) SetFile(f *File) {
-	m.File = f
+	m.Path = f.Path
+	m.ExcludeFileContaining = f.ExcludeFileContaining
+	m.VideoExtentions = f.VideoExtentions
+	m.AllowedExtentionsToDelete = f.AllowedExtentionsToDelete
+	m.Guesser = f.Guesser
 }
 
 // SetConfig implements the video interface
-func (m *Movie) SetConfig(c *Config) {
-	// Only keep movie config from global config
-	m.config = &c.Movie
+func (m *Movie) SetConfig(c *VideoConfig, log *logrus.Logger) {
+	m.Dir = c.Movie.Dir
+	m.Detailers = c.Movie.Detailers
+	m.Notifiers = c.Movie.Notifiers
+	// m.Subtitilers = c.Movie.Subtitilers
+	m.Torrenters = c.Movie.Torrenters
 
 	// Set logger
-	m.log = c.Log.WithFields(logrus.Fields{
+	m.log = log.WithFields(logrus.Fields{
 		"type": "movie",
 	})
 }
 
 // readShowSeasonNFO deserialized a XML file into a ShowSeason
-func readMovieNFO(r io.Reader) (*Movie, error) {
-	m := &Movie{}
+func readMovieNFO(r io.Reader, conf MovieConfig) (*Movie, error) {
+	m := NewMovie(conf)
 
 	if err := readNFO(r, m); err != nil {
 		return nil, err
@@ -83,7 +117,7 @@ func readMovieNFO(r io.Reader) (*Movie, error) {
 // GetDetails helps getting infos for a movie
 func (m *Movie) GetDetails() error {
 	var err error
-	for _, d := range m.config.Detailers {
+	for _, d := range m.Detailers {
 		err = d.GetDetails(m)
 		if err == nil {
 			break
@@ -96,7 +130,7 @@ func (m *Movie) GetDetails() error {
 // GetTorrents helps getting the torrent files for a movie
 func (m *Movie) GetTorrents() error {
 	var err error
-	for _, t := range m.config.Torrenters {
+	for _, t := range m.Torrenters {
 		err = t.GetTorrents(m)
 		if err == nil {
 			break
@@ -110,7 +144,7 @@ func (m *Movie) GetTorrents() error {
 // Notify sends a notification
 func (m *Movie) Notify() error {
 	var err error
-	for _, n := range m.config.Notifiers {
+	for _, n := range m.Notifiers {
 		err = n.Notify(m)
 		if err == nil {
 			break
@@ -124,10 +158,10 @@ func (m *Movie) Notify() error {
 // storePath returns the movie store path from the config
 func (m *Movie) storePath() string {
 	if m.Year != 0 {
-		return filepath.Join(m.config.Dir, fmt.Sprintf("%s (%d)", m.Title, m.Year))
+		return filepath.Join(m.Dir, fmt.Sprintf("%s (%d)", m.Title, m.Year))
 	}
 
-	return filepath.Join(m.config.Dir, m.Title)
+	return filepath.Join(m.Dir, m.Title)
 }
 
 // move helps move the movie to the expected destination
@@ -170,11 +204,11 @@ func (m *Movie) move() error {
 
 // Store stores the movie according to the config
 func (m *Movie) Store() error {
-	if m.File == nil {
+	if m.Path == "" {
 		return ErrMissingMovieFilePath
 	}
 
-	if m.config == nil || m.config.Dir == "" {
+	if m.Dir == "" {
 		return ErrMissingMovieDir
 	}
 

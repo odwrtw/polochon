@@ -1,6 +1,10 @@
 package polochon
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/Sirupsen/logrus"
+)
 
 // Video errors
 var (
@@ -61,5 +65,5 @@ type Video interface {
 	Type() VideoType
 	Store() error
 	SetFile(f *File)
-	SetConfig(c *Config)
+	SetConfig(c *VideoConfig, log *logrus.Logger)
 }

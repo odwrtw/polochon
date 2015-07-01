@@ -28,16 +28,23 @@ type App struct {
 
 	// wait group sync the goroutines launched by the app
 	wg sync.WaitGroup
+
+	logger *logrus.Logger
 }
 
 // NewApp create a new app from the given configuration path
 func NewApp(configPath string) (*App, error) {
-	config, err := polochon.ReadConfigFile(configPath)
-	if err != nil {
-		log.Panic(err)
+
+	// Setup the logger
+	logger := logrus.New()
+	logger.Level = logrus.DebugLevel
+	logger.Out = os.Stderr
+	logger.Formatter = &logrus.TextFormatter{
+		ForceColors:   true,
+		FullTimestamp: true,
 	}
 
-	err = config.Init()
+	config, err := polochon.LoadConfigFile(configPath, logrus.NewEntry(logger))
 	if err != nil {
 		log.Panic(err)
 	}
@@ -48,6 +55,7 @@ func NewApp(configPath string) (*App, error) {
 		done:   make(chan struct{}),
 		stop:   make(chan struct{}),
 		errc:   make(chan error),
+		logger: logger,
 	}, nil
 }
 
@@ -60,13 +68,13 @@ func (a *App) Run() {
 	// Handle graceful shutdown
 	var forceShutdown bool
 
-	a.config.Log.Info("Starting app")
+	a.logger.Info("Starting app")
 
 	// Start the error logger
 	go a.errorLogger()
 
 	if err := a.StartFsNotifier(); err != nil {
-		a.config.Log.Error("Couldn't start the FsNotifier : ", err)
+		a.logger.Error("Couldn't start the FsNotifier : ", err)
 		go a.Stop()
 	}
 
@@ -78,14 +86,15 @@ func (a *App) Run() {
 	for {
 		select {
 		case <-a.stop:
-			a.config.Log.Info("All done, exiting")
+			a.logger.Info("All done, exiting")
 			return
 		case <-osSig:
 			if forceShutdown {
-				a.config.Log.Info("Forced shutdown")
+				a.logger.Info("Forced shutdown")
+				// TODO delete uneded pmember
 				os.Exit(1)
 			}
-			a.config.Log.Info("Graceful shutdown")
+			a.logger.Info("Graceful shutdown")
 
 			// Stop the app
 			go a.Stop()
@@ -124,7 +133,7 @@ func (a *App) StartFsNotifier() error {
 		for {
 			select {
 			case file := <-a.event:
-				a.config.Log.Infof("Got an event for the file: %q", file)
+				a.logger.Infof("Got an event for the file: %q", file)
 				if err := a.Organize(file); err != nil {
 					a.errc <- err
 				}
@@ -136,7 +145,7 @@ func (a *App) StartFsNotifier() error {
 
 	// Send a notification to organize the whole folder on app start
 	go func() {
-		a.config.Log.Info("Organize the watched folder")
+		a.logger.Info("Organize the watched folder")
 		a.event <- a.config.Watcher.Dir
 	}()
 
@@ -148,10 +157,10 @@ func (a *App) errorLogger() {
 	for {
 		select {
 		case <-a.stop:
-			a.config.Log.Info("Stopping the logger")
+			a.logger.Info("Stopping the logger")
 			return
 		case err := <-a.errc:
-			a.config.Log.Errorf("Err: %q", err)
+			a.logger.Errorf("Err: %q", err)
 		}
 	}
 }
@@ -162,7 +171,7 @@ func (a *App) Organize(filePath string) error {
 	defer a.wg.Done()
 
 	// Logs
-	log := a.config.Log.WithFields(logrus.Fields{
+	log := a.logger.WithFields(logrus.Fields{
 		"filepath": filePath,
 		"function": "organizer",
 	})
@@ -198,49 +207,51 @@ func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 	log = log.WithField("filePath", filePath)
 
 	// Create a file
-	videoFile := polochon.NewFileWithConfig(filePath, a.config)
+	file := polochon.NewFileWithConfig(filePath, a.config)
 
 	// Check if file really exists
-	if !videoFile.Exists() {
+	if !file.Exists() {
 		log.Warning("the file has been removed")
 		return nil
 	}
 
 	// Check if file is a video
-	if !videoFile.IsVideo() {
+	if !file.IsVideo() {
 		log.Debug("the file is not a video")
 		return nil
 	}
 
 	// Check if file is ignored
-	if videoFile.IsIgnored() {
+	if file.IsIgnored() {
 		log.Debug("the file is ignored")
 		return nil
 	}
 
 	// Check if file is ignored
-	if videoFile.IsExcluded() {
+	if file.IsExcluded() {
 		log.Debug("the file is excluded")
-		return videoFile.Ignore()
+		return file.Ignore()
 	}
 
 	// Guess the video inforamtion
-	video, err := videoFile.Guess(a.config.Video.Guesser)
+	video, err := file.Guess(a.config.Video)
 	if err != nil {
 		log.Errorf("failed to guess video file: %q", err)
-		return videoFile.Ignore()
+		return file.Ignore()
 	}
+
+	video.SetConfig(&a.config.Video, a.logger)
 
 	// Get video details
 	if err := video.GetDetails(); err != nil {
 		log.Errorf("failed to get video details: %q", err)
-		return videoFile.Ignore()
+		return file.Ignore()
 	}
 
 	// Store the video
 	if err := video.Store(); err != nil {
 		log.Errorf("failed to store video: %q", err)
-		return videoFile.Ignore()
+		return file.Ignore()
 	}
 
 	// Get subtitle

@@ -25,7 +25,7 @@ var seasonNFOContent = []byte(`<tvshow>
 </tvshow>`)
 
 func newFakeShow() *Show {
-	s := NewShow()
+	s := NewShow(ShowConfig{Dir: "/shows"})
 	s.Title = "American Dad!"
 	s.ShowTitle = "American Dad!"
 	s.Rating = 8.5
@@ -35,7 +35,6 @@ func newFakeShow() *Show {
 	s.ImdbID = "tt0397306"
 	s.Year = 2005
 
-	s.config = &ShowConfig{Dir: "/shows"}
 	s.log = logrus.NewEntry(logrus.New())
 
 	return s
@@ -44,7 +43,6 @@ func newFakeShow() *Show {
 func TestShowStoreWriter(t *testing.T) {
 	s := newFakeShow()
 	s.log = nil
-	s.config = nil
 
 	var b bytes.Buffer
 	err := writeNFO(&b, s)
@@ -60,9 +58,8 @@ func TestShowStoreWriter(t *testing.T) {
 func TestShowReader(t *testing.T) {
 	expected := newFakeShow()
 	expected.log = nil
-	expected.config = nil
 
-	got, err := readShowNFO(bytes.NewBuffer(seasonNFOContent))
+	got, err := readShowNFO(bytes.NewBuffer(seasonNFOContent), ShowConfig{Dir: "/shows"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,7 +99,7 @@ func TestShowStore(t *testing.T) {
 		t.Fatalf("failed to create temp dir for show store test")
 	}
 	defer os.RemoveAll(tmpDir)
-	show.config.Dir = tmpDir
+	show.Dir = tmpDir
 
 	downloadShowImage = func(URL, savePath string, log *logrus.Entry) error {
 		return nil

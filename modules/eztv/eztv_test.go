@@ -20,7 +20,7 @@ func TestEztvGetTorrentsInvalidArgumens(t *testing.T) {
 
 func TestEztvInvalidArguments(t *testing.T) {
 	e := &Eztv{}
-	s := polochon.NewShowEpisode()
+	s := polochon.NewShowEpisode(polochon.ShowConfig{})
 
 	err := e.GetTorrents(s)
 	if err != ErrMissingShowImdbID {
@@ -36,7 +36,7 @@ func TestEztvInvalidArguments(t *testing.T) {
 
 func TestEztvNoShowEpisodeFound(t *testing.T) {
 	e := &Eztv{}
-	s := polochon.NewShowEpisode()
+	s := polochon.NewShowEpisode(polochon.ShowConfig{})
 	s.ShowImdbID = "tt2562232"
 	s.Season = 1
 	s.Episode = 1
@@ -53,7 +53,7 @@ func TestEztvNoShowEpisodeFound(t *testing.T) {
 
 func TestEztvNoTorrentFound(t *testing.T) {
 	e := &Eztv{}
-	s := polochon.NewShowEpisode()
+	s := polochon.NewShowEpisode(polochon.ShowConfig{})
 	s.ShowImdbID = "tt2562232"
 	s.Season = 1
 	s.Episode = 1
@@ -70,7 +70,7 @@ func TestEztvNoTorrentFound(t *testing.T) {
 
 func TestEztvGetTorrents(t *testing.T) {
 	e := &Eztv{}
-	s := polochon.NewShowEpisode()
+	s := polochon.NewShowEpisode(polochon.ShowConfig{})
 	s.ShowImdbID = "tt2562232"
 	s.Season = 1
 	s.Episode = 1
