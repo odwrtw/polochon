@@ -67,6 +67,7 @@ func NewMovie(movieConfig MovieConfig) *Movie {
 	}
 }
 
+// NewMovieFromFile returns a new movie from a file
 func NewMovieFromFile(movieConfig MovieConfig, file File) *Movie {
 	return &Movie{
 		MovieConfig: movieConfig,
@@ -262,6 +263,29 @@ func (m *Movie) downloadImages() error {
 
 // GetSubtitle implements the subtitle interface
 func (m *Movie) GetSubtitle() error {
+	var err error
+	var subtitle Subtitle
+	for _, subtitiler := range m.Subtitilers {
+		subtitle, err = subtitiler.GetMovieSubtitle(m)
+		if err == nil {
+			break
+		}
 
-	return nil
+		m.log.Warnf("failed to get subtitles from subtitiler: %q", err)
+	}
+
+	if err == nil {
+		file, err := os.Create(m.File.SubtitlePath())
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		defer subtitle.Close()
+
+		if _, err := io.Copy(file, subtitle); err != nil {
+			return err
+		}
+	}
+
+	return err
 }

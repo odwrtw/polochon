@@ -9,6 +9,7 @@ import (
 	_ "gitlab.quimbo.fr/odwrtw/polochon/modules/eztv"
 	_ "gitlab.quimbo.fr/odwrtw/polochon/modules/fsnotify"
 	_ "gitlab.quimbo.fr/odwrtw/polochon/modules/openguessit"
+	_ "gitlab.quimbo.fr/odwrtw/polochon/modules/opensubtitles"
 	_ "gitlab.quimbo.fr/odwrtw/polochon/modules/pushover"
 	_ "gitlab.quimbo.fr/odwrtw/polochon/modules/tmdb"
 	_ "gitlab.quimbo.fr/odwrtw/polochon/modules/tvdb"

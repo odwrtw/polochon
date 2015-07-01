@@ -43,6 +43,10 @@ modules_params:
     key: sdf7as8f8ds7f9sf
   - name: addicted
     lang: fr_FR
+  - name: opensubtitles
+    lang: en_US
+    user: myUserName
+    password: myPass
 show:
   dir: /home/user/tvshows
   torrenters:
@@ -57,6 +61,8 @@ movie:
     - yts
   detailers:
     - tmdb
+  subtitilers:
+    - opensubtitles
 `)
 
 var configStructExample = &ConfigFileRoot{
@@ -93,11 +99,18 @@ var configStructExample = &ConfigFileRoot{
 			"name": "addicted",
 			"lang": "fr_FR",
 		},
+		{
+			"name":     "opensubtitles",
+			"lang":     "en_US",
+			"user":     "myUserName",
+			"password": "myPass",
+		},
 	},
 	Movie: ConfigFileMovie{
 		Dir:            "/home/user/movies",
 		TorrenterNames: []string{"yts"},
 		DetailerNames:  []string{"tmdb"},
+		SubtitlerNames: []string{"opensubtitles"},
 	},
 	Show: ConfigFileShow{
 		Dir:            "/home/user/tvshows",
