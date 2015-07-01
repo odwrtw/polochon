@@ -10,7 +10,7 @@ import (
 )
 
 func fakeShowEpisode() *ShowEpisode {
-	s := NewShowEpisode()
+	s := NewShowEpisode(ShowConfig{Dir: "/shows"})
 	s.XMLName = xml.Name{Space: "", Local: "episodedetails"}
 	s.Title = "Lost in Space"
 	s.ShowTitle = "American Dad!"
@@ -25,7 +25,6 @@ func fakeShowEpisode() *ShowEpisode {
 	s.ShowImdbID = "tt0397306"
 	s.ShowTvdbID = 73141
 
-	s.config = &ShowConfig{Dir: "/shows"}
 	s.log = logrus.NewEntry(logrus.New())
 
 	return s
@@ -50,7 +49,6 @@ var episodeNFOContent = []byte(`<episodedetails>
 func TestShowEpisodeStoreWriter(t *testing.T) {
 	s := fakeShowEpisode()
 	s.log = nil
-	s.config = nil
 
 	var b bytes.Buffer
 	err := writeNFO(&b, s)
@@ -66,15 +64,13 @@ func TestShowEpisodeStoreWriter(t *testing.T) {
 func TestShowEpisodeReader(t *testing.T) {
 	expected := fakeShowEpisode()
 	expected.log = nil
-	expected.config = nil
-
-	got, err := readShowEpisodeNFO(bytes.NewBuffer(episodeNFOContent))
+	got, err := readShowEpisodeNFO(bytes.NewBuffer(episodeNFOContent), ShowConfig{Dir: "/shows"})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if !reflect.DeepEqual(got, expected) {
-		t.Errorf("Failed to deserialize show episode NFO")
+		t.Errorf("Failed to deserialize show episode NFO.\nGot: %#v\nExpected: %#v", got, expected)
 	}
 }
 

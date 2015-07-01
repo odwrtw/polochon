@@ -2,8 +2,6 @@ package polochon
 
 import (
 	"bytes"
-	"io/ioutil"
-	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -24,6 +22,7 @@ http_server:
   serve_files_user: toto
   serve_files_pwd: tata
 video:
+  guesser: openguessit
   notifiers:
   - pushover
   exclude_file_containing:
@@ -60,16 +59,16 @@ movie:
     - tmdb
 `)
 
-var configStructExample = &Config{
-	Watcher: WatcherConfig{
+var configStructExample = &ConfigFileRoot{
+	Watcher: ConfigFileWatcher{
 		Timer:          time.Second * 30,
 		Dir:            "/home/user/downloads",
 		FsNotifierName: "fsnotify",
 	},
-	Downloader: DownloaderConfig{
+	Downloader: ConfigFileDownloader{
 		DownloadDir: "/home/user/downloads",
 	},
-	HTTPServer: HTTPServerConfig{
+	HTTPServer: ConfigFileHTTPServer{
 		Enable:         true,
 		Port:           8080,
 		Host:           "localhost",
@@ -77,11 +76,12 @@ var configStructExample = &Config{
 		ServeFilesUser: "toto",
 		ServeFilesPwd:  "tata",
 	},
-	Video: VideoConfig{
+	Video: ConfigFileVideo{
 		ExcludeFileContaining:     []string{"sample"},
 		VideoExtentions:           []string{".avi", ".mkv", ".mp4"},
 		AllowedExtentionsToDelete: []string{".srt", ".nfo", ".txt", ".jpg", ".jpeg"},
 		NotifierNames:             []string{"pushover"},
+		GuesserName:               "openguessit",
 	},
 	ModulesParams: []map[string]string{
 		{
@@ -94,39 +94,17 @@ var configStructExample = &Config{
 			"lang": "fr_FR",
 		},
 	},
-	Movie: MovieConfig{
+	Movie: ConfigFileMovie{
 		Dir:            "/home/user/movies",
 		TorrenterNames: []string{"yts"},
 		DetailerNames:  []string{"tmdb"},
 	},
-	Show: ShowConfig{
+	Show: ConfigFileShow{
 		Dir:            "/home/user/tvshows",
 		TorrenterNames: []string{"eztv"},
 		DetailerNames:  []string{"tvdb"},
 		SubtitlerNames: []string{"addicted"},
 	},
-}
-
-func TestWriteReadConfig(t *testing.T) {
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "polochon-config")
-	if err != nil {
-		t.Fatal("failed to create temp file", err)
-	}
-	defer os.Remove(tmpFile.Name())
-
-	err = configStructExample.WriteConfigFile(tmpFile.Name())
-	if err != nil {
-		t.Fatalf("failed to write config file: %q", err)
-	}
-
-	got, err := ReadConfigFile(tmpFile.Name())
-	if err != nil {
-		t.Fatalf("failed to read config from file: %q", err)
-	}
-
-	if !reflect.DeepEqual(got, configStructExample) {
-		t.Errorf("Invalid config")
-	}
 }
 
 func TestReadConfig(t *testing.T) {

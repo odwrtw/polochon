@@ -152,7 +152,7 @@ type FileConfig struct {
 }
 
 // readConfig helps read the config
-func readConfig(r io.Reader, log *logrus.Entry) (*Config, error) {
+func readConfig(r io.Reader) (*ConfigFileRoot, error) {
 	cf := &ConfigFileRoot{}
 
 	b, err := ioutil.ReadAll(r)
@@ -165,6 +165,10 @@ func readConfig(r io.Reader, log *logrus.Entry) (*Config, error) {
 		return nil, err
 	}
 
+	return cf, nil
+}
+
+func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 	conf := &Config{}
 
 	conf.Watcher = WatcherConfig{
@@ -393,6 +397,9 @@ func LoadConfigFile(path string, log *logrus.Entry) (*Config, error) {
 		return nil, err
 	}
 	defer file.Close()
-
-	return readConfig(file, log)
+	cf, err := readConfig(file)
+	if err != nil {
+		return nil, err
+	}
+	return loadConfig(cf, log)
 }

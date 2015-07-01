@@ -14,7 +14,7 @@ var testDetailer = &TvDB{}
 
 func TestTvdbUpdateShow(t *testing.T) {
 	getShowFromTvdb = func(s *tvdb.Series) error { return nil }
-	s := polochon.NewShow()
+	s := polochon.NewShow(polochon.ShowConfig{})
 
 	// Tvdb input
 	input := &tvdb.Series{
@@ -69,7 +69,7 @@ func TestTvdbUpdateShow(t *testing.T) {
 	}
 
 	// Expected show values
-	expected := polochon.NewShow()
+	expected := polochon.NewShow(polochon.ShowConfig{})
 	expected.Title = "American Dad!"
 	expected.ShowTitle = "American Dad!"
 	expected.Rating = 8.5
@@ -111,7 +111,7 @@ func TestTvdbUpdateShow(t *testing.T) {
 }
 
 func TestTvdbGetShowByName(t *testing.T) {
-	s := polochon.NewShow()
+	s := polochon.NewShow(polochon.ShowConfig{})
 	s.Title = "American Dad"
 
 	tvdbGetSeries = func(name string, maxResults int) (seriesList tvdb.SeriesList, err error) {
@@ -135,7 +135,7 @@ func TestTvdbGetShowByName(t *testing.T) {
 }
 
 func TestTvdbGetShowByImdbID(t *testing.T) {
-	s := polochon.NewShow()
+	s := polochon.NewShow(polochon.ShowConfig{})
 
 	tvdbGetShowByImdbID = func(id string) (series *tvdb.Series, err error) {
 		return &tvdb.Series{SeriesName: "American Dad!", ImdbID: "tt0397306"}, nil
@@ -158,7 +158,7 @@ func TestTvdbGetShowByImdbID(t *testing.T) {
 }
 
 func TesTvdbGetShowDetails(t *testing.T) {
-	s := polochon.NewShow()
+	s := polochon.NewShow(polochon.ShowConfig{})
 
 	// No arguments
 	err := getShowDetails(s)
@@ -201,7 +201,7 @@ func TesTvdbGetShowDetails(t *testing.T) {
 }
 
 func TestTvdbGetDetailsFromShow(t *testing.T) {
-	s := polochon.NewShow()
+	s := polochon.NewShow(polochon.ShowConfig{})
 	s.ImdbID = "tt0397306"
 
 	tvdbGetShowByImdbID = func(id string) (series *tvdb.Series, err error) {
@@ -227,7 +227,7 @@ func TestTvdbGetDetailsInvalidArgument(t *testing.T) {
 }
 
 func TestTvdbGetShowEpisodeDetailsInvalidArgumens(t *testing.T) {
-	s := polochon.NewShowEpisode()
+	s := polochon.NewShowEpisode(polochon.ShowConfig{})
 
 	err := getShowEpisodeDetails(s)
 	if err != ErrMissingShowEpisodeInformations {
@@ -243,7 +243,7 @@ func TestTvdbGetShowEpisodeDetailsInvalidArgumens(t *testing.T) {
 }
 
 func TestTvdbGetShowEpisodeDetailsFailed(t *testing.T) {
-	s := polochon.NewShowEpisode()
+	s := polochon.NewShowEpisode(polochon.ShowConfig{})
 	s.ShowImdbID = "tt0397306"
 	s.Episode = 1
 	s.Season = 1
@@ -260,7 +260,7 @@ func TestTvdbGetShowEpisodeDetailsFailed(t *testing.T) {
 }
 
 func TestTvdbGetShowEpisodeDetails(t *testing.T) {
-	s := polochon.NewShowEpisode()
+	s := polochon.NewShowEpisode(polochon.ShowConfig{})
 	s.ShowImdbID = "tt0397306"
 	s.Episode = 1
 	s.Season = 1

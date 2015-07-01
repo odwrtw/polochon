@@ -111,7 +111,7 @@ func (vs *VideoStore) scanShows() (map[string]*Show, error) {
 			return nil
 		}
 
-		show, err := readShowNFO(nfoFile)
+		show, err := readShowNFO(nfoFile, vs.config.Video.Show)
 		if err != nil {
 			vs.log.Errorf("video store: failed to read tv show NFO: %q", err)
 			return nil

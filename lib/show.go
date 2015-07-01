@@ -55,8 +55,8 @@ func NewShow(showConf ShowConfig) *Show {
 }
 
 // readShowNFO deserialized a XML file into a ShowSeason
-func readShowNFO(r io.Reader) (*Show, error) {
-	s := &Show{}
+func readShowNFO(r io.Reader, conf ShowConfig) (*Show, error) {
+	s := &Show{ShowConfig: conf}
 
 	if err := readNFO(r, s); err != nil {
 		return nil, err

@@ -10,7 +10,7 @@ import (
 
 func TestYtsBadInput(t *testing.T) {
 	y := &Yts{}
-	show := polochon.NewShowEpisode()
+	show := polochon.NewShowEpisode(polochon.ShowConfig{})
 
 	err := y.GetTorrents(show)
 	if err != ErrInvalidArgument {
@@ -20,7 +20,7 @@ func TestYtsBadInput(t *testing.T) {
 
 func TestYtsNoResults(t *testing.T) {
 	y := &Yts{}
-	m := polochon.NewMovie()
+	m := polochon.NewMovie(polochon.MovieConfig{})
 
 	searchByImdbID = func(imdbID string) ([]yts.Movie, error) {
 		return []yts.Movie{}, nil
@@ -34,7 +34,7 @@ func TestYtsNoResults(t *testing.T) {
 
 func TestYtsNoTorrent(t *testing.T) {
 	y := &Yts{}
-	m := polochon.NewMovie()
+	m := polochon.NewMovie(polochon.MovieConfig{})
 
 	searchByImdbID = func(imdbID string) ([]yts.Movie, error) {
 		return []yts.Movie{
@@ -50,7 +50,7 @@ func TestYtsNoTorrent(t *testing.T) {
 
 func TestYtsTorrents(t *testing.T) {
 	y := &Yts{}
-	m := polochon.NewMovie()
+	m := polochon.NewMovie(polochon.MovieConfig{})
 
 	searchByImdbID = func(imdbID string) ([]yts.Movie, error) {
 		return []yts.Movie{
@@ -69,7 +69,7 @@ func TestYtsTorrents(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expected := polochon.NewMovie()
+	expected := polochon.NewMovie(polochon.MovieConfig{})
 	expected.Torrents = []polochon.Torrent{
 		{Quality: polochon.Quality480p, URL: "http://test.480p.magnet"},
 		{Quality: polochon.Quality720p, URL: "http://test.720p.magnet"},
