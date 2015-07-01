@@ -55,7 +55,7 @@ func (vs *VideoStore) ScanMovies() ([]*Movie, error) {
 			return nil
 		}
 
-		movie, err := readMovieNFO(nfoFile)
+		movie, err := readMovieNFO(nfoFile, vs.config.Video.Movie)
 		if err != nil {
 			vs.log.Errorf("video store: failed to read movie NFO: %q", err)
 			return nil
@@ -163,7 +163,7 @@ func (vs *VideoStore) scanEpisodes(showPath string) ([]*ShowEpisode, error) {
 			return nil
 		}
 
-		episode, err := readShowEpisodeNFO(nfoFile)
+		episode, err := readShowEpisodeNFO(nfoFile, vs.config.Video.Show)
 		if err != nil {
 			vs.log.Errorf("video store: failed to read episode NFO: %q", err)
 			return nil

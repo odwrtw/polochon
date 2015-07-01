@@ -21,7 +21,7 @@ var (
 
 // Movie represents a movie
 type Movie struct {
-	MovieConfig
+	MovieConfig `xml:"-" json:"-"`
 	File
 	XMLName       xml.Name  `xml:"movie" json:"-"`
 	ImdbID        string    `xml:"id" json:"imdb_id"`
@@ -39,6 +39,24 @@ type Movie struct {
 	Year          int       `xml:"year" json:"year"`
 	Torrents      []Torrent `xml:"-" json:"-"`
 	log           *logrus.Entry
+}
+
+// PrepareForJSON return a copy of the object clean for the API
+func (m Movie) PrepareForJSON() (Movie, error) {
+	ok, err := filepath.Match(m.Dir+"/*/*", m.Path)
+	if err != nil {
+		return m, err
+	}
+	if !ok {
+		return m, errors.New("Unexpected file path")
+	}
+	path, err := filepath.Rel(m.Dir, m.Path)
+	if err != nil {
+		return m, err
+	}
+	m.Path = path
+
+	return m, nil
 }
 
 // NewMovie returns a new movie
@@ -86,8 +104,8 @@ func (m *Movie) SetConfig(c *VideoConfig, log *logrus.Logger) {
 }
 
 // readShowSeasonNFO deserialized a XML file into a ShowSeason
-func readMovieNFO(r io.Reader) (*Movie, error) {
-	m := &Movie{}
+func readMovieNFO(r io.Reader, conf MovieConfig) (*Movie, error) {
+	m := NewMovie(conf)
 
 	if err := readNFO(r, m); err != nil {
 		return nil, err

@@ -20,7 +20,16 @@ func (a *App) movieStore(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	a.writeResponse(w, movies)
+	toJSONMovies := []polochon.Movie{}
+	for _, m := range movies {
+		movie, err := m.PrepareForJSON()
+		if err != nil {
+			msg := fmt.Sprintf("Failed to prepare for json response: %+v", err)
+			a.writeError(w, msg)
+		}
+		toJSONMovies = append(toJSONMovies, movie)
+	}
+	a.writeResponse(w, toJSONMovies)
 }
 
 func (a *App) showStore(w http.ResponseWriter, req *http.Request) {
@@ -32,7 +41,17 @@ func (a *App) showStore(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	a.writeResponse(w, shows)
+	toJSONShows := []polochon.Show{}
+	for _, s := range shows {
+		show, err := s.PrepareForJSON()
+		if err != nil {
+			msg := fmt.Sprintf("Failed to prepare fo json response: %+v", err)
+			a.writeError(w, msg)
+		}
+		toJSONShows = append(toJSONShows, show)
+	}
+
+	a.writeResponse(w, toJSONShows)
 }
 
 func (a *App) serveFiles(w http.ResponseWriter, req *http.Request) {

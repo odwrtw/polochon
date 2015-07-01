@@ -20,7 +20,7 @@ var (
 
 // ShowEpisode represents a tvshow episode
 type ShowEpisode struct {
-	ShowConfig
+	ShowConfig `xml:"-" json:"-"`
 	File
 	XMLName       xml.Name  `xml:"episodedetails" json:"-"`
 	Title         string    `xml:"title" json:"title"`
@@ -36,9 +36,27 @@ type ShowEpisode struct {
 	ShowImdbID    string    `xml:"showimdbid" json:"-"`
 	ShowTvdbID    int       `xml:"showtvdbid" json:"-"`
 	EpisodeImdbID string    `xml:"episodeimdbid" json:"imdb_id"`
-	Torrents      []Torrent `xml:"-"`
-	Show          *Show     `xml:"-"`
+	Torrents      []Torrent `xml:"-" json:"-"`
+	Show          *Show     `xml:"-" json:"-"`
 	log           *logrus.Entry
+}
+
+// PrepareForJSON return a copy of the object clean for the API
+func (s ShowEpisode) PrepareForJSON() (ShowEpisode, error) {
+	ok, err := filepath.Match(s.Dir+"/*/*/*", s.Path)
+	if err != nil {
+		return s, err
+	}
+	if !ok {
+		return s, errors.New("Unexpected file path")
+	}
+	path, err := filepath.Rel(s.Dir, s.Path)
+	if err != nil {
+		return s, err
+	}
+	s.Path = path
+
+	return s, nil
 }
 
 // NewShowEpisode returns a new show episode
@@ -86,8 +104,8 @@ func (s *ShowEpisode) SetConfig(c *VideoConfig, log *logrus.Logger) {
 }
 
 // readShowEpisodeNFO deserialized a XML file into a ShowEpisode
-func readShowEpisodeNFO(r io.Reader) (*ShowEpisode, error) {
-	s := &ShowEpisode{}
+func readShowEpisodeNFO(r io.Reader, conf ShowConfig) (*ShowEpisode, error) {
+	s := NewShowEpisode(conf)
 
 	if err := readNFO(r, s); err != nil {
 		return nil, err

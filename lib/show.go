@@ -17,21 +17,33 @@ var (
 
 // Show represents a tv show
 type Show struct {
-	ShowConfig
-	XMLName   xml.Name       `xml:"tvshow" json:"-"`
-	Title     string         `xml:"title" json:"title"`
-	ShowTitle string         `xml:"showtitle" json:"-"`
-	Rating    float32        `xml:"rating" json:"rating"`
-	Plot      string         `xml:"plot" json:"plot"`
-	URL       string         `xml:"episodeguide>url" json:"-"`
-	TvdbID    int            `xml:"tvdbid" json:"tvdb_id"`
-	ImdbID    string         `xml:"imdbid" json:"imdb_id"`
-	Year      int            `xml:"year" json:"year"`
-	Banner    string         `xml:"-" json:"banner"`
-	Fanart    string         `xml:"-" json:"fanart"`
-	Poster    string         `xml:"-" json:"poster"`
-	Episodes  []*ShowEpisode `xml:"-" json:"episodes"`
-	log       *logrus.Entry
+	ShowConfig `xml:"-" json:"-"`
+	XMLName    xml.Name       `xml:"tvshow" json:"-"`
+	Title      string         `xml:"title" json:"title"`
+	ShowTitle  string         `xml:"showtitle" json:"-"`
+	Rating     float32        `xml:"rating" json:"rating"`
+	Plot       string         `xml:"plot" json:"plot"`
+	URL        string         `xml:"episodeguide>url" json:"-"`
+	TvdbID     int            `xml:"tvdbid" json:"tvdb_id"`
+	ImdbID     string         `xml:"imdbid" json:"imdb_id"`
+	Year       int            `xml:"year" json:"year"`
+	Banner     string         `xml:"-" json:"banner"`
+	Fanart     string         `xml:"-" json:"fanart"`
+	Poster     string         `xml:"-" json:"poster"`
+	Episodes   []*ShowEpisode `xml:"-" json:"episodes"`
+	log        *logrus.Entry
+}
+
+// PrepareForJSON return a copy of the object clean for the API
+func (s Show) PrepareForJSON() (Show, error) {
+	for i, ep := range s.Episodes {
+		newep, err := ep.PrepareForJSON()
+		if err != nil {
+			return s, err
+		}
+		s.Episodes[i] = &newep
+	}
+	return s, nil
 }
 
 // NewShow returns a new show

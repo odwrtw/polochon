@@ -2,10 +2,8 @@ package polochon
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 )
 
@@ -16,9 +14,8 @@ var (
 
 // File handles polochon files
 type File struct {
-	FileConfig
-	Path   string
-	config *Config
+	FileConfig `xml:"-" json:"-"`
+	Path       string
 }
 
 // NewFile returs a new file from a path
@@ -33,43 +30,7 @@ func NewFileWithConfig(path string, config *Config) *File {
 	return &File{
 		FileConfig: config.File,
 		Path:       path,
-		config:     config,
 	}
-}
-
-// MarshalJSON custon marshal return path
-func (f File) MarshalJSON() ([]byte, error) {
-	var path string
-	var ok bool
-	var err error
-
-	ok, err = filepath.Match(f.config.Video.Movie.Dir+"/*/*", f.Path)
-	if err != nil {
-		return []byte{}, nil
-	}
-	if ok {
-		path, err = filepath.Rel(f.config.Video.Movie.Dir, f.Path)
-		if err != nil {
-			return []byte{}, nil
-		}
-	}
-
-	ok, err = filepath.Match(f.config.Video.Show.Dir+"/*/*/*", f.Path)
-	if err != nil {
-		return []byte{}, nil
-	}
-	if ok {
-		path, err = filepath.Rel(f.config.Video.Show.Dir, f.Path)
-		if err != nil {
-			return []byte{}, nil
-		}
-	}
-
-	if path == "" {
-		return []byte{}, errors.New("Unexpected file path")
-	}
-
-	return []byte(fmt.Sprintf(`{"path":"%s"}`, path)), nil
 }
 
 // Exists returns true is the file exists
