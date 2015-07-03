@@ -23,7 +23,17 @@ func init() {
 
 // New module
 func New(params map[string]string, log *logrus.Entry) (polochon.Subtitiler, error) {
-	client, err := addicted.New()
+	// Handle auth
+	var err error
+	var client *addicted.Client
+	user := params["user"]
+	pwd := params["password"]
+	if user != "" && pwd != "" {
+		client, err = addicted.NewWithAuth(user, pwd)
+	} else {
+		client, err = addicted.New()
+	}
+
 	if err != nil {
 		return nil, err
 	}
