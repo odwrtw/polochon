@@ -11,12 +11,12 @@ var registeredModules *RegisteredModules
 
 func init() {
 	registeredModules = &RegisteredModules{
-		Detailers:   make(map[string]func(params map[string]string, log *logrus.Entry) (Detailer, error)),
-		Torrenters:  make(map[string]func(params map[string]string, log *logrus.Entry) (Torrenter, error)),
-		Guessers:    make(map[string]func(params map[string]string, log *logrus.Entry) (Guesser, error)),
-		FsNotifiers: make(map[string]func(params map[string]string, log *logrus.Entry) (FsNotifier, error)),
-		Notifiers:   make(map[string]func(params map[string]string, log *logrus.Entry) (Notifier, error)),
-		Subtitilers: make(map[string]func(params map[string]string, log *logrus.Entry) (Subtitiler, error)),
+		Detailers:   make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Detailer, error)),
+		Torrenters:  make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Torrenter, error)),
+		Guessers:    make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Guesser, error)),
+		FsNotifiers: make(map[string]func(params map[string]interface{}, log *logrus.Entry) (FsNotifier, error)),
+		Notifiers:   make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Notifier, error)),
+		Subtitilers: make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Subtitiler, error)),
 	}
 }
 
@@ -41,16 +41,16 @@ const (
 
 // RegisteredModules holds the modules registered during the init process
 type RegisteredModules struct {
-	Detailers   map[string]func(params map[string]string, log *logrus.Entry) (Detailer, error)
-	Torrenters  map[string]func(params map[string]string, log *logrus.Entry) (Torrenter, error)
-	Guessers    map[string]func(params map[string]string, log *logrus.Entry) (Guesser, error)
-	FsNotifiers map[string]func(params map[string]string, log *logrus.Entry) (FsNotifier, error)
-	Notifiers   map[string]func(params map[string]string, log *logrus.Entry) (Notifier, error)
-	Subtitilers map[string]func(params map[string]string, log *logrus.Entry) (Subtitiler, error)
+	Detailers   map[string]func(params map[string]interface{}, log *logrus.Entry) (Detailer, error)
+	Torrenters  map[string]func(params map[string]interface{}, log *logrus.Entry) (Torrenter, error)
+	Guessers    map[string]func(params map[string]interface{}, log *logrus.Entry) (Guesser, error)
+	FsNotifiers map[string]func(params map[string]interface{}, log *logrus.Entry) (FsNotifier, error)
+	Notifiers   map[string]func(params map[string]interface{}, log *logrus.Entry) (Notifier, error)
+	Subtitilers map[string]func(params map[string]interface{}, log *logrus.Entry) (Subtitiler, error)
 }
 
 // ConfigureDetailer configures a detailer
-func ConfigureDetailer(name string, params map[string]string, log *logrus.Entry) (Detailer, error) {
+func ConfigureDetailer(name string, params map[string]interface{}, log *logrus.Entry) (Detailer, error) {
 	f, ok := registeredModules.Detailers[name]
 	if !ok {
 		return nil, ErrModuleNotFound
@@ -69,7 +69,7 @@ func ConfigureDetailer(name string, params map[string]string, log *logrus.Entry)
 }
 
 // ConfigureSubtitler configures a subtitiler
-func ConfigureSubtitler(name string, params map[string]string, log *logrus.Entry) (Subtitiler, error) {
+func ConfigureSubtitler(name string, params map[string]interface{}, log *logrus.Entry) (Subtitiler, error) {
 	f, ok := registeredModules.Subtitilers[name]
 	if !ok {
 		return nil, ErrModuleNotFound
@@ -88,7 +88,7 @@ func ConfigureSubtitler(name string, params map[string]string, log *logrus.Entry
 }
 
 // ConfigureTorrenter configures a torrenter
-func ConfigureTorrenter(name string, params map[string]string, log *logrus.Entry) (Torrenter, error) {
+func ConfigureTorrenter(name string, params map[string]interface{}, log *logrus.Entry) (Torrenter, error) {
 	f, ok := registeredModules.Torrenters[name]
 	if !ok {
 		return nil, ErrModuleNotFound
@@ -107,7 +107,7 @@ func ConfigureTorrenter(name string, params map[string]string, log *logrus.Entry
 }
 
 // ConfigureGuesser configures a guesser
-func ConfigureGuesser(name string, params map[string]string, log *logrus.Entry) (Guesser, error) {
+func ConfigureGuesser(name string, params map[string]interface{}, log *logrus.Entry) (Guesser, error) {
 	f, ok := registeredModules.Guessers[name]
 	if !ok {
 		return nil, ErrModuleNotFound
@@ -126,7 +126,7 @@ func ConfigureGuesser(name string, params map[string]string, log *logrus.Entry) 
 }
 
 // ConfigureFsNotifier configures a fs notifier
-func ConfigureFsNotifier(name string, params map[string]string, log *logrus.Entry) (FsNotifier, error) {
+func ConfigureFsNotifier(name string, params map[string]interface{}, log *logrus.Entry) (FsNotifier, error) {
 	f, ok := registeredModules.FsNotifiers[name]
 	if !ok {
 		return nil, ErrModuleNotFound
@@ -145,7 +145,7 @@ func ConfigureFsNotifier(name string, params map[string]string, log *logrus.Entr
 }
 
 // ConfigureNotifier configures a notifier
-func ConfigureNotifier(name string, params map[string]string, log *logrus.Entry) (Notifier, error) {
+func ConfigureNotifier(name string, params map[string]interface{}, log *logrus.Entry) (Notifier, error) {
 	f, ok := registeredModules.Notifiers[name]
 	if !ok {
 		return nil, ErrModuleNotFound

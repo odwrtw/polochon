@@ -12,7 +12,7 @@ type Detailer interface {
 }
 
 // RegisterDetailer helps register a new detailer
-func RegisterDetailer(name string, f func(params map[string]string, log *logrus.Entry) (Detailer, error)) {
+func RegisterDetailer(name string, f func(params map[string]interface{}, log *logrus.Entry) (Detailer, error)) {
 	if _, ok := registeredModules.Detailers[name]; ok {
 		log.Panicf("modules: %q of type %q is already registered", name, TypeDetailer)
 	}

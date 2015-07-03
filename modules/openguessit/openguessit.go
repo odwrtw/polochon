@@ -37,7 +37,7 @@ type OpenGuessit struct {
 }
 
 // NewOpenGuessit returns an new openguessit
-func NewOpenGuessit(params map[string]string, log *logrus.Entry) (polochon.Guesser, error) {
+func NewOpenGuessit(params map[string]interface{}, log *logrus.Entry) (polochon.Guesser, error) {
 	return &OpenGuessit{log: log}, nil
 }
 

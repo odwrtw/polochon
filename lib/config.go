@@ -13,22 +13,22 @@ import (
 
 // ConfigFileRoot represents polochon's config file
 type ConfigFileRoot struct {
-	Watcher       ConfigFileWatcher    `yaml:"watcher"`
-	Downloader    ConfigFileDownloader `yaml:"downloader"`
-	HTTPServer    ConfigFileHTTPServer `yaml:"http_server"`
-	ModulesParams []map[string]string  `yaml:"modules_params"`
-	Video         ConfigFileVideo      `yaml:"video"`
-	Show          ConfigFileShow       `yaml:"show"`
-	Movie         ConfigFileMovie      `yaml:"movie"`
+	Watcher       ConfigFileWatcher        `yaml:"watcher"`
+	Downloader    ConfigFileDownloader     `yaml:"downloader"`
+	HTTPServer    ConfigFileHTTPServer     `yaml:"http_server"`
+	ModulesParams []map[string]interface{} `yaml:"modules_params"`
+	Video         ConfigFileVideo          `yaml:"video"`
+	Show          ConfigFileShow           `yaml:"show"`
+	Movie         ConfigFileMovie          `yaml:"movie"`
 }
 
 // moduleParams returns the modules params set in the configuration.
-func (c *ConfigFileRoot) moduleParams(moduleName string) (map[string]string, error) {
+func (c *ConfigFileRoot) moduleParams(moduleName string) (map[string]interface{}, error) {
 	for _, p := range c.ModulesParams {
 		// Is the name of the module missing in the conf ?
 		name, ok := p["name"]
 		if !ok {
-			return map[string]string{}, fmt.Errorf("config: missing module name in configuration params: %+v", p)
+			return map[string]interface{}{}, fmt.Errorf("config: missing module name in configuration params: %+v", p)
 		}
 
 		// Found the right module config
@@ -38,7 +38,7 @@ func (c *ConfigFileRoot) moduleParams(moduleName string) (map[string]string, err
 	}
 
 	// Nothing found, return the default values
-	return map[string]string{}, nil
+	return map[string]interface{}{}, nil
 }
 
 // ConfigFileVideo represents the configuration for the video in the configuration file
@@ -92,7 +92,7 @@ type Config struct {
 	Watcher       WatcherConfig
 	Downloader    DownloaderConfig
 	HTTPServer    HTTPServerConfig
-	ModulesParams []map[string]string
+	ModulesParams []map[string]interface{}
 	Video         VideoConfig
 	File          FileConfig
 }

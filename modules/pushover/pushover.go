@@ -28,16 +28,24 @@ type Pushover struct {
 }
 
 // New returns a new Pushover
-func New(params map[string]string, log *logrus.Entry) (polochon.Notifier, error) {
-	// Check params
-	key, ok := params["key"]
-	if !ok {
-		return nil, ErrMissingKey
-	}
+func New(params map[string]interface{}, log *logrus.Entry) (polochon.Notifier, error) {
+	var key, recipient string
 
-	recipient, ok := params["recipient"]
-	if !ok {
-		return nil, ErrMissingRecipient
+	for ptr, param := range map[*string]string{
+		&key:       "key",
+		&recipient: "recipient",
+	} {
+		p, ok := params[param]
+		if !ok {
+			return nil, fmt.Errorf("pushover: missing %q configuration", param)
+		}
+
+		v, ok := p.(string)
+		if !ok {
+			return nil, fmt.Errorf("pushover: %s should be a string", param)
+		}
+
+		*ptr = v
 	}
 
 	return &Pushover{

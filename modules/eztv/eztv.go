@@ -28,7 +28,7 @@ type Eztv struct {
 }
 
 // NewEztv returns a new Eztv
-func NewEztv(params map[string]string, log *logrus.Entry) (polochon.Torrenter, error) {
+func NewEztv(params map[string]interface{}, log *logrus.Entry) (polochon.Torrenter, error) {
 	return &Eztv{log: log}, nil
 }
 

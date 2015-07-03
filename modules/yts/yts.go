@@ -26,7 +26,7 @@ type Yts struct {
 }
 
 // NewYts returns a new Yts
-func NewYts(params map[string]string, log *logrus.Entry) (polochon.Torrenter, error) {
+func NewYts(params map[string]interface{}, log *logrus.Entry) (polochon.Torrenter, error) {
 	return &Yts{log: log}, nil
 }
 

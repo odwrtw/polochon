@@ -24,7 +24,7 @@ type FsNotify struct {
 }
 
 // NewFsNotify returns a new FsNotify
-func NewFsNotify(params map[string]string, log *logrus.Entry) (polochon.FsNotifier, error) {
+func NewFsNotify(params map[string]interface{}, log *logrus.Entry) (polochon.FsNotifier, error) {
 	// Create a new watcher
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {

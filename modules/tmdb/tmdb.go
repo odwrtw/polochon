@@ -37,7 +37,7 @@ type TmDB struct {
 }
 
 // NewTmDB returns an initialized tmdb instance
-func NewTmDB(params map[string]string, log *logrus.Entry) (polochon.Detailer, error) {
+func NewTmDB(params map[string]interface{}, log *logrus.Entry) (polochon.Detailer, error) {
 	return &TmDB{log: log}, nil
 }
 
