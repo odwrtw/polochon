@@ -12,7 +12,7 @@ type Notifier interface {
 }
 
 // RegisterNotifier helps register a new notifier
-func RegisterNotifier(name string, f func(params map[string]string, log *logrus.Entry) (Notifier, error)) {
+func RegisterNotifier(name string, f func(params map[string]interface{}, log *logrus.Entry) (Notifier, error)) {
 	if _, ok := registeredModules.Notifiers[name]; ok {
 		log.Panicf("modules: %q of type %q is already registered", name, TypeNotifier)
 	}

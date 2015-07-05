@@ -21,7 +21,7 @@ type FsNotifier interface {
 }
 
 // RegisterFsNotifier helps register a new FsNotifier
-func RegisterFsNotifier(name string, f func(params map[string]string, log *logrus.Entry) (FsNotifier, error)) {
+func RegisterFsNotifier(name string, f func(params map[string]interface{}, log *logrus.Entry) (FsNotifier, error)) {
 	if _, ok := registeredModules.FsNotifiers[name]; ok {
 		log.Panicf("modules: %q of type %q is already registered", name, TypeFsNotifier)
 	}

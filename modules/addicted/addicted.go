@@ -22,25 +22,42 @@ func init() {
 }
 
 // New module
-func New(params map[string]string, log *logrus.Entry) (polochon.Subtitiler, error) {
-	// Handle auth
-	var err error
+func New(params map[string]interface{}, log *logrus.Entry) (polochon.Subtitiler, error) {
+	var user, password, lang string
+
+	for ptr, param := range map[*string]string{
+		&user:     "user",
+		&password: "password",
+		&lang:     "lang",
+	} {
+		p, ok := params[param]
+		if !ok {
+			continue
+		}
+
+		v, ok := p.(string)
+		if !ok {
+			return nil, fmt.Errorf("addicted: %s should be a string", param)
+		}
+
+		*ptr = v
+	}
+
+	if lang == "" {
+		return nil, fmt.Errorf("addicted: missing lang param")
+	}
+
+	// Handle auth if the user and password are provided
 	var client *addicted.Client
-	user := params["user"]
-	pwd := params["password"]
-	if user != "" && pwd != "" {
-		client, err = addicted.NewWithAuth(user, pwd)
+
+	var err error
+	if user != "" && password != "" {
+		client, err = addicted.NewWithAuth(user, password)
 	} else {
 		client, err = addicted.New()
 	}
-
 	if err != nil {
 		return nil, err
-	}
-
-	lang, ok := params["lang"]
-	if !ok {
-		return nil, fmt.Errorf("addicted: missing lang param")
 	}
 
 	language := polochon.Language(lang)

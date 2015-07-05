@@ -83,7 +83,7 @@ var configStructExample = &ConfigFileRoot{
 		NotifierNames:             []string{"pushover"},
 		GuesserName:               "openguessit",
 	},
-	ModulesParams: []map[string]string{
+	ModulesParams: []map[string]interface{}{
 		{
 			"name": "pushover",
 			"user": "9327a472s3947234792",

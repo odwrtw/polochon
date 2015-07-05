@@ -44,7 +44,7 @@ type TvDB struct {
 }
 
 // NewTvDB returns an initialized tmdb instance
-func NewTvDB(params map[string]string, log *logrus.Entry) (polochon.Detailer, error) {
+func NewTvDB(params map[string]interface{}, log *logrus.Entry) (polochon.Detailer, error) {
 	return &TvDB{log: log}, nil
 }
 
