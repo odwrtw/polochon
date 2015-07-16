@@ -76,7 +76,7 @@ func ConfigureSubtitler(name string, params map[string]interface{}, log *logrus.
 	}
 
 	// Setup the logs
-	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeDetailer})
+	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeSubtitiler})
 
 	// Configure the module
 	module, err := f(params, logger)
@@ -95,7 +95,7 @@ func ConfigureTorrenter(name string, params map[string]interface{}, log *logrus.
 	}
 
 	// Setup the logs
-	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeDetailer})
+	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeTorrenter})
 
 	// Configure the module
 	module, err := f(params, logger)
@@ -114,7 +114,7 @@ func ConfigureGuesser(name string, params map[string]interface{}, log *logrus.En
 	}
 
 	// Setup the logs
-	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeDetailer})
+	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeGuesser})
 
 	// Configure the module
 	module, err := f(params, logger)
@@ -133,7 +133,7 @@ func ConfigureFsNotifier(name string, params map[string]interface{}, log *logrus
 	}
 
 	// Setup the logs
-	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeDetailer})
+	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeFsNotifier})
 
 	// Configure the module
 	module, err := f(params, logger)
@@ -152,7 +152,7 @@ func ConfigureNotifier(name string, params map[string]interface{}, log *logrus.E
 	}
 
 	// Setup the logs
-	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeDetailer})
+	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeNotifier})
 
 	// Configure the module
 	module, err := f(params, logger)

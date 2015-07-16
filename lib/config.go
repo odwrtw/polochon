@@ -62,6 +62,7 @@ type ConfigFileMovie struct {
 	Dir            string   `yaml:"dir"`
 	TorrenterNames []string `yaml:"torrenters"`
 	DetailerNames  []string `yaml:"detailers"`
+	SubtitlerNames []string `yaml:"subtitilers"`
 }
 
 // ConfigFileShow represents the configuration for file in the configuration file
@@ -137,10 +138,11 @@ type ShowConfig struct {
 
 // MovieConfig represents the configuration for a movie
 type MovieConfig struct {
-	Dir        string
-	Torrenters []Torrenter
-	Detailers  []Detailer
-	Notifiers  []Notifier
+	Dir         string
+	Torrenters  []Torrenter
+	Detailers   []Detailer
+	Subtitilers []Subtitiler
+	Notifiers   []Notifier
 }
 
 // FileConfig represents the configuration for a file
@@ -385,6 +387,20 @@ func (c *ConfigFileRoot) initMovie(log *logrus.Entry) (*MovieConfig, error) {
 			return nil, err
 		}
 		movieConf.Torrenters = append(movieConf.Torrenters, torrenter)
+	}
+
+	for _, subtitlerName := range c.Movie.SubtitlerNames {
+		moduleParams, err := c.moduleParams(subtitlerName)
+		if err != nil {
+			return nil, err
+		}
+
+		subtitiler, err := ConfigureSubtitler(subtitlerName, moduleParams, log)
+		if err != nil {
+			return nil, err
+		}
+
+		movieConf.Subtitilers = append(movieConf.Subtitilers, subtitiler)
 	}
 
 	return movieConf, nil

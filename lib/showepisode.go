@@ -67,6 +67,7 @@ func NewShowEpisode(showConf ShowConfig) *ShowEpisode {
 	}
 }
 
+// NewShowEpisodeFromFile returns a new show episode from a file
 func NewShowEpisodeFromFile(showConf ShowConfig, file File) *ShowEpisode {
 	return &ShowEpisode{
 		ShowConfig: showConf,

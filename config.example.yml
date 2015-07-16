@@ -31,6 +31,10 @@ modules_params:
     recipient: 9327a472s3947234792
   - name: addicted
     lang: fr_FR
+  - name: opensubtitles
+    user: opensubtitle@canapeapp.com
+    lang: en_US
+    password: my@w3$0m3p@$$w0rD
 show:
   dir: /home/user/tvshows
   torrenters:
@@ -45,3 +49,5 @@ movie:
     - yts
   detailers:
     - tmdb
+  subtitilers:
+    - opensubtitles
