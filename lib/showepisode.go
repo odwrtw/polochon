@@ -95,7 +95,7 @@ func (s *ShowEpisode) SetConfig(c *VideoConfig, log *logrus.Logger) {
 	s.Dir = c.Show.Dir
 	s.Detailers = c.Show.Detailers
 	s.Notifiers = c.Show.Notifiers
-	s.Subtitilers = c.Show.Subtitilers
+	s.Subtitlers = c.Show.Subtitlers
 	s.Torrenters = c.Show.Torrenters
 
 	// Set logger
@@ -169,11 +169,11 @@ func (s *ShowEpisode) createShowDir() error {
 		TvdbID:    s.ShowTvdbID,
 		ImdbID:    s.ShowImdbID,
 		ShowConfig: ShowConfig{
-			Dir:         s.Dir,
-			Detailers:   s.Detailers,
-			Notifiers:   s.Notifiers,
-			Subtitilers: s.Subtitilers,
-			Torrenters:  s.Torrenters,
+			Dir:        s.Dir,
+			Detailers:  s.Detailers,
+			Notifiers:  s.Notifiers,
+			Subtitlers: s.Subtitlers,
+			Torrenters: s.Torrenters,
 		},
 		log: s.log,
 	}
@@ -279,13 +279,13 @@ func (s *ShowEpisode) Store() error {
 func (s *ShowEpisode) GetSubtitle() error {
 	var err error
 	var subtitle Subtitle
-	for _, subtitiler := range s.Subtitilers {
-		subtitle, err = subtitiler.GetShowSubtitle(s)
+	for _, subtitler := range s.Subtitlers {
+		subtitle, err = subtitler.GetShowSubtitle(s)
 		if err == nil {
 			break
 		}
 
-		s.log.Warnf("failed to get subtitles from subtitiler: %q", err)
+		s.log.Warnf("failed to get subtitles from subtitler: %q", err)
 	}
 
 	if err == nil {

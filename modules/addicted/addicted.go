@@ -16,13 +16,13 @@ var langTranslate = map[polochon.Language]string{
 	polochon.FR: "french",
 }
 
-// Register a new Subtitiler
+// Register a new Subtitler
 func init() {
-	polochon.RegisterSubtitiler("addicted", New)
+	polochon.RegisterSubtitler("addicted", New)
 }
 
 // New module
-func New(params map[string]interface{}, log *logrus.Entry) (polochon.Subtitiler, error) {
+func New(params map[string]interface{}, log *logrus.Entry) (polochon.Subtitler, error) {
 	var user, password, lang string
 
 	for ptr, param := range map[*string]string{

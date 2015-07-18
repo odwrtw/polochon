@@ -53,7 +53,7 @@ show:
     - eztv
   detailers:
     - tvdb
-  subtitilers:
+  subtitlers:
     - addicted
 movie:
   dir: /home/user/movies
@@ -61,7 +61,7 @@ movie:
     - yts
   detailers:
     - tmdb
-  subtitilers:
+  subtitlers:
     - opensubtitles
 `)
 

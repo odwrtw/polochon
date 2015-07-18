@@ -1,5 +1,4 @@
 # polochon
-=======================
 
 ## Modules
 
@@ -38,14 +37,36 @@ Available FsNotifier:
 * inotify (not yet implemented)
 * fsnotify (multi-platform file system notifier)
 
-### Notifier (not yet implemented)
+### Notifier
 
 The notifier notifies when a video has been properly stored in the library.
 
-### Subtitler (not yet implemented)
+Available Notifier:
+* pushover
+
+### Subtitler
 
 The subtitler downloads subtitles and stores them with the video file, so that the video player can open them during playback.
+
+Available Sutitler:
+* addicted (shows)
+* opensubtitles (movies and shows)
 
 ### Downloader (not yet implemented)
 
 The downloader send remote command to a BiTorrent server to add, remove or list entries.
+
+## How to use
+
+Copy config.yml.example and customize it as you wish
+
+### Build and launch
+```
+go build -o polochon server/*.go
+./polochon -configPath=/home/user/config.yml
+```
+
+### Run
+```
+go run server/*.go -configPath=/home/user/config.yml
+```
