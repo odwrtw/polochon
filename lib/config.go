@@ -62,7 +62,7 @@ type ConfigFileMovie struct {
 	Dir            string   `yaml:"dir"`
 	TorrenterNames []string `yaml:"torrenters"`
 	DetailerNames  []string `yaml:"detailers"`
-	SubtitlerNames []string `yaml:"subtitilers"`
+	SubtitlerNames []string `yaml:"subtitlers"`
 }
 
 // ConfigFileShow represents the configuration for file in the configuration file
@@ -70,7 +70,7 @@ type ConfigFileShow struct {
 	Dir            string   `yaml:"dir"`
 	TorrenterNames []string `yaml:"torrenters"`
 	DetailerNames  []string `yaml:"detailers"`
-	SubtitlerNames []string `yaml:"subtitilers"`
+	SubtitlerNames []string `yaml:"subtitlers"`
 }
 
 // ConfigFileDownloader represents the configuration for the downloader in the configuration file
@@ -129,20 +129,20 @@ type VideoConfig struct {
 
 // ShowConfig represents the configuration for a show and its show episodes
 type ShowConfig struct {
-	Dir         string
-	Detailers   []Detailer
-	Notifiers   []Notifier
-	Subtitilers []Subtitiler
-	Torrenters  []Torrenter
+	Dir        string
+	Detailers  []Detailer
+	Notifiers  []Notifier
+	Subtitlers []Subtitler
+	Torrenters []Torrenter
 }
 
 // MovieConfig represents the configuration for a movie
 type MovieConfig struct {
-	Dir         string
-	Torrenters  []Torrenter
-	Detailers   []Detailer
-	Subtitilers []Subtitiler
-	Notifiers   []Notifier
+	Dir        string
+	Torrenters []Torrenter
+	Detailers  []Detailer
+	Subtitlers []Subtitler
+	Notifiers  []Notifier
 }
 
 // FileConfig represents the configuration for a file
@@ -340,11 +340,11 @@ func (c *ConfigFileRoot) initShow(log *logrus.Entry) (*ShowConfig, error) {
 			return nil, err
 		}
 
-		subtitiler, err := ConfigureSubtitler(subtitlerName, moduleParams, log)
+		subtitler, err := ConfigureSubtitler(subtitlerName, moduleParams, log)
 		if err != nil {
 			return nil, err
 		}
-		showConf.Subtitilers = append(showConf.Subtitilers, subtitiler)
+		showConf.Subtitlers = append(showConf.Subtitlers, subtitler)
 	}
 
 	return showConf, nil
@@ -395,12 +395,12 @@ func (c *ConfigFileRoot) initMovie(log *logrus.Entry) (*MovieConfig, error) {
 			return nil, err
 		}
 
-		subtitiler, err := ConfigureSubtitler(subtitlerName, moduleParams, log)
+		subtitler, err := ConfigureSubtitler(subtitlerName, moduleParams, log)
 		if err != nil {
 			return nil, err
 		}
 
-		movieConf.Subtitilers = append(movieConf.Subtitilers, subtitiler)
+		movieConf.Subtitlers = append(movieConf.Subtitlers, subtitler)
 	}
 
 	return movieConf, nil

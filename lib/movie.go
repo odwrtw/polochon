@@ -95,7 +95,7 @@ func (m *Movie) SetConfig(c *VideoConfig, log *logrus.Logger) {
 	m.Dir = c.Movie.Dir
 	m.Detailers = c.Movie.Detailers
 	m.Notifiers = c.Movie.Notifiers
-	// m.Subtitilers = c.Movie.Subtitilers
+	m.Subtitlers = c.Movie.Subtitlers
 	m.Torrenters = c.Movie.Torrenters
 
 	// Set logger
@@ -265,13 +265,13 @@ func (m *Movie) downloadImages() error {
 func (m *Movie) GetSubtitle() error {
 	var err error
 	var subtitle Subtitle
-	for _, subtitiler := range m.Subtitilers {
-		subtitle, err = subtitiler.GetMovieSubtitle(m)
+	for _, subtitler := range m.Subtitlers {
+		subtitle, err = subtitler.GetMovieSubtitle(m)
 		if err == nil {
 			break
 		}
 
-		m.log.Warnf("failed to get subtitles from subtitiler: %q", err)
+		m.log.Warnf("failed to get subtitles from subtitler: %q", err)
 	}
 
 	if err == nil {

@@ -25,9 +25,9 @@ var langTranslate = map[polochon.Language]string{
 	polochon.FR: "fre",
 }
 
-// Register a new Subtitiler
+// Register a new Subtitler
 func init() {
-	polochon.RegisterSubtitiler("opensubtitles", New)
+	polochon.RegisterSubtitler("opensubtitles", New)
 }
 
 // Close the subtitle connexion
@@ -66,7 +66,7 @@ func (o *openSubtitle) Read(b []byte) (int, error) {
 }
 
 // New module
-func New(params map[string]interface{}, log *logrus.Entry) (polochon.Subtitiler, error) {
+func New(params map[string]interface{}, log *logrus.Entry) (polochon.Subtitler, error) {
 	// Get all the needed params
 	var user, password, lang string
 
@@ -349,7 +349,6 @@ func (osp *osProxy) getGoodMovieSubtitles(m polochon.Movie, subs osdb.Subtitles)
 			osp.log.Debugf("This is it : %s", imdbID)
 			goodSubs = append(goodSubs, sub)
 		} else {
-			osp.log.Debugf("Not the good one %s != %s", imdbID, m.ImdbID)
 			continue
 		}
 	}
@@ -364,17 +363,14 @@ func (osp *osProxy) getGoodShowEpisodeSubtitles(s polochon.ShowEpisode, subs osd
 		// Need to check that it's the good subtitle
 		imdbID := fmt.Sprintf("tt%07s", sub.SeriesIMDBParent)
 		if imdbID != s.ShowImdbID {
-			osp.log.Debugf("Not the right IMDB ID")
 			continue
 		}
 
 		if sub.SeriesEpisode != strconv.Itoa(s.Episode) {
-			osp.log.Debugf("Not the right show episode")
 			continue
 		}
 
 		if sub.SeriesSeason != strconv.Itoa(s.Season) {
-			osp.log.Debugf("Not right the show season")
 			continue
 		}
 

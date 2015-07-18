@@ -16,7 +16,7 @@ func init() {
 		Guessers:    make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Guesser, error)),
 		FsNotifiers: make(map[string]func(params map[string]interface{}, log *logrus.Entry) (FsNotifier, error)),
 		Notifiers:   make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Notifier, error)),
-		Subtitilers: make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Subtitiler, error)),
+		Subtitlers:  make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Subtitler, error)),
 	}
 }
 
@@ -36,7 +36,7 @@ const (
 	TypeGuesser               = "guesser"
 	TypeFsNotifier            = "fsnotifier"
 	TypeNotifier              = "notifier"
-	TypeSubtitiler            = "subtitiler"
+	TypeSubtitler             = "subtitler"
 )
 
 // RegisteredModules holds the modules registered during the init process
@@ -46,7 +46,7 @@ type RegisteredModules struct {
 	Guessers    map[string]func(params map[string]interface{}, log *logrus.Entry) (Guesser, error)
 	FsNotifiers map[string]func(params map[string]interface{}, log *logrus.Entry) (FsNotifier, error)
 	Notifiers   map[string]func(params map[string]interface{}, log *logrus.Entry) (Notifier, error)
-	Subtitilers map[string]func(params map[string]interface{}, log *logrus.Entry) (Subtitiler, error)
+	Subtitlers  map[string]func(params map[string]interface{}, log *logrus.Entry) (Subtitler, error)
 }
 
 // ConfigureDetailer configures a detailer
@@ -69,14 +69,14 @@ func ConfigureDetailer(name string, params map[string]interface{}, log *logrus.E
 }
 
 // ConfigureSubtitler configures a subtitiler
-func ConfigureSubtitler(name string, params map[string]interface{}, log *logrus.Entry) (Subtitiler, error) {
-	f, ok := registeredModules.Subtitilers[name]
+func ConfigureSubtitler(name string, params map[string]interface{}, log *logrus.Entry) (Subtitler, error) {
+	f, ok := registeredModules.Subtitlers[name]
 	if !ok {
 		return nil, ErrModuleNotFound
 	}
 
 	// Setup the logs
-	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeSubtitiler})
+	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeSubtitler})
 
 	// Configure the module
 	module, err := f(params, logger)
