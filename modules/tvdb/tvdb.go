@@ -9,7 +9,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/arbovm/levenshtein"
 	"github.com/garfunkel/go-tvdb"
-	"gitlab.quimbo.fr/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib"
 )
 
 // Register tvdb as a Detailer

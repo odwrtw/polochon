@@ -6,7 +6,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/gregdel/pushover"
-	"gitlab.quimbo.fr/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib"
 )
 
 // Pushover errors

@@ -5,7 +5,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/eztv"
-	"gitlab.quimbo.fr/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib"
 )
 
 // Eztv errors

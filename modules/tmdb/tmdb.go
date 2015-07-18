@@ -7,8 +7,8 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/arbovm/levenshtein"
+	"github.com/odwrtw/polochon/lib"
 	"github.com/ryanbradynd05/go-tmdb"
-	"gitlab.quimbo.fr/odwrtw/polochon/lib"
 )
 
 // Register tvdb as a Detailer

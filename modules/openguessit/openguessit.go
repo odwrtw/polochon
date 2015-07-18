@@ -9,9 +9,9 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/arbovm/levenshtein"
+	"github.com/odwrtw/guessit"
+	"github.com/odwrtw/polochon/lib"
 	"github.com/oz/osdb"
-	"gitlab.quimbo.fr/odwrtw/go-guessit"
-	"gitlab.quimbo.fr/odwrtw/polochon/lib"
 )
 
 // Video types

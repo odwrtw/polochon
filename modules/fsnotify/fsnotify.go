@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"gitlab.quimbo.fr/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib"
 	"gopkg.in/fsnotify.v1"
 )
 

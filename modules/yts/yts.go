@@ -5,8 +5,8 @@ import (
 	"log"
 
 	"github.com/Sirupsen/logrus"
-	"gitlab.quimbo.fr/odwrtw/polochon/lib"
-	"gitlab.quimbo.fr/odwrtw/yts-api"
+	"github.com/odwrtw/polochon/lib"
+	"github.com/odwrtw/yts"
 )
 
 // Yts errors

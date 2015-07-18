@@ -5,15 +5,15 @@ import (
 	"log"
 
 	// Modules
-	_ "gitlab.quimbo.fr/odwrtw/polochon/modules/addicted"
-	_ "gitlab.quimbo.fr/odwrtw/polochon/modules/eztv"
-	_ "gitlab.quimbo.fr/odwrtw/polochon/modules/fsnotify"
-	_ "gitlab.quimbo.fr/odwrtw/polochon/modules/openguessit"
-	_ "gitlab.quimbo.fr/odwrtw/polochon/modules/opensubtitles"
-	_ "gitlab.quimbo.fr/odwrtw/polochon/modules/pushover"
-	_ "gitlab.quimbo.fr/odwrtw/polochon/modules/tmdb"
-	_ "gitlab.quimbo.fr/odwrtw/polochon/modules/tvdb"
-	_ "gitlab.quimbo.fr/odwrtw/polochon/modules/yts"
+	_ "github.com/odwrtw/polochon/modules/addicted"
+	_ "github.com/odwrtw/polochon/modules/eztv"
+	_ "github.com/odwrtw/polochon/modules/fsnotify"
+	_ "github.com/odwrtw/polochon/modules/openguessit"
+	_ "github.com/odwrtw/polochon/modules/opensubtitles"
+	_ "github.com/odwrtw/polochon/modules/pushover"
+	_ "github.com/odwrtw/polochon/modules/tmdb"
+	_ "github.com/odwrtw/polochon/modules/tvdb"
+	_ "github.com/odwrtw/polochon/modules/yts"
 )
 
 func main() {

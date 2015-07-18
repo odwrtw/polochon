@@ -7,8 +7,8 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/arbovm/levenshtein"
-	"gitlab.quimbo.fr/odwrtw/addicted"
-	"gitlab.quimbo.fr/odwrtw/polochon/lib"
+	"github.com/odwrtw/addicted"
+	"github.com/odwrtw/polochon/lib"
 )
 
 var langTranslate = map[polochon.Language]string{

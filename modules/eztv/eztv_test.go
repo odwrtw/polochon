@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/odwrtw/eztv"
-	"gitlab.quimbo.fr/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib"
 )
 
 func TestEztvGetTorrentsInvalidArgumens(t *testing.T) {

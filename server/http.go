@@ -7,7 +7,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"gitlab.quimbo.fr/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib"
 )
 
 // hello world, the web server

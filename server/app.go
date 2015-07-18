@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/Sirupsen/logrus"
-	"gitlab.quimbo.fr/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib"
 )
 
 // App represents the polochon app

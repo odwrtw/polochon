@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/odwrtw/polochon/lib"
 	"github.com/oz/osdb"
-	"gitlab.quimbo.fr/odwrtw/polochon/lib"
 )
 
 // Struct of a subtitle containing an osdbSubtitle, a connexion if any, and a

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/garfunkel/go-tvdb"
-	"gitlab.quimbo.fr/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib"
 )
 
 var testDetailer = &TvDB{}
