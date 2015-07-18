@@ -1,6 +1,8 @@
 # polochon
 =======================
 
+[![Build Status](https://travis-ci.org/odwrtw/polochon.svg?branch=master)](https://travis-ci.org/odwrtw/polochon)
+
 ## Modules
 
 Modules needs to be loaded using the "\_" prefix. See [this link](https://golang.org/doc/effective_go.html#blank_import) for more explanation.
