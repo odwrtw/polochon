@@ -21,6 +21,7 @@ then
     fi
 
     echo "Deleting the current '$GIT_TAG' tag"
+    git tag -d $GIT_TAG
     git push $GITHUB_PROJECT :refs/tags/$GIT_TAG
 
     echo "Pushing the $GIT_TAG to github"
