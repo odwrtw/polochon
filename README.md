@@ -36,7 +36,7 @@ Available guesser:
 The fs notifier notifies the app whenever a file has been added into the watched directory.
 
 Available FsNotifier:
-* inotify (not yet implemented)
+* inotify (linux file system notifier)
 * fsnotify (multi-platform file system notifier)
 
 ### Notifier
