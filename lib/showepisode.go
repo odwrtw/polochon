@@ -289,7 +289,7 @@ func (s *ShowEpisode) GetSubtitle() error {
 		s.log.Warnf("failed to get subtitles from subtitiler %q: %q", subtitler.Name(), err)
 	}
 
-	if err == nil {
+	if subtitle != nil {
 		file, err := os.Create(s.SubtitlePath())
 		if err != nil {
 			return err
