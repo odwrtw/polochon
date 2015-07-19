@@ -12,6 +12,7 @@ var ErrNoSubtitleFound = errors.New("No subtitle found")
 
 // Subtitler all subtitler must implement it
 type Subtitler interface {
+	Module
 	GetShowSubtitle(*ShowEpisode) (Subtitle, error)
 	GetMovieSubtitle(*Movie) (Subtitle, error)
 }

@@ -21,6 +21,11 @@ const (
 	UnknownType = "unknown"
 )
 
+// Module constants
+const (
+	moduleName = "openguessit"
+)
+
 // Errors
 var (
 	ErrShowNameUnknown = errors.New("show title unknown")
@@ -28,7 +33,7 @@ var (
 
 // Register openguessit as a Guesser
 func init() {
-	polochon.RegisterGuesser("openguessit", NewOpenGuessit)
+	polochon.RegisterGuesser(moduleName, NewOpenGuessit)
 }
 
 // OpenGuessit is a mix of opensubtitle and guessit
@@ -39,6 +44,11 @@ type OpenGuessit struct {
 // NewOpenGuessit returns an new openguessit
 func NewOpenGuessit(params map[string]interface{}, log *logrus.Entry) (polochon.Guesser, error) {
 	return &OpenGuessit{log: log}, nil
+}
+
+// Name implements the Module interface
+func (og *OpenGuessit) Name() string {
+	return moduleName
 }
 
 // Guess implements the Guesser interface

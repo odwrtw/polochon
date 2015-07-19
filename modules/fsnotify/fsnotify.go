@@ -12,15 +12,25 @@ import (
 // Time to wait before sending an event
 const DELAY time.Duration = 100 * time.Millisecond
 
+// Module constants
+const (
+	moduleName = "fsnotify"
+)
+
 // Register fsnotify as a FsNotifier
 func init() {
-	polochon.RegisterFsNotifier("fsnotify", NewFsNotify)
+	polochon.RegisterFsNotifier(moduleName, NewFsNotify)
 }
 
 // FsNotify is a fsNotifier watching a directory
 type FsNotify struct {
 	log     *logrus.Entry
 	watcher *fsnotify.Watcher
+}
+
+// Name implements the Module interface
+func (fs *FsNotify) Name() string {
+	return moduleName
 }
 
 // NewFsNotify returns a new FsNotify

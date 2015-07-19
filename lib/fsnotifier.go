@@ -17,6 +17,7 @@ type FsNotifierCtx struct {
 
 // FsNotifier is an interface to notify on filesytem change
 type FsNotifier interface {
+	Module
 	Watch(watchPath string, ctx FsNotifierCtx) error
 }
 

@@ -16,9 +16,14 @@ var (
 	ErrInvalidArgument  = errors.New("pushover: invalid argument type")
 )
 
+// Module constants
+const (
+	moduleName = "pushover"
+)
+
 // Register a new notifier
 func init() {
-	polochon.RegisterNotifier("pushover", New)
+	polochon.RegisterNotifier(moduleName, New)
 }
 
 // Pushover stores the notification configs
@@ -52,6 +57,11 @@ func New(params map[string]interface{}, log *logrus.Entry) (polochon.Notifier, e
 		app:       pushover.New(key),
 		recipient: pushover.NewRecipient(recipient),
 	}, nil
+}
+
+// Name implements the Module interface
+func (p *Pushover) Name() string {
+	return moduleName
 }
 
 // Notify sends a notification to the recipient

@@ -123,7 +123,7 @@ func (s *ShowEpisode) GetDetails() error {
 		if err == nil {
 			break
 		}
-		s.log.Warnf("failed to get details from detailer: %q", err)
+		s.log.Warnf("failed to get details from detailer: %q: %q", d.Name(), err)
 	}
 	return err
 }
@@ -137,7 +137,7 @@ func (s *ShowEpisode) GetTorrents() error {
 			break
 		}
 
-		s.log.Warnf("failed to get torrents from torrenter: %q", err)
+		s.log.Warnf("failed to get torrents from torrenter: %q: %q", t.Name(), err)
 	}
 	return err
 }
@@ -151,7 +151,7 @@ func (s *ShowEpisode) Notify() error {
 			break
 		}
 
-		s.log.Warnf("failed to send a notification from notifier: %q", err)
+		s.log.Warnf("failed to send a notification from notifier: %q: %q", n.Name(), err)
 	}
 	return err
 }
@@ -282,10 +282,11 @@ func (s *ShowEpisode) GetSubtitle() error {
 	for _, subtitler := range s.Subtitlers {
 		subtitle, err = subtitler.GetShowSubtitle(s)
 		if err == nil {
+			s.log.Infof("Got subtitle from subtitiler %q", subtitler.Name())
 			break
 		}
 
-		s.log.Warnf("failed to get subtitles from subtitler: %q", err)
+		s.log.Warnf("failed to get subtitles from subtitiler %q: %q", subtitler.Name(), err)
 	}
 
 	if err == nil {

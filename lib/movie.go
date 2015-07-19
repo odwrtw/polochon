@@ -268,10 +268,11 @@ func (m *Movie) GetSubtitle() error {
 	for _, subtitler := range m.Subtitlers {
 		subtitle, err = subtitler.GetMovieSubtitle(m)
 		if err == nil {
+			m.log.Infof("Got subtitle from subtitiler %q", subtitler.Name())
 			break
 		}
 
-		m.log.Warnf("failed to get subtitles from subtitler: %q", err)
+		m.log.Warnf("failed to get subtitles from subtitiler %q: %q", subtitler.Name(), err)
 	}
 
 	if err == nil {

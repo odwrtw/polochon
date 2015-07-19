@@ -15,9 +15,14 @@ var (
 	ErrNoTorrentFound  = errors.New("yts: no torrent found on yts")
 )
 
+// Module constants
+const (
+	moduleName = "yts"
+)
+
 // Register yts as a Torrenter
 func init() {
-	polochon.RegisterTorrenter("yts", NewYts)
+	polochon.RegisterTorrenter(moduleName, NewYts)
 }
 
 // Yts is a source for movie torrents
@@ -28,6 +33,11 @@ type Yts struct {
 // NewYts returns a new Yts
 func NewYts(params map[string]interface{}, log *logrus.Entry) (polochon.Torrenter, error) {
 	return &Yts{log: log}, nil
+}
+
+// Name implements the Module interface
+func (y *Yts) Name() string {
+	return moduleName
 }
 
 // Ensure that the given interface is an Movie

@@ -2,6 +2,7 @@ package polochon
 
 // Downloader represent a interface for any downloader
 type Downloader interface {
+	Module
 	Download(URL string) error
 	List() error
 }

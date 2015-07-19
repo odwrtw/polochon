@@ -17,9 +17,14 @@ var (
 	ErrInvalidShowEpisode      = errors.New("eztv: missing show episode or season")
 )
 
+// Module constants
+const (
+	moduleName = "eztv"
+)
+
 // Register yts as a Torrenter
 func init() {
-	polochon.RegisterTorrenter("eztv", NewEztv)
+	polochon.RegisterTorrenter(moduleName, NewEztv)
 }
 
 // Eztv is a source for show episode torrents
@@ -81,6 +86,11 @@ func (e *Eztv) getShowEpisodeDetails(s *polochon.ShowEpisode) error {
 	s.Torrents = torrents
 
 	return nil
+}
+
+// Name implements the Module interface
+func (e *Eztv) Name() string {
+	return moduleName
 }
 
 // GetTorrents implements the Torrenter interface
