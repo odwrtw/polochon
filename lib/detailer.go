@@ -8,6 +8,7 @@ import (
 
 // Detailer is the interface to get details on a video or a show
 type Detailer interface {
+	Module
 	GetDetails(i interface{}) error
 }
 

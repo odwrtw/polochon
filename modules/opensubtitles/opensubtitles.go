@@ -20,6 +20,11 @@ type openSubtitle struct {
 	client *osdb.Client
 }
 
+// Module constants
+const (
+	moduleName = "opensubtitles"
+)
+
 var langTranslate = map[polochon.Language]string{
 	polochon.EN: "eng",
 	polochon.FR: "fre",
@@ -27,7 +32,7 @@ var langTranslate = map[polochon.Language]string{
 
 // Register a new Subtitler
 func init() {
-	polochon.RegisterSubtitler("opensubtitles", New)
+	polochon.RegisterSubtitler(moduleName, New)
 }
 
 // Close the subtitle connexion
@@ -122,6 +127,19 @@ func New(params map[string]interface{}, log *logrus.Entry) (polochon.Subtitler, 
 	return osp, nil
 }
 
+type osProxy struct {
+	client   *osdb.Client
+	log      *logrus.Entry
+	language string
+	user     string
+	password string
+}
+
+// Name implements the Module interface
+func (osp *osProxy) Name() string {
+	return moduleName
+}
+
 // getOpenSubtitleClient will return a configured osdb.Client
 func (osp *osProxy) getOpenSubtitleClient() error {
 	// Create a new client if needed
@@ -141,14 +159,6 @@ func (osp *osProxy) getOpenSubtitleClient() error {
 	// If we had an error, try to login again
 	// LogIn with the user's configuration
 	return osp.client.LogIn(osp.user, osp.password, osp.language)
-}
-
-type osProxy struct {
-	client   *osdb.Client
-	log      *logrus.Entry
-	language string
-	user     string
-	password string
 }
 
 func (osp *osProxy) checkSubtitles(i interface{}, subs osdb.Subtitles) (*osdb.Subtitle, error) {
@@ -220,7 +230,8 @@ func (osp *osProxy) searchSubtitles(v interface{}, filePath string) (*openSubtit
 	if sub != nil {
 		return &openSubtitle{os: sub, client: osp.client}, nil
 	}
-	return nil, nil
+
+	return nil, polochon.ErrNoSubtitleFound
 }
 
 // checkConnAndExec will check the connexion, execute the function and check the subtitles returned
@@ -346,11 +357,13 @@ func (osp *osProxy) getGoodMovieSubtitles(m polochon.Movie, subs osdb.Subtitles)
 		imdbID := fmt.Sprintf("tt%07s", sub.IDMovieImdb)
 
 		if imdbID == m.ImdbID {
-			osp.log.Debugf("This is it : %s", imdbID)
 			goodSubs = append(goodSubs, sub)
 		} else {
 			continue
 		}
+	}
+	if len(goodSubs) > 0 {
+		osp.log.Debugf("Got %d subtitles", len(goodSubs))
 	}
 	return goodSubs
 }
@@ -374,8 +387,10 @@ func (osp *osProxy) getGoodShowEpisodeSubtitles(s polochon.ShowEpisode, subs osd
 			continue
 		}
 
-		osp.log.Debugf("This is it : %s | episode %s | season %s", imdbID, sub.SeriesEpisode, sub.SeriesSeason)
 		goodSubs = append(goodSubs, sub)
+	}
+	if len(goodSubs) > 0 {
+		osp.log.Debugf("Got %d subtitles", len(goodSubs))
 	}
 	return goodSubs
 }

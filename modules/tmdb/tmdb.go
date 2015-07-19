@@ -11,9 +11,14 @@ import (
 	"github.com/ryanbradynd05/go-tmdb"
 )
 
+// Module constants
+const (
+	moduleName = "tmdb"
+)
+
 // Register tvdb as a Detailer
 func init() {
-	polochon.RegisterDetailer("tmdb", NewTmDB)
+	polochon.RegisterDetailer(moduleName, NewTmDB)
 }
 
 // API constants
@@ -144,6 +149,11 @@ func (t *TmDB) searchByImdbID(i interface{}) error {
 var tmdbGetMovieInfo = func(tmdbID int, options map[string]string) (*tmdb.Movie, error) {
 	t := tmdb.Init(TmDBAPIKey)
 	return t.GetMovieInfo(tmdbID, options)
+}
+
+// Name implements the Module interface
+func (t *TmDB) Name() string {
+	return moduleName
 }
 
 // GetDetails implements the Detailer interface

@@ -16,9 +16,14 @@ var langTranslate = map[polochon.Language]string{
 	polochon.FR: "french",
 }
 
+// Module constants
+const (
+	moduleName = "addicted"
+)
+
 // Register a new Subtitler
 func init() {
-	polochon.RegisterSubtitler("addicted", New)
+	polochon.RegisterSubtitler(moduleName, New)
 }
 
 // New module
@@ -74,6 +79,11 @@ func New(params map[string]interface{}, log *logrus.Entry) (polochon.Subtitler, 
 type addictedProxy struct {
 	client   addicted.Client
 	language string
+}
+
+// Name implements the Module interface
+func (a *addictedProxy) Name() string {
+	return moduleName
 }
 
 func (a *addictedProxy) GetShowSubtitle(reqEpisode *polochon.ShowEpisode) (polochon.Subtitle, error) {

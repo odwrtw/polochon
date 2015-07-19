@@ -14,7 +14,7 @@ import (
 
 // Register tvdb as a Detailer
 func init() {
-	polochon.RegisterDetailer("tvdb", NewTvDB)
+	polochon.RegisterDetailer(moduleName, NewTvDB)
 }
 
 // API constants
@@ -22,6 +22,11 @@ const (
 	APIendpoint = "http://www.thetvdb.com/api"
 	Token       = "1D62F2F90030C444"
 	AssetsURL   = "http://thetvdb.com/banners/"
+)
+
+// Module constants
+const (
+	moduleName = "tvdb"
 )
 
 // Errors
@@ -264,6 +269,11 @@ func getShowEpisodeDetails(s *polochon.ShowEpisode) error {
 	}
 
 	return nil
+}
+
+// Name implements the Module interface
+func (t *TvDB) Name() string {
+	return moduleName
 }
 
 // GetDetails implements the Detailer interface

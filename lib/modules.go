@@ -29,6 +29,11 @@ var (
 // ModuleType holds modules type
 type ModuleType string
 
+// Module type, all modules must implement it
+type Module interface {
+	Name() string
+}
+
 // Available modules types
 const (
 	TypeTorrenter  ModuleType = "torrenter"

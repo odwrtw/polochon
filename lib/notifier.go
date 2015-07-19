@@ -8,6 +8,7 @@ import (
 
 // Notifier is an interface to notify when a video is added
 type Notifier interface {
+	Module
 	Notify(i interface{}) error
 }
 
