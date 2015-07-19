@@ -1,5 +1,14 @@
 language: go
-
 go:
 - 1.4
 - tip
+script: go build -o polochon server/*.go
+deploy:
+  provider: releases
+  api_key:
+    secure: V4Hva9O1XppONuFJRonmKtTLO/qonHLErfesH+X6patJbPYd5QtqMjg5N9PajjlXgGXYGp6X0/gagj1vXxOa+gd8aRQLjuAEQuklRaEztOMhy9asU6IitNUKCJmCm7JgGr4NlNzl8i7DKhr5bAD9U54vn70bVJ3pGnQ2FbgnrvY+8xBgHVe0NSfk+HAbVkQGOnFm9lDzyGncbTkukfauIx8TMyXqK6VFeLXeYs27DK73nAGOXh+n8ZoFKxEZ8hKecgdTS8OwZwZ7vSwAHhJauvaKRwMOie35llPcsgy9BQ1Mc6HU0kWfYOBTzGJ3yWHqkhYQe6yzgBbpIIE7yss4CRQywIALkPqGJyhqn7HD07GZbNT2m8HhMtvt+aLb7Y6DkHmgHaOde3zeDSrEEnSUo/xoLT7AKMqaM+hdjlZlb103kzZCnybde6c5aJQ5yjmmPQWXHHKp0/RkuEhGI7W8vyvI8iexE/lQGf8schU/GfgRCvqoUciTO3285W6DRMdHjW1BFbn+Enn3K6RFEGCTmQorgiJ8nQa40LccySXEhuHwE7wJZDQUmng0GCBiR75TV5yuAAPHs085/26/yiglmL1gkJr4cPXzG3GFRsGiHpQHO3swcNQFmjGbzL9ecwjw2luO77IeSaxxvhRmsSs0uzW7fYYHGT8S7ZuveHOxN8g=
+  file: polochon
+  skip_cleanup: true
+  on:
+    repo: odwrtw/polochon
+    tags: true
