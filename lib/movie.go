@@ -275,7 +275,7 @@ func (m *Movie) GetSubtitle() error {
 		m.log.Warnf("failed to get subtitles from subtitiler %q: %q", subtitler.Name(), err)
 	}
 
-	if err == nil {
+	if subtitle != nil {
 		file, err := os.Create(m.File.SubtitlePath())
 		if err != nil {
 			return err
