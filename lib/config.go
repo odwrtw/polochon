@@ -80,12 +80,13 @@ type ConfigFileDownloader struct {
 
 // ConfigFileHTTPServer represents the configuration for the HTTP Server in the configuration file
 type ConfigFileHTTPServer struct {
-	Enable         bool   `yaml:"enable"`
-	Port           int    `yaml:"port"`
-	Host           string `yaml:"host"`
-	ServeFiles     bool   `yaml:"serve_files"`
-	ServeFilesUser string `yaml:"serve_files_user"`
-	ServeFilesPwd  string `yaml:"serve_files_pwd"`
+	Enable            bool   `yaml:"enable"`
+	Port              int    `yaml:"port"`
+	Host              string `yaml:"host"`
+	ServeFiles        bool   `yaml:"serve_files"`
+	BasicAuth         bool   `yaml:"basic_auth"`
+	BasicAuthUser     string `yaml:"basic_auth_user"`
+	BasicAuthPassword string `yaml:"basic_auth_password"`
 }
 
 // Config represents the configuration for polochon
@@ -112,12 +113,13 @@ type DownloaderConfig struct {
 
 // HTTPServerConfig represents the configuration for the HTTP Server
 type HTTPServerConfig struct {
-	Enable         bool
-	Port           int
-	Host           string
-	ServeFiles     bool
-	ServeFilesUser string
-	ServeFilesPwd  string
+	Enable            bool
+	Port              int
+	Host              string
+	ServeFiles        bool
+	BasicAuth         bool
+	BasicAuthUser     string
+	BasicAuthPassword string
 }
 
 // VideoConfig represents the configuration for video object
@@ -189,12 +191,13 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 	}
 
 	conf.HTTPServer = HTTPServerConfig{
-		Enable:         cf.HTTPServer.Enable,
-		Port:           cf.HTTPServer.Port,
-		Host:           cf.HTTPServer.Host,
-		ServeFiles:     cf.HTTPServer.ServeFiles,
-		ServeFilesUser: cf.HTTPServer.ServeFilesUser,
-		ServeFilesPwd:  cf.HTTPServer.ServeFilesPwd,
+		Enable:            cf.HTTPServer.Enable,
+		Port:              cf.HTTPServer.Port,
+		Host:              cf.HTTPServer.Host,
+		ServeFiles:        cf.HTTPServer.ServeFiles,
+		BasicAuth:         cf.HTTPServer.BasicAuth,
+		BasicAuthUser:     cf.HTTPServer.BasicAuthUser,
+		BasicAuthPassword: cf.HTTPServer.BasicAuthPassword,
 	}
 
 	conf.ModulesParams = cf.ModulesParams

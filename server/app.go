@@ -8,7 +8,9 @@ import (
 	"sync"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/gorilla/mux"
 	"github.com/odwrtw/polochon/lib"
+	"gopkg.in/unrolled/render.v1"
 )
 
 // App represents the polochon app
@@ -30,6 +32,8 @@ type App struct {
 	wg sync.WaitGroup
 
 	logger *logrus.Logger
+	render *render.Render
+	mux    *mux.Router
 }
 
 // NewApp create a new app from the given configuration path
@@ -49,6 +53,12 @@ func NewApp(configPath string) (*App, error) {
 		log.Panic(err)
 	}
 
+	// Only indent JSON in dev mode
+	indentJSON := false
+	if os.Getenv("ENV") != "PRODUCTION" {
+		indentJSON = true
+	}
+
 	return &App{
 		config: config,
 		event:  make(chan string),
@@ -56,6 +66,10 @@ func NewApp(configPath string) (*App, error) {
 		stop:   make(chan struct{}),
 		errc:   make(chan error),
 		logger: logger,
+		render: render.New(render.Options{
+			IndentJSON: indentJSON,
+		}),
+		mux: mux.NewRouter(),
 	}, nil
 }
 
