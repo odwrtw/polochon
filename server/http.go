@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
+	"strings"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
@@ -13,6 +15,7 @@ import (
 
 // hello world, the web server
 func (a *App) movieStore(w http.ResponseWriter, req *http.Request) {
+	a.logger.Debug("Listing movies")
 	vs := polochon.NewVideoStore(a.config, a.logger)
 
 	movies, err := vs.ScanMovies()
@@ -20,20 +23,11 @@ func (a *App) movieStore(w http.ResponseWriter, req *http.Request) {
 		a.render.JSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
-
-	toJSONMovies := []polochon.Movie{}
-	for _, m := range movies {
-		movie, err := m.PrepareForJSON()
-		if err != nil {
-			msg := fmt.Sprintf("Failed to prepare for json response: %+v", err)
-			a.render.JSON(w, http.StatusInternalServerError, map[string]string{"error": msg})
-		}
-		toJSONMovies = append(toJSONMovies, movie)
-	}
-	a.render.JSON(w, http.StatusOK, toJSONMovies)
+	a.render.JSON(w, http.StatusOK, movies)
 }
 
 func (a *App) showStore(w http.ResponseWriter, req *http.Request) {
+	a.logger.Debug("Listing shows")
 	vs := polochon.NewVideoStore(a.config, a.logger)
 
 	shows, err := vs.ScanShows()
@@ -41,36 +35,50 @@ func (a *App) showStore(w http.ResponseWriter, req *http.Request) {
 		a.render.JSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
-
-	toJSONShows := []polochon.Show{}
-	for _, s := range shows {
-		show, err := s.PrepareForJSON()
-		if err != nil {
-			msg := fmt.Sprintf("Failed to prepare fo json response: %+v", err)
-			a.render.JSON(w, http.StatusInternalServerError, map[string]string{"error": msg})
-		}
-		toJSONShows = append(toJSONShows, show)
-	}
-
-	a.render.JSON(w, http.StatusOK, toJSONShows)
+	a.render.JSON(w, http.StatusOK, shows)
 }
 
 func (a *App) serveFiles(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	slug := vars["slug"]
+	slug = strings.ToLower(slug)
 
-	// TODO: create the real file handler with video slugs
-	a.logger.Infof("Should get file with slug: %s", slug)
+	a.logger.Debugf("Looking for: %s", slug)
 
-	a.render.JSON(w, http.StatusInternalServerError, map[string]string{"slug": slug})
+	// Instanciate a VideoStore to look for the Slug
+	vs := polochon.NewVideoStore(a.config, a.logger)
+
+	// Find the file by Slug
+	f, err := vs.SearchFileBySlug(slug)
+	if err != nil {
+		a.logger.Error(err.Error())
+		var status int
+		if err == polochon.ErrSlugNotFound {
+			status = http.StatusNotFound
+		} else {
+			status = http.StatusInternalServerError
+		}
+		a.render.JSON(w, status, map[string]string{"error": err.Error()})
+		return
+	}
+	a.logger.Debugf("Going to serve: %s", filepath.Base(f.Path))
+
+	// Set the header so that when downloading, the real filename will be given
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filepath.Base(f.Path)))
+	http.ServeFile(w, req, f.Path)
 }
 
 // HTTPServer handles the HTTP requests
 func (a *App) HTTPServer() {
 	addr := fmt.Sprintf("%s:%d", a.config.HTTPServer.Host, a.config.HTTPServer.Port)
+	a.logger.Debugf("HTTP Server listening on: %s", addr)
 
-	a.mux.HandleFunc("/videos/movies", a.movieStore)
-	a.mux.HandleFunc("/videos/shows", a.showStore)
+	// s will handle /videos requests
+	s := a.mux.PathPrefix("/videos").Subrouter()
+	// /videos/shows
+	s.HandleFunc("/shows", a.showStore)
+	// /videos/movies
+	s.HandleFunc("/movies", a.movieStore)
 
 	if a.config.HTTPServer.ServeFiles {
 		a.logger.Info("Server is serving files")

@@ -1,11 +1,17 @@
 package polochon
 
 import (
+	"errors"
 	"os"
 	"path"
 	"path/filepath"
 
 	"github.com/Sirupsen/logrus"
+)
+
+// Video errors
+var (
+	ErrSlugNotFound = errors.New("videostore: no such file with this slug")
 )
 
 // VideoStore represent a collection of videos
@@ -178,4 +184,33 @@ func (vs *VideoStore) scanEpisodes(showPath string) ([]*ShowEpisode, error) {
 	}
 
 	return showEpisodes, nil
+}
+
+// SearchFileBySlug returns the video by its slug
+func (vs *VideoStore) SearchFileBySlug(slug string) (*File, error) {
+	// Get all the movies
+	movies, err := vs.ScanMovies()
+	if err != nil {
+		return nil, err
+	}
+	// Look for movies with this Slug
+	for _, m := range movies {
+		if m.Slug() == slug {
+			return &m.File, nil
+		}
+	}
+	// Get all the shows
+	shows, err := vs.ScanShows()
+	if err != nil {
+		return nil, err
+	}
+	// Look for shows with this Slug
+	for _, s := range shows {
+		for _, e := range s.Episodes {
+			if e.Slug() == slug {
+				return &e.File, nil
+			}
+		}
+	}
+	return nil, ErrSlugNotFound
 }

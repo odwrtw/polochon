@@ -1,6 +1,7 @@
 package polochon
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -41,22 +42,16 @@ type ShowEpisode struct {
 	log           *logrus.Entry
 }
 
-// PrepareForJSON return a copy of the object clean for the API
-func (s ShowEpisode) PrepareForJSON() (ShowEpisode, error) {
-	ok, err := filepath.Match(s.Dir+"/*/*/*", s.Path)
-	if err != nil {
-		return s, err
+// MarshalJSON is a custom marshal function to handle public path
+func (s *ShowEpisode) MarshalJSON() ([]byte, error) {
+	var aux struct {
+		ShowEpisode
+		Slug string `json:"slug"`
 	}
-	if !ok {
-		return s, errors.New("Unexpected file path")
-	}
-	path, err := filepath.Rel(s.Dir, s.Path)
-	if err != nil {
-		return s, err
-	}
-	s.Path = path
+	aux.Slug = s.Slug()
+	aux.ShowEpisode = *s
 
-	return s, nil
+	return json.Marshal(aux)
 }
 
 // NewShowEpisode returns a new show episode
@@ -303,4 +298,9 @@ func (s *ShowEpisode) GetSubtitle() error {
 	}
 
 	return err
+}
+
+// Slug will slug the show episode
+func (s *ShowEpisode) Slug() string {
+	return slug(fmt.Sprintf("%s-s%02de%02d", s.ShowTitle, s.Season, s.Episode))
 }

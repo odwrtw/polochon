@@ -34,18 +34,6 @@ type Show struct {
 	log        *logrus.Entry
 }
 
-// PrepareForJSON return a copy of the object clean for the API
-func (s Show) PrepareForJSON() (Show, error) {
-	for i, ep := range s.Episodes {
-		newep, err := ep.PrepareForJSON()
-		if err != nil {
-			return s, err
-		}
-		s.Episodes[i] = &newep
-	}
-	return s, nil
-}
-
 // NewShow returns a new show
 func NewShow(showConf ShowConfig) *Show {
 	return &Show{
