@@ -9,8 +9,9 @@ http_server:
   host: localhost
   enable: true
   serve_files: true
-  serve_files_user: toto
-  serve_files_pwd: tata
+  basic_auth: true
+  basic_auth_user: toto
+  basic_auth_password: tata
 video:
   guesser: openguessit
   exclude_file_containing:

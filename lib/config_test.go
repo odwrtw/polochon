@@ -19,8 +19,9 @@ http_server:
   host: localhost
   enable: true
   serve_files: true
-  serve_files_user: toto
-  serve_files_pwd: tata
+  basic_auth: true
+  basic_auth_user: toto
+  basic_auth_password: tata
 video:
   guesser: openguessit
   notifiers:
@@ -75,12 +76,13 @@ var configStructExample = &ConfigFileRoot{
 		DownloadDir: "/home/user/downloads",
 	},
 	HTTPServer: ConfigFileHTTPServer{
-		Enable:         true,
-		Port:           8080,
-		Host:           "localhost",
-		ServeFiles:     true,
-		ServeFilesUser: "toto",
-		ServeFilesPwd:  "tata",
+		Enable:            true,
+		Port:              8080,
+		Host:              "localhost",
+		ServeFiles:        true,
+		BasicAuth:         true,
+		BasicAuthUser:     "toto",
+		BasicAuthPassword: "tata",
 	},
 	Video: ConfigFileVideo{
 		ExcludeFileContaining:     []string{"sample"},
