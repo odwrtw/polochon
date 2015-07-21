@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"sync"
 
 	"github.com/Sirupsen/logrus"
@@ -200,10 +201,10 @@ func (a *App) Organize(filePath string) error {
 	// only a file, organize it.
 	if fileInfo.IsDir() {
 		log.Debug("Organize folder")
-		err = a.organizeFolder(filePath, log)
+		err = a.recoverOrganize(a.organizeFolder, filePath, log)
 	} else {
 		log.Debug("Organize file")
-		err = a.organizeFile(filePath, log)
+		err = a.recoverOrganize(a.organizeFile, filePath, log)
 	}
 
 	if err != nil {
@@ -211,6 +212,19 @@ func (a *App) Organize(filePath string) error {
 	}
 
 	return nil
+}
+
+// recoverOrganize wraps the organise function to catch panics
+func (a *App) recoverOrganize(f func(filePath string, log *logrus.Entry) error, filePath string, log *logrus.Entry) error {
+	defer func() {
+		if err := recover(); err != nil {
+			stack := make([]byte, 8*1024)
+			runtime.Stack(stack, true)
+			a.logger.Errorf("PANIC: %q\n%s", err, stack)
+		}
+	}()
+
+	return f(filePath, log)
 }
 
 // OrganizeFile stores the videos in the video library
