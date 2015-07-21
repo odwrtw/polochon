@@ -1,6 +1,7 @@
 package polochon
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -41,22 +42,16 @@ type Movie struct {
 	log           *logrus.Entry
 }
 
-// PrepareForJSON return a copy of the object clean for the API
-func (m Movie) PrepareForJSON() (Movie, error) {
-	ok, err := filepath.Match(m.Dir+"/*/*", m.Path)
-	if err != nil {
-		return m, err
+// MarshalJSON is a custom marshal function to handle public path
+func (m *Movie) MarshalJSON() ([]byte, error) {
+	var aux struct {
+		Movie
+		Slug string `json:"slug"`
 	}
-	if !ok {
-		return m, errors.New("Unexpected file path")
-	}
-	path, err := filepath.Rel(m.Dir, m.Path)
-	if err != nil {
-		return m, err
-	}
-	m.Path = path
+	aux.Slug = m.Slug()
+	aux.Movie = *m
 
-	return m, nil
+	return json.Marshal(aux)
 }
 
 // NewMovie returns a new movie
@@ -289,4 +284,9 @@ func (m *Movie) GetSubtitle() error {
 	}
 
 	return err
+}
+
+// Slug will slug the movie name
+func (m *Movie) Slug() string {
+	return slug(fmt.Sprintf("%s", m.Title))
 }

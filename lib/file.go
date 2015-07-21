@@ -15,7 +15,7 @@ var (
 // File handles polochon files
 type File struct {
 	FileConfig `xml:"-" json:"-"`
-	Path       string `xml:"-"`
+	Path       string `xml:"-" json:"-"`
 }
 
 // NewFile returs a new file from a path

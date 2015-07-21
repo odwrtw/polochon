@@ -56,13 +56,14 @@ type RegisteredModules struct {
 
 // ConfigureDetailer configures a detailer
 func ConfigureDetailer(name string, params map[string]interface{}, log *logrus.Entry) (Detailer, error) {
-	f, ok := registeredModules.Detailers[name]
-	if !ok {
-		return nil, ErrModuleNotFound
-	}
-
 	// Setup the logs
 	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeDetailer})
+
+	f, ok := registeredModules.Detailers[name]
+	if !ok {
+		logger.Infof("No such module %q", name)
+		return nil, ErrModuleNotFound
+	}
 
 	// Configure the module
 	module, err := f(params, logger)
@@ -75,13 +76,14 @@ func ConfigureDetailer(name string, params map[string]interface{}, log *logrus.E
 
 // ConfigureSubtitler configures a subtitiler
 func ConfigureSubtitler(name string, params map[string]interface{}, log *logrus.Entry) (Subtitler, error) {
-	f, ok := registeredModules.Subtitlers[name]
-	if !ok {
-		return nil, ErrModuleNotFound
-	}
-
 	// Setup the logs
 	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeSubtitler})
+
+	f, ok := registeredModules.Subtitlers[name]
+	if !ok {
+		logger.Infof("No such module %q", name)
+		return nil, ErrModuleNotFound
+	}
 
 	// Configure the module
 	module, err := f(params, logger)
@@ -94,13 +96,14 @@ func ConfigureSubtitler(name string, params map[string]interface{}, log *logrus.
 
 // ConfigureTorrenter configures a torrenter
 func ConfigureTorrenter(name string, params map[string]interface{}, log *logrus.Entry) (Torrenter, error) {
-	f, ok := registeredModules.Torrenters[name]
-	if !ok {
-		return nil, ErrModuleNotFound
-	}
-
 	// Setup the logs
 	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeTorrenter})
+
+	f, ok := registeredModules.Torrenters[name]
+	if !ok {
+		logger.Infof("No such module %q", name)
+		return nil, ErrModuleNotFound
+	}
 
 	// Configure the module
 	module, err := f(params, logger)
@@ -113,13 +116,14 @@ func ConfigureTorrenter(name string, params map[string]interface{}, log *logrus.
 
 // ConfigureGuesser configures a guesser
 func ConfigureGuesser(name string, params map[string]interface{}, log *logrus.Entry) (Guesser, error) {
-	f, ok := registeredModules.Guessers[name]
-	if !ok {
-		return nil, ErrModuleNotFound
-	}
-
 	// Setup the logs
 	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeGuesser})
+
+	f, ok := registeredModules.Guessers[name]
+	if !ok {
+		logger.Infof("No such module %q", name)
+		return nil, ErrModuleNotFound
+	}
 
 	// Configure the module
 	module, err := f(params, logger)
@@ -132,13 +136,14 @@ func ConfigureGuesser(name string, params map[string]interface{}, log *logrus.En
 
 // ConfigureFsNotifier configures a fs notifier
 func ConfigureFsNotifier(name string, params map[string]interface{}, log *logrus.Entry) (FsNotifier, error) {
-	f, ok := registeredModules.FsNotifiers[name]
-	if !ok {
-		return nil, ErrModuleNotFound
-	}
-
 	// Setup the logs
 	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeFsNotifier})
+
+	f, ok := registeredModules.FsNotifiers[name]
+	if !ok {
+		logger.Infof("No such module %q", name)
+		return nil, ErrModuleNotFound
+	}
 
 	// Configure the module
 	module, err := f(params, logger)
@@ -151,13 +156,14 @@ func ConfigureFsNotifier(name string, params map[string]interface{}, log *logrus
 
 // ConfigureNotifier configures a notifier
 func ConfigureNotifier(name string, params map[string]interface{}, log *logrus.Entry) (Notifier, error) {
-	f, ok := registeredModules.Notifiers[name]
-	if !ok {
-		return nil, ErrModuleNotFound
-	}
-
 	// Setup the logs
 	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeNotifier})
+
+	f, ok := registeredModules.Notifiers[name]
+	if !ok {
+		logger.Infof("No such module %q", name)
+		return nil, ErrModuleNotFound
+	}
 
 	// Configure the module
 	module, err := f(params, logger)
