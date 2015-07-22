@@ -74,6 +74,7 @@ type Video interface {
 	Type() VideoType
 	Store() error
 	SetFile(f *File)
+	GetFile() *File
 	SetConfig(c *VideoConfig, log *logrus.Logger)
 }
 

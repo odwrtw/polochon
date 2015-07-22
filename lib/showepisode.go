@@ -76,6 +76,11 @@ func (s *ShowEpisode) Type() VideoType {
 	return ShowEpisodeType
 }
 
+// GetFile implements the video interface
+func (s *ShowEpisode) GetFile() *File {
+	return &s.File
+}
+
 // SetFile implements the video interface
 func (s *ShowEpisode) SetFile(f *File) {
 	s.Path = f.Path

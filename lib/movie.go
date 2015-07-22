@@ -85,6 +85,11 @@ func (m *Movie) SetFile(f *File) {
 	m.Guesser = f.Guesser
 }
 
+// GetFile implements the video interface
+func (m *Movie) GetFile() *File {
+	return &m.File
+}
+
 // SetConfig implements the video interface
 func (m *Movie) SetConfig(c *VideoConfig, log *logrus.Logger) {
 	m.Dir = c.Movie.Dir
