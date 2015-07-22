@@ -22,6 +22,16 @@ http_server:
   basic_auth: true
   basic_auth_user: toto
   basic_auth_password: tata
+wishlist:
+  wishlisters:
+  - imdb
+  show_default_qualities:
+  - 720p
+  - 480p
+  - 1080p
+  movie_default_qualities:
+  - 1080p
+  - 720p
 video:
   guesser: openguessit
   notifiers:
@@ -83,6 +93,11 @@ var configStructExample = &ConfigFileRoot{
 		BasicAuth:         true,
 		BasicAuthUser:     "toto",
 		BasicAuthPassword: "tata",
+	},
+	Wishlist: ConfigFileWishlist{
+		WishlisterNames:       []string{"imdb"},
+		ShowDefaultQualities:  []Quality{Quality720p, Quality480p, Quality1080p},
+		MovieDefaultQualities: []Quality{Quality1080p, Quality720p},
 	},
 	Video: ConfigFileVideo{
 		ExcludeFileContaining:     []string{"sample"},
