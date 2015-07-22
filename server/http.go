@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
-	"strings"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
@@ -38,20 +37,32 @@ func (a *App) showStore(w http.ResponseWriter, req *http.Request) {
 	a.render.JSON(w, http.StatusOK, shows)
 }
 
-func (a *App) serveFiles(w http.ResponseWriter, req *http.Request) {
+func (a *App) serveFile(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
+	videoType := vars["videoType"]
 	slug := vars["slug"]
-	slug = strings.ToLower(slug)
 
-	a.logger.Debugf("Looking for: %s", slug)
+	a.logger.Debugf("Looking for the %s: %s", videoType, slug)
 
 	// Instanciate a VideoStore to look for the Slug
 	vs := polochon.NewVideoStore(a.config, a.logger)
 
+	var searchFunc func(slug string) (polochon.Video, error)
+	switch videoType {
+	case "movies":
+		searchFunc = vs.SearchMovieBySlug
+	case "shows":
+		searchFunc = vs.SearchShowEpisodeBySlug
+	default:
+		msg := fmt.Sprintf("Invalid video type: %q", videoType)
+		a.render.JSON(w, http.StatusInternalServerError, map[string]string{"error": msg})
+		return
+	}
+
 	// Find the file by Slug
-	f, err := vs.SearchFileBySlug(slug)
+	v, err := searchFunc(slug)
 	if err != nil {
-		a.logger.Error(err.Error())
+		a.logger.Error(err)
 		var status int
 		if err == polochon.ErrSlugNotFound {
 			status = http.StatusNotFound
@@ -61,11 +72,13 @@ func (a *App) serveFiles(w http.ResponseWriter, req *http.Request) {
 		a.render.JSON(w, status, map[string]string{"error": err.Error()})
 		return
 	}
-	a.logger.Debugf("Going to serve: %s", filepath.Base(f.Path))
+
+	videoFile := v.GetFile()
+	a.logger.Debugf("Going to serve: %s", filepath.Base(videoFile.Path))
 
 	// Set the header so that when downloading, the real filename will be given
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filepath.Base(f.Path)))
-	http.ServeFile(w, req, f.Path)
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filepath.Base(videoFile.Path)))
+	http.ServeFile(w, req, videoFile.Path)
 }
 
 // HTTPServer handles the HTTP requests
@@ -73,16 +86,14 @@ func (a *App) HTTPServer() {
 	addr := fmt.Sprintf("%s:%d", a.config.HTTPServer.Host, a.config.HTTPServer.Port)
 	a.logger.Debugf("HTTP Server listening on: %s", addr)
 
-	// s will handle /videos requests
-	s := a.mux.PathPrefix("/videos").Subrouter()
 	// /videos/shows
-	s.HandleFunc("/shows", a.showStore)
+	a.mux.HandleFunc("/shows", a.showStore)
 	// /videos/movies
-	s.HandleFunc("/movies", a.movieStore)
+	a.mux.HandleFunc("/movies", a.movieStore)
 
 	if a.config.HTTPServer.ServeFiles {
 		a.logger.Info("Server is serving files")
-		a.mux.HandleFunc("/files/{slug}", a.serveFiles)
+		a.mux.HandleFunc("/{videoType:movies|shows}/{slug}/download", a.serveFile)
 	}
 
 	n := negroni.New()

@@ -186,31 +186,39 @@ func (vs *VideoStore) scanEpisodes(showPath string) ([]*ShowEpisode, error) {
 	return showEpisodes, nil
 }
 
-// SearchFileBySlug returns the video by its slug
-func (vs *VideoStore) SearchFileBySlug(slug string) (*File, error) {
+// SearchMovieBySlug returns the video by its slug
+func (vs *VideoStore) SearchMovieBySlug(slug string) (Video, error) {
 	// Get all the movies
 	movies, err := vs.ScanMovies()
 	if err != nil {
 		return nil, err
 	}
+
 	// Look for movies with this Slug
 	for _, m := range movies {
 		if m.Slug() == slug {
-			return &m.File, nil
+			return m, nil
 		}
 	}
-	// Get all the shows
+
+	return nil, ErrSlugNotFound
+}
+
+// SearchShowEpisodeBySlug search for a show episode by its slug
+func (vs *VideoStore) SearchShowEpisodeBySlug(slug string) (Video, error) {
 	shows, err := vs.ScanShows()
 	if err != nil {
 		return nil, err
 	}
+
 	// Look for shows with this Slug
 	for _, s := range shows {
 		for _, e := range s.Episodes {
 			if e.Slug() == slug {
-				return &e.File, nil
+				return e, nil
 			}
 		}
 	}
+
 	return nil, ErrSlugNotFound
 }
