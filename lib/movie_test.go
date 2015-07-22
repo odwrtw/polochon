@@ -182,3 +182,13 @@ func TestDownloadImagesInvalidArguments(t *testing.T) {
 		t.Errorf("expected error %q, got %q", ErrMissingMovieImageURL, err)
 	}
 }
+
+func TestMovieSlug(t *testing.T) {
+	s := newFakeMovie()
+	got := s.Slug()
+	expected := "birdman"
+
+	if got != expected {
+		t.Errorf("got %q, expected %q", got, expected)
+	}
+}

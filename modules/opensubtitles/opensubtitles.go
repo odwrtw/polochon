@@ -1,6 +1,7 @@
 package opensubtitles
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"path"
@@ -29,6 +30,12 @@ var langTranslate = map[polochon.Language]string{
 	polochon.EN: "eng",
 	polochon.FR: "fre",
 }
+
+// Opensubtitles errors
+var (
+	ErrInvalidArgument = errors.New("opensubtitles: invalid argument")
+	ErrMissingArgument = errors.New("opensubtitles: missing argument")
+)
 
 // Register a new Subtitler
 func init() {
@@ -87,7 +94,8 @@ func New(params map[string]interface{}, log *logrus.Entry) (polochon.Subtitler, 
 
 		v, ok := p.(string)
 		if !ok {
-			return nil, fmt.Errorf("opensubtitles: %s should be a string", param)
+			log.Errorf("opensubtitles: %s should be a string", param)
+			return nil, ErrInvalidArgument
 		}
 
 		*ptr = v
@@ -97,17 +105,20 @@ func New(params map[string]interface{}, log *logrus.Entry) (polochon.Subtitler, 
 		log.Debugf("Logging in opensubtitles with no user")
 	}
 	if user != "" && password == "" {
-		return nil, fmt.Errorf("opensubtitles: missing password param")
+		log.Errorf("opensubtitles: missing password param")
+		return nil, ErrMissingArgument
 	}
 	if lang == "" {
-		return nil, fmt.Errorf("opensubtitles: missing lang param")
+		log.Errorf("opensubtitles: missing lang param")
+		return nil, ErrMissingArgument
 	}
 
 	language := polochon.Language(lang)
 
 	opensubtitlesLang, ok := langTranslate[language]
 	if !ok {
-		return nil, fmt.Errorf("opensubtitles: language no supported")
+		log.Errorf("opensubtitles: language no supported")
+		return nil, ErrInvalidArgument
 	}
 
 	// Create the OpenSubtitles proxy
@@ -116,12 +127,6 @@ func New(params map[string]interface{}, log *logrus.Entry) (polochon.Subtitler, 
 		user:     user,
 		password: password,
 		log:      log,
-	}
-
-	// Set the OpenSubtitles client
-	err := osp.getOpenSubtitleClient()
-	if err != nil {
-		return nil, err
 	}
 
 	return osp, nil
@@ -140,11 +145,36 @@ func (osp *osProxy) Name() string {
 	return moduleName
 }
 
+// Function to get a new client
+var newOsdbClient = func() (*osdb.Client, error) {
+	return osdb.NewClient()
+}
+
+// Function to check the client
+var checkOsdbClient = func(c *osdb.Client) error {
+	return c.Noop()
+}
+
+// Function to log in the client
+var logInOsdbClient = func(c *osdb.Client, user, password, language string) error {
+	return c.LogIn(user, password, language)
+}
+
+// Function to search subtitles via params
+var searchOsdbSubtitles = func(c *osdb.Client, params []interface{}) (osdb.Subtitles, error) {
+	return c.SearchSubtitles(&params)
+}
+
+// Function to search subtitles via a file
+var fileSearchSubtitles = func(c *osdb.Client, filePath string, languages []string) (osdb.Subtitles, error) {
+	return c.FileSearch(filePath, languages)
+}
+
 // getOpenSubtitleClient will return a configured osdb.Client
 func (osp *osProxy) getOpenSubtitleClient() error {
 	// Create a new client if needed
 	if osp.client == nil {
-		client, err := osdb.NewClient()
+		client, err := newOsdbClient()
 		if err != nil {
 			return err
 		}
@@ -152,13 +182,13 @@ func (osp *osProxy) getOpenSubtitleClient() error {
 	}
 
 	// Test to see if the connexion is still ok
-	if err := osp.client.Noop(); err == nil {
+	if err := checkOsdbClient(osp.client); err == nil {
 		return nil
 	}
 
 	// If we had an error, try to login again
 	// LogIn with the user's configuration
-	return osp.client.LogIn(osp.user, osp.password, osp.language)
+	return logInOsdbClient(osp.client, osp.user, osp.password, osp.language)
 }
 
 func (osp *osProxy) checkSubtitles(i interface{}, subs osdb.Subtitles) (*osdb.Subtitle, error) {
@@ -258,7 +288,7 @@ func (osp *osProxy) searchSubtitlesByHash(v interface{}, filePath string) (osdb.
 	// Set the languages
 	languages := []string{osp.language}
 	// Hash movie file, and search...
-	res, err := osp.client.FileSearch(filePath, languages)
+	res, err := fileSearchSubtitles(osp.client, filePath, languages)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +309,7 @@ func (osp *osProxy) searchSubtitlesByFilename(v interface{}, filePath string) (o
 		innerParams,
 	}
 
-	res, err := osp.client.SearchSubtitles(&params)
+	res, err := searchOsdbSubtitles(osp.client, params)
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +329,7 @@ func (osp *osProxy) searchSubtitlesByInfos(m interface{}, filePath string) (osdb
 		innerParams,
 	}
 
-	res, err := osp.client.SearchSubtitles(&params)
+	res, err := searchOsdbSubtitles(osp.client, params)
 	if err != nil {
 		return nil, err
 	}
