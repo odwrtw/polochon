@@ -11,7 +11,6 @@ import (
 // Video errors
 var (
 	ErrInvalidVideoType = errors.New("polochon: invalid video type")
-	ErrInvalidQuality   = errors.New("polochon: invalid quality")
 )
 
 // Regexp used for slugs by Movie and ShowEpisode objects
@@ -41,21 +40,19 @@ const (
 	Quality3D            = "3D"
 )
 
-var stringToQuality = map[string]Quality{
-	"480p":  Quality480p,
-	"720p":  Quality720p,
-	"1080p": Quality1080p,
-	"3D":    Quality3D,
-}
-
-// GetQuality helps find the quality from a string
-func GetQuality(s string) (Quality, error) {
-	q, ok := stringToQuality[s]
-	if !ok {
-		return "", ErrInvalidQuality
+// IsAllowed checks if the quality is allowed
+func (q *Quality) IsAllowed() bool {
+	for _, quality := range []Quality{
+		Quality480p,
+		Quality720p,
+		Quality1080p,
+		Quality3D,
+	} {
+		if *q == quality {
+			return true
+		}
 	}
-
-	return q, nil
+	return false
 }
 
 // Torrent represents a torrent file

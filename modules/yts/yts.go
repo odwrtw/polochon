@@ -81,8 +81,8 @@ func (y *Yts) GetTorrents(i interface{}) error {
 
 	torrents := []polochon.Torrent{}
 	for _, t := range ytsMovie.Torrents {
-		q, err := polochon.GetQuality(t.Quality)
-		if err != nil {
+		q := polochon.Quality(t.Quality)
+		if !q.IsAllowed() {
 			log.Printf("Invalid quality %q", t.Quality)
 			continue
 		}

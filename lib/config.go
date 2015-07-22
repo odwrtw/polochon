@@ -20,6 +20,7 @@ type ConfigFileRoot struct {
 	Video         ConfigFileVideo          `yaml:"video"`
 	Show          ConfigFileShow           `yaml:"show"`
 	Movie         ConfigFileMovie          `yaml:"movie"`
+	Wishlist      ConfigFileWishlist       `yaml:"wishlist"`
 }
 
 // moduleParams returns the modules params set in the configuration.
@@ -55,6 +56,13 @@ type ConfigFileWatcher struct {
 	Timer          time.Duration `yaml:"timer"`
 	Dir            string        `yaml:"dir"`
 	FsNotifierName string        `yaml:"fsnotifier"`
+}
+
+// ConfigFileWishlist represents the configuration for the wishlist in the configuration file
+type ConfigFileWishlist struct {
+	WishlisterNames       []string  `yaml:"wishlisters"`
+	ShowDefaultQualities  []Quality `yaml:"show_default_qualities"`
+	MovieDefaultQualities []Quality `yaml:"movie_default_qualities"`
 }
 
 // ConfigFileMovie represents the configuration for movies in the configuration file
@@ -96,6 +104,7 @@ type Config struct {
 	HTTPServer    HTTPServerConfig
 	ModulesParams []map[string]interface{}
 	Video         VideoConfig
+	Wishlist      WishlistConfig
 	File          FileConfig
 }
 
@@ -127,6 +136,13 @@ type VideoConfig struct {
 	Notifiers []Notifier
 	Show      ShowConfig
 	Movie     MovieConfig
+}
+
+// WishlistConfig represents the wishlist configurations
+type WishlistConfig struct {
+	Wishlisters           []Wishlister
+	ShowDefaultQualities  []Quality `yaml:"show_default_qualities"`
+	MovieDefaultQualities []Quality `yaml:"movie_default_qualities"`
 }
 
 // ShowConfig represents the configuration for a show and its show episodes
@@ -208,6 +224,12 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 	}
 	conf.Video = *videoConf
 
+	wishlistConf, err := cf.initWishlist(log)
+	if err != nil {
+		return nil, err
+	}
+	conf.Wishlist = *wishlistConf
+
 	showConf, err := cf.initShow(log)
 	if err != nil {
 		return nil, err
@@ -277,6 +299,42 @@ func (c *ConfigFileRoot) initFile(log *logrus.Entry) (Guesser, error) {
 	}
 
 	return guesser, nil
+}
+
+func (c *ConfigFileRoot) initWishlist(log *logrus.Entry) (*WishlistConfig, error) {
+	wishlistConfig := &WishlistConfig{}
+
+	// Configure the wishlisters
+	for _, wishlisterName := range c.Wishlist.WishlisterNames {
+		moduleParams, err := c.moduleParams(wishlisterName)
+		if err != nil {
+			return nil, err
+		}
+
+		wishlister, err := ConfigureWishlister(wishlisterName, moduleParams, log)
+		if err != nil {
+			return nil, err
+		}
+		wishlistConfig.Wishlisters = append(wishlistConfig.Wishlisters, wishlister)
+	}
+
+	// Check the default show qualities
+	for _, q := range c.Wishlist.ShowDefaultQualities {
+		if !q.IsAllowed() {
+			return nil, fmt.Errorf("wishlist config: invalid show quality: %q", q)
+		}
+		wishlistConfig.ShowDefaultQualities = append(wishlistConfig.ShowDefaultQualities, q)
+	}
+
+	// Check the default movie qualities
+	for _, q := range c.Wishlist.MovieDefaultQualities {
+		if !q.IsAllowed() {
+			return nil, fmt.Errorf("wishlist config: invalid movie quality: %q", q)
+		}
+		wishlistConfig.MovieDefaultQualities = append(wishlistConfig.MovieDefaultQualities, q)
+	}
+
+	return wishlistConfig, nil
 }
 
 func (c *ConfigFileRoot) initVideo(log *logrus.Entry) (*VideoConfig, error) {

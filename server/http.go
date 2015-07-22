@@ -37,6 +37,17 @@ func (a *App) showStore(w http.ResponseWriter, req *http.Request) {
 	a.render.JSON(w, http.StatusOK, shows)
 }
 
+func (a *App) wishlist(w http.ResponseWriter, req *http.Request) {
+	wl := polochon.NewWishlist(a.config.Wishlist, a.logger)
+
+	if err := wl.Fetch(); err != nil {
+		a.render.JSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+
+	a.render.JSON(w, http.StatusOK, wl)
+}
+
 func (a *App) serveFile(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	videoType := vars["videoType"]
@@ -86,10 +97,9 @@ func (a *App) HTTPServer() {
 	addr := fmt.Sprintf("%s:%d", a.config.HTTPServer.Host, a.config.HTTPServer.Port)
 	a.logger.Debugf("HTTP Server listening on: %s", addr)
 
-	// /videos/shows
 	a.mux.HandleFunc("/shows", a.showStore)
-	// /videos/movies
 	a.mux.HandleFunc("/movies", a.movieStore)
+	a.mux.HandleFunc("/wishlist", a.wishlist)
 
 	if a.config.HTTPServer.ServeFiles {
 		a.logger.Info("Server is serving files")

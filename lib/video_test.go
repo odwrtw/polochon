@@ -2,25 +2,24 @@ package polochon
 
 import "testing"
 
-func TestQualityFromString(t *testing.T) {
-	for expected, s := range map[Quality]string{
-		Quality480p:  "480p",
-		Quality720p:  "720p",
-		Quality1080p: "1080p",
-		Quality3D:    "3D",
+func TestIsAllowedQuality(t *testing.T) {
+	for _, allowedQuality := range []Quality{
+		Quality480p,
+		Quality720p,
+		Quality1080p,
+		Quality3D,
 	} {
-		got, err := GetQuality(s)
-		if err != nil {
-			t.Errorf("Should get quality, instead we've got %q", err)
-		}
-
-		if got != expected {
-			t.Errorf("Expected %q got %q", expected, got)
+		if !allowedQuality.IsAllowed() {
+			t.Errorf("Quality should be allowed: %q", allowedQuality)
 		}
 	}
 
-	_, err := GetQuality("invalidType")
-	if err != ErrInvalidQuality {
-		t.Errorf("Expected %q got %q", ErrInvalidQuality, err)
+	for _, invalidQuality := range []Quality{
+		Quality("yo"),
+		Quality("mama"),
+	} {
+		if invalidQuality.IsAllowed() {
+			t.Errorf("Quality should not be allowed: %q", invalidQuality)
+		}
 	}
 }
