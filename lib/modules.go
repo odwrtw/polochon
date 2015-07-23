@@ -18,6 +18,7 @@ func init() {
 		Notifiers:   make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Notifier, error)),
 		Subtitlers:  make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Subtitler, error)),
 		Wishlisters: make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Wishlister, error)),
+		Downloaders: make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Downloader, error)),
 	}
 }
 
@@ -44,6 +45,7 @@ const (
 	TypeNotifier              = "notifier"
 	TypeSubtitler             = "subtitler"
 	TypeWishlister            = "wishlister"
+	TypeDownloader            = "downloader"
 )
 
 // RegisteredModules holds the modules registered during the init process
@@ -55,6 +57,7 @@ type RegisteredModules struct {
 	Notifiers   map[string]func(params map[string]interface{}, log *logrus.Entry) (Notifier, error)
 	Subtitlers  map[string]func(params map[string]interface{}, log *logrus.Entry) (Subtitler, error)
 	Wishlisters map[string]func(params map[string]interface{}, log *logrus.Entry) (Wishlister, error)
+	Downloaders map[string]func(params map[string]interface{}, log *logrus.Entry) (Downloader, error)
 }
 
 // ConfigureDetailer configures a detailer
@@ -183,6 +186,26 @@ func ConfigureNotifier(name string, params map[string]interface{}, log *logrus.E
 	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeNotifier})
 
 	f, ok := registeredModules.Notifiers[name]
+	if !ok {
+		logger.Infof("No such module %q", name)
+		return nil, ErrModuleNotFound
+	}
+
+	// Configure the module
+	module, err := f(params, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	return module, nil
+}
+
+// ConfigureDownloader configures a downloader
+func ConfigureDownloader(name string, params map[string]interface{}, log *logrus.Entry) (Downloader, error) {
+	// Setup the logs
+	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeDownloader})
+
+	f, ok := registeredModules.Downloaders[name]
 	if !ok {
 		logger.Infof("No such module %q", name)
 		return nil, ErrModuleNotFound

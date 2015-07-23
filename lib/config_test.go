@@ -14,6 +14,7 @@ watcher:
   dir: /home/user/downloads
 downloader:
   download_dir: /home/user/downloads
+  client: transmission
 http_server:
   port: 8080
   host: localhost
@@ -83,7 +84,8 @@ var configStructExample = &ConfigFileRoot{
 		FsNotifierName: "fsnotify",
 	},
 	Downloader: ConfigFileDownloader{
-		DownloadDir: "/home/user/downloads",
+		DownloadDir:    "/home/user/downloads",
+		DownloaderName: "transmission",
 	},
 	HTTPServer: ConfigFileHTTPServer{
 		Enable:            true,
