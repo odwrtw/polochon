@@ -83,3 +83,13 @@ func TestShowEpisodeStorePath(t *testing.T) {
 		t.Errorf("got %q, expected %q", got, expected)
 	}
 }
+
+func TestShowEpisodeSlug(t *testing.T) {
+	s := fakeShowEpisode()
+	got := s.Slug()
+	expected := "american-dad-s09e18"
+
+	if got != expected {
+		t.Errorf("got %q, expected %q", got, expected)
+	}
+}
