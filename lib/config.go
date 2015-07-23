@@ -83,7 +83,8 @@ type ConfigFileShow struct {
 
 // ConfigFileDownloader represents the configuration for the downloader in the configuration file
 type ConfigFileDownloader struct {
-	DownloadDir string `yaml:"download_dir"`
+	DownloadDir    string `yaml:"download_dir"`
+	DownloaderName string `yaml:"client"`
 }
 
 // ConfigFileHTTPServer represents the configuration for the HTTP Server in the configuration file
@@ -118,6 +119,7 @@ type WatcherConfig struct {
 // DownloaderConfig represents the configuration for the downloader
 type DownloaderConfig struct {
 	DownloadDir string
+	Client      Downloader
 }
 
 // HTTPServerConfig represents the configuration for the HTTP Server
@@ -202,10 +204,6 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 	}
 	conf.Watcher.FsNotifier = fsNotifier
 
-	conf.Downloader = DownloaderConfig{
-		DownloadDir: cf.Downloader.DownloadDir,
-	}
-
 	conf.HTTPServer = HTTPServerConfig{
 		Enable:            cf.HTTPServer.Enable,
 		Port:              cf.HTTPServer.Port,
@@ -217,6 +215,12 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 	}
 
 	conf.ModulesParams = cf.ModulesParams
+
+	downloaderConf, err := cf.initDownloader(log)
+	if err != nil {
+		return nil, err
+	}
+	conf.Downloader = *downloaderConf
 
 	videoConf, err := cf.initVideo(log)
 	if err != nil {
@@ -335,6 +339,27 @@ func (c *ConfigFileRoot) initWishlist(log *logrus.Entry) (*WishlistConfig, error
 	}
 
 	return wishlistConfig, nil
+}
+
+func (c *ConfigFileRoot) initDownloader(log *logrus.Entry) (*DownloaderConfig, error) {
+	downloaderConf := &DownloaderConfig{
+		DownloadDir: c.Downloader.DownloadDir,
+	}
+
+	if c.Downloader.DownloaderName != "" {
+		moduleParams, err := c.moduleParams(c.Downloader.DownloaderName)
+		if err != nil {
+			return nil, err
+		}
+
+		downloader, err := ConfigureDownloader(c.Downloader.DownloaderName, moduleParams, log)
+		if err != nil {
+			return nil, err
+		}
+		downloaderConf.Client = downloader
+	}
+
+	return downloaderConf, nil
 }
 
 func (c *ConfigFileRoot) initVideo(log *logrus.Entry) (*VideoConfig, error) {
