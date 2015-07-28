@@ -60,6 +60,7 @@ func (vs *VideoStore) ScanMovies() ([]*Movie, error) {
 			vs.log.Errorf("video store: failed to open file %q", filePath)
 			return nil
 		}
+		defer nfoFile.Close()
 
 		movie, err := readMovieNFO(nfoFile, vs.config.Video.Movie)
 		if err != nil {
@@ -116,6 +117,7 @@ func (vs *VideoStore) scanShows() (map[string]*Show, error) {
 			vs.log.Errorf("video store: failed to open tv show NFO: %q", err)
 			return nil
 		}
+		defer nfoFile.Close()
 
 		show, err := readShowNFO(nfoFile, vs.config.Video.Show)
 		if err != nil {
@@ -168,6 +170,7 @@ func (vs *VideoStore) scanEpisodes(showPath string) ([]*ShowEpisode, error) {
 			vs.log.Errorf("video store: failed to open file %q", filePath)
 			return nil
 		}
+		defer nfoFile.Close()
 
 		episode, err := readShowEpisodeNFO(nfoFile, vs.config.Video.Show)
 		if err != nil {
