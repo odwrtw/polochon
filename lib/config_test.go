@@ -26,6 +26,7 @@ http_server:
 wishlist:
   wishlisters:
   - imdb
+  - canape
   show_default_qualities:
   - 720p
   - 480p
@@ -98,7 +99,7 @@ var configStructExample = &ConfigFileRoot{
 		BasicAuthPassword: "tata",
 	},
 	Wishlist: ConfigFileWishlist{
-		WishlisterNames:       []string{"imdb"},
+		WishlisterNames:       []string{"imdb", "canape"},
 		ShowDefaultQualities:  []Quality{Quality720p, Quality480p, Quality1080p},
 		MovieDefaultQualities: []Quality{Quality1080p, Quality720p},
 	},
