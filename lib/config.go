@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -238,7 +239,14 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	showConf.Dir = cf.Show.Dir
+
+	realShowsPath, err := filepath.EvalSymlinks(cf.Show.Dir)
+	if err != nil {
+		return nil, err
+	}
+
+	showConf.Dir = realShowsPath
+
 	showConf.Notifiers = conf.Video.Notifiers
 	conf.Video.Show = *showConf
 
@@ -246,7 +254,14 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	movieConf.Dir = cf.Movie.Dir
+
+	realMoviesPath, err := filepath.EvalSymlinks(cf.Movie.Dir)
+	if err != nil {
+		return nil, err
+	}
+
+	movieConf.Dir = realMoviesPath
+
 	movieConf.Notifiers = conf.Video.Notifiers
 	conf.Video.Movie = *movieConf
 
