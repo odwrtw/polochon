@@ -14,7 +14,8 @@ import (
 
 // Register tvdb as a Detailer
 func init() {
-	polochon.RegisterDetailer(moduleName, NewTvDB)
+	polochon.RegisterDetailer(moduleName, NewDetailer)
+	polochon.RegisterCalendar(moduleName, NewCalendar)
 }
 
 // API constants
@@ -48,8 +49,13 @@ type TvDB struct {
 	log *logrus.Entry
 }
 
-// NewTvDB returns an initialized tmdb instance
-func NewTvDB(params map[string]interface{}, log *logrus.Entry) (polochon.Detailer, error) {
+// NewDetailer returns an initialized tmdb instance as a detailer
+func NewDetailer(params map[string]interface{}, log *logrus.Entry) (polochon.Detailer, error) {
+	return &TvDB{log: log}, nil
+}
+
+// NewCalendar returns an initialized tmdb instance as a calendar
+func NewCalendar(params map[string]interface{}, log *logrus.Entry) (polochon.Calendar, error) {
 	return &TvDB{log: log}, nil
 }
 
@@ -286,4 +292,44 @@ func (t *TvDB) GetDetails(i interface{}) error {
 	default:
 		return ErrInvalidArgument
 	}
+}
+
+// GetShowCalendar implements the Calendar interface
+func (t *TvDB) GetShowCalendar(show *polochon.Show) (*polochon.ShowCalendar, error) {
+	// Get show details
+	if show.ImdbID == "" {
+		return nil, ErrMissingShowImdbID
+	}
+	calendar := polochon.NewShowCalendar(show.ImdbID)
+
+	s, err := tvdb.GetSeriesByIMDBID(show.ImdbID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.GetDetail(); err != nil {
+		return nil, err
+	}
+
+	for s, es := range s.Seasons {
+		for _, e := range es {
+			episodeCalendar := &polochon.ShowCalendarEpisode{
+				Season:  int(s),
+				Episode: int(e.EpisodeNumber),
+			}
+
+			// Parse aired date
+			if e.FirstAired != "" {
+				aired, err := time.Parse("2006-01-02", e.FirstAired)
+				if err != nil {
+					return nil, err
+				}
+				episodeCalendar.AiredDate = &aired
+			}
+
+			calendar.Episodes = append(calendar.Episodes, episodeCalendar)
+		}
+	}
+
+	return calendar, nil
 }

@@ -59,6 +59,7 @@ modules_params:
     user_ids:
     - ur78342023
 show:
+  calendar: tvdb
   dir: /home/user/tvshows
   torrenters:
     - eztv
