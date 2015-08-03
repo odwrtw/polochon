@@ -80,6 +80,7 @@ type ConfigFileShow struct {
 	TorrenterNames []string `yaml:"torrenters"`
 	DetailerNames  []string `yaml:"detailers"`
 	SubtitlerNames []string `yaml:"subtitlers"`
+	CalendarName   string   `yaml:"calendar"`
 }
 
 // ConfigFileDownloader represents the configuration for the downloader in the configuration file
@@ -151,6 +152,7 @@ type WishlistConfig struct {
 // ShowConfig represents the configuration for a show and its show episodes
 type ShowConfig struct {
 	Dir        string
+	Calendar   Calendar
 	Detailers  []Detailer
 	Notifiers  []Notifier
 	Subtitlers []Subtitler
@@ -446,6 +448,22 @@ func (c *ConfigFileRoot) initShow(log *logrus.Entry) (*ShowConfig, error) {
 			return nil, err
 		}
 		showConf.Subtitlers = append(showConf.Subtitlers, subtitler)
+	}
+
+	// Init the show calendar fetcher
+	if c.Show.CalendarName != "" {
+		moduleParams, err := c.moduleParams(c.Show.CalendarName)
+		if err != nil {
+			return nil, err
+		}
+
+		// Configure
+		calendar, err := ConfigureCalendar(c.Show.CalendarName, moduleParams, log)
+		if err != nil {
+			return nil, err
+		}
+
+		showConf.Calendar = calendar
 	}
 
 	return showConf, nil

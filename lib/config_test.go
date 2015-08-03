@@ -60,6 +60,7 @@ modules_params:
     user: myUserName
     password: myPass
 show:
+  calendar: tvdb
   dir: /home/user/tvshows
   torrenters:
     - eztv
@@ -136,6 +137,7 @@ var configStructExample = &ConfigFileRoot{
 		TorrenterNames: []string{"eztv"},
 		DetailerNames:  []string{"tvdb"},
 		SubtitlerNames: []string{"addicted"},
+		CalendarName:   "tvdb",
 	},
 }
 

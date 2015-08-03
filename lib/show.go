@@ -3,6 +3,7 @@ package polochon
 import (
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -64,6 +65,20 @@ func (s *Show) GetDetails() error {
 		s.log.Warnf("failed to get details from detailer: %q", err)
 	}
 	return err
+}
+
+// GetCalendar gets the calendar for the show
+func (s *Show) GetCalendar() (*ShowCalendar, error) {
+	if s.Calendar == nil {
+		return nil, fmt.Errorf("no show calendar fetcher configured")
+	}
+
+	calendar, err := s.Calendar.GetShowCalendar(s)
+	if err != nil {
+		return nil, err
+	}
+
+	return calendar, nil
 }
 
 // storePath returns the show store path from the config

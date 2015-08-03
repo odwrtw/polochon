@@ -19,6 +19,7 @@ func init() {
 		Subtitlers:  make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Subtitler, error)),
 		Wishlisters: make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Wishlister, error)),
 		Downloaders: make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Downloader, error)),
+		Calendars:   make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Calendar, error)),
 	}
 }
 
@@ -46,6 +47,7 @@ const (
 	TypeSubtitler             = "subtitler"
 	TypeWishlister            = "wishlister"
 	TypeDownloader            = "downloader"
+	TypeCalendar              = "calendar"
 )
 
 // RegisteredModules holds the modules registered during the init process
@@ -58,6 +60,7 @@ type RegisteredModules struct {
 	Subtitlers  map[string]func(params map[string]interface{}, log *logrus.Entry) (Subtitler, error)
 	Wishlisters map[string]func(params map[string]interface{}, log *logrus.Entry) (Wishlister, error)
 	Downloaders map[string]func(params map[string]interface{}, log *logrus.Entry) (Downloader, error)
+	Calendars   map[string]func(params map[string]interface{}, log *logrus.Entry) (Calendar, error)
 }
 
 // ConfigureDetailer configures a detailer
@@ -206,6 +209,26 @@ func ConfigureDownloader(name string, params map[string]interface{}, log *logrus
 	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeDownloader})
 
 	f, ok := registeredModules.Downloaders[name]
+	if !ok {
+		logger.Infof("No such module %q", name)
+		return nil, ErrModuleNotFound
+	}
+
+	// Configure the module
+	module, err := f(params, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	return module, nil
+}
+
+// ConfigureShowCalendarFetcher configures a show calendar fetcher
+func ConfigureCalendar(name string, params map[string]interface{}, log *logrus.Entry) (Calendar, error) {
+	// Setup the logs
+	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeCalendar})
+
+	f, ok := registeredModules.Calendars[name]
 	if !ok {
 		logger.Infof("No such module %q", name)
 		return nil, ErrModuleNotFound
