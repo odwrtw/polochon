@@ -181,11 +181,10 @@ func (si *ShowIndex) buildShowIndex() error {
 		}
 
 		// Scan the path for the episodes
-		i, err := si.scanEpisodes(show.ImdbID, filePath)
+		err = si.scanEpisodes(show.ImdbID, filePath)
 		if err != nil {
 			return err
 		}
-		si.ids[show.ImdbID] = i
 
 		// No need to go deeper, the tvshow.nfo is on the second root folder
 		return filepath.SkipDir
@@ -199,10 +198,28 @@ func (si *ShowIndex) buildShowIndex() error {
 	return nil
 }
 
-// scanEpisodes returns the show episodes in a path
-func (si *ShowIndex) scanEpisodes(imdbID, showRootPath string) (map[int]map[int]string, error) {
-	showEpisodesIndex := map[int]map[int]string{}
+// AddEpisodeToIndex adds a show episode to the index
+func (si *ShowIndex) AddToIndex(episode *ShowEpisode) error {
+	si.Lock()
+	// Add the episode to the index
+	// first by id
+	if _, ok := si.ids[episode.ShowImdbID][episode.Season]; !ok {
+		if _, ok := si.ids[episode.ShowImdbID]; !ok {
+			si.ids[episode.ShowImdbID] = map[int]map[int]string{}
+		}
+		si.ids[episode.ShowImdbID][episode.Season] = map[int]string{}
+	}
+	si.ids[episode.ShowImdbID][episode.Season][episode.Episode] = episode.Path
+	// then by slug
+	si.slugs[episode.Slug()] = episode.Path
 
+	si.Unlock()
+
+	return nil
+}
+
+// scanEpisodes returns the show episodes in a path
+func (si *ShowIndex) scanEpisodes(imdbID, showRootPath string) error {
 	// Walk the files of a show
 	err := filepath.Walk(showRootPath, func(filePath string, file os.FileInfo, err error) error {
 		// Nothing to do on dir
@@ -241,20 +258,14 @@ func (si *ShowIndex) scanEpisodes(imdbID, showRootPath string) (map[int]map[int]
 			return nil
 		}
 
-		// Create the season index if needed
-		if _, ok := showEpisodesIndex[episode.Season]; !ok {
-			showEpisodesIndex[episode.Season] = map[int]string{}
-		}
-
-		// Add the episode to the index
-		showEpisodesIndex[episode.Season][episode.Episode] = filePath
-		si.slugs[episode.Slug()] = filePath
+		episode.SetFile(f)
+		si.AddToIndex(episode)
 
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return showEpisodesIndex, nil
+	return nil
 }

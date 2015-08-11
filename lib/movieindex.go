@@ -150,10 +150,10 @@ func (mi *MovieIndex) buildMovieIndex() error {
 			mi.log.Errorf("video store: failed to read movie NFO: %q", err)
 			return nil
 		}
+		movie.SetFile(movieFile)
 
 		// Add the movie to the index
-		mi.slugs[movie.Slug()] = filePath
-		mi.ids[movie.ImdbID] = filePath
+		mi.AddToIndex(movie)
 
 		return nil
 	})
@@ -164,6 +164,18 @@ func (mi *MovieIndex) buildMovieIndex() error {
 	}
 
 	mi.log.Infof("Index built in %s", time.Since(start))
+
+	return nil
+}
+
+// AddToIndex adds a movie to an index
+func (mi *MovieIndex) AddToIndex(movie *Movie) error {
+	mi.Lock()
+
+	mi.slugs[movie.Slug()] = movie.Path
+	mi.ids[movie.ImdbID] = movie.Path
+
+	mi.Unlock()
 
 	return nil
 }
