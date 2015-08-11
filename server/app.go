@@ -32,6 +32,8 @@ type App struct {
 	// wait group sync the goroutines launched by the app
 	wg sync.WaitGroup
 
+	videoStore *polochon.VideoStore
+
 	logger *logrus.Logger
 	render *render.Render
 	mux    *mux.Router
@@ -54,23 +56,16 @@ func NewApp(configPath string) (*App, error) {
 		log.Panic(err)
 	}
 
-	// Only indent JSON in dev mode
-	indentJSON := false
-	if os.Getenv("ENV") != "PRODUCTION" {
-		indentJSON = true
-	}
-
 	return &App{
-		config: config,
-		event:  make(chan string),
-		done:   make(chan struct{}),
-		stop:   make(chan struct{}),
-		errc:   make(chan error),
-		logger: logger,
-		render: render.New(render.Options{
-			IndentJSON: indentJSON,
-		}),
-		mux: mux.NewRouter(),
+		config:     config,
+		event:      make(chan string),
+		done:       make(chan struct{}),
+		stop:       make(chan struct{}),
+		errc:       make(chan error),
+		logger:     logger,
+		videoStore: polochon.NewVideoStore(config, logger),
+		render:     render.New(),
+		mux:        mux.NewRouter(),
 	}, nil
 }
 
@@ -87,6 +82,13 @@ func (a *App) Run() {
 
 	// Start the error logger
 	go a.errorLogger()
+
+	// Build the index
+	go func() {
+		if err := a.videoStore.RebuildIndex(); err != nil {
+			a.errc <- err
+		}
+	}()
 
 	if err := a.StartFsNotifier(); err != nil {
 		a.logger.Error("Couldn't start the FsNotifier : ", err)
@@ -290,6 +292,11 @@ func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 	// Notify
 	if err := video.Notify(); err != nil {
 		log.Errorf("failed to notify: %q", err)
+	}
+
+	// Rebuild index
+	if err := a.videoStore.RebuildVideoIndex(video); err != nil {
+		log.Errorf("failed to rebuild index: %q", err)
 	}
 
 	return nil

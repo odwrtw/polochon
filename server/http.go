@@ -10,31 +10,72 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/meatballhat/negroni-logrus"
 	"github.com/odwrtw/polochon/lib"
+	"github.com/phyber/negroni-gzip/gzip"
 )
 
-// hello world, the web server
-func (a *App) movieStore(w http.ResponseWriter, req *http.Request) {
-	a.logger.Debug("Listing movies")
-	vs := polochon.NewVideoStore(a.config, a.logger)
+func (a *App) movieSlugs(w http.ResponseWriter, req *http.Request) {
+	a.logger.Debug("Listing movies by slugs")
 
-	movies, err := vs.ScanMovies()
+	movieSlugs, err := a.videoStore.MovieSlugs()
 	if err != nil {
 		a.render.JSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
-	a.render.JSON(w, http.StatusOK, movies)
+	a.render.JSON(w, http.StatusOK, movieSlugs)
 }
 
-func (a *App) showStore(w http.ResponseWriter, req *http.Request) {
-	a.logger.Debug("Listing shows")
-	vs := polochon.NewVideoStore(a.config, a.logger)
+func (a *App) movieIds(w http.ResponseWriter, req *http.Request) {
+	a.logger.Debug("Listing movies by ids")
 
-	shows, err := vs.ScanShows()
+	movieIds, err := a.videoStore.MovieIds()
 	if err != nil {
 		a.render.JSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
-	a.render.JSON(w, http.StatusOK, shows)
+	a.render.JSON(w, http.StatusOK, movieIds)
+}
+
+func (a *App) showIds(w http.ResponseWriter, req *http.Request) {
+	a.logger.Debug("Listing shows")
+
+	ids, err := a.videoStore.ShowIds()
+	if err != nil {
+		a.render.JSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+
+	// JSON only allows strings as keys, the ids must me converted from int to
+	// string
+	ret := map[string]map[string][]string{}
+	for imdbID, seasons := range ids {
+		ret[imdbID] = map[string][]string{}
+		for season, episodes := range seasons {
+			s := fmt.Sprintf("%02d", season)
+			for episode := range episodes {
+				e := fmt.Sprintf("%02d", episode)
+
+				if _, ok := ret[imdbID][s]; !ok {
+					ret[imdbID][s] = []string{}
+				}
+
+				ret[imdbID][s] = append(ret[imdbID][s], e)
+			}
+		}
+	}
+
+	a.render.JSON(w, http.StatusOK, ret)
+}
+
+func (a *App) showSlugs(w http.ResponseWriter, req *http.Request) {
+	a.logger.Debug("Listing shows by slugs")
+
+	slugs, err := a.videoStore.ShowSlugs()
+	if err != nil {
+		a.render.JSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+
+	a.render.JSON(w, http.StatusOK, slugs)
 }
 
 func (a *App) wishlist(w http.ResponseWriter, req *http.Request) {
@@ -55,15 +96,12 @@ func (a *App) serveFile(w http.ResponseWriter, req *http.Request) {
 
 	a.logger.Debugf("Looking for the %s: %s", videoType, slug)
 
-	// Instanciate a VideoStore to look for the Slug
-	vs := polochon.NewVideoStore(a.config, a.logger)
-
 	var searchFunc func(slug string) (polochon.Video, error)
 	switch videoType {
 	case "movies":
-		searchFunc = vs.SearchMovieBySlug
+		searchFunc = a.videoStore.SearchMovieBySlug
 	case "shows":
-		searchFunc = vs.SearchShowEpisodeBySlug
+		searchFunc = a.videoStore.SearchShowEpisodeBySlug
 	default:
 		msg := fmt.Sprintf("Invalid video type: %q", videoType)
 		a.render.JSON(w, http.StatusInternalServerError, map[string]string{"error": msg})
@@ -97,13 +135,15 @@ func (a *App) HTTPServer() {
 	addr := fmt.Sprintf("%s:%d", a.config.HTTPServer.Host, a.config.HTTPServer.Port)
 	a.logger.Debugf("HTTP Server listening on: %s", addr)
 
-	a.mux.HandleFunc("/shows", a.showStore)
-	a.mux.HandleFunc("/movies", a.movieStore)
+	a.mux.HandleFunc("/movies/slugs", a.movieSlugs)
+	a.mux.HandleFunc("/movies/ids", a.movieIds)
+	a.mux.HandleFunc("/shows/ids", a.showIds)
+	a.mux.HandleFunc("/shows/slugs", a.showSlugs)
 	a.mux.HandleFunc("/wishlist", a.wishlist)
 
 	if a.config.HTTPServer.ServeFiles {
 		a.logger.Info("Server is serving files")
-		a.mux.HandleFunc("/{videoType:movies|shows}/{slug}/download", a.serveFile)
+		a.mux.HandleFunc("/{videoType:movies|shows}/slugs/{slug}/download", a.serveFile)
 	}
 
 	n := negroni.New()
@@ -111,6 +151,8 @@ func (a *App) HTTPServer() {
 	n.Use(negroni.NewRecovery())
 	// Use logrus as logger
 	n.Use(negronilogrus.NewCustomMiddleware(logrus.InfoLevel, a.logger.Formatter, "httpServer"))
+	// gzip compression
+	n.Use(gzip.Gzip(gzip.DefaultCompression))
 
 	// Add basic auth if configured
 	if a.config.HTTPServer.BasicAuth {
