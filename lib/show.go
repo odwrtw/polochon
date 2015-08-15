@@ -176,3 +176,28 @@ func (s *Show) downloadImages() error {
 
 	return nil
 }
+
+// Delete implements the Video interface
+func (s *Show) Delete() error {
+	s.log.Infof("Removing Show %s", s.storePath())
+
+	return os.RemoveAll(s.storePath())
+}
+
+// NewShowFromEpisode will return a show from an episode
+func NewShowFromEpisode(e *ShowEpisode) *Show {
+	return &Show{
+		Title:     e.ShowTitle,
+		ShowTitle: e.ShowTitle,
+		TvdbID:    e.ShowTvdbID,
+		ImdbID:    e.ShowImdbID,
+		ShowConfig: ShowConfig{
+			Dir:        e.Dir,
+			Detailers:  e.Detailers,
+			Notifiers:  e.Notifiers,
+			Subtitlers: e.Subtitlers,
+			Torrenters: e.Torrenters,
+		},
+		log: e.log,
+	}
+}

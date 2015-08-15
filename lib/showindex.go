@@ -45,8 +45,6 @@ func (si *ShowIndex) ShowIds() (map[string]map[int]map[int]string, error) {
 		return map[string]map[int]map[int]string{}, err
 	}
 
-	si.Lock()
-	defer si.Unlock()
 	return si.ids, nil
 }
 
@@ -58,6 +56,7 @@ func (si *ShowIndex) ShowSlugs() ([]string, error) {
 
 	si.Lock()
 	defer si.Unlock()
+
 	return extractMapKeys(si.slugs)
 }
 
@@ -88,7 +87,12 @@ func (si *ShowIndex) Has(imdbID string, season, episode int) (bool, error) {
 		return false, nil
 	}
 
-	return false, nil
+	return true, nil
+}
+
+// Function to be overwritten during the tests
+var buildShowIndex = func(si *ShowIndex) error {
+	return buildShowEpisodeIndex(si)
 }
 
 // Rebuild rebuilds the show index
@@ -101,7 +105,7 @@ func (si *ShowIndex) Rebuild() error {
 func (si *ShowIndex) index() error {
 	var err error
 	si.once.Do(func() {
-		err = si.buildShowIndex()
+		err = buildShowIndex(si)
 	})
 	return err
 }
@@ -113,12 +117,10 @@ func (si *ShowIndex) SearchShowEpisodeBySlug(slug string) (Video, error) {
 	}
 
 	// Check if the slug is in the index
-	si.Lock()
-	filePath, ok := si.slugs[slug]
-	if !ok {
-		return nil, ErrSlugNotFound
+	filePath, err := si.searchShowEpisodeBySlug(slug)
+	if err != nil {
+		return nil, err
 	}
-	si.Unlock()
 
 	// Create a File from the path
 	file := NewFileWithConfig(filePath, si.config)
@@ -137,12 +139,18 @@ func (si *ShowIndex) SearchShowEpisodeBySlug(slug string) (Video, error) {
 	}
 
 	episode.SetFile(file)
+	episode.ShowConfig = si.config.Video.Show
+	// Set logger
+	episode.log = si.log.WithFields(logrus.Fields{
+		"type": "show_episode",
+	})
+	episode.Show = NewShowFromEpisode(episode)
 
 	return episode, nil
 }
 
 // scanShow returns a show with the path for its episodes
-func (si *ShowIndex) buildShowIndex() error {
+func buildShowEpisodeIndex(si *ShowIndex) error {
 	// Keep track of the time to build the index
 	start := time.Now()
 	si.log.Info("Building show index")
@@ -198,9 +206,11 @@ func (si *ShowIndex) buildShowIndex() error {
 	return nil
 }
 
-// AddEpisodeToIndex adds a show episode to the index
+// AddToIndex adds a show episode to the index
 func (si *ShowIndex) AddToIndex(episode *ShowEpisode) error {
 	si.Lock()
+	defer si.Unlock()
+
 	// Add the episode to the index
 	// first by id
 	if _, ok := si.ids[episode.ShowImdbID][episode.Season]; !ok {
@@ -213,6 +223,87 @@ func (si *ShowIndex) AddToIndex(episode *ShowEpisode) error {
 	// then by slug
 	si.slugs[episode.Slug()] = episode.Path
 
+	return nil
+}
+
+// isShowEmpty returns true if the episode is the only episode in the
+// whole show
+func (si *ShowIndex) isShowEmpty(imdbID string) (bool, error) {
+	si.Lock()
+	defer si.Unlock()
+
+	// Check if there is something in the show index
+	if len(si.ids[imdbID]) != 0 {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+// isSeasonEmpty returns true if the season index is empty
+func (si *ShowIndex) isSeasonEmpty(imdbID string, season int) (bool, error) {
+	si.Lock()
+	defer si.Unlock()
+
+	// More than one season
+	if len(si.ids[imdbID][season]) != 0 {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+// RemoveSeasonFromIndex removes the season from the index
+func (si *ShowIndex) RemoveSeasonFromIndex(show *Show, season int) error {
+	return si.removeSeasonFromIndex(show.ImdbID, season)
+}
+
+// removeSeasonFromIndex removes the season from the index
+func (si *ShowIndex) removeSeasonFromIndex(imdbID string, season int) error {
+	si.Lock()
+
+	si.log.Infof("Deleting whole season %d of %s from index", season, imdbID)
+	delete(si.ids[imdbID], season)
+
+	si.Unlock()
+	return nil
+}
+
+// RemoveShowFromIndex removes the show from the index
+func (si *ShowIndex) RemoveShowFromIndex(show *Show) error {
+	return si.removeShowFromIndex(show.ImdbID)
+}
+
+// removeShowFromIndex removes the show from the index
+func (si *ShowIndex) removeShowFromIndex(imdbID string) error {
+	si.Lock()
+
+	si.log.Infof("Deleting whole show %s from index", imdbID)
+	delete(si.ids, imdbID)
+
+	si.Unlock()
+
+	return nil
+}
+
+// RemoveFromIndex removes the show episode from the index
+func (si *ShowIndex) RemoveFromIndex(episode *ShowEpisode) error {
+	slug := episode.Slug()
+	imdbID := episode.ShowImdbID
+	season := episode.Season
+
+	// Delete from the slug index
+	// Check if the slug is in the index
+	_, err := si.searchShowEpisodeBySlug(slug)
+	if err != nil {
+		si.log.Errorf("Show not in slug index, WEIRD")
+		return err
+	}
+
+	si.Lock()
+	// Delete the episode from the index
+	delete(si.slugs, slug)
+	delete(si.ids[imdbID][season], episode.Episode)
 	si.Unlock()
 
 	return nil
@@ -259,6 +350,8 @@ func (si *ShowIndex) scanEpisodes(imdbID, showRootPath string) error {
 		}
 
 		episode.SetFile(f)
+		episode.ShowImdbID = imdbID
+		episode.ShowConfig = si.config.Video.Show
 		si.AddToIndex(episode)
 
 		return nil
@@ -268,4 +361,17 @@ func (si *ShowIndex) scanEpisodes(imdbID, showRootPath string) error {
 	}
 
 	return nil
+}
+
+// searchShowEpisodeBySlug returns a show from a slug
+func (si *ShowIndex) searchShowEpisodeBySlug(slug string) (string, error) {
+	si.Lock()
+	defer si.Unlock()
+
+	filePath, ok := si.slugs[slug]
+	if !ok {
+		return "", ErrSlugNotFound
+	}
+
+	return filePath, nil
 }

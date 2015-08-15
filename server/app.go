@@ -278,6 +278,17 @@ func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 		return file.Ignore()
 	}
 
+	// If we already have the video, we delete it to store the new one
+	oldVideo, err := a.videoStore.SearchBySlug(video)
+	if err != nil {
+		log.Errorf("failed to check HasVideo : %q", err)
+	}
+	if oldVideo != nil {
+		if err := a.videoStore.Delete(oldVideo); err != nil {
+			log.Errorf("failed to delete video : %q", err)
+		}
+	}
+
 	// Store the video
 	if err := video.Store(); err != nil {
 		log.Errorf("failed to store video: %q", err)
@@ -295,8 +306,8 @@ func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 	}
 
 	// Rebuild index
-	if err := a.videoStore.RebuildVideoIndex(video); err != nil {
-		log.Errorf("failed to rebuild index: %q", err)
+	if err := a.videoStore.AddToIndex(video); err != nil {
+		log.Errorf("failed to add to index: %q", err)
 	}
 
 	return nil

@@ -309,3 +309,15 @@ func (s *ShowEpisode) GetSubtitle() error {
 func (s *ShowEpisode) Slug() string {
 	return slug(fmt.Sprintf("%s-s%02de%02d", s.ShowTitle, s.Season, s.Episode))
 }
+
+// Delete implements the Video interface
+func (s *ShowEpisode) Delete() error {
+	s.log.Infof("Removing ShowEpisode %s", s.Path)
+	return os.RemoveAll(s.Path)
+}
+
+// DeleteSeason implements the Video interface
+func (s *ShowEpisode) DeleteSeason() error {
+	s.log.Infof("Removing Season %s", s.storePath())
+	return os.RemoveAll(s.storePath())
+}
