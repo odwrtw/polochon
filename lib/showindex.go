@@ -139,7 +139,6 @@ func (si *ShowIndex) SearchShowEpisodeBySlug(slug string) (Video, error) {
 	}
 
 	episode.SetFile(file)
-	episode.ShowConfig = si.config.Video.Show
 	// Set logger
 	episode.log = si.log.WithFields(logrus.Fields{
 		"type": "show_episode",

@@ -66,6 +66,10 @@ func (mi *MovieIndex) SearchMovieBySlug(slug string) (Video, error) {
 	}
 
 	movie.SetFile(file)
+	// Set logger
+	movie.log = mi.log.WithFields(logrus.Fields{
+		"type": "movie",
+	})
 
 	return movie, nil
 }
