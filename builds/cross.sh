@@ -1,0 +1,23 @@
+#!/bin/bash
+
+echo '
+  linux 386
+  linux amd64
+  linux arm 6
+  linux arm 7
+' | {
+  while read os arch armv; do
+    [ -n "$os" ] || continue
+    export GIMME_OS="$os"
+    export GIMME_ARCH="$arch"
+    export GOARM="$armv"
+    eval "$(gimme 1.4)"
+
+    echo "Building for $os $arch$armv" >&2
+    binname="polochon_${os}_${arch}${armv}"
+    time go build -v -a -o "$binname" server/*.go || {
+      echo "Unable to build for $os $arch$armv" >&2
+      continue
+    }
+  done
+}
