@@ -295,3 +295,12 @@ func (m *Movie) GetSubtitle() error {
 func (m *Movie) Slug() string {
 	return slug(fmt.Sprintf("%s", m.Title))
 }
+
+// Delete implements the Video interface
+func (m *Movie) Delete() error {
+	// Get directory to remove
+	d := filepath.Dir(m.Path)
+	m.log.Infof("Removing Movie %s", d)
+
+	return os.RemoveAll(d)
+}

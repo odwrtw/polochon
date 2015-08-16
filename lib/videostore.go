@@ -10,6 +10,7 @@ import (
 // Video errors
 var (
 	ErrSlugNotFound          = errors.New("videostore: no such file with this slug")
+	ErrImdbIDNotFound        = errors.New("videostore: no such file with this imdbID")
 	ErrInvalidIndexVideoType = errors.New("videostore: invalid index video type")
 )
 
@@ -40,6 +41,122 @@ func (vs *VideoStore) MovieIds() ([]string, error) {
 // MovieSlugs returns the movie slugs
 func (vs *VideoStore) MovieSlugs() ([]string, error) {
 	return vs.movieIndex.MovieSlugs()
+}
+
+// HasVideo returns true if the video is in the store
+func (vs *VideoStore) HasVideo(video Video) (bool, error) {
+	switch v := video.(type) {
+	case *Movie:
+		return vs.HasMovie(v.ImdbID)
+	case *ShowEpisode:
+		return vs.HasShow(v.ShowImdbID, v.Season, v.Episode)
+	default:
+		return false, ErrInvalidIndexVideoType
+	}
+}
+
+// SearchBySlug search the video by its slug
+func (vs *VideoStore) SearchBySlug(video Video) (Video, error) {
+	switch v := video.(type) {
+	case *Movie:
+		return vs.SearchMovieBySlug(v.Slug())
+	case *ShowEpisode:
+		return vs.SearchShowEpisodeBySlug(v.Slug())
+	default:
+		return nil, ErrInvalidIndexVideoType
+	}
+}
+
+// Delete will delete the video
+func (vs *VideoStore) Delete(video Video) error {
+	switch v := video.(type) {
+	case *Movie:
+		return vs.DeleteMovie(v)
+	case *ShowEpisode:
+		return vs.DeleteShowEpisode(v)
+	default:
+		return ErrInvalidIndexVideoType
+	}
+}
+
+// DeleteMovie will delete the movie
+func (vs *VideoStore) DeleteMovie(m *Movie) error {
+	// Delete the movie
+	if err := m.Delete(); err != nil {
+		vs.log.Errorf("Error while deleting movie :%q", err)
+		return err
+	}
+	// Remove the movie from the index
+	if err := vs.movieIndex.RemoveFromIndex(m); err != nil {
+		vs.log.Errorf("Error while deleting movie from index :%q", err)
+		return err
+	}
+
+	return nil
+}
+
+// DeleteShowEpisode will delete the showEpisode
+func (vs *VideoStore) DeleteShowEpisode(se *ShowEpisode) error {
+	// Delete the episode
+	if err := se.Delete(); err != nil {
+		vs.log.Errorf("Error while deleting episode :%q", err)
+		return err
+	}
+	// Remove the episode from the index
+	if err := vs.showIndex.RemoveFromIndex(se); err != nil {
+		vs.log.Errorf("Error while deleting episode from index :%q", err)
+		return err
+	}
+
+	// Season is empty, delete the whole season
+	ok, err := vs.showIndex.isSeasonEmpty(se.ShowImdbID, se.Season)
+	if err != nil {
+		return err
+	}
+	if ok {
+		// Delete the whole season
+		if err := se.DeleteSeason(); err != nil {
+			vs.log.Errorf("Error while deleting season :%q", err)
+			return err
+		}
+		// Remove the season from the index
+		if err := vs.showIndex.removeSeasonFromIndex(se.ShowImdbID, se.Season); err != nil {
+			vs.log.Errorf("Error while deleting season from index :%q", err)
+			return err
+		}
+	}
+
+	// Show is empty, delete the whole show from the index
+	ok, err = vs.showIndex.isShowEmpty(se.ShowImdbID)
+	if err != nil {
+		return err
+	}
+	if ok {
+		// Delete the whole Show
+		if err := se.Show.Delete(); err != nil {
+			vs.log.Errorf("Error while deleting show :%q", err)
+			return err
+		}
+		// Remove the show from the index
+		if err := vs.showIndex.RemoveShowFromIndex(se.Show); err != nil {
+			vs.log.Errorf("Error while deleting show from index :%q", err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+// AddToIndex adds a video to the index
+func (vs *VideoStore) AddToIndex(video Video) error {
+	switch v := video.(type) {
+	case *Movie:
+		return vs.movieIndex.AddToIndex(v)
+	case *ShowEpisode:
+		return vs.showIndex.AddToIndex(v)
+	default:
+		return ErrInvalidIndexVideoType
+	}
 }
 
 // HasMovie returns true if the movie is in the store

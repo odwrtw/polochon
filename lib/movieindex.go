@@ -43,13 +43,11 @@ func (mi *MovieIndex) SearchMovieBySlug(slug string) (Video, error) {
 		return nil, err
 	}
 
-	// Check if the slug is in the index
-	mi.Lock()
-	filePath, ok := mi.slugs[slug]
-	if !ok {
-		return nil, ErrSlugNotFound
+	// Check if the slug is in the index and get the filePath
+	filePath, err := mi.searchMovieBySlug(slug)
+	if err != nil {
+		return nil, err
 	}
-	mi.Unlock()
 
 	// Create a File from the path
 	file := NewFileWithConfig(filePath, mi.config)
@@ -76,7 +74,7 @@ func (mi *MovieIndex) SearchMovieBySlug(slug string) (Video, error) {
 func (mi *MovieIndex) index() error {
 	var err error
 	mi.once.Do(func() {
-		err = mi.buildMovieIndex()
+		err = buildMovieIndex(mi)
 	})
 	return err
 }
@@ -94,18 +92,21 @@ func (mi *MovieIndex) Has(imdbID string) (bool, error) {
 		return false, err
 	}
 
-	mi.Lock()
-	defer mi.Unlock()
-
-	if _, ok := mi.ids[imdbID]; ok {
+	filePath, err := mi.searchMovieByImdbID(imdbID)
+	if filePath != "" && err == nil {
 		return true, nil
 	}
 
 	return false, nil
 }
 
+// Function to be overwritten during the tests
+var buildMovieIndex = func(mi *MovieIndex) error {
+	return buildIndex(mi)
+}
+
 // buildMovieIndex is the function to populate the movie index
-func (mi *MovieIndex) buildMovieIndex() error {
+func buildIndex(mi *MovieIndex) error {
 	// Keep track of the time to build the index
 	start := time.Now()
 	mi.log.Info("Building movie index")
@@ -171,11 +172,32 @@ func (mi *MovieIndex) buildMovieIndex() error {
 // AddToIndex adds a movie to an index
 func (mi *MovieIndex) AddToIndex(movie *Movie) error {
 	mi.Lock()
+	defer mi.Unlock()
 
 	mi.slugs[movie.Slug()] = movie.Path
 	mi.ids[movie.ImdbID] = movie.Path
 
-	mi.Unlock()
+	return nil
+}
+
+// RemoveFromIndex will delete the movie from the index
+func (mi *MovieIndex) RemoveFromIndex(m *Movie) error {
+	mi.Lock()
+	defer mi.Unlock()
+
+	slug := m.Slug()
+
+	if _, ok := mi.slugs[slug]; !ok {
+		mi.log.Errorf("Movie not in slug index, WEIRD")
+		return ErrSlugNotFound
+	}
+	delete(mi.slugs, slug)
+
+	if _, ok := mi.ids[m.ImdbID]; !ok {
+		mi.log.Errorf("Movie not in ids index, WEIRD")
+		return ErrSlugNotFound
+	}
+	delete(mi.ids, m.ImdbID)
 
 	return nil
 }
@@ -188,6 +210,7 @@ func (mi *MovieIndex) MovieIds() ([]string, error) {
 
 	mi.Lock()
 	defer mi.Unlock()
+
 	return extractMapKeys(mi.ids)
 }
 
@@ -199,5 +222,32 @@ func (mi *MovieIndex) MovieSlugs() ([]string, error) {
 
 	mi.Lock()
 	defer mi.Unlock()
+
 	return extractMapKeys(mi.slugs)
+}
+
+// searchMovieBySlug searches for a movie from its slug
+func (mi *MovieIndex) searchMovieBySlug(slug string) (string, error) {
+	mi.Lock()
+	defer mi.Unlock()
+
+	filePath, ok := mi.slugs[slug]
+	if !ok {
+		return "", ErrSlugNotFound
+	}
+
+	return filePath, nil
+}
+
+// searchMovieByImdbID searches for a movie from its imdbId
+func (mi *MovieIndex) searchMovieByImdbID(imdbID string) (string, error) {
+	mi.Lock()
+	defer mi.Unlock()
+
+	filePath, ok := mi.ids[imdbID]
+	if !ok {
+		return "", ErrImdbIDNotFound
+	}
+
+	return filePath, nil
 }

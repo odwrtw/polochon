@@ -130,6 +130,50 @@ func (a *App) serveFile(w http.ResponseWriter, req *http.Request) {
 	http.ServeFile(w, req, videoFile.Path)
 }
 
+func (a *App) deleteFile(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	videoType := vars["videoType"]
+	slug := vars["slug"]
+
+	a.logger.Debugf("Looking for the %s: %s", videoType, slug)
+
+	var searchFunc func(slug string) (polochon.Video, error)
+	switch videoType {
+	case "movies":
+		searchFunc = a.videoStore.SearchMovieBySlug
+	case "shows":
+		searchFunc = a.videoStore.SearchShowEpisodeBySlug
+	default:
+		msg := fmt.Sprintf("Invalid video type: %q", videoType)
+		a.render.JSON(w, http.StatusInternalServerError, map[string]string{"error": msg})
+		return
+	}
+
+	// Find the file by Slug
+	v, err := searchFunc(slug)
+	if err != nil {
+		a.logger.Error(err)
+		var status int
+		if err == polochon.ErrSlugNotFound {
+			status = http.StatusNotFound
+		} else {
+			status = http.StatusInternalServerError
+		}
+		a.render.JSON(w, status, map[string]string{"error": err.Error()})
+		return
+	}
+
+	videoFile := v.GetFile()
+	a.logger.Debugf("Got the file to delete: %s", filepath.Base(videoFile.Path))
+
+	err = a.videoStore.Delete(v)
+	if err != nil {
+		a.render.JSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	a.render.JSON(w, http.StatusOK, nil)
+}
+
 // HTTPServer handles the HTTP requests
 func (a *App) HTTPServer() {
 	addr := fmt.Sprintf("%s:%d", a.config.HTTPServer.Host, a.config.HTTPServer.Port)
@@ -144,6 +188,7 @@ func (a *App) HTTPServer() {
 	if a.config.HTTPServer.ServeFiles {
 		a.logger.Info("Server is serving files")
 		a.mux.HandleFunc("/{videoType:movies|shows}/slugs/{slug}/download", a.serveFile)
+		a.mux.HandleFunc("/{videoType:movies|shows}/slugs/{slug}/delete", a.deleteFile)
 	}
 
 	n := negroni.New()
