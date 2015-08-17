@@ -281,7 +281,10 @@ func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 	// If we already have the video, we delete it to store the new one
 	oldVideo, err := a.videoStore.SearchBySlug(video)
 	if err != nil {
-		log.Errorf("failed to check HasVideo : %q", err)
+		// If it's a not and error not found, something's wrong
+		if err != polochon.ErrSlugNotFound {
+			log.Errorf("SearchBySlug returned an error : %q", err)
+		}
 	}
 	if oldVideo != nil {
 		if err := a.videoStore.Delete(oldVideo); err != nil {
