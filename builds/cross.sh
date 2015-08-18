@@ -21,5 +21,6 @@ echo '
       echo "Unable to build for $os $arch$armv" >&2
       continue
     }
+    file $binname
   done
 }
