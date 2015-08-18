@@ -9,7 +9,9 @@ echo '
   while read os arch armv; do
     [ -n "$os" ] || continue
     export GIMME_OS="$os"
+    export GOOS="$os"
     export GIMME_ARCH="$arch"
+    export GOARCH="$arch"
     export GOARM="$armv"
     eval "$(gimme 1.4)"
 
@@ -19,5 +21,6 @@ echo '
       echo "Unable to build for $os $arch$armv" >&2
       continue
     }
+    file $binname
   done
 }
