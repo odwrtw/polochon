@@ -149,8 +149,8 @@ func updateShow(s *polochon.Show, tvSeries *tvdb.Series) error {
 }
 
 // Function to be overwritten during the tests
-var tvdbGetSeries = func(name string, maxResults int) (seriesList tvdb.SeriesList, err error) {
-	return tvdb.SearchSeries(name, maxResults)
+var tvdbGetSeries = func(name string) (seriesList tvdb.SeriesList, err error) {
+	return tvdb.GetSeries(name)
 }
 
 // getShowByName helps find a show on tvdb using its name
@@ -166,7 +166,7 @@ func getShowByName(s *polochon.Show) error {
 	}
 
 	// Search on tvdb by name
-	list, err := tvdbGetSeries(query, 5)
+	list, err := tvdbGetSeries(query)
 	if err != nil {
 		return err
 	}
