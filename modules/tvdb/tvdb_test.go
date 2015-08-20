@@ -114,7 +114,7 @@ func TestTvdbGetShowByName(t *testing.T) {
 	s := polochon.NewShow(polochon.ShowConfig{})
 	s.Title = "American Dad"
 
-	tvdbGetSeries = func(name string, maxResults int) (seriesList tvdb.SeriesList, err error) {
+	tvdbGetSeries = func(name string) (seriesList tvdb.SeriesList, err error) {
 		return tvdb.SeriesList{
 			Series: []*tvdb.Series{
 				{SeriesName: "Kill the americans", ImdbID: "tt0832306"},
@@ -168,7 +168,7 @@ func TesTvdbGetShowDetails(t *testing.T) {
 
 	// Get by title
 	s.Title = "American Dad!"
-	tvdbGetSeries = func(name string, maxResults int) (seriesList tvdb.SeriesList, err error) {
+	tvdbGetSeries = func(name string) (seriesList tvdb.SeriesList, err error) {
 		return tvdb.SeriesList{
 			Series: []*tvdb.Series{{SeriesName: "American Dad!", ImdbID: "tt0397306"}},
 		}, nil
