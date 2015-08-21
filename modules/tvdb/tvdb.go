@@ -221,7 +221,7 @@ func getShowDetails(s *polochon.Show) error {
 	}
 }
 
-// getShowDetails
+// getShowEpisodeDetails
 func getShowEpisodeDetails(s *polochon.ShowEpisode) error {
 	// The season / episode infos are needed
 	if s.Season == 0 || s.Episode == 0 {
@@ -240,8 +240,13 @@ func getShowEpisodeDetails(s *polochon.ShowEpisode) error {
 	} else {
 		show = polochon.NewShow(polochon.ShowConfig{})
 	}
-	show.Title = s.ShowTitle
-	show.ImdbID = s.ShowImdbID
+	// Copy missing informations
+	if show.Title == "" && s.ShowTitle != "" {
+		show.Title = s.ShowTitle
+	}
+	if show.ImdbID == "" && s.ShowImdbID != "" {
+		show.ImdbID = s.ShowImdbID
+	}
 
 	err := getShowDetails(show)
 	if err != nil {

@@ -121,6 +121,7 @@ func (m *Movie) GetDetails() error {
 	for _, d := range m.Detailers {
 		err = d.GetDetails(m)
 		if err == nil {
+			m.log.Debugf("got details from detailer: %q", d.Name())
 			break
 		}
 		m.log.Warnf("failed to get details from detailer: %q", err)
