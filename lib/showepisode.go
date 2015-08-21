@@ -313,8 +313,28 @@ func (s *ShowEpisode) Slug() string {
 
 // Delete implements the Video interface
 func (s *ShowEpisode) Delete() error {
-	s.log.Infof("Removing ShowEpisode %s", s.Path)
-	return os.RemoveAll(s.Path)
+	s.log.Infof("Removing ShowEpisode %q", s.Path)
+	// Remove the episode
+	err := os.RemoveAll(s.Path)
+	if err != nil {
+		s.log.Warnf("Couldn't remove %q : %s", s.Path, err)
+		return err
+	}
+	pathWithoutExt := s.filePathWithoutExt()
+
+	// Remove also the .nfo and .srt files
+	for _, ext := range []string{"nfo", "srt"} {
+		fileToDelete := fmt.Sprintf("%s.%s", pathWithoutExt, ext)
+		s.log.Debugf("Removing %q", fileToDelete)
+		// Remove file
+		err := os.RemoveAll(fileToDelete)
+		if err != nil {
+			s.log.Warnf("Couldn't remove %q : %s", fileToDelete, err)
+			return err
+		}
+	}
+
+	return nil
 }
 
 // DeleteSeason implements the Video interface
