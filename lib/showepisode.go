@@ -121,6 +121,7 @@ func (s *ShowEpisode) GetDetails() error {
 	for _, d := range s.Detailers {
 		err = d.GetDetails(s)
 		if err == nil {
+			s.log.Debugf("got details from detailer: %q", d.Name())
 			break
 		}
 		s.log.Warnf("failed to get details from detailer: %q: %q", d.Name(), err)

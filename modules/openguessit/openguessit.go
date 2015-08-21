@@ -97,6 +97,7 @@ func (og *OpenGuessit) Guess(videoConf polochon.VideoConfig, file polochon.File)
 
 		// Add some infos on the show
 		video.Show = &polochon.Show{
+			ImdbID:    guess.ImdbID(),
 			ShowTitle: showTitle,
 			Title:     showTitle,
 			Year:      year,
@@ -139,7 +140,7 @@ func NewGuesser(filePath string, log *logrus.Entry) (*Guesser, error) {
 	// Sometimes opensub returns an error... It should not be a problem,
 	// guessit should be able to handle it alone
 	if err := g.UpdateFromOpenSubtitle(); err != nil {
-		g.log.Warningf("failed to get guess form opensubtitle: %q", err)
+		g.log.Warningf("failed to get guess from opensubtitle: %q", err)
 	}
 
 	if err := g.UpdateFromGuessit(); err != nil {
@@ -166,7 +167,7 @@ type Guessit struct {
 	Year      string
 }
 
-// OpenSubtitle represents the informations form OpenSubtitle
+// OpenSubtitle represents the informations from OpenSubtitle
 type OpenSubtitle struct {
 	ImdbID    string
 	Type      string
@@ -212,6 +213,15 @@ func (g *Guess) ShowName() (string, error) {
 	}
 
 	return "", ErrShowNameUnknown
+}
+
+// ImdbID returns the show imdbID of a guess
+func (g *Guess) ImdbID() string {
+	if g.OpenSubtitle != nil && g.OpenSubtitle.ImdbID != "" {
+		return g.OpenSubtitle.ImdbID
+	}
+
+	return ""
 }
 
 // Year returns the show year of a guess
