@@ -2,6 +2,7 @@ package polochon
 
 import (
 	"errors"
+	"io"
 	"log"
 
 	"github.com/Sirupsen/logrus"
@@ -19,8 +20,7 @@ type Subtitler interface {
 
 // Subtitle represents a subtitle
 type Subtitle interface {
-	Read([]byte) (int, error)
-	Close()
+	io.ReadCloser
 }
 
 // RegisterSubtitler helps register a new Subtitler
