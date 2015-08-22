@@ -43,10 +43,11 @@ func init() {
 }
 
 // Close the subtitle connexion
-func (o *openSubtitle) Close() {
+func (o *openSubtitle) Close() error {
 	if o.conn != nil {
-		o.conn.Close()
+		return o.conn.Close()
 	}
+	return nil
 }
 
 // Read the subtitle
