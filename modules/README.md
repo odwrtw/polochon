@@ -49,6 +49,7 @@ The subtitler downloads subtitles and stores them with the video file, so that t
 Available Sutitler:
 * addicted (shows)
 * opensubtitles (movies and shows)
+* yifysubtitle (shows)
 
 ### Wishlister
 
