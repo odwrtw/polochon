@@ -1,13 +1,14 @@
 #!/bin/bash
 
 echo '
-  linux 386
   linux amd64
+  linux 386
   linux arm 6
   linux arm 7
 ' | {
   while read os arch armv; do
     [ -n "$os" ] || continue
+
     export GIMME_OS="$os"
     export GOOS="$os"
     export GIMME_ARCH="$arch"
@@ -22,5 +23,7 @@ echo '
       continue
     }
     file $binname
+
+    [ -z "`git tag -l | grep latest`" ] && break
   done
 }
