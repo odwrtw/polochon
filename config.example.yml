@@ -1,8 +1,9 @@
 watcher:
-  timer: 30s
   fsnotifier: fsnotify
   dir: /home/user/downloads
 downloader:
+  enabled: false
+  timer: 4h
   client: transmission
   download_dir: /home/user/downloads
 http_server:
@@ -16,6 +17,7 @@ http_server:
 wishlist:
   wishlisters:
   - imdb
+  - canape
   show_default_qualities:
   - 720p
   - 480p
@@ -60,6 +62,10 @@ modules_params:
     - ur78342023
   - name: yifysubs
     lang: fr_FR
+  - name: canape
+    wishlists:
+    - url: https://canapeapp.com/users/bob/wishlist.json
+      token: 5O32q4D6jlqj492374923749234Kso4aZtarEsAfaJs=
 show:
   calendar: tvdb
   dir: /home/user/tvshows

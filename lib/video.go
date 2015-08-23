@@ -74,6 +74,7 @@ type Video interface {
 	GetFile() *File
 	Delete() error
 	SetConfig(c *VideoConfig, log *logrus.Logger)
+	SetLogger(log *logrus.Entry)
 }
 
 func slug(text string) string {

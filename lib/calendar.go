@@ -53,3 +53,18 @@ func (sc *ShowCalendarEpisode) IsAvailable() bool {
 
 	return sc.AiredDate.Before(time.Now())
 }
+
+// IsOlder returns true if the given show is older than the calendar episode
+func (sc *ShowCalendarEpisode) IsOlder(ws *WishedShow) bool {
+	if sc.Season < ws.Season {
+		return true
+	}
+
+	if sc.Season == ws.Season {
+		if sc.Episode < ws.Episode {
+			return true
+		}
+	}
+
+	return false
+}

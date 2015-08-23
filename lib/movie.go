@@ -99,9 +99,12 @@ func (m *Movie) SetConfig(c *VideoConfig, log *logrus.Logger) {
 	m.Torrenters = c.Movie.Torrenters
 
 	// Set logger
-	m.log = log.WithFields(logrus.Fields{
-		"type": "movie",
-	})
+	m.SetLogger(logrus.NewEntry(log))
+}
+
+// SetLogger sets the logger
+func (m *Movie) SetLogger(log *logrus.Entry) {
+	m.log = log.WithField("type", "movie")
 }
 
 // readShowSeasonNFO deserialized a XML file into a ShowSeason
@@ -119,6 +122,7 @@ func readMovieNFO(r io.Reader, conf MovieConfig) (*Movie, error) {
 func (m *Movie) GetDetails() error {
 	var err error
 	for _, d := range m.Detailers {
+		m.log.Infof("Getting details from %q", d.Name())
 		err = d.GetDetails(m)
 		if err == nil {
 			m.log.Debugf("got details from detailer: %q", d.Name())
@@ -133,6 +137,7 @@ func (m *Movie) GetDetails() error {
 func (m *Movie) GetTorrents() error {
 	var err error
 	for _, t := range m.Torrenters {
+		m.log.Infof("Getting torrents from %q", t.Name())
 		err = t.GetTorrents(m)
 		if err == nil {
 			break

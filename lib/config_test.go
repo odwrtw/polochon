@@ -9,10 +9,10 @@ import (
 
 var configFileExample = []byte(`
 watcher:
-  timer: 30s
   fsnotifier: fsnotify
   dir: /home/user/downloads
 downloader:
+  timer: 30s
   download_dir: /home/user/downloads
   client: transmission
 http_server:
@@ -26,6 +26,7 @@ http_server:
 wishlist:
   wishlisters:
   - imdb
+  - canape
   show_default_qualities:
   - 720p
   - 480p
@@ -80,11 +81,11 @@ movie:
 
 var configStructExample = &ConfigFileRoot{
 	Watcher: ConfigFileWatcher{
-		Timer:          time.Second * 30,
 		Dir:            "/home/user/downloads",
 		FsNotifierName: "fsnotify",
 	},
 	Downloader: ConfigFileDownloader{
+		Timer:          time.Second * 30,
 		DownloadDir:    "/home/user/downloads",
 		DownloaderName: "transmission",
 	},
@@ -98,7 +99,7 @@ var configStructExample = &ConfigFileRoot{
 		BasicAuthPassword: "tata",
 	},
 	Wishlist: ConfigFileWishlist{
-		WishlisterNames:       []string{"imdb"},
+		WishlisterNames:       []string{"imdb", "canape"},
 		ShowDefaultQualities:  []Quality{Quality720p, Quality480p, Quality1080p},
 		MovieDefaultQualities: []Quality{Quality1080p, Quality720p},
 	},

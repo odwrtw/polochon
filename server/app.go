@@ -17,10 +17,10 @@ import (
 // App represents the polochon app
 type App struct {
 	config *polochon.Config
-	ctx    *polochon.FsNotifierCtx
 
-	// event channel is used to trigger the organize a file
-	event chan string
+	// Automatic downloader
+	downloader *downloader
+
 	// done channel is used to notify all the goroutines to stop
 	done chan struct{}
 	// stop channel is used to notify the app to stop when the goroutines are
@@ -58,7 +58,6 @@ func NewApp(configPath string) (*App, error) {
 
 	return &App{
 		config:     config,
-		event:      make(chan string),
 		done:       make(chan struct{}),
 		stop:       make(chan struct{}),
 		errc:       make(chan error),
@@ -90,7 +89,7 @@ func (a *App) Run() {
 		}
 	}()
 
-	if err := a.StartFsNotifier(); err != nil {
+	if err := a.startFsNotifier(); err != nil {
 		a.logger.Error("Couldn't start the FsNotifier : ", err)
 		go a.Stop()
 	}
@@ -100,6 +99,11 @@ func (a *App) Run() {
 		go a.HTTPServer()
 	}
 
+	// Start the downloader
+	if a.config.Downloader.Enabled {
+		go a.startDownloader()
+	}
+
 	for {
 		select {
 		case <-a.stop:
@@ -107,8 +111,7 @@ func (a *App) Run() {
 			return
 		case <-osSig:
 			if forceShutdown {
-				a.logger.Info("Forced shutdown")
-				// TODO delete uneded pmember
+				a.logger.Warn("Forced shutdown")
 				os.Exit(1)
 			}
 			a.logger.Info("Graceful shutdown")
@@ -132,10 +135,10 @@ func (a *App) Stop() {
 	close(a.stop)
 }
 
-// StartFsNotifier starts the FsNotifier
-func (a *App) StartFsNotifier() error {
+// startFsNotifier starts the FsNotifier
+func (a *App) startFsNotifier() error {
 	ctx := polochon.FsNotifierCtx{
-		Event: a.event,
+		Event: make(chan string),
 		Done:  a.done,
 		Errc:  a.errc,
 		Wg:    &a.wg,
@@ -149,7 +152,7 @@ func (a *App) StartFsNotifier() error {
 	go func() {
 		for {
 			select {
-			case file := <-a.event:
+			case file := <-ctx.Event:
 				a.logger.Infof("Got an event for the file: %q", file)
 				if err := a.Organize(file); err != nil {
 					a.errc <- err
@@ -163,7 +166,7 @@ func (a *App) StartFsNotifier() error {
 	// Send a notification to organize the whole folder on app start
 	go func() {
 		a.logger.Info("Organize the watched folder")
-		a.event <- a.config.Watcher.Dir
+		ctx.Event <- a.config.Watcher.Dir
 	}()
 
 	return nil
@@ -177,7 +180,7 @@ func (a *App) errorLogger() {
 			a.logger.Info("Stopping the logger")
 			return
 		case err := <-a.errc:
-			a.logger.Errorf("Err: %q", err)
+			a.logger.Errorf(err.Error())
 		}
 	}
 }
@@ -188,10 +191,7 @@ func (a *App) Organize(filePath string) error {
 	defer a.wg.Done()
 
 	// Logs
-	log := a.logger.WithFields(logrus.Fields{
-		"filepath": filePath,
-		"function": "organizer",
-	})
+	log := a.logger.WithField("function", "organizer")
 
 	// Get the file infos from the path
 	fileInfo, err := os.Stat(filePath)

@@ -164,6 +164,11 @@ func (vs *VideoStore) HasMovie(imdbID string) (bool, error) {
 	return vs.movieIndex.Has(imdbID)
 }
 
+// HasShow returns true if the show is in the store
+func (vs *VideoStore) HasShow(imdbID string, season, episode int) (bool, error) {
+	return vs.showIndex.Has(imdbID, season, episode)
+}
+
 // ShowIds returns the show ids, seasons and episodes
 func (vs *VideoStore) ShowIds() (map[string]map[int]map[int]string, error) {
 	return vs.showIndex.ShowIds()
@@ -174,8 +179,8 @@ func (vs *VideoStore) ShowSlugs() ([]string, error) {
 	return vs.showIndex.ShowSlugs()
 }
 
-// HasShow returns true if the show is in the store
-func (vs *VideoStore) HasShow(imdbID string, season, episode int) (bool, error) {
+// HasShowEpisode returns true if the show episode is in the store
+func (vs *VideoStore) HasShowEpisode(imdbID string, season, episode int) (bool, error) {
 	return vs.showIndex.Has(imdbID, season, episode)
 }
 
@@ -217,8 +222,9 @@ func (vs *VideoStore) RebuildIndex() error {
 	close(errc)
 
 	// Return the first error found
-	if len(errc) > 0 {
-		return <-errc
+	err, ok := <-errc
+	if ok {
+		return err
 	}
 
 	return nil

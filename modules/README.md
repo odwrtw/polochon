@@ -57,7 +57,11 @@ The wishlister gets the user(s) wishlists on various websites / services.
 
 Available Wishlister:
 * imdb (movies and shows)
+* canape (movies and shows)
 
-### Downloader (not yet implemented)
+### Downloader
 
 The downloader sends remote command to a BiTorrent server to add, remove or list entries.
+
+Available Downloader:
+* transmission
