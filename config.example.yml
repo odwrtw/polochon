@@ -58,6 +58,8 @@ modules_params:
   - name: imdb
     user_ids:
     - ur78342023
+  - name: yifysubs
+    lang: fr_FR
 show:
   calendar: tvdb
   dir: /home/user/tvshows
@@ -74,4 +76,5 @@ movie:
   detailers:
     - tmdb
   subtitlers:
+    - yifysubs
     - opensubtitles
