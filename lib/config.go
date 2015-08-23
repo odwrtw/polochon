@@ -54,9 +54,8 @@ type ConfigFileVideo struct {
 
 // ConfigFileWatcher represents the configuration for the file watcher in the configuration file
 type ConfigFileWatcher struct {
-	Timer          time.Duration `yaml:"timer"`
-	Dir            string        `yaml:"dir"`
-	FsNotifierName string        `yaml:"fsnotifier"`
+	Dir            string `yaml:"dir"`
+	FsNotifierName string `yaml:"fsnotifier"`
 }
 
 // ConfigFileWishlist represents the configuration for the wishlist in the configuration file
@@ -85,8 +84,10 @@ type ConfigFileShow struct {
 
 // ConfigFileDownloader represents the configuration for the downloader in the configuration file
 type ConfigFileDownloader struct {
-	DownloadDir    string `yaml:"download_dir"`
-	DownloaderName string `yaml:"client"`
+	Enabled        bool          `yaml:"enabled"`
+	Timer          time.Duration `yaml:"timer"`
+	DownloadDir    string        `yaml:"download_dir"`
+	DownloaderName string        `yaml:"client"`
 }
 
 // ConfigFileHTTPServer represents the configuration for the HTTP Server in the configuration file
@@ -113,13 +114,14 @@ type Config struct {
 
 // WatcherConfig represents the configuration for the detailers
 type WatcherConfig struct {
-	Timer      time.Duration
 	Dir        string
 	FsNotifier FsNotifier
 }
 
 // DownloaderConfig represents the configuration for the downloader
 type DownloaderConfig struct {
+	Enabled     bool
+	Timer       time.Duration
 	DownloadDir string
 	Client      Downloader
 }
@@ -197,8 +199,7 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 	conf := &Config{}
 
 	conf.Watcher = WatcherConfig{
-		Timer: cf.Watcher.Timer,
-		Dir:   cf.Watcher.Dir,
+		Dir: cf.Watcher.Dir,
 	}
 
 	fsNotifier, err := cf.loadWatcher(log)
@@ -361,9 +362,11 @@ func (c *ConfigFileRoot) initWishlist(log *logrus.Entry) (*WishlistConfig, error
 func (c *ConfigFileRoot) initDownloader(log *logrus.Entry) (*DownloaderConfig, error) {
 	downloaderConf := &DownloaderConfig{
 		DownloadDir: c.Downloader.DownloadDir,
+		Timer:       c.Downloader.Timer,
+		Enabled:     c.Downloader.Enabled,
 	}
 
-	if c.Downloader.DownloaderName != "" {
+	if c.Downloader.DownloaderName != "" && c.Downloader.Enabled {
 		moduleParams, err := c.moduleParams(c.Downloader.DownloaderName)
 		if err != nil {
 			return nil, err

@@ -111,7 +111,7 @@ func TestFetchWishlist(t *testing.T) {
 		MovieDefaultQualities: []Quality{Quality1080p, Quality720p},
 	}
 
-	wl := NewWishlist(conf, logrus.New())
+	wl := NewWishlist(conf, log)
 
 	if err := wl.Fetch(); err != nil {
 		t.Fatalf("Expected no error, got %q", err)

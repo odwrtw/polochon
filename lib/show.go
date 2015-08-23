@@ -54,6 +54,11 @@ func readShowNFO(r io.Reader, conf ShowConfig) (*Show, error) {
 	return s, nil
 }
 
+// SetLogger sets the logger
+func (s *Show) SetLogger(log *logrus.Entry) {
+	s.log = log.WithField("type", "show")
+}
+
 // GetDetails helps getting infos for a show
 func (s *Show) GetDetails() error {
 	var err error

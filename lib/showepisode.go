@@ -99,9 +99,12 @@ func (s *ShowEpisode) SetConfig(c *VideoConfig, log *logrus.Logger) {
 	s.Torrenters = c.Show.Torrenters
 
 	// Set logger
-	s.log = log.WithFields(logrus.Fields{
-		"type": "show_episode",
-	})
+	s.SetLogger(logrus.NewEntry(log))
+}
+
+// SetLogger sets the logger
+func (s *ShowEpisode) SetLogger(log *logrus.Entry) {
+	s.log = log.WithField("type", "show_episode")
 }
 
 // readShowEpisodeNFO deserialized a XML file into a ShowEpisode

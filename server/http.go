@@ -79,7 +79,7 @@ func (a *App) showSlugs(w http.ResponseWriter, req *http.Request) {
 }
 
 func (a *App) wishlist(w http.ResponseWriter, req *http.Request) {
-	wl := polochon.NewWishlist(a.config.Wishlist, a.logger)
+	wl := polochon.NewWishlist(a.config.Wishlist, logrus.NewEntry(a.logger))
 
 	if err := wl.Fetch(); err != nil {
 		a.render.JSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})

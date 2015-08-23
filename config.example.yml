@@ -1,8 +1,9 @@
 watcher:
-  timer: 30s
   fsnotifier: fsnotify
   dir: /home/user/downloads
 downloader:
+  enabled: false
+  timer: 4h
   client: transmission
   download_dir: /home/user/downloads
 http_server:

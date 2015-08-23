@@ -37,11 +37,10 @@ type Wishlist struct {
 }
 
 // NewWishlist returns a new wishlist
-func NewWishlist(wishlistConfig WishlistConfig, log *logrus.Logger) *Wishlist {
-	logEntry := log.WithField("type", "wishlist")
+func NewWishlist(wishlistConfig WishlistConfig, log *logrus.Entry) *Wishlist {
 	return &Wishlist{
 		WishlistConfig: wishlistConfig,
-		log:            logEntry,
+		log:            log.WithField("type", "wishlist"),
 	}
 }
 

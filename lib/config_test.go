@@ -9,10 +9,10 @@ import (
 
 var configFileExample = []byte(`
 watcher:
-  timer: 30s
   fsnotifier: fsnotify
   dir: /home/user/downloads
 downloader:
+  timer: 30s
   download_dir: /home/user/downloads
   client: transmission
 http_server:
@@ -81,11 +81,11 @@ movie:
 
 var configStructExample = &ConfigFileRoot{
 	Watcher: ConfigFileWatcher{
-		Timer:          time.Second * 30,
 		Dir:            "/home/user/downloads",
 		FsNotifierName: "fsnotify",
 	},
 	Downloader: ConfigFileDownloader{
+		Timer:          time.Second * 30,
 		DownloadDir:    "/home/user/downloads",
 		DownloaderName: "transmission",
 	},
