@@ -70,7 +70,6 @@ func (d *downloader) downloadMissingVideos() {
 	wl := polochon.NewWishlist(d.config.Wishlist, d.log)
 	if err := wl.Fetch(); err != nil {
 		d.log.Errorf("Got an error while fetching wishlist: %q", err)
-		d.errc <- err
 		return
 	}
 
@@ -92,11 +91,12 @@ func (d *downloader) downloadMissingMovies(wl *polochon.Wishlist) {
 		}
 
 		m := polochon.NewMovie(d.config.Video.Movie)
-		m.SetLogger(d.log)
 		m.ImdbID = wantedMovie.ImdbID
+		log := d.log.WithField("imdbID", m.ImdbID)
+		m.SetLogger(log)
 
-		if err := m.GetTorrents(); err != nil {
-			d.errc <- err
+		if err := m.GetTorrents(); err != nil && err != polochon.ErrMovieTorrentNotFound {
+			log.Error(err)
 			continue
 		}
 
@@ -113,12 +113,12 @@ func (d *downloader) downloadMissingMovies(wl *polochon.Wishlist) {
 		}
 
 		if torrentURL == "" {
-			d.log.Info("no torrent found")
+			log.Debug("no torrent found")
 			continue
 		}
 
 		if err := d.config.Downloader.Client.Download(torrentURL); err != nil {
-			d.errc <- err
+			log.Error(err)
 			continue
 		}
 	}
@@ -127,8 +127,8 @@ func (d *downloader) downloadMissingMovies(wl *polochon.Wishlist) {
 func (d *downloader) downloadMissingShows(wl *polochon.Wishlist) {
 	for _, wishedShow := range wl.Shows {
 		s := polochon.NewShow(d.config.Video.Show)
-		s.SetLogger(d.log)
 		s.ImdbID = wishedShow.ImdbID
+		s.SetLogger(d.log.WithField("imdbID", s.ImdbID))
 
 		calendar, err := s.GetCalendar()
 		if err != nil {
@@ -155,13 +155,18 @@ func (d *downloader) downloadMissingShows(wl *polochon.Wishlist) {
 
 			// Setup the episode
 			e := polochon.NewShowEpisode(d.config.Video.Show)
-			e.SetLogger(d.log)
 			e.ShowImdbID = wishedShow.ImdbID
 			e.Season = calEpisode.Season
 			e.Episode = calEpisode.Episode
+			log := d.log.WithFields(logrus.Fields{
+				"showImdbID": e.ShowImdbID,
+				"season":     e.Season,
+				"episode":    e.Episode,
+			})
+			e.SetLogger(log)
 
-			if err := e.GetTorrents(); err != nil {
-				d.errc <- err
+			if err := e.GetTorrents(); err != nil && err != polochon.ErrShowEpisodeTorrentNotFound {
+				log.Error(err)
 				continue
 			}
 
@@ -179,7 +184,7 @@ func (d *downloader) downloadMissingShows(wl *polochon.Wishlist) {
 			}
 
 			if torrentURL == "" {
-				d.log.Info("no torrent found")
+				log.Debug("no torrent found")
 				continue
 			}
 

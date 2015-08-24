@@ -12,7 +12,6 @@ import (
 // Yts errors
 var (
 	ErrInvalidArgument = errors.New("yts: invalid yts argument")
-	ErrNoTorrentFound  = errors.New("yts: no torrent found on yts")
 )
 
 // Module constants
@@ -68,7 +67,7 @@ func (y *Yts) GetTorrents(i interface{}) error {
 	}
 
 	if len(matches) == 0 {
-		return ErrNoTorrentFound
+		return polochon.ErrMovieTorrentNotFound
 	}
 
 	// since we searched by id, there should be only one movie in the list
@@ -76,7 +75,7 @@ func (y *Yts) GetTorrents(i interface{}) error {
 
 	// Check the torrent
 	if len(ytsMovie.Torrents) == 0 {
-		return ErrNoTorrentFound
+		return polochon.ErrMovieTorrentNotFound
 	}
 
 	torrents := []polochon.Torrent{}

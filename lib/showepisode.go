@@ -140,8 +140,6 @@ func (s *ShowEpisode) GetTorrents() error {
 		if err == nil {
 			break
 		}
-
-		s.log.Warnf("failed to get torrents from torrenter: %q: %q", t.Name(), err)
 	}
 	return err
 }

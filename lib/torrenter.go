@@ -1,9 +1,17 @@
 package polochon
 
 import (
+	"errors"
 	"log"
 
 	"github.com/Sirupsen/logrus"
+)
+
+// Torrenter error
+var (
+	ErrTorrentNotFound            = errors.New("torrenter: failed to find torrent")
+	ErrShowEpisodeTorrentNotFound = errors.New("torrenter: show episode torrent not found")
+	ErrMovieTorrentNotFound       = errors.New("torrenter: movie torrent not found")
 )
 
 // Torrenter is an interface which allows to get torrent for a movie or a show

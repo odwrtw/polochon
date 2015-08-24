@@ -46,8 +46,8 @@ func TestEztvNoShowEpisodeFound(t *testing.T) {
 	}
 
 	err := e.GetTorrents(s)
-	if err != ErrFailedToFindShowEpisode {
-		t.Fatalf("Expected %q got %q", ErrFailedToFindShowEpisode, err)
+	if err != polochon.ErrShowEpisodeTorrentNotFound {
+		t.Fatalf("Expected %q got %q", polochon.ErrShowEpisodeTorrentNotFound, err)
 	}
 }
 
@@ -63,8 +63,8 @@ func TestEztvNoTorrentFound(t *testing.T) {
 	}
 
 	err := e.GetTorrents(s)
-	if err != ErrNoTorrentFound {
-		t.Fatalf("Expected %q got %q", ErrNoTorrentFound, err)
+	if err != polochon.ErrTorrentNotFound {
+		t.Fatalf("Expected %q got %q", polochon.ErrTorrentNotFound, err)
 	}
 }
 

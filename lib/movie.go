@@ -142,8 +142,6 @@ func (m *Movie) GetTorrents() error {
 		if err == nil {
 			break
 		}
-
-		m.log.Warnf("failed to get torrents from torrenter: %q", err)
 	}
 	return err
 }
