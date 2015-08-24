@@ -121,6 +121,12 @@ func buildIndex(mi *MovieIndex) error {
 
 	// Walk movies
 	err := filepath.Walk(mi.config.Video.Movie.Dir, func(filePath string, file os.FileInfo, err error) error {
+		// Check err
+		if err != nil {
+			mi.log.Errorf("video store: failed to walk %q", err)
+			return nil
+		}
+
 		// Nothing to do on dir
 		if file.IsDir() {
 			return nil
