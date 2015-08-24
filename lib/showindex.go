@@ -312,6 +312,12 @@ func (si *ShowIndex) RemoveFromIndex(episode *ShowEpisode) error {
 func (si *ShowIndex) scanEpisodes(imdbID, showRootPath string) error {
 	// Walk the files of a show
 	err := filepath.Walk(showRootPath, func(filePath string, file os.FileInfo, err error) error {
+		// Check err
+		if err != nil {
+			si.log.Errorf("video store: failed to walk %q", err)
+			return nil
+		}
+
 		// Nothing to do on dir
 		if file.IsDir() {
 			return nil
