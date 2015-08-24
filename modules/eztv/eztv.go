@@ -10,11 +10,9 @@ import (
 
 // Eztv errors
 var (
-	ErrFailedToFindShowEpisode = errors.New("eztv: failed to find show episode")
-	ErrInvalidArgument         = errors.New("eztv: invalid argument")
-	ErrNoTorrentFound          = errors.New("eztv: failed to find torrent")
-	ErrMissingShowImdbID       = errors.New("eztv: missing show imdb id")
-	ErrInvalidShowEpisode      = errors.New("eztv: missing show episode or season")
+	ErrInvalidArgument    = errors.New("eztv: invalid argument")
+	ErrMissingShowImdbID  = errors.New("eztv: missing show imdb id")
+	ErrInvalidShowEpisode = errors.New("eztv: missing show episode or season")
 )
 
 // Module constants
@@ -57,13 +55,13 @@ func (e *Eztv) getShowEpisodeDetails(s *polochon.ShowEpisode) error {
 	case nil:
 		// continue
 	case eztv.ErrEpisodeNotFound:
-		return ErrFailedToFindShowEpisode
+		return polochon.ErrShowEpisodeTorrentNotFound
 	default:
 		return err
 	}
 
 	if len(episode.Torrents) == 0 {
-		return ErrNoTorrentFound
+		return polochon.ErrTorrentNotFound
 	}
 
 	torrents := []polochon.Torrent{}
