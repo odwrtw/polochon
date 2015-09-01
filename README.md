@@ -1,6 +1,8 @@
 # polochon
 
 [![Build Status](https://travis-ci.org/odwrtw/polochon.svg?branch=master)](https://travis-ci.org/odwrtw/polochon)
+[![Coverage Status](https://coveralls.io/repos/odwrtw/polochon/badge.svg?branch=master&service=github)](https://coveralls.io/github/odwrtw/polochon?branch=master)
+
 
 ## How to use
 
