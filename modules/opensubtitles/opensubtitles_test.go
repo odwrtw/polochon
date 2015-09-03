@@ -106,25 +106,25 @@ func TestInvalidNew(t *testing.T) {
 	l := logrus.NewEntry(fakeLogger)
 	for expected, params := range map[error]map[string]interface{}{
 		// Not a string
-		ErrInvalidArgument: map[string]interface{}{
+		ErrInvalidArgument: {
 			"lang":     "fr_FR",
 			"user":     6,
 			"password": "passTest",
 		},
 		// Missing password
-		ErrMissingArgument: map[string]interface{}{
+		ErrMissingArgument: {
 			"lang":     "fr_FR",
 			"user":     "userTest",
 			"password": "",
 		},
 		// Bad language
-		ErrInvalidArgument: map[string]interface{}{
+		ErrInvalidArgument: {
 			"lang":     "bad_language",
 			"user":     "userTest",
 			"password": "passTest",
 		},
 		// No language
-		ErrMissingArgument: map[string]interface{}{
+		ErrMissingArgument: {
 			"lang":     "",
 			"user":     "userTest",
 			"password": "passTest",

@@ -9,13 +9,13 @@ import (
 
 // Test data, fakes users wishlists
 var testData = map[string]map[string][]string{
-	"bob": map[string][]string{
-		"movies": []string{"movie1", "movie2"},
-		"shows":  []string{"show1", "show2"},
+	"bob": {
+		"movies": {"movie1", "movie2"},
+		"shows":  {"show1", "show2"},
 	},
-	"joe": map[string][]string{
-		"movies": []string{"movie1", "movie3"},
-		"shows":  []string{"show1", "show3"},
+	"joe": {
+		"movies": {"movie1", "movie3"},
+		"shows":  {"show1", "show3"},
 	},
 }
 
