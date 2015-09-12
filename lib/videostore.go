@@ -209,6 +209,10 @@ func (vs *VideoStore) AddMovie(movie *Movie) error {
 
 	// Move the movie into the folder
 	newPath := filepath.Join(storePath, path.Base(movie.Path))
+
+	// Save the old path
+	oldPath := movie.Path
+
 	vs.log.Debugf("Old path: %q, new path %q", movie.Path, newPath)
 	if err := move(movie.Path, newPath); err != nil {
 		return err
@@ -216,6 +220,11 @@ func (vs *VideoStore) AddMovie(movie *Movie) error {
 
 	// Set the new movie path
 	movie.Path = newPath
+
+	// Create a symlink between the new and the old location
+	if err := os.Symlink(movie.Path, oldPath); err != nil {
+		vs.log.Warnf("Error while making symlink between %s and %s : %+v", oldPath, movie.Path, err)
+	}
 
 	// Write NFO into the file
 	if err := MarshalInFile(movie, movie.NfoPath()); err != nil {
@@ -312,6 +321,9 @@ func (vs *VideoStore) AddShowEpisode(ep *ShowEpisode) error {
 		return nil
 	}
 
+	// Save the old path
+	oldPath := ep.Path
+
 	// Move the episode into the folder
 	newPath := filepath.Join(seasonDir, path.Base(ep.Path))
 	vs.log.Debugf("Moving episode to folder Old path: %q, New path: %q", ep.Path, newPath)
@@ -321,6 +333,11 @@ func (vs *VideoStore) AddShowEpisode(ep *ShowEpisode) error {
 
 	// Set the new movie path
 	ep.Path = newPath
+
+	// Create a symlink between the new and the old location
+	if err := os.Symlink(ep.Path, oldPath); err != nil {
+		vs.log.Warnf("Error while making symlink between %s and %s : %+v", oldPath, ep.Path, err)
+	}
 
 	// Create show NFO if necessary
 	if err := MarshalInFile(ep, ep.NfoPath()); err != nil {

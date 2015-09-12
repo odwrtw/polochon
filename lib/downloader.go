@@ -16,13 +16,22 @@ var (
 type Downloader interface {
 	Module
 	Download(string, *logrus.Entry) error
+	Remove(Downloadable) error
+	List() ([]Downloadable, error)
 }
 
 // Downloadable is an interface for anything to be downlaoded
 type Downloadable interface {
-	Status(*logrus.Entry) error
-	Remove(*logrus.Entry) error
-	Download(*logrus.Entry) error
+	Infos() *DownloadableInfos
+}
+
+// DownloadableInfos represent infos about a Downloadable object
+type DownloadableInfos struct {
+	Ratio           float32
+	IsFinished      bool
+	FilePaths       []string
+	Name            string
+	AdditionalInfos map[string]interface{}
 }
 
 // RegisterDownloader helps register a new Downloader

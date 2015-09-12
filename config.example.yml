@@ -6,6 +6,11 @@ downloader:
   timer: 4h
   client: transmission
   download_dir: /home/user/downloads
+  cleaner:
+    enabled: true
+    timer: 35s
+    ratio: 0
+    trash_dir: /home/user/trash-dir
 http_server:
   port: 8080
   host: localhost

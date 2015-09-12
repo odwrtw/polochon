@@ -83,6 +83,20 @@ func (f *File) IsExcluded() bool {
 	return false
 }
 
+// IsSymlink returns true if the file is a symlink
+func (f *File) IsSymlink() bool {
+	s, err := os.Lstat(f.Path)
+	if err != nil {
+		return false
+	}
+
+	// Check if it's a symlink
+	if s.Mode()&os.ModeSymlink != 0 {
+		return true
+	}
+	return false
+}
+
 // Ignore create a ".ignore" file next to the file to indicate that it is
 // ignored
 func (f *File) Ignore() error {

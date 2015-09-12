@@ -26,6 +26,9 @@ type App struct {
 	// Token auth for API
 	tokenManager *token.Manager
 
+	// Automatic cleaner
+	cleaner *cleaner
+
 	// done channel is used to notify all the goroutines to stop
 	done chan struct{}
 	// stop channel is used to notify the app to stop when the goroutines are
@@ -108,6 +111,10 @@ func (a *App) Run() {
 	// Start the downloader
 	if a.config.Downloader.Enabled {
 		go a.startDownloader()
+		// Start the cleaner
+		if a.config.Downloader.Cleaner.Enabled {
+			go a.startCleaner()
+		}
 	}
 
 	for {
@@ -176,6 +183,37 @@ func (a *App) startFsNotifier() error {
 	}()
 
 	return nil
+}
+
+// startCleaner launches the cleaner
+func (a *App) startCleaner() {
+	a.cleaner = &cleaner{
+		config: a.config,
+		event:  make(chan struct{}),
+		done:   a.done,
+		stop:   a.stop,
+		errc:   a.errc,
+		wg:     &a.wg,
+		log:    a.logger.WithField("function", "cleaner"),
+	}
+
+	a.cleaner.cleanDaemon()
+}
+
+// startDownloader launches the downloader
+func (a *App) startDownloader() {
+	a.downloader = &downloader{
+		config:     a.config,
+		videoStore: a.videoStore,
+		event:      make(chan struct{}),
+		done:       a.done,
+		stop:       a.stop,
+		errc:       a.errc,
+		wg:         &a.wg,
+		log:        a.logger.WithField("function", "downloader"),
+	}
+
+	a.downloader.downloadDaemon()
 }
 
 // Run lauches the app
@@ -273,6 +311,12 @@ func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 	// Check if file is ignored
 	if file.IsIgnored() {
 		log.Debug("the file is ignored")
+		return nil
+	}
+
+	// Check if file is symlink
+	if file.IsSymlink() {
+		log.Debug("the file is a symlink")
 		return nil
 	}
 
