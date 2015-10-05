@@ -28,7 +28,7 @@ func TestMoviesWishlist(t *testing.T) {
 		return &ids, nil
 	}
 
-	got, err := testWishlist.GetMovieWishlist()
+	got, err = testWishlist.GetMovieWishlist()
 	if err != nil {
 		t.Fatalf("Expected no error, got %q", err)
 	}

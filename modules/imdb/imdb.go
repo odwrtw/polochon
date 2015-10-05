@@ -40,11 +40,15 @@ func New(params map[string]interface{}, log *logrus.Entry) (polochon.Wishlister,
 		userIDs = append(userIDs, userID)
 	}
 
-	return &Wishlist{userIDs: userIDs}, nil
+	return &Wishlist{
+		log:     log,
+		userIDs: userIDs,
+	}, nil
 }
 
 // Wishlist holds the imdb wishlist
 type Wishlist struct {
+	log     *logrus.Entry
 	userIDs []string
 }
 
@@ -101,6 +105,15 @@ func (w *Wishlist) getList(f func(userid string) (*[]string, error)) ([]string, 
 		ids, err := f(userID)
 		if err != nil {
 			return nil, err
+		}
+
+		if ids == nil {
+			w.log.WithFields(logrus.Fields{
+				"function": "getList",
+				"userId":   userID,
+			}).Info("imdb: got empty ids from imdb-watchlist")
+
+			continue
 		}
 
 		imdbIDs = append(imdbIDs, *ids...)
