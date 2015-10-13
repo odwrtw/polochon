@@ -89,27 +89,43 @@ func (a *App) wishlist(w http.ResponseWriter, req *http.Request) {
 	a.render.JSON(w, http.StatusOK, wl)
 }
 
+func (a *App) getVideoBySlug(vtype, slug string) (polochon.Video, error) {
+	switch vtype {
+	case "movies":
+		return a.videoStore.SearchMovieBySlug(slug)
+	case "shows":
+		return a.videoStore.SearchShowEpisodeBySlug(slug)
+	default:
+		return nil, fmt.Errorf("invalid video type: %q", vtype)
+	}
+}
+func (a *App) getVideoByImdbID(vtype, imdbID string) (polochon.Video, error) {
+	switch vtype {
+	case "movies":
+		return a.videoStore.SearchMovieByImdbID(imdbID)
+	case "shows":
+		return a.videoStore.SearchShowEpisodeByImdbID(imdbID)
+	default:
+		return nil, fmt.Errorf("invalid video type: %q", vtype)
+	}
+}
+
 func (a *App) serveFile(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	videoType := vars["videoType"]
-	slug := vars["slug"]
 
-	a.logger.Debugf("Looking for the %s: %s", videoType, slug)
+	var err error
+	var v polochon.Video
 
-	var searchFunc func(slug string) (polochon.Video, error)
-	switch videoType {
-	case "movies":
-		searchFunc = a.videoStore.SearchMovieBySlug
-	case "shows":
-		searchFunc = a.videoStore.SearchShowEpisodeBySlug
-	default:
-		msg := fmt.Sprintf("Invalid video type: %q", videoType)
-		a.render.JSON(w, http.StatusInternalServerError, map[string]string{"error": msg})
+	if vars["slug"] != "" {
+		v, err = a.getVideoBySlug(videoType, vars["slug"])
+	} else if vars["id"] != "" {
+		v, err = a.getVideoByImdbID(videoType, vars["id"])
+	} else {
+		a.render.JSON(w, http.StatusNotFound, map[string]string{"error": "URL not found"})
 		return
 	}
 
-	// Find the file by Slug
-	v, err := searchFunc(slug)
 	if err != nil {
 		a.logger.Error(err)
 		var status int
@@ -189,6 +205,7 @@ func (a *App) HTTPServer() {
 		a.logger.Info("Server is serving files")
 		a.mux.HandleFunc("/{videoType:movies|shows}/slugs/{slug}/download", a.serveFile)
 		a.mux.HandleFunc("/{videoType:movies|shows}/slugs/{slug}/delete", a.deleteFile)
+		a.mux.HandleFunc("/{videoType:movies|shows}/ids/{id}/download", a.serveFile)
 	}
 
 	n := negroni.New()

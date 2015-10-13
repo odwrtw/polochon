@@ -120,7 +120,7 @@ func (vs *VideoStore) DeleteShowEpisode(se *ShowEpisode) error {
 			return err
 		}
 		// Remove the season from the index
-		if err := vs.showIndex.removeSeasonFromIndex(se.ShowImdbID, se.Season); err != nil {
+		if err := vs.showIndex.RemoveSeasonFromIndex(se.Show, se.Season); err != nil {
 			vs.log.Errorf("Error while deleting season from index :%q", err)
 			return err
 		}
@@ -192,6 +192,16 @@ func (vs *VideoStore) SearchMovieBySlug(slug string) (Video, error) {
 // SearchShowEpisodeBySlug search for a show episode by its slug
 func (vs *VideoStore) SearchShowEpisodeBySlug(slug string) (Video, error) {
 	return vs.showIndex.SearchShowEpisodeBySlug(slug)
+}
+
+// SearchMovieByImdbID returns the video by its imdb ID
+func (vs *VideoStore) SearchMovieByImdbID(imdbID string) (Video, error) {
+	return vs.movieIndex.SearchMovieByImdbID(imdbID)
+}
+
+// SearchShowEpisodeByImdbID search for a show episode by its imdb ID
+func (vs *VideoStore) SearchShowEpisodeByImdbID(imdbID string) (Video, error) {
+	return vs.showIndex.SearchShowEpisodeByImdbID(imdbID)
 }
 
 // RebuildIndex rebuilds both the movie and show index

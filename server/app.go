@@ -237,7 +237,7 @@ func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 	log = log.WithField("filePath", filePath)
 
 	// Create a file
-	file := polochon.NewFileWithConfig(filePath, a.config)
+	file := polochon.NewFileWithConfig(filePath, a.config.File)
 
 	// Check if file really exists
 	if !file.Exists() {

@@ -71,6 +71,27 @@ func NewShowEpisodeFromFile(showConf ShowConfig, file File) *ShowEpisode {
 	}
 }
 
+// NewShowEpisodeFromPath returns a new ShowEpisode object from path, it loads the nfo
+func NewShowEpisodeFromPath(Sconf ShowConfig, Fconf FileConfig, log *logrus.Entry, path string) (*ShowEpisode, error) {
+	file := NewFileWithConfig(path, Fconf)
+
+	// Open the NFO
+	nfoFile, err := os.Open(file.NfoPath())
+	if err != nil {
+		return nil, err
+	}
+	defer nfoFile.Close()
+
+	// Unmarshal the NFO into an episode
+	ep, err := readShowEpisodeNFO(nfoFile, Sconf)
+	if err != nil {
+		return nil, err
+	}
+	ep.SetFile(file)
+	ep.SetLogger(log)
+	return ep, nil
+}
+
 // Type implements the video interface
 func (s *ShowEpisode) Type() VideoType {
 	return ShowEpisodeType
