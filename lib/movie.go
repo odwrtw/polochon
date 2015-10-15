@@ -71,6 +71,27 @@ func NewMovieFromFile(movieConfig MovieConfig, file File) *Movie {
 	}
 }
 
+// NewMovieFromPath returns a new movie object from path, it loads the nfo
+func NewMovieFromPath(Mconf MovieConfig, Fconf FileConfig, log *logrus.Entry, path string) (*Movie, error) {
+	file := NewFileWithConfig(path, Fconf)
+
+	// Open the NFO
+	nfoFile, err := os.Open(file.NfoPath())
+	if err != nil {
+		return nil, err
+	}
+	defer nfoFile.Close()
+
+	// Unmarshal the NFO into an episode
+	movie, err := readMovieNFO(nfoFile, Mconf)
+	if err != nil {
+		return nil, err
+	}
+	movie.SetFile(file)
+	movie.SetLogger(log)
+	return movie, nil
+}
+
 // Type implements the video interface
 func (m *Movie) Type() VideoType {
 	return MovieType

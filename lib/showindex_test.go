@@ -15,6 +15,7 @@ func newFakeShowIndex() *ShowIndex {
 		log:    logger.WithField("function", "showIndexTest"),
 		ids:    map[string]map[int]map[int]string{},
 		slugs:  map[string]string{},
+		epIDs:  map[string]string{},
 	}
 }
 
@@ -37,13 +38,19 @@ var showIdsIndex = map[string]map[int]map[int]string{
 	"tt22222": map[int]map[int]string{
 		2: map[int]string{},
 	},
+	"tt0397306": map[int]map[int]string{
+		9: map[int]string{
+			18: "/home/test/show/season-1/showTers-s09e18.mp4",
+		},
+	},
 }
 
 var showSlugsIndex = map[string]string{
-	"show-s01e01":    "/home/test/show/season-1/show-s01e01.mp4",
-	"show-s01e02":    "/home/test/show/season-1/show-s01e02.mp4",
-	"show-s02e02":    "/home/test/show/season-2/show-s02e02.mp4",
-	"showBis-s02e01": "/home/test/showBis/season-2/showBis-s01e01.mp4",
+	"show-s01e01":         "/home/test/show/season-1/show-s01e01.mp4",
+	"show-s01e02":         "/home/test/show/season-1/show-s01e02.mp4",
+	"show-s02e02":         "/home/test/show/season-2/show-s02e02.mp4",
+	"showBis-s02e01":      "/home/test/showBis/season-2/showBis-s01e01.mp4",
+	"american-dad-s09e18": "/home/test/show/season-1/showTers-s09e18.mp4",
 }
 
 func TestHasShowEpisode(t *testing.T) {
@@ -181,11 +188,12 @@ func TestRemoveSeason(t *testing.T) {
 	si := newFakeShowIndex()
 
 	si.ids = showIdsIndex
+	si.slugs = showSlugsIndex
 
 	buildShowIndex = func(si *ShowIndex) error {
 		return nil
 	}
-	res, err := si.isSeasonEmpty("tt12345", 2)
+	res, err := si.isSeasonEmpty("tt0397306", 9)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -193,9 +201,16 @@ func TestRemoveSeason(t *testing.T) {
 		t.Fatalf("TestRemoveSeason: expected %t, got %t", false, res)
 	}
 
-	si.removeSeasonFromIndex("tt12345", 1)
+	// Create a fake show and a fake show episode
+	e := fakeShowEpisode()
+	s := newFakeShow()
+	s.Episodes = append(s.Episodes, e)
+	s.ImdbID = e.ShowImdbID
+	e.Path = "/home/test/show/season-1/showTers-s09e18.mp4"
 
-	res, err = si.isSeasonEmpty("tt12345", 1)
+	si.RemoveSeasonFromIndex(s, 9)
+
+	res, err = si.isSeasonEmpty("tt0397306", 9)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -212,7 +227,7 @@ func TestRemoveShow(t *testing.T) {
 	buildShowIndex = func(si *ShowIndex) error {
 		return nil
 	}
-	res, err := si.isShowEmpty("tt12345")
+	res, err := si.isShowEmpty("tt0397306")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -220,9 +235,16 @@ func TestRemoveShow(t *testing.T) {
 		t.Fatalf("TestRemoveShow: expected %t, got %t", false, res)
 	}
 
-	si.removeShowFromIndex("tt12345")
+	// Create a fake show and a fake show episode
+	e := fakeShowEpisode()
+	s := newFakeShow()
+	s.ImdbID = e.ShowImdbID
+	e.Show = s
+	e.Path = "/home/test/show/season-1/showTers-s09e18.mp4"
 
-	res, err = si.isShowEmpty("tt12345")
+	si.RemoveShowFromIndex(s)
+
+	res, err = si.isShowEmpty("tt0397306")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -244,7 +266,7 @@ func TestAddAndDeleteEpisodeToIndex(t *testing.T) {
 	s := newFakeShow()
 	s.ImdbID = e.ShowImdbID
 	e.Show = s
-	e.Path = "/home/test/show/season-1/show-s01e01.mp4"
+	e.Path = "/home/test/show/season-1/showTers-s09e18.mp4"
 
 	// Add it to the index
 	err := si.AddToIndex(e)

@@ -49,29 +49,22 @@ func (mi *MovieIndex) SearchMovieBySlug(slug string) (Video, error) {
 		return nil, err
 	}
 
-	// Create a File from the path
-	file := NewFileWithConfig(filePath, mi.config)
+	return NewMovieFromPath(mi.config.Video.Movie, mi.config.File, mi.log, filePath)
+}
 
-	// Open the NFO
-	nfoFile, err := os.Open(file.NfoPath())
-	if err != nil {
-		return nil, err
-	}
-	defer nfoFile.Close()
-
-	// Unmarshal the NFO into an episode
-	movie, err := readMovieNFO(nfoFile, mi.config.Video.Movie)
-	if err != nil {
+// SearchMovieByImdbID searches for a movie from its slug
+func (mi *MovieIndex) SearchMovieByImdbID(imdbID string) (Video, error) {
+	if err := mi.index(); err != nil {
 		return nil, err
 	}
 
-	movie.SetFile(file)
-	// Set logger
-	movie.log = mi.log.WithFields(logrus.Fields{
-		"type": "movie",
-	})
+	// Check if the slug is in the index and get the filePath
+	filePath, err := mi.searchMovieByImdbID(imdbID)
+	if err != nil {
+		return nil, err
+	}
 
-	return movie, nil
+	return NewMovieFromPath(mi.config.Video.Movie, mi.config.File, mi.log, filePath)
 }
 
 // index builds the movie index only once
@@ -138,7 +131,7 @@ func buildIndex(mi *MovieIndex) error {
 		var movieFile *File
 		for _, mext := range mi.config.File.VideoExtentions {
 			if ext == mext {
-				movieFile = NewFileWithConfig(filePath, mi.config)
+				movieFile = NewFileWithConfig(filePath, mi.config.File)
 				break
 			}
 		}

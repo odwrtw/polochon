@@ -26,9 +26,9 @@ func NewFile(path string) *File {
 }
 
 // NewFileWithConfig returs a new file from a path
-func NewFileWithConfig(path string, config *Config) *File {
+func NewFileWithConfig(path string, conf FileConfig) *File {
 	return &File{
-		FileConfig: config.File,
+		FileConfig: conf,
 		Path:       path,
 	}
 }
