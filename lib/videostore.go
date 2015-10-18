@@ -200,8 +200,8 @@ func (vs *VideoStore) SearchMovieByImdbID(imdbID string) (Video, error) {
 }
 
 // SearchShowEpisodeByImdbID search for a show episode by its imdb ID
-func (vs *VideoStore) SearchShowEpisodeByImdbID(imdbID string) (Video, error) {
-	return vs.showIndex.SearchShowEpisodeByImdbID(imdbID)
+func (vs *VideoStore) SearchShowEpisodeByImdbID(imdbID string, sNum, eNum int) (Video, error) {
+	return vs.showIndex.SearchShowEpisodeByImdbID(imdbID, sNum, eNum)
 }
 
 // RebuildIndex rebuilds both the movie and show index

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"strconv"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
@@ -89,38 +90,22 @@ func (a *App) wishlist(w http.ResponseWriter, req *http.Request) {
 	a.render.JSON(w, http.StatusOK, wl)
 }
 
-func (a *App) getVideoBySlug(vtype, slug string) (polochon.Video, error) {
-	switch vtype {
-	case "movies":
-		return a.videoStore.SearchMovieBySlug(slug)
-	case "shows":
-		return a.videoStore.SearchShowEpisodeBySlug(slug)
-	default:
-		return nil, fmt.Errorf("invalid video type: %q", vtype)
-	}
-}
-func (a *App) getVideoByImdbID(vtype, imdbID string) (polochon.Video, error) {
-	switch vtype {
-	case "movies":
-		return a.videoStore.SearchMovieByImdbID(imdbID)
-	case "shows":
-		return a.videoStore.SearchShowEpisodeByImdbID(imdbID)
-	default:
-		return nil, fmt.Errorf("invalid video type: %q", vtype)
-	}
+func serveFile(w http.ResponseWriter, r *http.Request, file *polochon.File) {
+	// Set the header so that when downloading, the real filename will be given
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filepath.Base(file.Path)))
+	http.ServeFile(w, r, file.Path)
 }
 
-func (a *App) serveFile(w http.ResponseWriter, req *http.Request) {
+func (a *App) serveMovie(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	videoType := vars["videoType"]
 
 	var err error
 	var v polochon.Video
 
 	if vars["slug"] != "" {
-		v, err = a.getVideoBySlug(videoType, vars["slug"])
+		v, err = a.videoStore.SearchMovieBySlug(vars["slug"])
 	} else if vars["id"] != "" {
-		v, err = a.getVideoByImdbID(videoType, vars["id"])
+		v, err = a.videoStore.SearchMovieByImdbID(vars["id"])
 	} else {
 		a.render.JSON(w, http.StatusNotFound, map[string]string{"error": "URL not found"})
 		return
@@ -138,12 +123,46 @@ func (a *App) serveFile(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	videoFile := v.GetFile()
-	a.logger.Debugf("Going to serve: %s", filepath.Base(videoFile.Path))
+	serveFile(w, req, v.GetFile())
+}
 
-	// Set the header so that when downloading, the real filename will be given
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filepath.Base(videoFile.Path)))
-	http.ServeFile(w, req, videoFile.Path)
+func (a *App) serveShow(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	var err error
+	var v polochon.Video
+
+	if vars["slug"] != "" {
+		v, err = a.videoStore.SearchShowEpisodeBySlug(vars["slug"])
+	} else if vars["id"] != "" && vars["season"] != "" && vars["episode"] != "" {
+		sStr := vars["season"]
+		eStr := vars["episode"]
+		season, err := strconv.Atoi(sStr)
+		episode, err := strconv.Atoi(eStr)
+		if err != nil {
+			a.render.JSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+		v, err = a.videoStore.SearchShowEpisodeByImdbID(vars["id"], season, episode)
+	} else {
+		a.render.JSON(w, http.StatusNotFound, map[string]string{"error": "URL not found"})
+		return
+	}
+
+	if err != nil {
+		a.logger.Error(err)
+		var status int
+		if err == polochon.ErrSlugNotFound {
+			status = http.StatusNotFound
+		} else {
+			status = http.StatusInternalServerError
+		}
+		a.render.JSON(w, status, map[string]string{"error": err.Error()})
+		return
+	}
+
+	serveFile(w, r, v.GetFile())
+
 }
 
 func (a *App) deleteFile(w http.ResponseWriter, req *http.Request) {
@@ -203,9 +222,11 @@ func (a *App) HTTPServer() {
 
 	if a.config.HTTPServer.ServeFiles {
 		a.logger.Info("Server is serving files")
-		a.mux.HandleFunc("/{videoType:movies|shows}/slugs/{slug}/download", a.serveFile)
 		a.mux.HandleFunc("/{videoType:movies|shows}/slugs/{slug}/delete", a.deleteFile)
-		a.mux.HandleFunc("/{videoType:movies|shows}/ids/{id}/download", a.serveFile)
+		a.mux.HandleFunc("/shows/slugs/{slug}/download", a.serveShow)
+		a.mux.HandleFunc("/shows/ids/{id}/{season}/{episode}/download", a.serveShow)
+		a.mux.HandleFunc("/movies/ids/{id}/download", a.serveMovie)
+		a.mux.HandleFunc("/movies/slugs/{slug}/download", a.serveMovie)
 	}
 
 	n := negroni.New()

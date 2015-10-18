@@ -15,7 +15,6 @@ func newFakeShowIndex() *ShowIndex {
 		log:    logger.WithField("function", "showIndexTest"),
 		ids:    map[string]map[int]map[int]string{},
 		slugs:  map[string]string{},
-		epIDs:  map[string]string{},
 	}
 }
 

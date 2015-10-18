@@ -23,8 +23,6 @@ type ShowIndex struct {
 	log *logrus.Entry
 	// ids keep the path of the show indexed by id, season and episode
 	ids map[string]map[int]map[int]string
-	// epID key ImdbID val file path
-	epIDs map[string]string
 	// paths keep the path of the shows
 	paths map[string]string
 	// slugs keep the episode index by slug
@@ -37,7 +35,6 @@ func NewShowIndex(config *Config, log *logrus.Entry) *ShowIndex {
 		config: config,
 		log:    log.WithField("function", "showIndex"),
 		ids:    map[string]map[int]map[int]string{},
-		epIDs:  map[string]string{},
 		slugs:  map[string]string{},
 	}
 }
@@ -152,13 +149,13 @@ func (si *ShowIndex) SearchShowEpisodeBySlug(slug string) (Video, error) {
 }
 
 // SearchShowEpisodeByImdbID returns a show from a slug
-func (si *ShowIndex) SearchShowEpisodeByImdbID(imdbID string) (Video, error) {
+func (si *ShowIndex) SearchShowEpisodeByImdbID(imdbID string, sNum, eNum int) (Video, error) {
 	if err := si.index(); err != nil {
 		return nil, err
 	}
 
 	// Check if the slug is in the index
-	filePath, err := si.searchShowEpisodeByImdbID(imdbID)
+	filePath, err := si.searchShowEpisodeByImdbID(imdbID, sNum, eNum)
 	if err != nil {
 		return nil, err
 	}
@@ -247,13 +244,6 @@ func (si *ShowIndex) AddToIndex(episode *ShowEpisode) error {
 	// then by slug
 	si.slugs[episode.Slug()] = episode.Path
 
-	// and by imdbID
-	if episode.EpisodeImdbID == "" {
-		si.log.Warnf("When adding to index episode with path: %q don't have an imdb ID", episode.Path)
-	} else {
-		si.epIDs[episode.EpisodeImdbID] = episode.Path
-	}
-
 	return nil
 }
 
@@ -326,7 +316,6 @@ func (si *ShowIndex) RemoveFromIndex(episode *ShowEpisode) error {
 	si.Lock()
 	// Delete the episode from the index
 	delete(si.slugs, slug)
-	delete(si.epIDs, episode.EpisodeImdbID)
 	delete(si.ids[imdbID][season], episode.Episode)
 	si.Unlock()
 
@@ -407,11 +396,19 @@ func (si *ShowIndex) searchShowEpisodeBySlug(slug string) (string, error) {
 }
 
 // searchShowEpisodeByImdbID searches for a show from its imdbId
-func (si *ShowIndex) searchShowEpisodeByImdbID(imdbID string) (string, error) {
+func (si *ShowIndex) searchShowEpisodeByImdbID(imdbID string, sNum, eNum int) (string, error) {
 	si.Lock()
 	defer si.Unlock()
 
-	filePath, ok := si.epIDs[imdbID]
+	show, ok := si.ids[imdbID]
+	if !ok {
+		return "", ErrImdbIDNotFound
+	}
+	season, ok := show[sNum]
+	if !ok {
+		return "", ErrImdbIDNotFound
+	}
+	filePath, ok := season[eNum]
 	if !ok {
 		return "", ErrImdbIDNotFound
 	}
