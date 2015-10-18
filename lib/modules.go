@@ -1,25 +1,21 @@
 package polochon
 
-import (
-	"errors"
-
-	"github.com/Sirupsen/logrus"
-)
+import "errors"
 
 // Registerd modules
 var registeredModules *RegisteredModules
 
 func init() {
 	registeredModules = &RegisteredModules{
-		Detailers:   make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Detailer, error)),
-		Torrenters:  make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Torrenter, error)),
-		Guessers:    make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Guesser, error)),
-		FsNotifiers: make(map[string]func(params map[string]interface{}, log *logrus.Entry) (FsNotifier, error)),
-		Notifiers:   make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Notifier, error)),
-		Subtitlers:  make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Subtitler, error)),
-		Wishlisters: make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Wishlister, error)),
-		Downloaders: make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Downloader, error)),
-		Calendars:   make(map[string]func(params map[string]interface{}, log *logrus.Entry) (Calendar, error)),
+		Detailers:   make(map[string]func(params map[string]interface{}) (Detailer, error)),
+		Torrenters:  make(map[string]func(params map[string]interface{}) (Torrenter, error)),
+		Guessers:    make(map[string]func(params map[string]interface{}) (Guesser, error)),
+		FsNotifiers: make(map[string]func(params map[string]interface{}) (FsNotifier, error)),
+		Notifiers:   make(map[string]func(params map[string]interface{}) (Notifier, error)),
+		Subtitlers:  make(map[string]func(params map[string]interface{}) (Subtitler, error)),
+		Wishlisters: make(map[string]func(params map[string]interface{}) (Wishlister, error)),
+		Downloaders: make(map[string]func(params map[string]interface{}) (Downloader, error)),
+		Calendars:   make(map[string]func(params map[string]interface{}) (Calendar, error)),
 	}
 }
 
@@ -52,30 +48,26 @@ const (
 
 // RegisteredModules holds the modules registered during the init process
 type RegisteredModules struct {
-	Detailers   map[string]func(params map[string]interface{}, log *logrus.Entry) (Detailer, error)
-	Torrenters  map[string]func(params map[string]interface{}, log *logrus.Entry) (Torrenter, error)
-	Guessers    map[string]func(params map[string]interface{}, log *logrus.Entry) (Guesser, error)
-	FsNotifiers map[string]func(params map[string]interface{}, log *logrus.Entry) (FsNotifier, error)
-	Notifiers   map[string]func(params map[string]interface{}, log *logrus.Entry) (Notifier, error)
-	Subtitlers  map[string]func(params map[string]interface{}, log *logrus.Entry) (Subtitler, error)
-	Wishlisters map[string]func(params map[string]interface{}, log *logrus.Entry) (Wishlister, error)
-	Downloaders map[string]func(params map[string]interface{}, log *logrus.Entry) (Downloader, error)
-	Calendars   map[string]func(params map[string]interface{}, log *logrus.Entry) (Calendar, error)
+	Detailers   map[string]func(params map[string]interface{}) (Detailer, error)
+	Torrenters  map[string]func(params map[string]interface{}) (Torrenter, error)
+	Guessers    map[string]func(params map[string]interface{}) (Guesser, error)
+	FsNotifiers map[string]func(params map[string]interface{}) (FsNotifier, error)
+	Notifiers   map[string]func(params map[string]interface{}) (Notifier, error)
+	Subtitlers  map[string]func(params map[string]interface{}) (Subtitler, error)
+	Wishlisters map[string]func(params map[string]interface{}) (Wishlister, error)
+	Downloaders map[string]func(params map[string]interface{}) (Downloader, error)
+	Calendars   map[string]func(params map[string]interface{}) (Calendar, error)
 }
 
 // ConfigureDetailer configures a detailer
-func ConfigureDetailer(name string, params map[string]interface{}, log *logrus.Entry) (Detailer, error) {
-	// Setup the logs
-	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeDetailer})
-
+func ConfigureDetailer(name string, params map[string]interface{}) (Detailer, error) {
 	f, ok := registeredModules.Detailers[name]
 	if !ok {
-		logger.Infof("No such module %q", name)
 		return nil, ErrModuleNotFound
 	}
 
 	// Configure the module
-	module, err := f(params, logger)
+	module, err := f(params)
 	if err != nil {
 		return nil, err
 	}
@@ -84,18 +76,14 @@ func ConfigureDetailer(name string, params map[string]interface{}, log *logrus.E
 }
 
 // ConfigureSubtitler configures a subtitiler
-func ConfigureSubtitler(name string, params map[string]interface{}, log *logrus.Entry) (Subtitler, error) {
-	// Setup the logs
-	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeSubtitler})
-
+func ConfigureSubtitler(name string, params map[string]interface{}) (Subtitler, error) {
 	f, ok := registeredModules.Subtitlers[name]
 	if !ok {
-		logger.Infof("No such module %q", name)
 		return nil, ErrModuleNotFound
 	}
 
 	// Configure the module
-	module, err := f(params, logger)
+	module, err := f(params)
 	if err != nil {
 		return nil, err
 	}
@@ -104,18 +92,14 @@ func ConfigureSubtitler(name string, params map[string]interface{}, log *logrus.
 }
 
 // ConfigureWishlister configures a wishlister
-func ConfigureWishlister(name string, params map[string]interface{}, log *logrus.Entry) (Wishlister, error) {
-	// Setup the logs
-	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeWishlister})
-
+func ConfigureWishlister(name string, params map[string]interface{}) (Wishlister, error) {
 	f, ok := registeredModules.Wishlisters[name]
 	if !ok {
-		logger.Infof("No such module %q", name)
 		return nil, ErrModuleNotFound
 	}
 
 	// Configure the module
-	module, err := f(params, logger)
+	module, err := f(params)
 	if err != nil {
 		return nil, err
 	}
@@ -124,18 +108,14 @@ func ConfigureWishlister(name string, params map[string]interface{}, log *logrus
 }
 
 // ConfigureTorrenter configures a torrenter
-func ConfigureTorrenter(name string, params map[string]interface{}, log *logrus.Entry) (Torrenter, error) {
-	// Setup the logs
-	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeTorrenter})
-
+func ConfigureTorrenter(name string, params map[string]interface{}) (Torrenter, error) {
 	f, ok := registeredModules.Torrenters[name]
 	if !ok {
-		logger.Infof("No such module %q", name)
 		return nil, ErrModuleNotFound
 	}
 
 	// Configure the module
-	module, err := f(params, logger)
+	module, err := f(params)
 	if err != nil {
 		return nil, err
 	}
@@ -144,18 +124,14 @@ func ConfigureTorrenter(name string, params map[string]interface{}, log *logrus.
 }
 
 // ConfigureGuesser configures a guesser
-func ConfigureGuesser(name string, params map[string]interface{}, log *logrus.Entry) (Guesser, error) {
-	// Setup the logs
-	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeGuesser})
-
+func ConfigureGuesser(name string, params map[string]interface{}) (Guesser, error) {
 	f, ok := registeredModules.Guessers[name]
 	if !ok {
-		logger.Infof("No such module %q", name)
 		return nil, ErrModuleNotFound
 	}
 
 	// Configure the module
-	module, err := f(params, logger)
+	module, err := f(params)
 	if err != nil {
 		return nil, err
 	}
@@ -164,18 +140,14 @@ func ConfigureGuesser(name string, params map[string]interface{}, log *logrus.En
 }
 
 // ConfigureFsNotifier configures a fs notifier
-func ConfigureFsNotifier(name string, params map[string]interface{}, log *logrus.Entry) (FsNotifier, error) {
-	// Setup the logs
-	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeFsNotifier})
-
+func ConfigureFsNotifier(name string, params map[string]interface{}) (FsNotifier, error) {
 	f, ok := registeredModules.FsNotifiers[name]
 	if !ok {
-		logger.Infof("No such module %q", name)
 		return nil, ErrModuleNotFound
 	}
 
 	// Configure the module
-	module, err := f(params, logger)
+	module, err := f(params)
 	if err != nil {
 		return nil, err
 	}
@@ -184,18 +156,14 @@ func ConfigureFsNotifier(name string, params map[string]interface{}, log *logrus
 }
 
 // ConfigureNotifier configures a notifier
-func ConfigureNotifier(name string, params map[string]interface{}, log *logrus.Entry) (Notifier, error) {
-	// Setup the logs
-	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeNotifier})
-
+func ConfigureNotifier(name string, params map[string]interface{}) (Notifier, error) {
 	f, ok := registeredModules.Notifiers[name]
 	if !ok {
-		logger.Infof("No such module %q", name)
 		return nil, ErrModuleNotFound
 	}
 
 	// Configure the module
-	module, err := f(params, logger)
+	module, err := f(params)
 	if err != nil {
 		return nil, err
 	}
@@ -204,18 +172,14 @@ func ConfigureNotifier(name string, params map[string]interface{}, log *logrus.E
 }
 
 // ConfigureDownloader configures a downloader
-func ConfigureDownloader(name string, params map[string]interface{}, log *logrus.Entry) (Downloader, error) {
-	// Setup the logs
-	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeDownloader})
-
+func ConfigureDownloader(name string, params map[string]interface{}) (Downloader, error) {
 	f, ok := registeredModules.Downloaders[name]
 	if !ok {
-		logger.Infof("No such module %q", name)
 		return nil, ErrModuleNotFound
 	}
 
 	// Configure the module
-	module, err := f(params, logger)
+	module, err := f(params)
 	if err != nil {
 		return nil, err
 	}
@@ -224,18 +188,14 @@ func ConfigureDownloader(name string, params map[string]interface{}, log *logrus
 }
 
 // ConfigureShowCalendarFetcher configures a show calendar fetcher
-func ConfigureCalendar(name string, params map[string]interface{}, log *logrus.Entry) (Calendar, error) {
-	// Setup the logs
-	logger := log.WithFields(logrus.Fields{"moduleName": name, "moduleType": TypeCalendar})
-
+func ConfigureCalendar(name string, params map[string]interface{}) (Calendar, error) {
 	f, ok := registeredModules.Calendars[name]
 	if !ok {
-		logger.Infof("No such module %q", name)
 		return nil, ErrModuleNotFound
 	}
 
 	// Configure the module
-	module, err := f(params, logger)
+	module, err := f(params)
 	if err != nil {
 		return nil, err
 	}

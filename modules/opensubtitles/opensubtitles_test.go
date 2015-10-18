@@ -2,7 +2,6 @@ package opensubtitles
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"reflect"
 	"testing"
@@ -13,6 +12,7 @@ import (
 )
 
 var fakeLogger = logrus.New()
+var fakeLoggerEntry = logrus.NewEntry(fakeLogger)
 var errFake = fmt.Errorf("fake error")
 var fakeClient = &osdb.Client{Token: "pwet"}
 
@@ -72,7 +72,6 @@ var fakeFileSearchSubtitlesError = func(c *osdb.Client, filePath string, languag
 }
 var fakeProxy = osProxy{
 	client:   nil,
-	log:      logrus.NewEntry(fakeLogger),
 	language: "fre",
 	user:     "fakeUser",
 	password: "fakePass",
@@ -102,8 +101,6 @@ var fakeMovie = polochon.Movie{
 }
 
 func TestInvalidNew(t *testing.T) {
-	fakeLogger.Out = ioutil.Discard
-	l := logrus.NewEntry(fakeLogger)
 	for expected, params := range map[error]map[string]interface{}{
 		// Not a string
 		ErrInvalidArgument: {
@@ -130,7 +127,7 @@ func TestInvalidNew(t *testing.T) {
 			"password": "passTest",
 		},
 	} {
-		_, err := New(params, l)
+		_, err := New(params)
 		if err != expected {
 			log.Fatalf("Got %q, expected %q with params %+v", err, expected, params)
 		}
@@ -138,14 +135,12 @@ func TestInvalidNew(t *testing.T) {
 }
 
 func TestSuccessfulNew(t *testing.T) {
-	fakeLogger.Out = ioutil.Discard
-	l := logrus.NewEntry(fakeLogger)
 	params := map[string]interface{}{
 		"lang":     "fr_FR",
 		"user":     "userTest",
 		"password": "passTest",
 	}
-	got, err := New(params, l)
+	got, err := New(params)
 	if err != nil {
 		log.Fatalf("Got error in New: %q", err)
 	}
@@ -153,7 +148,6 @@ func TestSuccessfulNew(t *testing.T) {
 		language: "fre",
 		user:     "userTest",
 		password: "passTest",
-		log:      l,
 	}
 	if !reflect.DeepEqual(got, expected) {
 		t.Errorf("Failed to get movie details\nGot: %+v\nExpected: %+v", got, expected)
@@ -161,7 +155,6 @@ func TestSuccessfulNew(t *testing.T) {
 }
 
 func TestGetClientFailed(t *testing.T) {
-	fakeLogger.Out = ioutil.Discard
 	situations := []struct {
 		newOsdbClient   func() (*osdb.Client, error)
 		checkOsdbClient func(c *osdb.Client) error
@@ -200,7 +193,6 @@ func TestGetClientFailed(t *testing.T) {
 }
 
 func TestSearchSubtitles(t *testing.T) {
-	fakeLogger.Out = ioutil.Discard
 	situations := []struct {
 		newOsdbClient       func() (*osdb.Client, error)
 		checkOsdbClient     func(c *osdb.Client) error
@@ -258,7 +250,7 @@ func TestSearchSubtitles(t *testing.T) {
 			fakeMovie,
 			fakeShowEpisode,
 		} {
-			sub, err := fakeProxy.searchSubtitles(video, "fakePath")
+			sub, err := fakeProxy.searchSubtitles(video, "fakePath", fakeLoggerEntry)
 			if err != situation.expectedErr {
 				log.Fatalf("Got error in searchMovieSubtitles: %q, wanted : %q", err, situation.expectedErr)
 			}

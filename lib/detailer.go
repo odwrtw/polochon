@@ -1,7 +1,7 @@
 package polochon
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/Sirupsen/logrus"
 )
@@ -9,15 +9,14 @@ import (
 // Detailer is the interface to get details on a video or a show
 type Detailer interface {
 	Module
-	GetDetails(i interface{}) error
+	GetDetails(i interface{}, log *logrus.Entry) error
 }
 
 // RegisterDetailer helps register a new detailer
-func RegisterDetailer(name string, f func(params map[string]interface{}, log *logrus.Entry) (Detailer, error)) {
+func RegisterDetailer(name string, f func(params map[string]interface{}) (Detailer, error)) {
 	if _, ok := registeredModules.Detailers[name]; ok {
-		log.Panicf("modules: %q of type %q is already registered", name, TypeDetailer)
+		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeDetailer))
 	}
-
 	// Register the module
 	registeredModules.Detailers[name] = f
 }

@@ -63,7 +63,7 @@ func (s *Show) SetLogger(log *logrus.Entry) {
 func (s *Show) GetDetails() error {
 	var err error
 	for _, d := range s.Detailers {
-		err = d.GetDetails(s)
+		err = d.GetDetails(s, s.log)
 		if err == nil {
 			break
 		}
@@ -78,7 +78,7 @@ func (s *Show) GetCalendar() (*ShowCalendar, error) {
 		return nil, fmt.Errorf("no show calendar fetcher configured")
 	}
 
-	calendar, err := s.Calendar.GetShowCalendar(s)
+	calendar, err := s.Calendar.GetShowCalendar(s, s.log)
 	if err != nil {
 		return nil, err
 	}

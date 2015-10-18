@@ -2,8 +2,8 @@ package polochon
 
 import (
 	"errors"
+	"fmt"
 	"io"
-	"log"
 
 	"github.com/Sirupsen/logrus"
 )
@@ -14,8 +14,8 @@ var ErrNoSubtitleFound = errors.New("No subtitle found")
 // Subtitler all subtitler must implement it
 type Subtitler interface {
 	Module
-	GetShowSubtitle(*ShowEpisode) (Subtitle, error)
-	GetMovieSubtitle(*Movie) (Subtitle, error)
+	GetShowSubtitle(*ShowEpisode, *logrus.Entry) (Subtitle, error)
+	GetMovieSubtitle(*Movie, *logrus.Entry) (Subtitle, error)
 }
 
 // Subtitle represents a subtitle
@@ -24,9 +24,9 @@ type Subtitle interface {
 }
 
 // RegisterSubtitler helps register a new Subtitler
-func RegisterSubtitler(name string, f func(params map[string]interface{}, log *logrus.Entry) (Subtitler, error)) {
+func RegisterSubtitler(name string, f func(params map[string]interface{}) (Subtitler, error)) {
 	if _, ok := registeredModules.Subtitlers[name]; ok {
-		log.Panicf("modules: %q of type %q is already registered", name, TypeSubtitler)
+		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeDetailer))
 	}
 
 	// Register the module

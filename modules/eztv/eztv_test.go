@@ -4,15 +4,18 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/eztv"
 	"github.com/odwrtw/polochon/lib"
 )
+
+var fakeLogEntry = logrus.NewEntry(logrus.New())
 
 func TestEztvGetTorrentsInvalidArgumens(t *testing.T) {
 	eztv := &Eztv{}
 	m := "invalid type"
 
-	err := eztv.GetTorrents(m)
+	err := eztv.GetTorrents(m, fakeLogEntry)
 	if err != ErrInvalidArgument {
 		t.Fatalf("Expected %q got %q", ErrInvalidArgument, err)
 	}
@@ -22,13 +25,13 @@ func TestEztvInvalidArguments(t *testing.T) {
 	e := &Eztv{}
 	s := polochon.NewShowEpisode(polochon.ShowConfig{})
 
-	err := e.GetTorrents(s)
+	err := e.GetTorrents(s, fakeLogEntry)
 	if err != ErrMissingShowImdbID {
 		t.Fatalf("Expected %q got %q", ErrMissingShowImdbID, err)
 	}
 
 	s.ShowImdbID = "tt2562232"
-	err = e.GetTorrents(s)
+	err = e.GetTorrents(s, fakeLogEntry)
 	if err != ErrInvalidShowEpisode {
 		t.Fatalf("Expected %q got %q", ErrInvalidShowEpisode, err)
 	}
@@ -45,7 +48,7 @@ func TestEztvNoShowEpisodeFound(t *testing.T) {
 		return nil, eztv.ErrEpisodeNotFound
 	}
 
-	err := e.GetTorrents(s)
+	err := e.GetTorrents(s, fakeLogEntry)
 	if err != polochon.ErrShowEpisodeTorrentNotFound {
 		t.Fatalf("Expected %q got %q", polochon.ErrShowEpisodeTorrentNotFound, err)
 	}
@@ -62,7 +65,7 @@ func TestEztvNoTorrentFound(t *testing.T) {
 		return &eztv.ShowEpisode{}, nil
 	}
 
-	err := e.GetTorrents(s)
+	err := e.GetTorrents(s, fakeLogEntry)
 	if err != polochon.ErrTorrentNotFound {
 		t.Fatalf("Expected %q got %q", polochon.ErrTorrentNotFound, err)
 	}
@@ -86,7 +89,7 @@ func TestEztvGetTorrents(t *testing.T) {
 		}, nil
 	}
 
-	err := e.GetTorrents(s)
+	err := e.GetTorrents(s, fakeLogEntry)
 	if err != nil {
 		t.Fatalf("Expected no error, got %q", err)
 	}

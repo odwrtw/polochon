@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
@@ -29,11 +28,10 @@ type Client struct {
 	Username  string
 	Password  string
 	tClient   *transmission.Client
-	log       *logrus.Entry
 }
 
 // New module
-func New(params map[string]interface{}, log *logrus.Entry) (polochon.Downloader, error) {
+func New(params map[string]interface{}) (polochon.Downloader, error) {
 	var URL, username, password string
 
 	// Check SSL and basic authentication by default
@@ -80,7 +78,6 @@ func New(params map[string]interface{}, log *logrus.Entry) (polochon.Downloader,
 		BasicAuth: basicAuth,
 		Username:  username,
 		Password:  password,
-		log:       log,
 	}
 	if err := client.checkConfig(); err != nil {
 		return nil, err
@@ -140,17 +137,10 @@ func (c *Client) Name() string {
 }
 
 // Download implements the downloader interface
-func (c *Client) Download(URL string) error {
-	start := time.Now()
+func (c *Client) Download(URL string, log *logrus.Entry) error {
 	_, err := c.tClient.Add(URL)
 	if err != nil {
 		return err
 	}
-
-	c.log.WithFields(logrus.Fields{
-		"URL":       URL,
-		"timeToAdd": time.Since(start),
-	}).Debug("torrent added to transmission")
-
 	return nil
 }

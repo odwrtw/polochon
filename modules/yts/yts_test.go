@@ -4,15 +4,18 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/yts"
 )
+
+var fakeLogEntry = logrus.NewEntry(logrus.New())
 
 func TestYtsBadInput(t *testing.T) {
 	y := &Yts{}
 	show := polochon.NewShowEpisode(polochon.ShowConfig{})
 
-	err := y.GetTorrents(show)
+	err := y.GetTorrents(show, fakeLogEntry)
 	if err != ErrInvalidArgument {
 		t.Errorf("Got %q, expected %q", err, ErrInvalidArgument)
 	}
@@ -26,7 +29,7 @@ func TestYtsNoResults(t *testing.T) {
 		return []yts.Movie{}, nil
 	}
 
-	err := y.GetTorrents(m)
+	err := y.GetTorrents(m, fakeLogEntry)
 	if err != polochon.ErrMovieTorrentNotFound {
 		t.Errorf("Got %q, expected %q", err, polochon.ErrMovieTorrentNotFound)
 	}
@@ -42,7 +45,7 @@ func TestYtsNoTorrent(t *testing.T) {
 		}, nil
 	}
 
-	err := y.GetTorrents(m)
+	err := y.GetTorrents(m, fakeLogEntry)
 	if err != polochon.ErrMovieTorrentNotFound {
 		t.Errorf("Got %q, expected %q", err, polochon.ErrMovieTorrentNotFound)
 	}
@@ -64,7 +67,7 @@ func TestYtsTorrents(t *testing.T) {
 		}, nil
 	}
 
-	err := y.GetTorrents(m)
+	err := y.GetTorrents(m, fakeLogEntry)
 	if err != nil {
 		t.Fatal(err)
 	}

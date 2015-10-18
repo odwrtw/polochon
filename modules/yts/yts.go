@@ -2,7 +2,6 @@ package yts
 
 import (
 	"errors"
-	"log"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
@@ -26,12 +25,11 @@ func init() {
 
 // Yts is a source for movie torrents
 type Yts struct {
-	log *logrus.Entry
 }
 
 // NewYts returns a new Yts
-func NewYts(params map[string]interface{}, log *logrus.Entry) (polochon.Torrenter, error) {
-	return &Yts{log: log}, nil
+func NewYts(params map[string]interface{}) (polochon.Torrenter, error) {
+	return &Yts{}, nil
 }
 
 // Name implements the Module interface
@@ -54,7 +52,7 @@ var searchByImdbID = func(imdbID string) ([]yts.Movie, error) {
 }
 
 // GetTorrents implements the Torrenter interface
-func (y *Yts) GetTorrents(i interface{}) error {
+func (y *Yts) GetTorrents(i interface{}, log *logrus.Entry) error {
 	m, err := y.getMovieArgument(i)
 	if err != nil {
 		return err
@@ -82,7 +80,6 @@ func (y *Yts) GetTorrents(i interface{}) error {
 	for _, t := range ytsMovie.Torrents {
 		q := polochon.Quality(t.Quality)
 		if !q.IsAllowed() {
-			log.Printf("Invalid quality %q", t.Quality)
 			continue
 		}
 

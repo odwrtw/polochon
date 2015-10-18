@@ -33,7 +33,7 @@ type Pushover struct {
 }
 
 // New returns a new Pushover
-func New(params map[string]interface{}, log *logrus.Entry) (polochon.Notifier, error) {
+func New(params map[string]interface{}) (polochon.Notifier, error) {
 	var key, recipient string
 
 	for ptr, param := range map[*string]string{
@@ -65,7 +65,7 @@ func (p *Pushover) Name() string {
 }
 
 // Notify sends a notification to the recipient
-func (p *Pushover) Notify(i interface{}) error {
+func (p *Pushover) Notify(i interface{}, log *logrus.Entry) error {
 	switch v := i.(type) {
 	case *polochon.ShowEpisode:
 		return p.notifyShowEpisode(v)

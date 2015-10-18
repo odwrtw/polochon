@@ -145,7 +145,7 @@ func (a *App) startFsNotifier() error {
 	}
 
 	// Launch the FsNotifier
-	if err := a.config.Watcher.FsNotifier.Watch(a.config.Watcher.Dir, ctx); err != nil {
+	if err := a.config.Watcher.FsNotifier.Watch(a.config.Watcher.Dir, ctx, logrus.NewEntry(a.logger)); err != nil {
 		return err
 	}
 
@@ -264,7 +264,7 @@ func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 	}
 
 	// Guess the video inforamtion
-	video, err := file.Guess(a.config.Video)
+	video, err := file.Guess(a.config.Video, log)
 	if err != nil {
 		log.Errorf("failed to guess video file: %q", err)
 		return file.Ignore()

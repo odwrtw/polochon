@@ -41,14 +41,13 @@ func init() {
 }
 
 func TestNew(t *testing.T) {
-	got, err := New(map[string]interface{}{"lang": "fr_FR"}, fakeLogEntry)
+	got, err := New(map[string]interface{}{"lang": "fr_FR"})
 	if err != nil {
 		log.Fatalf("Got error in New: %q", err)
 	}
 
 	expected := &YifySubs{
 		lang: "french",
-		log:  fakeLogEntry,
 	}
 
 	if !reflect.DeepEqual(got, expected) {
@@ -62,7 +61,7 @@ func TestNewError(t *testing.T) {
 		ErrInvalidArgument:     map[string]interface{}{"lang": 1},
 		ErrInvalidSubtitleLang: map[string]interface{}{"lang": "yo"},
 	} {
-		_, err := New(params, fakeLogEntry)
+		_, err := New(params)
 		if err == nil {
 			log.Fatal("expected an error, got none")
 		}
@@ -83,7 +82,7 @@ func TestName(t *testing.T) {
 
 func TestGetShowSubtitle(t *testing.T) {
 	y := &YifySubs{}
-	r, err := y.GetShowSubtitle(&polochon.ShowEpisode{})
+	r, err := y.GetShowSubtitle(&polochon.ShowEpisode{}, fakeLogEntry)
 	if r != nil {
 		log.Fatalf("expected no result, got %+v", r)
 	}
@@ -100,7 +99,7 @@ func TestGetMovieSubtitle(t *testing.T) {
 	m := &polochon.Movie{ImdbID: "tt9347238"}
 	y := &YifySubs{lang: "french"}
 
-	sub, err := y.GetMovieSubtitle(m)
+	sub, err := y.GetMovieSubtitle(m, fakeLogEntry)
 	if err != nil {
 		log.Fatalf("expected no error, got %q", err)
 	}
@@ -123,7 +122,7 @@ func TestGetMovieSubtitleNotFound(t *testing.T) {
 	m := &polochon.Movie{ImdbID: "tt9347238"}
 	y := &YifySubs{lang: "test"}
 
-	_, err := y.GetMovieSubtitle(m)
+	_, err := y.GetMovieSubtitle(m, fakeLogEntry)
 	if err == nil {
 		log.Fatal("expected an error, got none")
 	}
@@ -140,7 +139,7 @@ func TestGetMovieSubtitleNoID(t *testing.T) {
 	m := &polochon.Movie{}
 	y := &YifySubs{lang: "french"}
 
-	_, err := y.GetMovieSubtitle(m)
+	_, err := y.GetMovieSubtitle(m, fakeLogEntry)
 	if err == nil {
 		log.Fatal("expected an error, got none")
 	}

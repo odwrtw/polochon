@@ -26,13 +26,11 @@ func init() {
 }
 
 // Eztv is a source for show episode torrents
-type Eztv struct {
-	log *logrus.Entry
-}
+type Eztv struct{}
 
 // NewEztv returns a new Eztv
-func NewEztv(params map[string]interface{}, log *logrus.Entry) (polochon.Torrenter, error) {
-	return &Eztv{log: log}, nil
+func NewEztv(params map[string]interface{}) (polochon.Torrenter, error) {
+	return &Eztv{}, nil
 }
 
 // Function to be overwritten during the tests
@@ -92,7 +90,7 @@ func (e *Eztv) Name() string {
 }
 
 // GetTorrents implements the Torrenter interface
-func (e *Eztv) GetTorrents(i interface{}) error {
+func (e *Eztv) GetTorrents(i interface{}, log *logrus.Entry) error {
 	switch v := i.(type) {
 	case *polochon.ShowEpisode:
 		return e.getShowEpisodeDetails(v)

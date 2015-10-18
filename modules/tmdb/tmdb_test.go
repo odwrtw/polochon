@@ -12,7 +12,8 @@ import (
 
 // Fake TmDB pointer to run the tests
 var fakeLogger = logrus.New()
-var fakeTmDB = &TmDB{log: logrus.NewEntry(fakeLogger)}
+var fakeLoggerEntry = logrus.NewEntry(fakeLogger)
+var fakeTmDB = &TmDB{}
 
 func TestTmdbInvalidMovieArgument(t *testing.T) {
 	m := polochon.NewShowEpisode(polochon.ShowConfig{})
@@ -148,7 +149,9 @@ func TestTmdbFailedToGetDetails(t *testing.T) {
 		return &tmdb.MovieSearchResults{Results: []tmdb.MovieShort{}}, nil
 	}
 
-	err := fakeTmDB.GetDetails(m)
+	log := logrus.NewEntry(logrus.New())
+
+	err := fakeTmDB.GetDetails(m, log)
 	if err != ErrFailedToGetDetails {
 		log.Fatalf("Got %q, expected %q", err, ErrFailedToGetDetails)
 	}
@@ -179,7 +182,7 @@ func TestTmdbGetDetails(t *testing.T) {
 		}, nil
 	}
 
-	err := tm.GetDetails(m)
+	err := tm.GetDetails(m, fakeLoggerEntry)
 	if err != nil {
 		log.Fatalf("Expected no error, got %q", err)
 	}

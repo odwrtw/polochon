@@ -20,7 +20,7 @@ func init() {
 }
 
 // New module
-func New(params map[string]interface{}, log *logrus.Entry) (polochon.Wishlister, error) {
+func New(params map[string]interface{}) (polochon.Wishlister, error) {
 	k, ok := params["user_ids"]
 	if !ok {
 		return nil, fmt.Errorf("imdb: missing user ids")
@@ -41,14 +41,12 @@ func New(params map[string]interface{}, log *logrus.Entry) (polochon.Wishlister,
 	}
 
 	return &Wishlist{
-		log:     log,
 		userIDs: userIDs,
 	}, nil
 }
 
 // Wishlist holds the imdb wishlist
 type Wishlist struct {
-	log     *logrus.Entry
 	userIDs []string
 }
 
@@ -63,7 +61,7 @@ var getMoviesFromImdb = func(userID string) (*[]string, error) {
 }
 
 // GetMovieWishlist gets the movies wishlist
-func (w *Wishlist) GetMovieWishlist() ([]*polochon.WishedMovie, error) {
+func (w *Wishlist) GetMovieWishlist(log *logrus.Entry) ([]*polochon.WishedMovie, error) {
 	imdbIDs, err := w.getList(getMoviesFromImdb)
 	if err != nil {
 		return nil, err
@@ -83,7 +81,7 @@ var getShowsFromImdb = func(userID string) (*[]string, error) {
 }
 
 // GetShowWishlist gets the show wishlist
-func (w *Wishlist) GetShowWishlist() ([]*polochon.WishedShow, error) {
+func (w *Wishlist) GetShowWishlist(log *logrus.Entry) ([]*polochon.WishedShow, error) {
 	imdbIDs, err := w.getList(getShowsFromImdb)
 	if err != nil {
 		return nil, err
@@ -108,11 +106,6 @@ func (w *Wishlist) getList(f func(userid string) (*[]string, error)) ([]string, 
 		}
 
 		if ids == nil {
-			w.log.WithFields(logrus.Fields{
-				"function": "getList",
-				"userId":   userID,
-			}).Info("imdb: got empty ids from imdb-watchlist")
-
 			continue
 		}
 

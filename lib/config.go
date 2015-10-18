@@ -295,7 +295,7 @@ func (c *ConfigFileRoot) loadWatcher(log *logrus.Entry) (FsNotifier, error) {
 	}
 
 	// Configure
-	fsNotifier, err := ConfigureFsNotifier(c.Watcher.FsNotifierName, moduleParams, log)
+	fsNotifier, err := ConfigureFsNotifier(c.Watcher.FsNotifierName, moduleParams)
 	if err != nil {
 		return nil, err
 	}
@@ -315,7 +315,7 @@ func (c *ConfigFileRoot) initFile(log *logrus.Entry) (Guesser, error) {
 	}
 
 	// Configure
-	guesser, err := ConfigureGuesser(c.Video.GuesserName, moduleParams, log)
+	guesser, err := ConfigureGuesser(c.Video.GuesserName, moduleParams)
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +333,7 @@ func (c *ConfigFileRoot) initWishlist(log *logrus.Entry) (*WishlistConfig, error
 			return nil, err
 		}
 
-		wishlister, err := ConfigureWishlister(wishlisterName, moduleParams, log)
+		wishlister, err := ConfigureWishlister(wishlisterName, moduleParams)
 		if err != nil {
 			return nil, err
 		}
@@ -372,7 +372,7 @@ func (c *ConfigFileRoot) initDownloader(log *logrus.Entry) (*DownloaderConfig, e
 			return nil, err
 		}
 
-		downloader, err := ConfigureDownloader(c.Downloader.DownloaderName, moduleParams, log)
+		downloader, err := ConfigureDownloader(c.Downloader.DownloaderName, moduleParams)
 		if err != nil {
 			return nil, err
 		}
@@ -392,7 +392,7 @@ func (c *ConfigFileRoot) initVideo(log *logrus.Entry) (*VideoConfig, error) {
 			return nil, err
 		}
 
-		notifier, err := ConfigureNotifier(notifierName, moduleParams, log)
+		notifier, err := ConfigureNotifier(notifierName, moduleParams)
 		if err != nil {
 			return nil, err
 		}
@@ -414,7 +414,7 @@ func (c *ConfigFileRoot) initShow(log *logrus.Entry) (*ShowConfig, error) {
 			return nil, err
 		}
 
-		detailer, err := ConfigureDetailer(detailerName, moduleParams, log)
+		detailer, err := ConfigureDetailer(detailerName, moduleParams)
 		if err != nil {
 			return nil, err
 		}
@@ -433,7 +433,7 @@ func (c *ConfigFileRoot) initShow(log *logrus.Entry) (*ShowConfig, error) {
 			return nil, err
 		}
 
-		torrenter, err := ConfigureTorrenter(torrenterName, moduleParams, log)
+		torrenter, err := ConfigureTorrenter(torrenterName, moduleParams)
 		if err != nil {
 			return nil, err
 		}
@@ -446,7 +446,7 @@ func (c *ConfigFileRoot) initShow(log *logrus.Entry) (*ShowConfig, error) {
 			return nil, err
 		}
 
-		subtitler, err := ConfigureSubtitler(subtitlerName, moduleParams, log)
+		subtitler, err := ConfigureSubtitler(subtitlerName, moduleParams)
 		if err != nil {
 			return nil, err
 		}
@@ -461,7 +461,7 @@ func (c *ConfigFileRoot) initShow(log *logrus.Entry) (*ShowConfig, error) {
 		}
 
 		// Configure
-		calendar, err := ConfigureCalendar(c.Show.CalendarName, moduleParams, log)
+		calendar, err := ConfigureCalendar(c.Show.CalendarName, moduleParams)
 		if err != nil {
 			return nil, err
 		}
@@ -486,7 +486,7 @@ func (c *ConfigFileRoot) initMovie(log *logrus.Entry) (*MovieConfig, error) {
 			return nil, err
 		}
 
-		detailer, err := ConfigureDetailer(detailerName, moduleParams, log)
+		detailer, err := ConfigureDetailer(detailerName, moduleParams)
 		if err != nil {
 			return nil, err
 		}
@@ -504,7 +504,7 @@ func (c *ConfigFileRoot) initMovie(log *logrus.Entry) (*MovieConfig, error) {
 			return nil, err
 		}
 
-		torrenter, err := ConfigureTorrenter(torrenterName, moduleParams, log)
+		torrenter, err := ConfigureTorrenter(torrenterName, moduleParams)
 		if err != nil {
 			return nil, err
 		}
@@ -517,7 +517,7 @@ func (c *ConfigFileRoot) initMovie(log *logrus.Entry) (*MovieConfig, error) {
 			return nil, err
 		}
 
-		subtitler, err := ConfigureSubtitler(subtitlerName, moduleParams, log)
+		subtitler, err := ConfigureSubtitler(subtitlerName, moduleParams)
 		if err != nil {
 			return nil, err
 		}
