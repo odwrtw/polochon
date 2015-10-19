@@ -38,12 +38,11 @@ var (
 
 // TmDB implents the Detailer interface
 type TmDB struct {
-	log *logrus.Entry
 }
 
 // NewTmDB returns an initialized tmdb instance
-func NewTmDB(params map[string]interface{}, log *logrus.Entry) (polochon.Detailer, error) {
-	return &TmDB{log: log}, nil
+func NewTmDB(params map[string]interface{}) (polochon.Detailer, error) {
+	return &TmDB{}, nil
 }
 
 // Ensure that the given interface is an Movie
@@ -157,7 +156,7 @@ func (t *TmDB) Name() string {
 }
 
 // GetDetails implements the Detailer interface
-func (t *TmDB) GetDetails(i interface{}) error {
+func (t *TmDB) GetDetails(i interface{}, log *logrus.Entry) error {
 	m, err := t.getMovieArgument(i)
 	if err != nil {
 		return err
@@ -168,9 +167,9 @@ func (t *TmDB) GetDetails(i interface{}) error {
 		err := t.searchByImdbID(m)
 		switch err {
 		case nil:
-			t.log.Debugf("Found movie from imdb ID %q", m.ImdbID)
+			log.Debugf("Found movie from imdb ID %q", m.ImdbID)
 		case ErrNoMovieFound:
-			t.log.Debugf("Failed to find movie from imdb ID %q", m.ImdbID)
+			log.Debugf("Failed to find movie from imdb ID %q", m.ImdbID)
 		default:
 			return err
 		}
@@ -181,9 +180,9 @@ func (t *TmDB) GetDetails(i interface{}) error {
 		err := t.searchByTitle(m)
 		switch err {
 		case nil:
-			t.log.Debugf("Found movie from title %q", m.Title)
+			log.Debugf("Found movie from title %q", m.Title)
 		case ErrNoMovieFound:
-			t.log.Debugf("Failed to find movie from imdb title %q", m.Title)
+			log.Debugf("Failed to find movie from imdb title %q", m.Title)
 		default:
 			return err
 		}

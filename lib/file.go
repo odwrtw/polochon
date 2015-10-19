@@ -5,6 +5,8 @@ import (
 	"os"
 	"path"
 	"strings"
+
+	"github.com/Sirupsen/logrus"
 )
 
 // File errors
@@ -85,8 +87,8 @@ func (f *File) Ignore() error {
 }
 
 // Guess video information from file
-func (f *File) Guess(conf VideoConfig) (Video, error) {
-	return f.Guesser.Guess(conf, *f)
+func (f *File) Guess(conf VideoConfig, log *logrus.Entry) (Video, error) {
+	return f.Guesser.Guess(conf, *f, log)
 }
 
 // NfoPath is an helper to get the nfo filename from the video filename

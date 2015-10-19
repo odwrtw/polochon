@@ -1,7 +1,7 @@
 package polochon
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/Sirupsen/logrus"
 )
@@ -9,13 +9,13 @@ import (
 // Notifier is an interface to notify when a video is added
 type Notifier interface {
 	Module
-	Notify(i interface{}) error
+	Notify(interface{}, *logrus.Entry) error
 }
 
 // RegisterNotifier helps register a new notifier
-func RegisterNotifier(name string, f func(params map[string]interface{}, log *logrus.Entry) (Notifier, error)) {
+func RegisterNotifier(name string, f func(params map[string]interface{}) (Notifier, error)) {
 	if _, ok := registeredModules.Notifiers[name]; ok {
-		log.Panicf("modules: %q of type %q is already registered", name, TypeNotifier)
+		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeDetailer))
 	}
 
 	// Register the module

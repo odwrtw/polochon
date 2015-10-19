@@ -143,7 +143,7 @@ func readShowEpisodeNFO(r io.Reader, conf ShowConfig) (*ShowEpisode, error) {
 func (s *ShowEpisode) GetDetails() error {
 	var err error
 	for _, d := range s.Detailers {
-		err = d.GetDetails(s)
+		err = d.GetDetails(s, s.log)
 		if err == nil {
 			s.log.Debugf("got details from detailer: %q", d.Name())
 			break
@@ -157,7 +157,7 @@ func (s *ShowEpisode) GetDetails() error {
 func (s *ShowEpisode) GetTorrents() error {
 	var err error
 	for _, t := range s.Torrenters {
-		err = t.GetTorrents(s)
+		err = t.GetTorrents(s, s.log)
 		if err == nil {
 			break
 		}
@@ -169,7 +169,7 @@ func (s *ShowEpisode) GetTorrents() error {
 func (s *ShowEpisode) Notify() error {
 	var err error
 	for _, n := range s.Notifiers {
-		err = n.Notify(s)
+		err = n.Notify(s, s.log)
 		if err == nil {
 			break
 		}
@@ -303,7 +303,7 @@ func (s *ShowEpisode) GetSubtitle() error {
 	var err error
 	var subtitle Subtitle
 	for _, subtitler := range s.Subtitlers {
-		subtitle, err = subtitler.GetShowSubtitle(s)
+		subtitle, err = subtitler.GetShowSubtitle(s, s.log)
 		if err == nil {
 			s.log.Infof("Got subtitle from subtitiler %q", subtitler.Name())
 			break

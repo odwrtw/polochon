@@ -1,7 +1,7 @@
 package polochon
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/Sirupsen/logrus"
 )
@@ -10,13 +10,13 @@ import (
 // from a file
 type Guesser interface {
 	Module
-	Guess(conf VideoConfig, file File) (Video, error)
+	Guess(conf VideoConfig, file File, log *logrus.Entry) (Video, error)
 }
 
 // RegisterGuesser helps register a new detailer
-func RegisterGuesser(name string, f func(params map[string]interface{}, log *logrus.Entry) (Guesser, error)) {
+func RegisterGuesser(name string, f func(params map[string]interface{}) (Guesser, error)) {
 	if _, ok := registeredModules.Guessers[name]; ok {
-		log.Panicf("modules: %q of type %q is already registered", name, TypeGuesser)
+		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeDetailer))
 	}
 
 	// Register the module

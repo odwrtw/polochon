@@ -8,6 +8,8 @@ import (
 	"github.com/odwrtw/polochon/lib"
 )
 
+var fakeLogEntry = logrus.NewEntry(logrus.New())
+
 // Test data, fakes users wishlists
 var testData = map[string]map[string][]string{
 	"bob": {
@@ -21,10 +23,8 @@ var testData = map[string]map[string][]string{
 }
 
 // Fake wishlist with defined users
-var fakeLogger = logrus.New()
 var testWishlist = &Wishlist{
 	userIDs: []string{"bob", "joe", "robert"},
-	log:     logrus.NewEntry(fakeLogger),
 }
 
 func TestMoviesWishlist(t *testing.T) {
@@ -33,7 +33,7 @@ func TestMoviesWishlist(t *testing.T) {
 		return &ids, nil
 	}
 
-	got, err := testWishlist.GetMovieWishlist()
+	got, err := testWishlist.GetMovieWishlist(fakeLogEntry)
 	if err != nil {
 		t.Fatalf("Expected no error, got %q", err)
 	}
@@ -55,7 +55,7 @@ func TestShowsWishlist(t *testing.T) {
 		return &ids, nil
 	}
 
-	got, err := testWishlist.GetShowWishlist()
+	got, err := testWishlist.GetShowWishlist(fakeLogEntry)
 	if err != nil {
 		t.Fatalf("Expected no error, got %q", err)
 	}
@@ -76,7 +76,7 @@ func TestEmptyWishlist(t *testing.T) {
 		return nil, nil
 	}
 
-	got, err := testWishlist.GetMovieWishlist()
+	got, err := testWishlist.GetMovieWishlist(fakeLogEntry)
 	if err != nil {
 		t.Fatalf("Expected no error, got %q", err)
 	}
@@ -84,6 +84,6 @@ func TestEmptyWishlist(t *testing.T) {
 	expected := []*polochon.WishedMovie{}
 
 	if !reflect.DeepEqual(got, expected) {
-		t.Errorf("Expected %+v, got %+v", got)
+		t.Errorf("Expected %+v, got %+v", expected, got)
 	}
 }

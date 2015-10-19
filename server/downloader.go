@@ -117,7 +117,7 @@ func (d *downloader) downloadMissingMovies(wl *polochon.Wishlist) {
 			continue
 		}
 
-		if err := d.config.Downloader.Client.Download(torrentURL); err != nil {
+		if err := d.config.Downloader.Client.Download(torrentURL, d.log); err != nil {
 			log.Error(err)
 			continue
 		}
@@ -188,7 +188,7 @@ func (d *downloader) downloadMissingShows(wl *polochon.Wishlist) {
 				continue
 			}
 
-			if err := d.config.Downloader.Client.Download(torrentURL); err != nil {
+			if err := d.config.Downloader.Client.Download(torrentURL, d.log); err != nil {
 				d.errc <- err
 				continue
 			}

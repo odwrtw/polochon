@@ -24,7 +24,6 @@ func init() {
 
 // FsNotify is a fsNotifier watching a directory
 type FsNotify struct {
-	log     *logrus.Entry
 	watcher *fsnotify.Watcher
 }
 
@@ -34,7 +33,7 @@ func (fs *FsNotify) Name() string {
 }
 
 // NewFsNotify returns a new FsNotify
-func NewFsNotify(params map[string]interface{}, log *logrus.Entry) (polochon.FsNotifier, error) {
+func NewFsNotify(params map[string]interface{}) (polochon.FsNotifier, error) {
 	// Create a new watcher
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -42,13 +41,12 @@ func NewFsNotify(params map[string]interface{}, log *logrus.Entry) (polochon.FsN
 	}
 
 	return &FsNotify{
-		log:     log,
 		watcher: watcher,
 	}, nil
 }
 
 // Watch implements the modules fsNotifier interface
-func (fs *FsNotify) Watch(watchPath string, ctx polochon.FsNotifierCtx) error {
+func (fs *FsNotify) Watch(watchPath string, ctx polochon.FsNotifierCtx, log *logrus.Entry) error {
 	// Ensure that the watch path exists
 	if _, err := os.Stat(watchPath); os.IsNotExist(err) {
 		return err
@@ -76,7 +74,6 @@ func (fs *FsNotify) eventHandler(ctx polochon.FsNotifierCtx) {
 	for {
 		select {
 		case <-ctx.Done:
-			fs.log.Info("fsnotify is done watching")
 			return
 		case ev := <-fs.watcher.Events:
 			if ev.Op != fsnotify.Create && ev.Op != fsnotify.Chmod {

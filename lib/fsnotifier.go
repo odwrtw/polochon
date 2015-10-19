@@ -1,7 +1,7 @@
 package polochon
 
 import (
-	"log"
+	"fmt"
 	"sync"
 
 	"github.com/Sirupsen/logrus"
@@ -18,13 +18,13 @@ type FsNotifierCtx struct {
 // FsNotifier is an interface to notify on filesytem change
 type FsNotifier interface {
 	Module
-	Watch(watchPath string, ctx FsNotifierCtx) error
+	Watch(watchPath string, ctx FsNotifierCtx, log *logrus.Entry) error
 }
 
 // RegisterFsNotifier helps register a new FsNotifier
-func RegisterFsNotifier(name string, f func(params map[string]interface{}, log *logrus.Entry) (FsNotifier, error)) {
+func RegisterFsNotifier(name string, f func(params map[string]interface{}) (FsNotifier, error)) {
 	if _, ok := registeredModules.FsNotifiers[name]; ok {
-		log.Panicf("modules: %q of type %q is already registered", name, TypeFsNotifier)
+		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeDetailer))
 	}
 
 	// Register the module

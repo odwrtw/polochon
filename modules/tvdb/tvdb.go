@@ -46,17 +46,16 @@ var (
 
 // TvDB implents the Detailer interface
 type TvDB struct {
-	log *logrus.Entry
 }
 
 // NewDetailer returns an initialized tmdb instance as a detailer
-func NewDetailer(params map[string]interface{}, log *logrus.Entry) (polochon.Detailer, error) {
-	return &TvDB{log: log}, nil
+func NewDetailer(params map[string]interface{}) (polochon.Detailer, error) {
+	return &TvDB{}, nil
 }
 
 // NewCalendar returns an initialized tmdb instance as a calendar
-func NewCalendar(params map[string]interface{}, log *logrus.Entry) (polochon.Calendar, error) {
-	return &TvDB{log: log}, nil
+func NewCalendar(params map[string]interface{}) (polochon.Calendar, error) {
+	return &TvDB{}, nil
 }
 
 // assetURL return the URL of an asset
@@ -288,7 +287,7 @@ func (t *TvDB) Name() string {
 }
 
 // GetDetails implements the Detailer interface
-func (t *TvDB) GetDetails(i interface{}) error {
+func (t *TvDB) GetDetails(i interface{}, log *logrus.Entry) error {
 	switch v := i.(type) {
 	case *polochon.Show:
 		return getShowDetails(v)
@@ -300,7 +299,7 @@ func (t *TvDB) GetDetails(i interface{}) error {
 }
 
 // GetShowCalendar implements the Calendar interface
-func (t *TvDB) GetShowCalendar(show *polochon.Show) (*polochon.ShowCalendar, error) {
+func (t *TvDB) GetShowCalendar(show *polochon.Show, log *logrus.Entry) (*polochon.ShowCalendar, error) {
 	// Get show details
 	if show.ImdbID == "" {
 		return nil, ErrMissingShowImdbID

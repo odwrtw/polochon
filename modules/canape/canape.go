@@ -39,11 +39,10 @@ type userConfig struct {
 // Wishlist holds the canape wishlists
 type Wishlist struct {
 	userConfigs []userConfig
-	log         *logrus.Entry
 }
 
 // New module
-func New(params map[string]interface{}, log *logrus.Entry) (polochon.Wishlister, error) {
+func New(params map[string]interface{}) (polochon.Wishlister, error) {
 	w, ok := params["wishlists"]
 	if !ok {
 		return nil, fmt.Errorf("canape: missing users wishlists")
@@ -84,7 +83,6 @@ func New(params map[string]interface{}, log *logrus.Entry) (polochon.Wishlister,
 
 	return &Wishlist{
 		userConfigs: userConfigs,
-		log:         log,
 	}, nil
 }
 
@@ -123,8 +121,6 @@ func (w *Wishlist) getUsersWishlists() (*polochon.Wishlist, error) {
 
 // get a user wishlist
 func (w *Wishlist) getUserWishlists(url, token string) (*response, error) {
-	w.log.Debugf("Getting wishlist on URL: %q", url)
-
 	// Create a new request
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -157,7 +153,7 @@ func (w *Wishlist) getUserWishlists(url, token string) (*response, error) {
 }
 
 // GetMovieWishlist gets the movies wishlist
-func (w *Wishlist) GetMovieWishlist() ([]*polochon.WishedMovie, error) {
+func (w *Wishlist) GetMovieWishlist(log *logrus.Entry) ([]*polochon.WishedMovie, error) {
 	wl, err := w.getUsersWishlists()
 	if err != nil {
 		return nil, err
@@ -167,7 +163,7 @@ func (w *Wishlist) GetMovieWishlist() ([]*polochon.WishedMovie, error) {
 }
 
 // GetShowWishlist gets the show wishlist
-func (w *Wishlist) GetShowWishlist() ([]*polochon.WishedShow, error) {
+func (w *Wishlist) GetShowWishlist(log *logrus.Entry) ([]*polochon.WishedShow, error) {
 	wl, err := w.getUsersWishlists()
 	if err != nil {
 		return nil, err

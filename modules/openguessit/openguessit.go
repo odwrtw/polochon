@@ -38,12 +38,11 @@ func init() {
 
 // OpenGuessit is a mix of opensubtitle and guessit
 type OpenGuessit struct {
-	log *logrus.Entry
 }
 
 // NewOpenGuessit returns an new openguessit
-func NewOpenGuessit(params map[string]interface{}, log *logrus.Entry) (polochon.Guesser, error) {
-	return &OpenGuessit{log: log}, nil
+func NewOpenGuessit(params map[string]interface{}) (polochon.Guesser, error) {
+	return &OpenGuessit{}, nil
 }
 
 // Name implements the Module interface
@@ -52,8 +51,8 @@ func (og *OpenGuessit) Name() string {
 }
 
 // Guess implements the Guesser interface
-func (og *OpenGuessit) Guess(videoConf polochon.VideoConfig, file polochon.File) (polochon.Video, error) {
-	g, err := NewGuesser(file.Path, og.log)
+func (og *OpenGuessit) Guess(videoConf polochon.VideoConfig, file polochon.File, log *logrus.Entry) (polochon.Video, error) {
+	g, err := NewGuesser(file.Path, log)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the file: %q", err)
 	}

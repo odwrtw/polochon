@@ -11,7 +11,6 @@ import (
 // YifySubs holds the YifySubs module
 type YifySubs struct {
 	lang string
-	log  *logrus.Entry
 }
 
 // Module constants
@@ -38,7 +37,7 @@ func init() {
 }
 
 // New module
-func New(params map[string]interface{}, log *logrus.Entry) (polochon.Subtitler, error) {
+func New(params map[string]interface{}) (polochon.Subtitler, error) {
 	l, ok := params["lang"]
 	if !ok {
 		return nil, ErrMissingSubtitleLang
@@ -57,7 +56,6 @@ func New(params map[string]interface{}, log *logrus.Entry) (polochon.Subtitler, 
 
 	return &YifySubs{
 		lang: subLang,
-		log:  log,
 	}, nil
 }
 
@@ -72,7 +70,7 @@ var getSubtitles = func(imdbID string) (map[string][]yifysubs.Subtitle, error) {
 }
 
 // GetMovieSubtitle will get a movie subtitle
-func (y *YifySubs) GetMovieSubtitle(m *polochon.Movie) (polochon.Subtitle, error) {
+func (y *YifySubs) GetMovieSubtitle(m *polochon.Movie, log *logrus.Entry) (polochon.Subtitle, error) {
 	if m.ImdbID == "" {
 		return nil, ErrMissingImdbID
 	}
@@ -110,7 +108,7 @@ func (y *YifySubs) GetMovieSubtitle(m *polochon.Movie) (polochon.Subtitle, error
 }
 
 // GetShowSubtitle implements the Subtitler interface but will not be used here
-func (y *YifySubs) GetShowSubtitle(s *polochon.ShowEpisode) (polochon.Subtitle, error) {
+func (y *YifySubs) GetShowSubtitle(s *polochon.ShowEpisode, log *logrus.Entry) (polochon.Subtitle, error) {
 	// Return nil values
 	return nil, nil
 }

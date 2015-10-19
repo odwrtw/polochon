@@ -144,7 +144,7 @@ func (m *Movie) GetDetails() error {
 	var err error
 	for _, d := range m.Detailers {
 		m.log.Infof("Getting details from %q", d.Name())
-		err = d.GetDetails(m)
+		err = d.GetDetails(m, m.log)
 		if err == nil {
 			m.log.Debugf("got details from detailer: %q", d.Name())
 			break
@@ -159,7 +159,7 @@ func (m *Movie) GetTorrents() error {
 	var err error
 	for _, t := range m.Torrenters {
 		m.log.Infof("Getting torrents from %q", t.Name())
-		err = t.GetTorrents(m)
+		err = t.GetTorrents(m, m.log)
 		if err == nil {
 			break
 		}
@@ -171,7 +171,7 @@ func (m *Movie) GetTorrents() error {
 func (m *Movie) Notify() error {
 	var err error
 	for _, n := range m.Notifiers {
-		err = n.Notify(m)
+		err = n.Notify(m, m.log)
 		if err == nil {
 			break
 		}
@@ -291,7 +291,7 @@ func (m *Movie) GetSubtitle() error {
 	var err error
 	var subtitle Subtitle
 	for _, subtitler := range m.Subtitlers {
-		subtitle, err = subtitler.GetMovieSubtitle(m)
+		subtitle, err = subtitler.GetMovieSubtitle(m, m.log)
 		if err == nil {
 			m.log.Infof("Got subtitle from subtitiler %q", subtitler.Name())
 			break

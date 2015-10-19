@@ -27,7 +27,7 @@ func init() {
 }
 
 // New module
-func New(params map[string]interface{}, log *logrus.Entry) (polochon.Subtitler, error) {
+func New(params map[string]interface{}) (polochon.Subtitler, error) {
 	var user, password, lang string
 
 	for ptr, param := range map[*string]string{
@@ -86,7 +86,7 @@ func (a *addictedProxy) Name() string {
 	return moduleName
 }
 
-func (a *addictedProxy) GetShowSubtitle(reqEpisode *polochon.ShowEpisode) (polochon.Subtitle, error) {
+func (a *addictedProxy) GetShowSubtitle(reqEpisode *polochon.ShowEpisode, log *logrus.Entry) (polochon.Subtitle, error) {
 	// TODO: add year
 	// TODO: handle release
 
@@ -117,6 +117,6 @@ func (a *addictedProxy) GetShowSubtitle(reqEpisode *polochon.ShowEpisode) (poloc
 	return &filteredSubs[0], err
 }
 
-func (a *addictedProxy) GetMovieSubtitle(b *polochon.Movie) (polochon.Subtitle, error) {
+func (a *addictedProxy) GetMovieSubtitle(b *polochon.Movie, log *logrus.Entry) (polochon.Subtitle, error) {
 	return nil, polochon.ErrNoSubtitleFound
 }

@@ -6,10 +6,13 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/garfunkel/go-tvdb"
 	"github.com/odwrtw/polochon/lib"
 )
 
+var fakeLogger = logrus.New()
+var fakeLoggerEntry = logrus.NewEntry(fakeLogger)
 var testDetailer = &TvDB{}
 
 func TestTvdbUpdateShow(t *testing.T) {
@@ -210,7 +213,7 @@ func TestTvdbGetDetailsFromShow(t *testing.T) {
 	getShowFromTvdb = func(s *tvdb.Series) error { return nil }
 
 	// No arguments
-	err := testDetailer.GetDetails(s)
+	err := testDetailer.GetDetails(s, fakeLoggerEntry)
 	if err != nil {
 		t.Fatalf("Expected no error, got %q", err)
 	}
@@ -220,7 +223,7 @@ func TestTvdbGetDetailsInvalidArgument(t *testing.T) {
 	m := "invalid type"
 
 	// No arguments
-	err := testDetailer.GetDetails(m)
+	err := testDetailer.GetDetails(m, fakeLoggerEntry)
 	if err != ErrInvalidArgument {
 		t.Fatalf("Expected %q got %q", ErrInvalidArgument, err)
 	}

@@ -58,11 +58,11 @@ func (fw *FakeWishlister) Name() string {
 	return "fake"
 }
 
-func (fw *FakeWishlister) GetMovieWishlist() ([]*WishedMovie, error) {
+func (fw *FakeWishlister) GetMovieWishlist(log *logrus.Entry) ([]*WishedMovie, error) {
 	return fakeWishedMovies, nil
 }
 
-func (fw *FakeWishlister) GetShowWishlist() ([]*WishedShow, error) {
+func (fw *FakeWishlister) GetShowWishlist(log *logrus.Entry) ([]*WishedShow, error) {
 	return fakeWishedShows, nil
 }
 

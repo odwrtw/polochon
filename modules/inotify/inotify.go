@@ -23,7 +23,7 @@ func init() {
 }
 
 // NewInotify returns a new Inotify
-func NewInotify(params map[string]interface{}, log *logrus.Entry) (polochon.FsNotifier, error) {
+func NewInotify(params map[string]interface{}) (polochon.FsNotifier, error) {
 	// Create a new inotify watcher
 	watcher, err := inotify.NewWatcher()
 	if err != nil {
@@ -45,7 +45,6 @@ func NewInotify(params map[string]interface{}, log *logrus.Entry) (polochon.FsNo
 			inotify.IN_MOVED_TO + inotify.IN_ISDIR,
 			inotify.IN_MOVE_SELF + inotify.IN_ISDIR,
 		},
-		log:     log,
 		watcher: watcher,
 	}, nil
 }
@@ -53,9 +52,7 @@ func NewInotify(params map[string]interface{}, log *logrus.Entry) (polochon.FsNo
 // Inotifier is a fsNotifier watching a directory
 type Inotifier struct {
 	// inotify event list
-	Events []uint32
-	// Logger
-	log     *logrus.Entry
+	Events  []uint32
 	watcher *inotify.Watcher
 }
 
@@ -65,20 +62,20 @@ func (i *Inotifier) Name() string {
 }
 
 // Watch start watching all the paths
-func (i *Inotifier) Watch(pathToWatch string, ctx polochon.FsNotifierCtx) error {
+func (i *Inotifier) Watch(pathToWatch string, ctx polochon.FsNotifierCtx, log *logrus.Entry) error {
 	// Ensure that the watch path exists
 	if _, err := os.Stat(pathToWatch); os.IsNotExist(err) {
 		return err
 	}
 
 	// Run the event handler
-	go i.eventHandler(ctx)
+	go i.eventHandler(ctx, log)
 
 	// Check the path with inotify
 	return i.watcher.Watch(pathToWatch)
 }
 
-func (i *Inotifier) eventHandler(ctx polochon.FsNotifierCtx) {
+func (i *Inotifier) eventHandler(ctx polochon.FsNotifierCtx, log *logrus.Entry) {
 	// Notify the waitgroup
 	ctx.Wg.Add(1)
 	defer ctx.Wg.Done()
@@ -92,7 +89,7 @@ func (i *Inotifier) eventHandler(ctx polochon.FsNotifierCtx) {
 			// Check the current event in the event list
 			for _, eventMask := range i.Events {
 				if eventMask == e.Mask {
-					i.log.Debug("File detected:", e.Name)
+					log.Debug("File detected:", e.Name)
 					// Wait for the delay time before sending an event.
 					// Transmission creates the folder and move the files afterwards.
 					// We need to wait for the file to be moved in before sending the
@@ -107,7 +104,7 @@ func (i *Inotifier) eventHandler(ctx polochon.FsNotifierCtx) {
 		case err := <-i.watcher.Error:
 			ctx.Errc <- err
 		case <-ctx.Done:
-			i.log.Info("inotify is done watching")
+			log.Info("inotify is done watching")
 			return
 		}
 	}

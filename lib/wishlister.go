@@ -1,7 +1,7 @@
 package polochon
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/Sirupsen/logrus"
 )
@@ -9,8 +9,8 @@ import (
 // Wishlister is an interface which defines the behavior of the wishlister
 // modules
 type Wishlister interface {
-	GetMovieWishlist() ([]*WishedMovie, error)
-	GetShowWishlist() ([]*WishedShow, error)
+	GetMovieWishlist(*logrus.Entry) ([]*WishedMovie, error)
+	GetShowWishlist(*logrus.Entry) ([]*WishedShow, error)
 }
 
 // WishedMovie represents a wished movie and its expected qualities
@@ -45,9 +45,9 @@ func NewWishlist(wishlistConfig WishlistConfig, log *logrus.Entry) *Wishlist {
 }
 
 // RegisterWishlister helps register a new Wishlister
-func RegisterWishlister(name string, f func(params map[string]interface{}, log *logrus.Entry) (Wishlister, error)) {
+func RegisterWishlister(name string, f func(params map[string]interface{}) (Wishlister, error)) {
 	if _, ok := registeredModules.Wishlisters[name]; ok {
-		log.Panicf("modules: %q of type %q is already registered", name, TypeWishlister)
+		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeDetailer))
 	}
 
 	// Register the module
@@ -72,7 +72,7 @@ func (w *Wishlist) Fetch() error {
 
 func (w *Wishlist) fetchMovies() error {
 	for _, wl := range w.Wishlisters {
-		movieWishlist, err := wl.GetMovieWishlist()
+		movieWishlist, err := wl.GetMovieWishlist(w.log)
 		if err != nil {
 			w.log.Warnf("failed to get movie wishlist from wishlister: %q", err)
 			continue
@@ -92,7 +92,7 @@ func (w *Wishlist) fetchMovies() error {
 
 func (w *Wishlist) fetchShows() error {
 	for _, wl := range w.Wishlisters {
-		showWishlist, err := wl.GetShowWishlist()
+		showWishlist, err := wl.GetShowWishlist(w.log)
 		if err != nil {
 			w.log.Warnf("failed to get show wishlist from wishlister: %q", err)
 			continue
