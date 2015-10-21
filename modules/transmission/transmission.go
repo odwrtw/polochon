@@ -140,6 +140,9 @@ func (c *Client) Name() string {
 func (c *Client) Download(URL string, log *logrus.Entry) error {
 	_, err := c.tClient.Add(URL)
 	if err != nil {
+		if err == transmission.ErrDuplicateTorrent {
+			return polochon.ErrDuplicateTorrent
+		}
 		return err
 	}
 	return nil

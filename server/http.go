@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -209,6 +210,35 @@ func (a *App) deleteFile(w http.ResponseWriter, req *http.Request) {
 	a.render.JSON(w, http.StatusOK, nil)
 }
 
+func (a *App) addTorrent(w http.ResponseWriter, r *http.Request) {
+	if !a.config.Downloader.Enabled {
+		a.logger.Warning("Downloader not available")
+		http.Error(w, "Downloader not enabled in your polochon", http.StatusServiceUnavailable)
+		return
+	}
+
+	req := new(struct{ URL string })
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		http.Error(w, "Unkown error", http.StatusInternalServerError)
+		a.logger.Warning(err.Error())
+		return
+	}
+	if req.URL == "" {
+		http.Error(w, "URL missing", http.StatusBadRequest)
+		return
+	}
+
+	if err := a.config.Downloader.Client.Download(req.URL, a.logger.WithField("function", "downloader")); err != nil {
+		if err == polochon.ErrDuplicateTorrent {
+			http.Error(w, "Torrent already added", http.StatusConflict)
+			return
+		}
+		a.logger.Warning("Error while adding a torrent via the API: %q", err)
+		http.Error(w, "Unkown error", http.StatusInternalServerError)
+		return
+	}
+}
+
 // HTTPServer handles the HTTP requests
 func (a *App) HTTPServer() {
 	addr := fmt.Sprintf("%s:%d", a.config.HTTPServer.Host, a.config.HTTPServer.Port)
@@ -219,6 +249,8 @@ func (a *App) HTTPServer() {
 	a.mux.HandleFunc("/shows/ids", a.showIds)
 	a.mux.HandleFunc("/shows/slugs", a.showSlugs)
 	a.mux.HandleFunc("/wishlist", a.wishlist)
+
+	a.mux.HandleFunc("/torrents", a.addTorrent).Methods("POST")
 
 	if a.config.HTTPServer.ServeFiles {
 		a.logger.Info("Server is serving files")

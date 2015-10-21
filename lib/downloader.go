@@ -1,9 +1,15 @@
 package polochon
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/Sirupsen/logrus"
+)
+
+var (
+	// ErrDuplicateTorrent returned when the torrent is already added
+	ErrDuplicateTorrent = errors.New("Torrent already added")
 )
 
 // Downloader represent a interface for any downloader
