@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/arbovm/levenshtein"
 	"github.com/odwrtw/addicted"
@@ -21,43 +23,32 @@ const (
 	moduleName = "addicted"
 )
 
+// Params represents the module params
+type Params struct {
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
+	Lang     string `yaml:"lang"`
+}
+
 // Register a new Subtitler
 func init() {
 	polochon.RegisterSubtitler(moduleName, New)
 }
 
 // New module
-func New(params map[string]interface{}) (polochon.Subtitler, error) {
-	var user, password, lang string
-
-	for ptr, param := range map[*string]string{
-		&user:     "user",
-		&password: "password",
-		&lang:     "lang",
-	} {
-		p, ok := params[param]
-		if !ok {
-			continue
-		}
-
-		v, ok := p.(string)
-		if !ok {
-			return nil, fmt.Errorf("addicted: %s should be a string", param)
-		}
-
-		*ptr = v
+func New(p []byte) (polochon.Subtitler, error) {
+	params := &Params{}
+	if err := yaml.Unmarshal(p, params); err != nil {
+		return nil, err
 	}
 
-	if lang == "" {
-		return nil, fmt.Errorf("addicted: missing lang param")
-	}
 
 	// Handle auth if the user and password are provided
 	var client *addicted.Client
 
 	var err error
-	if user != "" && password != "" {
-		client, err = addicted.NewWithAuth(user, password)
+	if params.User != "" && params.Password != "" {
+		client, err = addicted.NewWithAuth(params.User, params.Password)
 	} else {
 		client, err = addicted.New()
 	}
@@ -65,7 +56,7 @@ func New(params map[string]interface{}) (polochon.Subtitler, error) {
 		return nil, err
 	}
 
-	language := polochon.Language(lang)
+	language := polochon.Language(params.Lang)
 
 	// if language not available in addicted
 	addictedLang, ok := langTranslate[language]

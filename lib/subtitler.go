@@ -24,7 +24,7 @@ type Subtitle interface {
 }
 
 // RegisterSubtitler helps register a new Subtitler
-func RegisterSubtitler(name string, f func(params map[string]interface{}) (Subtitler, error)) {
+func RegisterSubtitler(name string, f func(params []byte) (Subtitler, error)) {
 	if _, ok := registeredModules.Subtitlers[name]; ok {
 		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeDetailer))
 	}

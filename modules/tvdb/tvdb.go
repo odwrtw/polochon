@@ -49,12 +49,12 @@ type TvDB struct {
 }
 
 // NewDetailer returns an initialized tmdb instance as a detailer
-func NewDetailer(params map[string]interface{}) (polochon.Detailer, error) {
+func NewDetailer(p []byte) (polochon.Detailer, error) {
 	return &TvDB{}, nil
 }
 
 // NewCalendar returns an initialized tmdb instance as a calendar
-func NewCalendar(params map[string]interface{}) (polochon.Calendar, error) {
+func NewCalendar(p []byte) (polochon.Calendar, error) {
 	return &TvDB{}, nil
 }
 

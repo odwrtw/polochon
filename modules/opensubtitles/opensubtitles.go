@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
 	"github.com/oz/osdb"
@@ -78,38 +80,33 @@ func (o *openSubtitle) Read(b []byte) (int, error) {
 	return o.conn.Read(b)
 }
 
+// Params represents the module params
+type Params struct {
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
+	Lang     string `yaml:"lang"`
+}
+
+// IsValid checks if the given params are valid
+func (p *Params) IsValid() bool {
+	if p.User == "" || p.Password == "" || p.Lang == "" {
+		return false
+	}
+	return true
+}
+
 // New module
-func New(params map[string]interface{}) (polochon.Subtitler, error) {
-	// Get all the needed params
-	var user, password, lang string
-
-	for ptr, param := range map[*string]string{
-		&user:     "user",
-		&password: "password",
-		&lang:     "lang",
-	} {
-		p, ok := params[param]
-		if !ok {
-			continue
-		}
-
-		v, ok := p.(string)
-		if !ok {
-			return nil, ErrInvalidArgument
-		}
-
-		*ptr = v
+func New(p []byte) (polochon.Subtitler, error) {
+	params := &Params{}
+	if err := yaml.Unmarshal(p, params); err != nil {
+		return nil, err
 	}
 
-	if user != "" && password == "" {
-		return nil, ErrMissingArgument
-	}
-	if lang == "" {
+	if !params.IsValid() {
 		return nil, ErrMissingArgument
 	}
 
-	language := polochon.Language(lang)
-
+	language := polochon.Language(params.Lang)
 	opensubtitlesLang, ok := langTranslate[language]
 	if !ok {
 		return nil, ErrInvalidArgument
@@ -118,8 +115,8 @@ func New(params map[string]interface{}) (polochon.Subtitler, error) {
 	// Create the OpenSubtitles proxy
 	osp := &osProxy{
 		language: opensubtitlesLang,
-		user:     user,
-		password: password,
+		user:     params.User,
+		password: params.Password,
 	}
 
 	return osp, nil

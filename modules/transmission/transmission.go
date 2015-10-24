@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/transmission"
@@ -22,63 +24,22 @@ func init() {
 
 // Client holds the connection with transmission
 type Client struct {
-	URL       string
-	CheckSSL  bool
-	BasicAuth bool
-	Username  string
-	Password  string
+	URL       string `yaml:"url"`
+	CheckSSL  bool   `yaml:"check_ssl"`
+	BasicAuth bool   `yaml:"basic_auth"`
+	Username  string `yaml:"user"`
+	Password  string `yaml:"password"`
 	tClient   *transmission.Client
 }
 
 // New module
-func New(params map[string]interface{}) (polochon.Downloader, error) {
-	var URL, username, password string
+func New(p []byte) (polochon.Downloader, error) {
+	client := &Client{}
 
-	// Check SSL and basic authentication by default
-	checkSSL, basicAuth := true, true
-
-	for ptr, param := range map[*bool]string{
-		&checkSSL:  "check_ssl",
-		&basicAuth: "basic_auth",
-	} {
-		p, ok := params[param]
-		if !ok {
-			continue
-		}
-
-		v, ok := p.(bool)
-		if !ok {
-			return nil, fmt.Errorf("transmission: %s should be a bool", param)
-		}
-
-		*ptr = v
+	if err := yaml.Unmarshal(p, client); err != nil {
+		return nil, err
 	}
 
-	for ptr, param := range map[*string]string{
-		&URL:      "url",
-		&username: "user",
-		&password: "password",
-	} {
-		p, ok := params[param]
-		if !ok {
-			continue
-		}
-
-		v, ok := p.(string)
-		if !ok {
-			return nil, fmt.Errorf("transmission: %s should be a string", param)
-		}
-
-		*ptr = v
-	}
-
-	client := &Client{
-		URL:       URL,
-		CheckSSL:  checkSSL,
-		BasicAuth: basicAuth,
-		Username:  username,
-		Password:  password,
-	}
 	if err := client.checkConfig(); err != nil {
 		return nil, err
 	}

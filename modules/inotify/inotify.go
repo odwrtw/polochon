@@ -23,7 +23,7 @@ func init() {
 }
 
 // NewInotify returns a new Inotify
-func NewInotify(params map[string]interface{}) (polochon.FsNotifier, error) {
+func NewInotify(p []byte) (polochon.FsNotifier, error) {
 	// Create a new inotify watcher
 	watcher, err := inotify.NewWatcher()
 	if err != nil {

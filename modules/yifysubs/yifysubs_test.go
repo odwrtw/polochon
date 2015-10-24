@@ -41,7 +41,7 @@ func init() {
 }
 
 func TestNew(t *testing.T) {
-	got, err := New(map[string]interface{}{"lang": "fr_FR"})
+	got, err := New([]byte("lang: fr_FR"))
 	if err != nil {
 		log.Fatalf("Got error in New: %q", err)
 	}
@@ -56,10 +56,9 @@ func TestNew(t *testing.T) {
 }
 
 func TestNewError(t *testing.T) {
-	for expectedError, params := range map[error]map[string]interface{}{
-		ErrMissingSubtitleLang: map[string]interface{}{},
-		ErrInvalidArgument:     map[string]interface{}{"lang": 1},
-		ErrInvalidSubtitleLang: map[string]interface{}{"lang": "yo"},
+	for expectedError, params := range map[error][]byte{
+		ErrMissingSubtitleLang: []byte{},
+		ErrInvalidSubtitleLang: []byte("lang: yo"),
 	} {
 		_, err := New(params)
 		if err == nil {

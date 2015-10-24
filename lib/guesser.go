@@ -14,7 +14,7 @@ type Guesser interface {
 }
 
 // RegisterGuesser helps register a new detailer
-func RegisterGuesser(name string, f func(params map[string]interface{}) (Guesser, error)) {
+func RegisterGuesser(name string, f func(params []byte) (Guesser, error)) {
 	if _, ok := registeredModules.Guessers[name]; ok {
 		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeDetailer))
 	}

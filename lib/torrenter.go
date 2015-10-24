@@ -21,7 +21,7 @@ type Torrenter interface {
 }
 
 // RegisterTorrenter helps register a new torrenter
-func RegisterTorrenter(name string, f func(params map[string]interface{}) (Torrenter, error)) {
+func RegisterTorrenter(name string, f func(params []byte) (Torrenter, error)) {
 	if _, ok := registeredModules.Torrenters[name]; ok {
 		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeDetailer))
 	}

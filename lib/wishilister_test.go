@@ -66,7 +66,7 @@ func (fw *FakeWishlister) GetShowWishlist(log *logrus.Entry) ([]*WishedShow, err
 	return fakeWishedShows, nil
 }
 
-func NewFakeWishlister(params map[string]interface{}, log *logrus.Entry) (Wishlister, error) {
+func NewFakeWishlister(params []byte, log *logrus.Entry) (Wishlister, error) {
 	return &FakeWishlister{}, nil
 }
 
@@ -102,8 +102,7 @@ func TestAddShowsWishlist(t *testing.T) {
 
 func TestFetchWishlist(t *testing.T) {
 	log := logrus.NewEntry(logrus.New())
-	params := map[string]interface{}{}
-	wishlister, _ := NewFakeWishlister(params, log)
+	wishlister, _ := NewFakeWishlister([]byte{}, log)
 
 	conf := WishlistConfig{
 		Wishlisters:           []Wishlister{wishlister},

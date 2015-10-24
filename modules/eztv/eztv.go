@@ -29,7 +29,7 @@ func init() {
 type Eztv struct{}
 
 // NewEztv returns a new Eztv
-func NewEztv(params map[string]interface{}) (polochon.Torrenter, error) {
+func NewEztv(p []byte) (polochon.Torrenter, error) {
 	return &Eztv{}, nil
 }
 

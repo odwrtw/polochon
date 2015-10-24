@@ -2,9 +2,10 @@ package canape
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
@@ -20,6 +21,12 @@ func init() {
 	polochon.RegisterWishlister(moduleName, New)
 }
 
+// UserConfig represents the configurations to get a user wishlist
+type UserConfig struct {
+	URL   string `yaml:"url"`
+	Token string `yaml:"token"`
+}
+
 type response struct {
 	Movies []string  `json:"movies"`
 	Shows  []tvShows `json:"tv_shows"`
@@ -31,67 +38,27 @@ type tvShows struct {
 	Episode int    `json:"episode"`
 }
 
-type userConfig struct {
-	url   string
-	token string
-}
-
 // Wishlist holds the canape wishlists
 type Wishlist struct {
-	userConfigs []userConfig
+	Configs []UserConfig `yaml:"whistlists"`
 }
 
 // New module
-func New(params map[string]interface{}) (polochon.Wishlister, error) {
-	w, ok := params["wishlists"]
-	if !ok {
-		return nil, fmt.Errorf("canape: missing users wishlists")
+func New(p []byte) (polochon.Wishlister, error) {
+	w := &Wishlist{}
+	if err := yaml.Unmarshal(p, w); err != nil {
+		return nil, err
 	}
 
-	m, ok := w.([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("canape: users wishlist must be an array")
-	}
-
-	userConfigs := []userConfig{}
-	for _, i := range m {
-		values, ok := i.(map[interface{}]interface{})
-		if !ok {
-			return nil, fmt.Errorf("canape: invalid users wishlist configuration")
-		}
-
-		conf := map[string]string{}
-		for k, v := range values {
-			conf[k.(string)] = v.(string)
-		}
-
-		url, ok := conf["url"]
-		if !ok {
-			return nil, fmt.Errorf("canape: invalid users wishlist configuration, missing url")
-		}
-
-		token, ok := conf["token"]
-		if !ok {
-			return nil, fmt.Errorf("canape: invalid users wishlist configuration, missing token")
-		}
-
-		userConfigs = append(userConfigs, userConfig{
-			url:   url,
-			token: token,
-		})
-	}
-
-	return &Wishlist{
-		userConfigs: userConfigs,
-	}, nil
+	return w, nil
 }
 
 // Get all the users wishlists
 func (w *Wishlist) getUsersWishlists() (*polochon.Wishlist, error) {
 	wl := &polochon.Wishlist{}
 
-	for _, conf := range w.userConfigs {
-		resp, err := w.getUserWishlists(conf.url, conf.token)
+	for _, conf := range w.Configs {
+		resp, err := w.getUserWishlists(conf.URL, conf.Token)
 		if err != nil {
 			return nil, err
 		}

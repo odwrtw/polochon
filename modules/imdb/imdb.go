@@ -1,8 +1,9 @@
 package imdb
 
 import (
-	"fmt"
 	"sort"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/imdb-watchlist"
@@ -20,34 +21,19 @@ func init() {
 }
 
 // New module
-func New(params map[string]interface{}) (polochon.Wishlister, error) {
-	k, ok := params["user_ids"]
-	if !ok {
-		return nil, fmt.Errorf("imdb: missing user ids")
+func New(p []byte) (polochon.Wishlister, error) {
+	w := &Wishlist{}
+
+	if err := yaml.Unmarshal(p, w); err != nil {
+		return nil, err
 	}
 
-	ids, ok := k.([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("imdb: user ids must be an array")
-	}
-
-	userIDs := []string{}
-	for _, id := range ids {
-		userID, ok := id.(string)
-		if !ok {
-			return nil, fmt.Errorf("imdb: user id must be a string")
-		}
-		userIDs = append(userIDs, userID)
-	}
-
-	return &Wishlist{
-		userIDs: userIDs,
-	}, nil
+	return w, nil
 }
 
 // Wishlist holds the imdb wishlist
 type Wishlist struct {
-	userIDs []string
+	UserIDs []string `yaml:"user_ids"`
 }
 
 // Name implements the Module interface
@@ -99,7 +85,7 @@ func (w *Wishlist) getList(f func(userid string) (*[]string, error)) ([]string, 
 	var imdbIDs []string
 
 	// Get all the ids
-	for _, userID := range w.userIDs {
+	for _, userID := range w.UserIDs {
 		ids, err := f(userID)
 		if err != nil {
 			return nil, err

@@ -45,7 +45,7 @@ func NewWishlist(wishlistConfig WishlistConfig, log *logrus.Entry) *Wishlist {
 }
 
 // RegisterWishlister helps register a new Wishlister
-func RegisterWishlister(name string, f func(params map[string]interface{}) (Wishlister, error)) {
+func RegisterWishlister(name string, f func(params []byte) (Wishlister, error)) {
 	if _, ok := registeredModules.Wishlisters[name]; ok {
 		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeDetailer))
 	}

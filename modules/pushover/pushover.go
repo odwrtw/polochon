@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/gregdel/pushover"
 	"github.com/odwrtw/polochon/lib"
@@ -11,9 +13,8 @@ import (
 
 // Pushover errors
 var (
-	ErrMissingKey       = errors.New("pushover: missing key")
-	ErrMissingRecipient = errors.New("pushover: missing recipient")
-	ErrInvalidArgument  = errors.New("pushover: invalid argument type")
+	ErrMissingArgument = errors.New("pushover: missing argument")
+	ErrInvalidArgument = errors.New("pushover: invalid argument type")
 )
 
 // Module constants
@@ -26,6 +27,20 @@ func init() {
 	polochon.RegisterNotifier(moduleName, New)
 }
 
+// Params represents the module params
+type Params struct {
+	Key       string `yaml:"key"`
+	Recipient string `yaml:"recipien"`
+}
+
+// IsValid checks if the given params are valid
+func (p *Params) IsValid() bool {
+	if p.Key == "" || p.Recipient == "" {
+		return false
+	}
+	return true
+}
+
 // Pushover stores the notification configs
 type Pushover struct {
 	app       *pushover.Pushover
@@ -33,29 +48,19 @@ type Pushover struct {
 }
 
 // New returns a new Pushover
-func New(params map[string]interface{}) (polochon.Notifier, error) {
-	var key, recipient string
+func New(p []byte) (polochon.Notifier, error) {
+	params := &Params{}
+	if err := yaml.Unmarshal(p, params); err != nil {
+		return nil, err
+	}
 
-	for ptr, param := range map[*string]string{
-		&key:       "key",
-		&recipient: "recipient",
-	} {
-		p, ok := params[param]
-		if !ok {
-			return nil, fmt.Errorf("pushover: missing %q configuration", param)
-		}
-
-		v, ok := p.(string)
-		if !ok {
-			return nil, fmt.Errorf("pushover: %s should be a string", param)
-		}
-
-		*ptr = v
+	if !params.IsValid() {
+		return nil, ErrMissingArgument
 	}
 
 	return &Pushover{
-		app:       pushover.New(key),
-		recipient: pushover.NewRecipient(recipient),
+		app:       pushover.New(params.Key),
+		recipient: pushover.NewRecipient(params.Recipient),
 	}, nil
 }
 

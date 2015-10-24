@@ -14,7 +14,7 @@ type Calendar interface {
 }
 
 // RegisterCalendar helps register a new calendar
-func RegisterCalendar(name string, f func(params map[string]interface{}) (Calendar, error)) {
+func RegisterCalendar(name string, f func(params []byte) (Calendar, error)) {
 	if _, ok := registeredModules.Calendars[name]; ok {
 		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeCalendar))
 	}

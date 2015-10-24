@@ -28,7 +28,7 @@ type Yts struct {
 }
 
 // NewYts returns a new Yts
-func NewYts(params map[string]interface{}) (polochon.Torrenter, error) {
+func NewYts(p []byte) (polochon.Torrenter, error) {
 	return &Yts{}, nil
 }
 
