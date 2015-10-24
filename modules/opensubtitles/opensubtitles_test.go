@@ -130,7 +130,7 @@ func TestInvalidNew(t *testing.T) {
 		},
 	} {
 		params := []byte(strings.Join(paramsStr, "\n"))
-		_, err := New(params)
+		_, err := NewFromRawYaml(params)
 		if err != expected {
 			log.Fatalf("Got %q, expected %q with params %s", err, expected, params)
 		}
@@ -143,7 +143,7 @@ func TestSuccessfulNew(t *testing.T) {
 		"user: userTest",
 		"password: passTest",
 	}, "\n"))
-	got, err := New(params)
+	got, err := NewFromRawYaml(params)
 	if err != nil {
 		log.Fatalf("Got error in New: %q", err)
 	}

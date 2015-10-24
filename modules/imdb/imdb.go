@@ -17,23 +17,33 @@ const (
 
 // Register a new Subtitiler
 func init() {
-	polochon.RegisterWishlister(moduleName, New)
+	polochon.RegisterWishlister(moduleName, NewFromRawYaml)
 }
 
-// New module
-func New(p []byte) (polochon.Wishlister, error) {
-	w := &Wishlist{}
+// Params represents the module params
+type Params struct {
+	UserIDs []string `yaml:"user_ids"`
+}
 
-	if err := yaml.Unmarshal(p, w); err != nil {
+// NewFromRawYaml unmarshals the bytes as yaml as params and call the New
+// function
+func NewFromRawYaml(p []byte) (polochon.Wishlister, error) {
+	params := &Params{}
+	if err := yaml.Unmarshal(p, params); err != nil {
 		return nil, err
 	}
 
-	return w, nil
+	return New(params)
+}
+
+// New module
+func New(params *Params) (polochon.Wishlister, error) {
+	return &Wishlist{Params: params}, nil
 }
 
 // Wishlist holds the imdb wishlist
 type Wishlist struct {
-	UserIDs []string `yaml:"user_ids"`
+	*Params
 }
 
 // Name implements the Module interface

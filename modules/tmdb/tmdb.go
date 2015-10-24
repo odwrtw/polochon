@@ -18,7 +18,7 @@ const (
 
 // Register tvdb as a Detailer
 func init() {
-	polochon.RegisterDetailer(moduleName, NewTmDB)
+	polochon.RegisterDetailer(moduleName, NewFromRawYaml)
 }
 
 // API constants
@@ -37,12 +37,17 @@ var (
 )
 
 // TmDB implents the Detailer interface
-type TmDB struct {
+type TmDB struct{}
+
+// New is an helper to avoid passing bytes
+func New() (polochon.Detailer, error) {
+	return &TmDB{}, nil
 }
 
-// NewTmDB returns an initialized tmdb instance
-func NewTmDB(p []byte) (polochon.Detailer, error) {
-	return &TmDB{}, nil
+// NewFromRawYaml unmarshals the bytes as yaml as params and call the New
+// function
+func NewFromRawYaml(p []byte) (polochon.Detailer, error) {
+	return New()
 }
 
 // Ensure that the given interface is an Movie

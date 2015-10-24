@@ -24,7 +24,7 @@ const (
 
 // Register a new notifier
 func init() {
-	polochon.RegisterNotifier(moduleName, New)
+	polochon.RegisterNotifier(moduleName, NewFromRawYaml)
 }
 
 // Params represents the module params
@@ -47,13 +47,19 @@ type Pushover struct {
 	recipient *pushover.Recipient
 }
 
-// New returns a new Pushover
-func New(p []byte) (polochon.Notifier, error) {
+// NewFromRawYaml unmarshals the bytes as yaml as params and call the New
+// function
+func NewFromRawYaml(p []byte) (polochon.Notifier, error) {
 	params := &Params{}
 	if err := yaml.Unmarshal(p, params); err != nil {
 		return nil, err
 	}
 
+	return New(params)
+}
+
+// New returns a new Pushover
+func New(params *Params) (polochon.Notifier, error) {
 	if !params.IsValid() {
 		return nil, ErrMissingArgument
 	}

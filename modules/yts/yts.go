@@ -20,15 +20,20 @@ const (
 
 // Register yts as a Torrenter
 func init() {
-	polochon.RegisterTorrenter(moduleName, NewYts)
+	polochon.RegisterTorrenter(moduleName, NewFromRawYaml)
 }
 
 // Yts is a source for movie torrents
-type Yts struct {
+type Yts struct{}
+
+// NewFromRawYaml unmarshals the bytes as yaml as params and call the New
+// function
+func NewFromRawYaml(p []byte) (polochon.Torrenter, error) {
+	return New()
 }
 
-// NewYts returns a new Yts
-func NewYts(p []byte) (polochon.Torrenter, error) {
+// New returns a new Yts
+func New() (polochon.Torrenter, error) {
 	return &Yts{}, nil
 }
 

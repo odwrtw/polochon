@@ -41,7 +41,7 @@ func init() {
 }
 
 func TestNew(t *testing.T) {
-	got, err := New([]byte("lang: fr_FR"))
+	got, err := NewFromRawYaml([]byte("lang: fr_FR"))
 	if err != nil {
 		log.Fatalf("Got error in New: %q", err)
 	}
@@ -60,7 +60,7 @@ func TestNewError(t *testing.T) {
 		ErrMissingSubtitleLang: []byte{},
 		ErrInvalidSubtitleLang: []byte("lang: yo"),
 	} {
-		_, err := New(params)
+		_, err := NewFromRawYaml(params)
 		if err == nil {
 			log.Fatal("expected an error, got none")
 		}

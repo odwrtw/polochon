@@ -32,17 +32,22 @@ type Params struct {
 
 // Register a new Subtitler
 func init() {
-	polochon.RegisterSubtitler(moduleName, New)
+	polochon.RegisterSubtitler(moduleName, NewFromRawYaml)
 }
 
-// New module
-func New(p []byte) (polochon.Subtitler, error) {
+// NewFromRawYaml unmarshals the bytes as yaml as params and call the New
+// function
+func NewFromRawYaml(p []byte) (polochon.Subtitler, error) {
 	params := &Params{}
 	if err := yaml.Unmarshal(p, params); err != nil {
 		return nil, err
 	}
 
+	return New(params)
+}
 
+// New module
+func New(params *Params) (polochon.Subtitler, error) {
 	// Handle auth if the user and password are provided
 	var client *addicted.Client
 
@@ -61,7 +66,7 @@ func New(p []byte) (polochon.Subtitler, error) {
 	// if language not available in addicted
 	addictedLang, ok := langTranslate[language]
 	if !ok {
-		return nil, fmt.Errorf("addicted: language no supported")
+		return nil, fmt.Errorf("addicted: language %q no supported", language)
 	}
 
 	return &addictedProxy{client: *client, language: addictedLang}, nil

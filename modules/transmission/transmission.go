@@ -19,26 +19,38 @@ const (
 
 // Register a new Downloader
 func init() {
-	polochon.RegisterDownloader(moduleName, New)
+	polochon.RegisterDownloader(moduleName, NewFromRawYaml)
 }
 
-// Client holds the connection with transmission
-type Client struct {
+// Params represents the module params
+type Params struct {
 	URL       string `yaml:"url"`
 	CheckSSL  bool   `yaml:"check_ssl"`
 	BasicAuth bool   `yaml:"basic_auth"`
 	Username  string `yaml:"user"`
 	Password  string `yaml:"password"`
-	tClient   *transmission.Client
+}
+
+// Client holds the connection with transmission
+type Client struct {
+	*Params
+	tClient *transmission.Client
+}
+
+// NewFromRawYaml unmarshals the bytes as yaml as params and call the New
+// function
+func NewFromRawYaml(p []byte) (polochon.Downloader, error) {
+	params := &Params{}
+	if err := yaml.Unmarshal(p, params); err != nil {
+		return nil, err
+	}
+
+	return New(params)
 }
 
 // New module
-func New(p []byte) (polochon.Downloader, error) {
-	client := &Client{}
-
-	if err := yaml.Unmarshal(p, client); err != nil {
-		return nil, err
-	}
+func New(params *Params) (polochon.Downloader, error) {
+	client := &Client{Params: params}
 
 	if err := client.checkConfig(); err != nil {
 		return nil, err

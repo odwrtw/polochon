@@ -22,15 +22,20 @@ const (
 
 // Register yts as a Torrenter
 func init() {
-	polochon.RegisterTorrenter(moduleName, NewEztv)
+	polochon.RegisterTorrenter(moduleName, NewFromRawYaml)
 }
 
 // Eztv is a source for show episode torrents
 type Eztv struct{}
 
-// NewEztv returns a new Eztv
-func NewEztv(p []byte) (polochon.Torrenter, error) {
+// New is an helper to avoid passing bytes
+func New() (polochon.Torrenter, error) {
 	return &Eztv{}, nil
+}
+
+// NewFromRawYaml returns a new Eztv
+func NewFromRawYaml(p []byte) (polochon.Torrenter, error) {
+	return New()
 }
 
 // Function to be overwritten during the tests

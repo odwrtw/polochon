@@ -34,7 +34,7 @@ var (
 
 // Register a new Subtitler
 func init() {
-	polochon.RegisterSubtitler(moduleName, New)
+	polochon.RegisterSubtitler(moduleName, NewFromRawYaml)
 }
 
 // Params represents the module params
@@ -42,13 +42,19 @@ type Params struct {
 	Lang string `yaml:"lang"`
 }
 
-// New module
-func New(p []byte) (polochon.Subtitler, error) {
+// NewFromRawYaml unmarshals the bytes as yaml as params and call the New
+// function
+func NewFromRawYaml(p []byte) (polochon.Subtitler, error) {
 	params := &Params{}
 	if err := yaml.Unmarshal(p, params); err != nil {
 		return nil, err
 	}
 
+	return New(params)
+}
+
+// New module
+func New(params *Params) (polochon.Subtitler, error) {
 	if params.Lang == "" {
 		return nil, ErrMissingSubtitleLang
 	}

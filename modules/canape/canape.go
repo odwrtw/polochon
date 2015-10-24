@@ -18,7 +18,7 @@ const (
 
 // Register a new Subtitiler
 func init() {
-	polochon.RegisterWishlister(moduleName, New)
+	polochon.RegisterWishlister(moduleName, NewFromRawYaml)
 }
 
 // UserConfig represents the configurations to get a user wishlist
@@ -40,17 +40,28 @@ type tvShows struct {
 
 // Wishlist holds the canape wishlists
 type Wishlist struct {
+	*Params
+}
+
+// Params represents the module params
+type Params struct {
 	Configs []UserConfig `yaml:"whistlists"`
 }
 
-// New module
-func New(p []byte) (polochon.Wishlister, error) {
-	w := &Wishlist{}
-	if err := yaml.Unmarshal(p, w); err != nil {
+// NewFromRawYaml unmarshals the bytes as yaml as params and call the New
+// function
+func NewFromRawYaml(p []byte) (polochon.Wishlister, error) {
+	params := &Params{}
+	if err := yaml.Unmarshal(p, params); err != nil {
 		return nil, err
 	}
 
-	return w, nil
+	return New(params)
+}
+
+// New module
+func New(params *Params) (polochon.Wishlister, error) {
+	return &Wishlist{Params: params}, nil
 }
 
 // Get all the users wishlists
