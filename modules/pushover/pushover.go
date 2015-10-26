@@ -30,7 +30,7 @@ func init() {
 // Params represents the module params
 type Params struct {
 	Key       string `yaml:"key"`
-	Recipient string `yaml:"recipien"`
+	Recipient string `yaml:"recipient"`
 }
 
 // IsValid checks if the given params are valid
