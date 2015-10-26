@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/transmission"
@@ -17,68 +19,39 @@ const (
 
 // Register a new Downloader
 func init() {
-	polochon.RegisterDownloader(moduleName, New)
+	polochon.RegisterDownloader(moduleName, NewFromRawYaml)
+}
+
+// Params represents the module params
+type Params struct {
+	URL       string `yaml:"url"`
+	CheckSSL  bool   `yaml:"check_ssl"`
+	BasicAuth bool   `yaml:"basic_auth"`
+	Username  string `yaml:"user"`
+	Password  string `yaml:"password"`
 }
 
 // Client holds the connection with transmission
 type Client struct {
-	URL       string
-	CheckSSL  bool
-	BasicAuth bool
-	Username  string
-	Password  string
-	tClient   *transmission.Client
+	*Params
+	tClient *transmission.Client
+}
+
+// NewFromRawYaml unmarshals the bytes as yaml as params and call the New
+// function
+func NewFromRawYaml(p []byte) (polochon.Downloader, error) {
+	params := &Params{}
+	if err := yaml.Unmarshal(p, params); err != nil {
+		return nil, err
+	}
+
+	return New(params)
 }
 
 // New module
-func New(params map[string]interface{}) (polochon.Downloader, error) {
-	var URL, username, password string
+func New(params *Params) (polochon.Downloader, error) {
+	client := &Client{Params: params}
 
-	// Check SSL and basic authentication by default
-	checkSSL, basicAuth := true, true
-
-	for ptr, param := range map[*bool]string{
-		&checkSSL:  "check_ssl",
-		&basicAuth: "basic_auth",
-	} {
-		p, ok := params[param]
-		if !ok {
-			continue
-		}
-
-		v, ok := p.(bool)
-		if !ok {
-			return nil, fmt.Errorf("transmission: %s should be a bool", param)
-		}
-
-		*ptr = v
-	}
-
-	for ptr, param := range map[*string]string{
-		&URL:      "url",
-		&username: "user",
-		&password: "password",
-	} {
-		p, ok := params[param]
-		if !ok {
-			continue
-		}
-
-		v, ok := p.(string)
-		if !ok {
-			return nil, fmt.Errorf("transmission: %s should be a string", param)
-		}
-
-		*ptr = v
-	}
-
-	client := &Client{
-		URL:       URL,
-		CheckSSL:  checkSSL,
-		BasicAuth: basicAuth,
-		Username:  username,
-		Password:  password,
-	}
 	if err := client.checkConfig(); err != nil {
 		return nil, err
 	}

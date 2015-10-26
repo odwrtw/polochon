@@ -7,15 +7,15 @@ var registeredModules *RegisteredModules
 
 func init() {
 	registeredModules = &RegisteredModules{
-		Detailers:   make(map[string]func(params map[string]interface{}) (Detailer, error)),
-		Torrenters:  make(map[string]func(params map[string]interface{}) (Torrenter, error)),
-		Guessers:    make(map[string]func(params map[string]interface{}) (Guesser, error)),
-		FsNotifiers: make(map[string]func(params map[string]interface{}) (FsNotifier, error)),
-		Notifiers:   make(map[string]func(params map[string]interface{}) (Notifier, error)),
-		Subtitlers:  make(map[string]func(params map[string]interface{}) (Subtitler, error)),
-		Wishlisters: make(map[string]func(params map[string]interface{}) (Wishlister, error)),
-		Downloaders: make(map[string]func(params map[string]interface{}) (Downloader, error)),
-		Calendars:   make(map[string]func(params map[string]interface{}) (Calendar, error)),
+		Detailers:   make(map[string]func(params []byte) (Detailer, error)),
+		Torrenters:  make(map[string]func(params []byte) (Torrenter, error)),
+		Guessers:    make(map[string]func(params []byte) (Guesser, error)),
+		FsNotifiers: make(map[string]func(params []byte) (FsNotifier, error)),
+		Notifiers:   make(map[string]func(params []byte) (Notifier, error)),
+		Subtitlers:  make(map[string]func(params []byte) (Subtitler, error)),
+		Wishlisters: make(map[string]func(params []byte) (Wishlister, error)),
+		Downloaders: make(map[string]func(params []byte) (Downloader, error)),
+		Calendars:   make(map[string]func(params []byte) (Calendar, error)),
 	}
 }
 
@@ -48,19 +48,19 @@ const (
 
 // RegisteredModules holds the modules registered during the init process
 type RegisteredModules struct {
-	Detailers   map[string]func(params map[string]interface{}) (Detailer, error)
-	Torrenters  map[string]func(params map[string]interface{}) (Torrenter, error)
-	Guessers    map[string]func(params map[string]interface{}) (Guesser, error)
-	FsNotifiers map[string]func(params map[string]interface{}) (FsNotifier, error)
-	Notifiers   map[string]func(params map[string]interface{}) (Notifier, error)
-	Subtitlers  map[string]func(params map[string]interface{}) (Subtitler, error)
-	Wishlisters map[string]func(params map[string]interface{}) (Wishlister, error)
-	Downloaders map[string]func(params map[string]interface{}) (Downloader, error)
-	Calendars   map[string]func(params map[string]interface{}) (Calendar, error)
+	Detailers   map[string]func(params []byte) (Detailer, error)
+	Torrenters  map[string]func(params []byte) (Torrenter, error)
+	Guessers    map[string]func(params []byte) (Guesser, error)
+	FsNotifiers map[string]func(params []byte) (FsNotifier, error)
+	Notifiers   map[string]func(params []byte) (Notifier, error)
+	Subtitlers  map[string]func(params []byte) (Subtitler, error)
+	Wishlisters map[string]func(params []byte) (Wishlister, error)
+	Downloaders map[string]func(params []byte) (Downloader, error)
+	Calendars   map[string]func(params []byte) (Calendar, error)
 }
 
 // ConfigureDetailer configures a detailer
-func ConfigureDetailer(name string, params map[string]interface{}) (Detailer, error) {
+func ConfigureDetailer(name string, params []byte) (Detailer, error) {
 	f, ok := registeredModules.Detailers[name]
 	if !ok {
 		return nil, ErrModuleNotFound
@@ -76,7 +76,7 @@ func ConfigureDetailer(name string, params map[string]interface{}) (Detailer, er
 }
 
 // ConfigureSubtitler configures a subtitiler
-func ConfigureSubtitler(name string, params map[string]interface{}) (Subtitler, error) {
+func ConfigureSubtitler(name string, params []byte) (Subtitler, error) {
 	f, ok := registeredModules.Subtitlers[name]
 	if !ok {
 		return nil, ErrModuleNotFound
@@ -92,7 +92,7 @@ func ConfigureSubtitler(name string, params map[string]interface{}) (Subtitler, 
 }
 
 // ConfigureWishlister configures a wishlister
-func ConfigureWishlister(name string, params map[string]interface{}) (Wishlister, error) {
+func ConfigureWishlister(name string, params []byte) (Wishlister, error) {
 	f, ok := registeredModules.Wishlisters[name]
 	if !ok {
 		return nil, ErrModuleNotFound
@@ -108,7 +108,7 @@ func ConfigureWishlister(name string, params map[string]interface{}) (Wishlister
 }
 
 // ConfigureTorrenter configures a torrenter
-func ConfigureTorrenter(name string, params map[string]interface{}) (Torrenter, error) {
+func ConfigureTorrenter(name string, params []byte) (Torrenter, error) {
 	f, ok := registeredModules.Torrenters[name]
 	if !ok {
 		return nil, ErrModuleNotFound
@@ -124,7 +124,7 @@ func ConfigureTorrenter(name string, params map[string]interface{}) (Torrenter, 
 }
 
 // ConfigureGuesser configures a guesser
-func ConfigureGuesser(name string, params map[string]interface{}) (Guesser, error) {
+func ConfigureGuesser(name string, params []byte) (Guesser, error) {
 	f, ok := registeredModules.Guessers[name]
 	if !ok {
 		return nil, ErrModuleNotFound
@@ -140,7 +140,7 @@ func ConfigureGuesser(name string, params map[string]interface{}) (Guesser, erro
 }
 
 // ConfigureFsNotifier configures a fs notifier
-func ConfigureFsNotifier(name string, params map[string]interface{}) (FsNotifier, error) {
+func ConfigureFsNotifier(name string, params []byte) (FsNotifier, error) {
 	f, ok := registeredModules.FsNotifiers[name]
 	if !ok {
 		return nil, ErrModuleNotFound
@@ -156,7 +156,7 @@ func ConfigureFsNotifier(name string, params map[string]interface{}) (FsNotifier
 }
 
 // ConfigureNotifier configures a notifier
-func ConfigureNotifier(name string, params map[string]interface{}) (Notifier, error) {
+func ConfigureNotifier(name string, params []byte) (Notifier, error) {
 	f, ok := registeredModules.Notifiers[name]
 	if !ok {
 		return nil, ErrModuleNotFound
@@ -172,7 +172,7 @@ func ConfigureNotifier(name string, params map[string]interface{}) (Notifier, er
 }
 
 // ConfigureDownloader configures a downloader
-func ConfigureDownloader(name string, params map[string]interface{}) (Downloader, error) {
+func ConfigureDownloader(name string, params []byte) (Downloader, error) {
 	f, ok := registeredModules.Downloaders[name]
 	if !ok {
 		return nil, ErrModuleNotFound
@@ -188,7 +188,7 @@ func ConfigureDownloader(name string, params map[string]interface{}) (Downloader
 }
 
 // ConfigureShowCalendarFetcher configures a show calendar fetcher
-func ConfigureCalendar(name string, params map[string]interface{}) (Calendar, error) {
+func ConfigureCalendar(name string, params []byte) (Calendar, error) {
 	f, ok := registeredModules.Calendars[name]
 	if !ok {
 		return nil, ErrModuleNotFound

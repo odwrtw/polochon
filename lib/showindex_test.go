@@ -1,6 +1,7 @@
 package polochon
 
 import (
+	"io/ioutil"
 	"reflect"
 	"testing"
 
@@ -9,10 +10,10 @@ import (
 
 // NewMovieIndex returns a new movie index
 func newFakeShowIndex() *ShowIndex {
-	logger := logrus.NewEntry(logrus.New())
+	log := logrus.NewEntry(&logrus.Logger{Out: ioutil.Discard})
 	return &ShowIndex{
 		config: nil,
-		log:    logger.WithField("function", "showIndexTest"),
+		log:    log.WithField("function", "showIndexTest"),
 		ids:    map[string]map[int]map[int]string{},
 		slugs:  map[string]string{},
 	}

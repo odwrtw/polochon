@@ -33,7 +33,7 @@ func (fs *FsNotify) Name() string {
 }
 
 // NewFsNotify returns a new FsNotify
-func NewFsNotify(params map[string]interface{}) (polochon.FsNotifier, error) {
+func NewFsNotify(p []byte) (polochon.FsNotifier, error) {
 	// Create a new watcher
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {

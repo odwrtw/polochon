@@ -33,16 +33,21 @@ var (
 
 // Register openguessit as a Guesser
 func init() {
-	polochon.RegisterGuesser(moduleName, NewOpenGuessit)
+	polochon.RegisterGuesser(moduleName, NewFromRawYaml)
 }
 
 // OpenGuessit is a mix of opensubtitle and guessit
 type OpenGuessit struct {
 }
 
-// NewOpenGuessit returns an new openguessit
-func NewOpenGuessit(params map[string]interface{}) (polochon.Guesser, error) {
+// New returns an new openguessit
+func New() (polochon.Guesser, error) {
 	return &OpenGuessit{}, nil
+}
+
+// NewFromRawYaml returns an new openguessit
+func NewFromRawYaml(p []byte) (polochon.Guesser, error) {
+	return New()
 }
 
 // Name implements the Module interface

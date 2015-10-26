@@ -3,6 +3,8 @@ package yifysubs
 import (
 	"errors"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/yifysubs"
@@ -25,7 +27,6 @@ var langTranslate = map[polochon.Language]string{
 
 // Errors
 var (
-	ErrInvalidArgument     = errors.New("yifysub: invalid argument")
 	ErrInvalidSubtitleLang = errors.New("yifysub: invalid subtitle language")
 	ErrMissingSubtitleLang = errors.New("yifysub: missing subtitle language")
 	ErrMissingImdbID       = errors.New("yifysub: missing imdb id")
@@ -33,22 +34,32 @@ var (
 
 // Register a new Subtitler
 func init() {
-	polochon.RegisterSubtitler(moduleName, New)
+	polochon.RegisterSubtitler(moduleName, NewFromRawYaml)
+}
+
+// Params represents the module params
+type Params struct {
+	Lang string `yaml:"lang"`
+}
+
+// NewFromRawYaml unmarshals the bytes as yaml as params and call the New
+// function
+func NewFromRawYaml(p []byte) (polochon.Subtitler, error) {
+	params := &Params{}
+	if err := yaml.Unmarshal(p, params); err != nil {
+		return nil, err
+	}
+
+	return New(params)
 }
 
 // New module
-func New(params map[string]interface{}) (polochon.Subtitler, error) {
-	l, ok := params["lang"]
-	if !ok {
+func New(params *Params) (polochon.Subtitler, error) {
+	if params.Lang == "" {
 		return nil, ErrMissingSubtitleLang
 	}
 
-	lang, ok := l.(string)
-	if !ok {
-		return nil, ErrInvalidArgument
-	}
-
-	language := polochon.Language(lang)
+	language := polochon.Language(params.Lang)
 	subLang, ok := langTranslate[language]
 	if !ok {
 		return nil, ErrInvalidSubtitleLang

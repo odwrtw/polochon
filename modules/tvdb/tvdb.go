@@ -14,8 +14,8 @@ import (
 
 // Register tvdb as a Detailer
 func init() {
-	polochon.RegisterDetailer(moduleName, NewDetailer)
-	polochon.RegisterCalendar(moduleName, NewCalendar)
+	polochon.RegisterDetailer(moduleName, NewDetailerFromRawYaml)
+	polochon.RegisterCalendar(moduleName, NewCalendarFromRawYaml)
 }
 
 // API constants
@@ -48,13 +48,25 @@ var (
 type TvDB struct {
 }
 
+// NewDetailerFromRawYaml unmarshals the bytes as yaml as params and call the
+// New function
+func NewDetailerFromRawYaml(p []byte) (polochon.Detailer, error) {
+	return NewDetailer()
+}
+
 // NewDetailer returns an initialized tmdb instance as a detailer
-func NewDetailer(params map[string]interface{}) (polochon.Detailer, error) {
+func NewDetailer() (polochon.Detailer, error) {
 	return &TvDB{}, nil
 }
 
+// NewCalendarFromRawYaml unmarshals the bytes as yaml as params and call the
+// New function
+func NewCalendarFromRawYaml(p []byte) (polochon.Calendar, error) {
+	return NewCalendar()
+}
+
 // NewCalendar returns an initialized tmdb instance as a calendar
-func NewCalendar(params map[string]interface{}) (polochon.Calendar, error) {
+func NewCalendar() (polochon.Calendar, error) {
 	return &TvDB{}, nil
 }
 

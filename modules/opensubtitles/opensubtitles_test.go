@@ -2,8 +2,10 @@ package opensubtitles
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/Sirupsen/logrus"
@@ -11,7 +13,7 @@ import (
 	"github.com/oz/osdb"
 )
 
-var fakeLogger = logrus.New()
+var fakeLogger = &logrus.Logger{Out: ioutil.Discard}
 var fakeLoggerEntry = logrus.NewEntry(fakeLogger)
 var errFake = fmt.Errorf("fake error")
 var fakeClient = &osdb.Client{Token: "pwet"}
@@ -101,46 +103,47 @@ var fakeMovie = polochon.Movie{
 }
 
 func TestInvalidNew(t *testing.T) {
-	for expected, params := range map[error]map[string]interface{}{
+	for expected, paramsStr := range map[error][]string{
 		// Not a string
 		ErrInvalidArgument: {
-			"lang":     "fr_FR",
-			"user":     6,
-			"password": "passTest",
+			"lang: fr_FR",
+			"user: 6",
+			"password: passTest",
 		},
 		// Missing password
 		ErrMissingArgument: {
-			"lang":     "fr_FR",
-			"user":     "userTest",
-			"password": "",
+			"lang: fr_FR",
+			"user: userTest",
+			"password: ",
 		},
 		// Bad language
 		ErrInvalidArgument: {
-			"lang":     "bad_language",
-			"user":     "userTest",
-			"password": "passTest",
+			"lang: bad_language",
+			"user: userTest",
+			"password: passTest",
 		},
 		// No language
 		ErrMissingArgument: {
-			"lang":     "",
-			"user":     "userTest",
-			"password": "passTest",
+			"lang: ",
+			"user: userTest",
+			"password: passTest",
 		},
 	} {
-		_, err := New(params)
+		params := []byte(strings.Join(paramsStr, "\n"))
+		_, err := NewFromRawYaml(params)
 		if err != expected {
-			log.Fatalf("Got %q, expected %q with params %+v", err, expected, params)
+			log.Fatalf("Got %q, expected %q with params %s", err, expected, params)
 		}
 	}
 }
 
 func TestSuccessfulNew(t *testing.T) {
-	params := map[string]interface{}{
-		"lang":     "fr_FR",
-		"user":     "userTest",
-		"password": "passTest",
-	}
-	got, err := New(params)
+	params := []byte(strings.Join([]string{
+		"lang: fr_FR",
+		"user: userTest",
+		"password: passTest",
+	}, "\n"))
+	got, err := NewFromRawYaml(params)
 	if err != nil {
 		log.Fatalf("Got error in New: %q", err)
 	}

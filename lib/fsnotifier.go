@@ -22,7 +22,7 @@ type FsNotifier interface {
 }
 
 // RegisterFsNotifier helps register a new FsNotifier
-func RegisterFsNotifier(name string, f func(params map[string]interface{}) (FsNotifier, error)) {
+func RegisterFsNotifier(name string, f func(params []byte) (FsNotifier, error)) {
 	if _, ok := registeredModules.FsNotifiers[name]; ok {
 		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeDetailer))
 	}

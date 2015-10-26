@@ -23,9 +23,9 @@ var testData = map[string]map[string][]string{
 }
 
 // Fake wishlist with defined users
-var testWishlist = &Wishlist{
-	userIDs: []string{"bob", "joe", "robert"},
-}
+var testWishlist, _ = New(&Params{
+	UserIDs: []string{"bob", "joe", "robert"},
+})
 
 func TestMoviesWishlist(t *testing.T) {
 	getMoviesFromImdb = func(userID string) (*[]string, error) {

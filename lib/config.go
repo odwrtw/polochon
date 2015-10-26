@@ -25,22 +25,26 @@ type ConfigFileRoot struct {
 }
 
 // moduleParams returns the modules params set in the configuration.
-func (c *ConfigFileRoot) moduleParams(moduleName string) (map[string]interface{}, error) {
+func (c *ConfigFileRoot) moduleParams(moduleName string) ([]byte, error) {
 	for _, p := range c.ModulesParams {
 		// Is the name of the module missing in the conf ?
 		name, ok := p["name"]
 		if !ok {
-			return map[string]interface{}{}, fmt.Errorf("config: missing module name in configuration params: %+v", p)
+			return nil, fmt.Errorf("config: missing module name in configuration params: %+v", p)
 		}
 
-		// Found the right module config
-		if moduleName == name {
-			return p, nil
+		// Not the right module name
+		if moduleName != name {
+			continue
 		}
+
+		// Encode the params using the yaml format so that each module can
+		// decode it itself
+		return yaml.Marshal(p)
 	}
 
-	// Nothing found, return the default values
-	return map[string]interface{}{}, nil
+	// Nothing found
+	return nil, nil
 }
 
 // ConfigFileVideo represents the configuration for the video in the configuration file

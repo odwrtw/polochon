@@ -13,7 +13,7 @@ type Detailer interface {
 }
 
 // RegisterDetailer helps register a new detailer
-func RegisterDetailer(name string, f func(params map[string]interface{}) (Detailer, error)) {
+func RegisterDetailer(name string, f func(params []byte) (Detailer, error)) {
 	if _, ok := registeredModules.Detailers[name]; ok {
 		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeDetailer))
 	}
