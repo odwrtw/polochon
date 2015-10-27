@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/odwrtw/polochon/errors"
 	"github.com/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/token"
 	"gopkg.in/unrolled/render.v1"
 )
 
@@ -21,6 +22,9 @@ type App struct {
 
 	// Automatic downloader
 	downloader *downloader
+
+	// Token auth for API
+	tokenManager *token.Manager
 
 	// done channel is used to notify all the goroutines to stop
 	done chan struct{}
@@ -41,7 +45,7 @@ type App struct {
 }
 
 // NewApp create a new app from the given configuration path
-func NewApp(configPath string) (*App, error) {
+func NewApp(configPath string, tokenManager *token.Manager) (*App, error) {
 
 	// Setup the logger
 	logger := logrus.New()
@@ -58,14 +62,15 @@ func NewApp(configPath string) (*App, error) {
 	}
 
 	return &App{
-		config:     config,
-		done:       make(chan struct{}),
-		stop:       make(chan struct{}),
-		errc:       make(chan error),
-		logger:     logger,
-		videoStore: polochon.NewVideoStore(config.File, config.Movie, config.Show, config.VideoStore, logrus.NewEntry(logger)),
-		render:     render.New(),
-		mux:        mux.NewRouter(),
+		config:       config,
+		done:         make(chan struct{}),
+		stop:         make(chan struct{}),
+		errc:         make(chan error),
+		logger:       logger,
+		videoStore:   polochon.NewVideoStore(config.File, config.Movie, config.Show, config.VideoStore, logrus.NewEntry(logger)),
+		render:       render.New(),
+		mux:          mux.NewRouter(),
+		tokenManager: tokenManager,
 	}, nil
 }
 

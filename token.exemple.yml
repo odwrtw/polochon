@@ -1,0 +1,21 @@
+- role: guest
+  allowed:
+    - MoviesListIDs
+    - ShowsListSlugs
+  token:
+  - name: toto
+    value: wwiuiuwbjqwndjqubyuui
+- role: user
+  include:
+    - guest
+  token:
+  - name: plop
+    value: fupqkjlknkn
+- role: admin
+  include:
+    - user
+  allowed:
+    - DeleteBySlugs
+  token:
+  - name: skywalker
+    value: owoifupqkjlknkn

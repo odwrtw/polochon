@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/meatballhat/negroni-logrus"
 	"github.com/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/token"
 	"github.com/phyber/negroni-gzip/gzip"
 )
 
@@ -240,26 +241,32 @@ func (a *App) addTorrent(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (a *App) tokenGetAllowed(w http.ResponseWriter, r *http.Request) {
+	token := r.URL.Query().Get("token")
+	allowed := a.tokenManager.GetAllowed(token)
+	a.render.JSON(w, http.StatusOK, allowed)
+}
+
 // HTTPServer handles the HTTP requests
 func (a *App) HTTPServer() {
 	addr := fmt.Sprintf("%s:%d", a.config.HTTPServer.Host, a.config.HTTPServer.Port)
 	a.logger.Debugf("HTTP Server listening on: %s", addr)
 
-	a.mux.HandleFunc("/movies/slugs", a.movieSlugs)
-	a.mux.HandleFunc("/movies/ids", a.movieIds)
-	a.mux.HandleFunc("/shows/ids", a.showIds)
-	a.mux.HandleFunc("/shows/slugs", a.showSlugs)
-	a.mux.HandleFunc("/wishlist", a.wishlist)
+	a.mux.HandleFunc("/movies/slugs", a.movieSlugs).Name("MoviesListSlugs")
+	a.mux.HandleFunc("/movies/ids", a.movieIds).Name("MoviesListIDs")
+	a.mux.HandleFunc("/shows/ids", a.showIds).Name("ShowsListIDs")
+	a.mux.HandleFunc("/shows/slugs", a.showSlugs).Name("ShowsListSlugs")
+	a.mux.HandleFunc("/wishlist", a.wishlist).Name("Wishlist")
 
-	a.mux.HandleFunc("/torrents", a.addTorrent).Methods("POST")
+	a.mux.HandleFunc("/torrents", a.addTorrent).Methods("POST").Name("TorrentsAdd")
 
 	if a.config.HTTPServer.ServeFiles {
 		a.logger.Info("Server is serving files")
-		a.mux.HandleFunc("/{videoType:movies|shows}/slugs/{slug}/delete", a.deleteFile)
-		a.mux.HandleFunc("/shows/slugs/{slug}/download", a.serveShow)
-		a.mux.HandleFunc("/shows/ids/{id}/{season}/{episode}/download", a.serveShow)
-		a.mux.HandleFunc("/movies/ids/{id}/download", a.serveMovie)
-		a.mux.HandleFunc("/movies/slugs/{slug}/download", a.serveMovie)
+		a.mux.HandleFunc("/{videoType:movies|shows}/slugs/{slug}/delete", a.deleteFile).Name("DeleteBySlugs")
+		a.mux.HandleFunc("/shows/slugs/{slug}/download", a.serveShow).Name("ServeShowsBySlugs")
+		a.mux.HandleFunc("/shows/ids/{id}/{season}/{episode}/download", a.serveShow).Name("ServeShowsByIDs")
+		a.mux.HandleFunc("/movies/ids/{id}/download", a.serveMovie).Name("ServeMoviesByIDs")
+		a.mux.HandleFunc("/movies/slugs/{slug}/download", a.serveMovie).Name("ServeMoviesBySlugs")
 	}
 
 	n := negroni.New()
@@ -274,6 +281,12 @@ func (a *App) HTTPServer() {
 	if a.config.HTTPServer.BasicAuth {
 		a.logger.Info("Server requires basic authentication")
 		n.Use(NewBasicAuthMiddleware(a.config.HTTPServer.BasicAuthUser, a.config.HTTPServer.BasicAuthPassword))
+	}
+
+	// Add token auth middleware if token configuration file specified
+	if a.tokenManager != nil {
+		n.Use(token.NewMiddleware(a.tokenManager, a.mux))
+		a.mux.HandleFunc("/token/allowed", a.tokenGetAllowed).Name("TokenGetAllowed")
 	}
 
 	// Wrap the router
