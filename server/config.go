@@ -1,4 +1,4 @@
-package polochon
+package main
 
 import (
 	"fmt"
@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/odwrtw/polochon/lib"
 	"gopkg.in/yaml.v2"
 )
 
@@ -64,9 +65,9 @@ type ConfigFileWatcher struct {
 
 // ConfigFileWishlist represents the configuration for the wishlist in the configuration file
 type ConfigFileWishlist struct {
-	WishlisterNames       []string  `yaml:"wishlisters"`
-	ShowDefaultQualities  []Quality `yaml:"show_default_qualities"`
-	MovieDefaultQualities []Quality `yaml:"movie_default_qualities"`
+	WishlisterNames       []string           `yaml:"wishlisters"`
+	ShowDefaultQualities  []polochon.Quality `yaml:"show_default_qualities"`
+	MovieDefaultQualities []polochon.Quality `yaml:"movie_default_qualities"`
 }
 
 // ConfigFileMovie represents the configuration for movies in the configuration file
@@ -111,15 +112,16 @@ type Config struct {
 	Downloader    DownloaderConfig
 	HTTPServer    HTTPServerConfig
 	ModulesParams []map[string]interface{}
-	Video         VideoConfig
-	Wishlist      WishlistConfig
-	File          FileConfig
+	Wishlist      polochon.WishlistConfig
+	Movie         polochon.MovieConfig
+	Show          polochon.ShowConfig
+	File          polochon.FileConfig
 }
 
 // WatcherConfig represents the configuration for the detailers
 type WatcherConfig struct {
 	Dir        string
-	FsNotifier FsNotifier
+	FsNotifier polochon.FsNotifier
 }
 
 // DownloaderConfig represents the configuration for the downloader
@@ -127,7 +129,7 @@ type DownloaderConfig struct {
 	Enabled     bool
 	Timer       time.Duration
 	DownloadDir string
-	Client      Downloader
+	Client      polochon.Downloader
 }
 
 // HTTPServerConfig represents the configuration for the HTTP Server
@@ -139,47 +141,6 @@ type HTTPServerConfig struct {
 	BasicAuth         bool
 	BasicAuthUser     string
 	BasicAuthPassword string
-}
-
-// VideoConfig represents the configuration for video object
-type VideoConfig struct {
-	Notifiers []Notifier
-	Show      ShowConfig
-	Movie     MovieConfig
-}
-
-// WishlistConfig represents the wishlist configurations
-type WishlistConfig struct {
-	Wishlisters           []Wishlister
-	ShowDefaultQualities  []Quality `yaml:"show_default_qualities"`
-	MovieDefaultQualities []Quality `yaml:"movie_default_qualities"`
-}
-
-// ShowConfig represents the configuration for a show and its show episodes
-type ShowConfig struct {
-	Dir        string
-	Calendar   Calendar
-	Detailers  []Detailer
-	Notifiers  []Notifier
-	Subtitlers []Subtitler
-	Torrenters []Torrenter
-}
-
-// MovieConfig represents the configuration for a movie
-type MovieConfig struct {
-	Dir        string
-	Torrenters []Torrenter
-	Detailers  []Detailer
-	Subtitlers []Subtitler
-	Notifiers  []Notifier
-}
-
-// FileConfig represents the configuration for a file
-type FileConfig struct {
-	ExcludeFileContaining     []string
-	VideoExtentions           []string
-	AllowedExtentionsToDelete []string
-	Guesser                   Guesser
 }
 
 // readConfig helps read the config
@@ -230,11 +191,10 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 	}
 	conf.Downloader = *downloaderConf
 
-	videoConf, err := cf.initVideo(log)
+	notifiers, err := cf.initNotifiers()
 	if err != nil {
 		return nil, err
 	}
-	conf.Video = *videoConf
 
 	wishlistConf, err := cf.initWishlist(log)
 	if err != nil {
@@ -254,8 +214,8 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 
 	showConf.Dir = realShowsPath
 
-	showConf.Notifiers = conf.Video.Notifiers
-	conf.Video.Show = *showConf
+	showConf.Notifiers = notifiers
+	conf.Show = *showConf
 
 	movieConf, err := cf.initMovie(log)
 	if err != nil {
@@ -269,15 +229,15 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 
 	movieConf.Dir = realMoviesPath
 
-	movieConf.Notifiers = conf.Video.Notifiers
-	conf.Video.Movie = *movieConf
+	movieConf.Notifiers = notifiers
+	conf.Movie = *movieConf
 
 	guesser, err := cf.initFile(log)
 	if err != nil {
 		return nil, err
 	}
 
-	conf.File = FileConfig{
+	conf.File = polochon.FileConfig{
 		ExcludeFileContaining:     cf.Video.ExcludeFileContaining,
 		VideoExtentions:           cf.Video.VideoExtentions,
 		AllowedExtentionsToDelete: cf.Video.AllowedExtentionsToDelete,
@@ -287,7 +247,7 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 	return conf, nil
 }
 
-func (c *ConfigFileRoot) loadWatcher(log *logrus.Entry) (FsNotifier, error) {
+func (c *ConfigFileRoot) loadWatcher(log *logrus.Entry) (polochon.FsNotifier, error) {
 	if c.Watcher.FsNotifierName == "" {
 		return nil, fmt.Errorf("config: missing watcher fsnotifier name")
 	}
@@ -299,14 +259,14 @@ func (c *ConfigFileRoot) loadWatcher(log *logrus.Entry) (FsNotifier, error) {
 	}
 
 	// Configure
-	fsNotifier, err := ConfigureFsNotifier(c.Watcher.FsNotifierName, moduleParams)
+	fsNotifier, err := polochon.ConfigureFsNotifier(c.Watcher.FsNotifierName, moduleParams)
 	if err != nil {
 		return nil, err
 	}
 
 	return fsNotifier, nil
 }
-func (c *ConfigFileRoot) initFile(log *logrus.Entry) (Guesser, error) {
+func (c *ConfigFileRoot) initFile(log *logrus.Entry) (polochon.Guesser, error) {
 	// Get video guesser
 	if c.Video.GuesserName == "" {
 		return nil, fmt.Errorf("config: missing video guesser name")
@@ -319,7 +279,7 @@ func (c *ConfigFileRoot) initFile(log *logrus.Entry) (Guesser, error) {
 	}
 
 	// Configure
-	guesser, err := ConfigureGuesser(c.Video.GuesserName, moduleParams)
+	guesser, err := polochon.ConfigureGuesser(c.Video.GuesserName, moduleParams)
 	if err != nil {
 		return nil, err
 	}
@@ -327,8 +287,8 @@ func (c *ConfigFileRoot) initFile(log *logrus.Entry) (Guesser, error) {
 	return guesser, nil
 }
 
-func (c *ConfigFileRoot) initWishlist(log *logrus.Entry) (*WishlistConfig, error) {
-	wishlistConfig := &WishlistConfig{}
+func (c *ConfigFileRoot) initWishlist(log *logrus.Entry) (*polochon.WishlistConfig, error) {
+	wishlistConfig := &polochon.WishlistConfig{}
 
 	// Configure the wishlisters
 	for _, wishlisterName := range c.Wishlist.WishlisterNames {
@@ -337,7 +297,7 @@ func (c *ConfigFileRoot) initWishlist(log *logrus.Entry) (*WishlistConfig, error
 			return nil, err
 		}
 
-		wishlister, err := ConfigureWishlister(wishlisterName, moduleParams)
+		wishlister, err := polochon.ConfigureWishlister(wishlisterName, moduleParams)
 		if err != nil {
 			return nil, err
 		}
@@ -376,7 +336,7 @@ func (c *ConfigFileRoot) initDownloader(log *logrus.Entry) (*DownloaderConfig, e
 			return nil, err
 		}
 
-		downloader, err := ConfigureDownloader(c.Downloader.DownloaderName, moduleParams)
+		downloader, err := polochon.ConfigureDownloader(c.Downloader.DownloaderName, moduleParams)
 		if err != nil {
 			return nil, err
 		}
@@ -386,9 +346,8 @@ func (c *ConfigFileRoot) initDownloader(log *logrus.Entry) (*DownloaderConfig, e
 	return downloaderConf, nil
 }
 
-func (c *ConfigFileRoot) initVideo(log *logrus.Entry) (*VideoConfig, error) {
-
-	videoConf := &VideoConfig{}
+func (c *ConfigFileRoot) initNotifiers() ([]polochon.Notifier, error) {
+	notifiers := []polochon.Notifier{}
 
 	for _, notifierName := range c.Video.NotifierNames {
 		moduleParams, err := c.moduleParams(notifierName)
@@ -396,29 +355,29 @@ func (c *ConfigFileRoot) initVideo(log *logrus.Entry) (*VideoConfig, error) {
 			return nil, err
 		}
 
-		notifier, err := ConfigureNotifier(notifierName, moduleParams)
+		notifier, err := polochon.ConfigureNotifier(notifierName, moduleParams)
 		if err != nil {
 			return nil, err
 		}
-		videoConf.Notifiers = append(videoConf.Notifiers, notifier)
+		notifiers = append(notifiers, notifier)
 	}
 
-	return videoConf, nil
+	return notifiers, nil
 }
 
-func (c *ConfigFileRoot) initShow(log *logrus.Entry) (*ShowConfig, error) {
+func (c *ConfigFileRoot) initShow(log *logrus.Entry) (*polochon.ShowConfig, error) {
 	// Get show detailer
 	if len(c.Show.DetailerNames) == 0 {
 		return nil, fmt.Errorf("config: missing show detailer names")
 	}
-	showConf := &ShowConfig{}
+	showConf := &polochon.ShowConfig{}
 	for _, detailerName := range c.Show.DetailerNames {
 		moduleParams, err := c.moduleParams(detailerName)
 		if err != nil {
 			return nil, err
 		}
 
-		detailer, err := ConfigureDetailer(detailerName, moduleParams)
+		detailer, err := polochon.ConfigureDetailer(detailerName, moduleParams)
 		if err != nil {
 			return nil, err
 		}
@@ -437,7 +396,7 @@ func (c *ConfigFileRoot) initShow(log *logrus.Entry) (*ShowConfig, error) {
 			return nil, err
 		}
 
-		torrenter, err := ConfigureTorrenter(torrenterName, moduleParams)
+		torrenter, err := polochon.ConfigureTorrenter(torrenterName, moduleParams)
 		if err != nil {
 			return nil, err
 		}
@@ -450,7 +409,7 @@ func (c *ConfigFileRoot) initShow(log *logrus.Entry) (*ShowConfig, error) {
 			return nil, err
 		}
 
-		subtitler, err := ConfigureSubtitler(subtitlerName, moduleParams)
+		subtitler, err := polochon.ConfigureSubtitler(subtitlerName, moduleParams)
 		if err != nil {
 			return nil, err
 		}
@@ -465,7 +424,7 @@ func (c *ConfigFileRoot) initShow(log *logrus.Entry) (*ShowConfig, error) {
 		}
 
 		// Configure
-		calendar, err := ConfigureCalendar(c.Show.CalendarName, moduleParams)
+		calendar, err := polochon.ConfigureCalendar(c.Show.CalendarName, moduleParams)
 		if err != nil {
 			return nil, err
 		}
@@ -476,13 +435,13 @@ func (c *ConfigFileRoot) initShow(log *logrus.Entry) (*ShowConfig, error) {
 	return showConf, nil
 }
 
-func (c *ConfigFileRoot) initMovie(log *logrus.Entry) (*MovieConfig, error) {
+func (c *ConfigFileRoot) initMovie(log *logrus.Entry) (*polochon.MovieConfig, error) {
 	// Get movie detailer
 	if len(c.Movie.DetailerNames) == 0 {
 		return nil, fmt.Errorf("config: missing movie detailer names")
 	}
 
-	movieConf := &MovieConfig{}
+	movieConf := &polochon.MovieConfig{}
 
 	for _, detailerName := range c.Movie.DetailerNames {
 		moduleParams, err := c.moduleParams(detailerName)
@@ -490,7 +449,7 @@ func (c *ConfigFileRoot) initMovie(log *logrus.Entry) (*MovieConfig, error) {
 			return nil, err
 		}
 
-		detailer, err := ConfigureDetailer(detailerName, moduleParams)
+		detailer, err := polochon.ConfigureDetailer(detailerName, moduleParams)
 		if err != nil {
 			return nil, err
 		}
@@ -508,7 +467,7 @@ func (c *ConfigFileRoot) initMovie(log *logrus.Entry) (*MovieConfig, error) {
 			return nil, err
 		}
 
-		torrenter, err := ConfigureTorrenter(torrenterName, moduleParams)
+		torrenter, err := polochon.ConfigureTorrenter(torrenterName, moduleParams)
 		if err != nil {
 			return nil, err
 		}
@@ -521,7 +480,7 @@ func (c *ConfigFileRoot) initMovie(log *logrus.Entry) (*MovieConfig, error) {
 			return nil, err
 		}
 
-		subtitler, err := ConfigureSubtitler(subtitlerName, moduleParams)
+		subtitler, err := polochon.ConfigureSubtitler(subtitlerName, moduleParams)
 		if err != nil {
 			return nil, err
 		}

@@ -1,10 +1,12 @@
-package polochon
+package main
 
 import (
 	"bytes"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/odwrtw/polochon/lib"
 )
 
 var configFileExample = []byte(`
@@ -100,8 +102,8 @@ var configStructExample = &ConfigFileRoot{
 	},
 	Wishlist: ConfigFileWishlist{
 		WishlisterNames:       []string{"imdb", "canape"},
-		ShowDefaultQualities:  []Quality{Quality720p, Quality480p, Quality1080p},
-		MovieDefaultQualities: []Quality{Quality1080p, Quality720p},
+		ShowDefaultQualities:  []polochon.Quality{polochon.Quality720p, polochon.Quality480p, polochon.Quality1080p},
+		MovieDefaultQualities: []polochon.Quality{polochon.Quality1080p, polochon.Quality720p},
 	},
 	Video: ConfigFileVideo{
 		ExcludeFileContaining:     []string{"sample"},

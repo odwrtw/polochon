@@ -9,7 +9,7 @@ import (
 )
 
 type downloader struct {
-	config     *polochon.Config
+	config     *Config
 	videoStore *polochon.VideoStore
 	event      chan struct{}
 	done       chan struct{}
@@ -90,7 +90,7 @@ func (d *downloader) downloadMissingMovies(wl *polochon.Wishlist) {
 			continue
 		}
 
-		m := polochon.NewMovie(d.config.Video.Movie)
+		m := polochon.NewMovie(d.config.Movie)
 		m.ImdbID = wantedMovie.ImdbID
 		log := d.log.WithField("imdbID", m.ImdbID)
 		m.SetLogger(log)
@@ -126,7 +126,7 @@ func (d *downloader) downloadMissingMovies(wl *polochon.Wishlist) {
 
 func (d *downloader) downloadMissingShows(wl *polochon.Wishlist) {
 	for _, wishedShow := range wl.Shows {
-		s := polochon.NewShow(d.config.Video.Show)
+		s := polochon.NewShow(d.config.Show)
 		s.ImdbID = wishedShow.ImdbID
 		s.SetLogger(d.log.WithField("imdbID", s.ImdbID))
 
@@ -154,7 +154,7 @@ func (d *downloader) downloadMissingShows(wl *polochon.Wishlist) {
 			}
 
 			// Setup the episode
-			e := polochon.NewShowEpisode(d.config.Video.Show)
+			e := polochon.NewShowEpisode(d.config.Show)
 			e.ShowImdbID = wishedShow.ImdbID
 			e.Season = calEpisode.Season
 			e.Episode = calEpisode.Episode

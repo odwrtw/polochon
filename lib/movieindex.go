@@ -18,7 +18,8 @@ type MovieIndex struct {
 	// Build the index only once, use resync to add the Reset capability
 	once resync.Once
 	// Config
-	config *Config
+	movieConfig MovieConfig
+	fileConfig  FileConfig
 	// Logger
 	log *logrus.Entry
 	// ids keep the imdb ids and their associated paths
@@ -28,12 +29,13 @@ type MovieIndex struct {
 }
 
 // NewMovieIndex returns a new movie index
-func NewMovieIndex(config *Config, log *logrus.Entry) *MovieIndex {
+func NewMovieIndex(movieConfig MovieConfig, fileConfig FileConfig, log *logrus.Entry) *MovieIndex {
 	return &MovieIndex{
-		config: config,
-		log:    log.WithField("function", "movieIndex"),
-		ids:    map[string]string{},
-		slugs:  map[string]string{},
+		movieConfig: movieConfig,
+		fileConfig:  fileConfig,
+		log:         log.WithField("function", "movieIndex"),
+		ids:         map[string]string{},
+		slugs:       map[string]string{},
 	}
 }
 
@@ -49,7 +51,7 @@ func (mi *MovieIndex) SearchMovieBySlug(slug string) (Video, error) {
 		return nil, err
 	}
 
-	return NewMovieFromPath(mi.config.Video.Movie, mi.config.File, mi.log, filePath)
+	return NewMovieFromPath(mi.movieConfig, mi.fileConfig, mi.log, filePath)
 }
 
 // SearchMovieByImdbID searches for a movie from its slug
@@ -64,7 +66,7 @@ func (mi *MovieIndex) SearchMovieByImdbID(imdbID string) (Video, error) {
 		return nil, err
 	}
 
-	return NewMovieFromPath(mi.config.Video.Movie, mi.config.File, mi.log, filePath)
+	return NewMovieFromPath(mi.movieConfig, mi.fileConfig, mi.log, filePath)
 }
 
 // index builds the movie index only once
@@ -113,7 +115,7 @@ func buildIndex(mi *MovieIndex) error {
 	mi.slugs = map[string]string{}
 
 	// Walk movies
-	err := filepath.Walk(mi.config.Video.Movie.Dir, func(filePath string, file os.FileInfo, err error) error {
+	err := filepath.Walk(mi.movieConfig.Dir, func(filePath string, file os.FileInfo, err error) error {
 		// Check err
 		if err != nil {
 			mi.log.Errorf("video store: failed to walk %q", err)
@@ -129,9 +131,9 @@ func buildIndex(mi *MovieIndex) error {
 		ext := path.Ext(filePath)
 
 		var movieFile *File
-		for _, mext := range mi.config.File.VideoExtentions {
+		for _, mext := range mi.fileConfig.VideoExtentions {
 			if ext == mext {
-				movieFile = NewFileWithConfig(filePath, mi.config.File)
+				movieFile = NewFileWithConfig(filePath, mi.fileConfig)
 				break
 			}
 		}
@@ -149,7 +151,7 @@ func buildIndex(mi *MovieIndex) error {
 		defer nfoFile.Close()
 
 		// Read the movie informations
-		movie, err := readMovieNFO(nfoFile, mi.config.Video.Movie)
+		movie, err := readMovieNFO(nfoFile, mi.movieConfig)
 		if err != nil {
 			mi.log.Errorf("video store: failed to read movie NFO: %q", err)
 			return nil

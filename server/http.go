@@ -204,6 +204,7 @@ func (a *App) deleteFile(w http.ResponseWriter, req *http.Request) {
 
 	err = a.videoStore.Delete(v)
 	if err != nil {
+		a.logger.Errorf("failed to delete video : %q", err)
 		a.render.JSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 

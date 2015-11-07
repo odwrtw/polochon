@@ -19,6 +19,16 @@ var (
 	ErrMissingShowEpisodeDir      = errors.New("show episode: missing show dir in config")
 )
 
+// ShowConfig represents the configuration for a show and its show episodes
+type ShowConfig struct {
+	Dir        string
+	Calendar   Calendar
+	Detailers  []Detailer
+	Notifiers  []Notifier
+	Subtitlers []Subtitler
+	Torrenters []Torrenter
+}
+
 // ShowEpisode represents a tvshow episode
 type ShowEpisode struct {
 	ShowConfig `xml:"-" json:"-"`
@@ -109,18 +119,6 @@ func (s *ShowEpisode) SetFile(f *File) {
 	s.VideoExtentions = f.VideoExtentions
 	s.AllowedExtentionsToDelete = f.AllowedExtentionsToDelete
 	s.Guesser = f.Guesser
-}
-
-// SetConfig implements the video interface
-func (s *ShowEpisode) SetConfig(c *VideoConfig, log *logrus.Logger) {
-	s.Dir = c.Show.Dir
-	s.Detailers = c.Show.Detailers
-	s.Notifiers = c.Show.Notifiers
-	s.Subtitlers = c.Show.Subtitlers
-	s.Torrenters = c.Show.Torrenters
-
-	// Set logger
-	s.SetLogger(logrus.NewEntry(log))
 }
 
 // SetLogger sets the logger

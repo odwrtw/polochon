@@ -73,7 +73,6 @@ type Video interface {
 	SetFile(f *File)
 	GetFile() *File
 	Delete() error
-	SetConfig(c *VideoConfig, log *logrus.Logger)
 	SetLogger(log *logrus.Entry)
 }
 
