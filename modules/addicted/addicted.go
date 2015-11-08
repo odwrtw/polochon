@@ -109,8 +109,28 @@ func (a *addictedProxy) GetShowSubtitle(reqEpisode *polochon.ShowEpisode, log *l
 	if len(filteredSubs) == 0 {
 		return nil, polochon.ErrNoSubtitleFound
 	}
+
 	sort.Sort(addicted.ByDownloads(filteredSubs))
-	return &filteredSubs[0], err
+
+	if reqEpisode.ReleaseGroup == "" {
+		log.Info("No release group specified get the most downloaded subtitle")
+		return &filteredSubs[0], err
+	}
+
+	subDist := 1000
+	var subtitle polochon.Subtitle
+	var release string
+
+	for _, sub := range filteredSubs {
+		dist := levenshtein.Distance(strings.ToLower(reqEpisode.ReleaseGroup), strings.ToLower(sub.Release))
+		if dist < subDist {
+			subDist = dist
+			subtitle = &sub
+			release = sub.Release
+		}
+	}
+	log.Info("Subtitle chosen ", release, " whit distance ", subDist)
+	return subtitle, err
 }
 
 func (a *addictedProxy) GetMovieSubtitle(b *polochon.Movie, log *logrus.Entry) (polochon.Subtitle, error) {

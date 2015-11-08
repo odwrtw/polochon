@@ -37,6 +37,7 @@ type ShowEpisode struct {
 	ShowImdbID    string    `xml:"showimdbid" json:"-"`
 	ShowTvdbID    int       `xml:"showtvdbid" json:"-"`
 	EpisodeImdbID string    `xml:"episodeimdbid" json:"imdb_id"`
+	ReleaseGroup  string    `xml:"-"`
 	Torrents      []Torrent `xml:"-" json:"-"`
 	Show          *Show     `xml:"-" json:"-"`
 	log           *logrus.Entry

@@ -107,6 +107,8 @@ func (og *OpenGuessit) Guess(videoConf polochon.VideoConfig, file polochon.File,
 			Year:      year,
 		}
 
+		video.ReleaseGroup = guess.Guessit.ReleaseGroup
+
 		return video, nil
 	case MovieType:
 		video := polochon.NewMovieFromFile(videoConf.Movie, file)
@@ -163,12 +165,13 @@ type Guess struct {
 
 // Guessit represents the informations from guessit
 type Guessit struct {
-	Type      string
-	MovieName string
-	ShowName  string
-	Season    string
-	Episode   string
-	Year      string
+	Type         string
+	MovieName    string
+	ShowName     string
+	Season       string
+	Episode      string
+	Year         string
+	ReleaseGroup string
 }
 
 // OpenSubtitle represents the informations from OpenSubtitle
@@ -403,17 +406,19 @@ func (g *Guesser) UpdateFromGuessit() error {
 	switch guess.Type {
 	case guessit.Episode:
 		g.Guessit = &Guessit{
-			Type:     ShowType,
-			ShowName: guess.ShowName,
-			Season:   fmt.Sprintf("%d", guess.Season),
-			Episode:  fmt.Sprintf("%d", guess.Episode),
-			Year:     fmt.Sprintf("%d", guess.Year),
+			Type:         ShowType,
+			ShowName:     guess.ShowName,
+			Season:       fmt.Sprintf("%d", guess.Season),
+			Episode:      fmt.Sprintf("%d", guess.Episode),
+			Year:         fmt.Sprintf("%d", guess.Year),
+			ReleaseGroup: guess.ReleaseGroup,
 		}
 	case guessit.Movie:
 		g.Guessit = &Guessit{
-			Type:      MovieType,
-			MovieName: guess.Title,
-			Year:      fmt.Sprintf("%d", guess.Year),
+			Type:         MovieType,
+			MovieName:    guess.Title,
+			Year:         fmt.Sprintf("%d", guess.Year),
+			ReleaseGroup: guess.ReleaseGroup,
 		}
 	}
 
