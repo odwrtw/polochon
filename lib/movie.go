@@ -20,6 +20,15 @@ var (
 	ErrMissingMovieDir      = errors.New("polochon: missing movie dir in config")
 )
 
+// MovieConfig represents the configuration for a movie
+type MovieConfig struct {
+	Dir        string
+	Torrenters []Torrenter
+	Detailers  []Detailer
+	Subtitlers []Subtitler
+	Notifiers  []Notifier
+}
+
 // Movie represents a movie
 type Movie struct {
 	MovieConfig `xml:"-" json:"-"`
@@ -109,18 +118,6 @@ func (m *Movie) SetFile(f *File) {
 // GetFile implements the video interface
 func (m *Movie) GetFile() *File {
 	return &m.File
-}
-
-// SetConfig implements the video interface
-func (m *Movie) SetConfig(c *VideoConfig, log *logrus.Logger) {
-	m.Dir = c.Movie.Dir
-	m.Detailers = c.Movie.Detailers
-	m.Notifiers = c.Movie.Notifiers
-	m.Subtitlers = c.Movie.Subtitlers
-	m.Torrenters = c.Movie.Torrenters
-
-	// Set logger
-	m.SetLogger(logrus.NewEntry(log))
 }
 
 // SetLogger sets the logger

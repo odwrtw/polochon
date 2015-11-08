@@ -18,7 +18,8 @@ type ShowIndex struct {
 	// Build the index only once, use resync to add the Reset capability
 	once resync.Once
 	// Config
-	config *Config
+	showConfig ShowConfig
+	fileConfig FileConfig
 	// Logger
 	log *logrus.Entry
 	// ids keep the path of the show indexed by id, season and episode
@@ -30,12 +31,13 @@ type ShowIndex struct {
 }
 
 // NewShowIndex returns a new show index
-func NewShowIndex(config *Config, log *logrus.Entry) *ShowIndex {
+func NewShowIndex(showConfig ShowConfig, fileConfig FileConfig, log *logrus.Entry) *ShowIndex {
 	return &ShowIndex{
-		config: config,
-		log:    log.WithField("function", "showIndex"),
-		ids:    map[string]map[int]map[int]string{},
-		slugs:  map[string]string{},
+		showConfig: showConfig,
+		fileConfig: fileConfig,
+		log:        log.WithField("function", "showIndex"),
+		ids:        map[string]map[int]map[int]string{},
+		slugs:      map[string]string{},
 	}
 }
 
@@ -123,7 +125,7 @@ func (si *ShowIndex) SearchShowEpisodeBySlug(slug string) (Video, error) {
 	}
 
 	// Create a File from the path
-	file := NewFileWithConfig(filePath, si.config.File)
+	file := NewFileWithConfig(filePath, si.fileConfig)
 
 	// Open the NFO
 	nfoFile, err := os.Open(file.NfoPath())
@@ -133,7 +135,7 @@ func (si *ShowIndex) SearchShowEpisodeBySlug(slug string) (Video, error) {
 	defer nfoFile.Close()
 
 	// Unmarshal the NFO into an episode
-	episode, err := readShowEpisodeNFO(nfoFile, si.config.Video.Show)
+	episode, err := readShowEpisodeNFO(nfoFile, si.showConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +162,7 @@ func (si *ShowIndex) SearchShowEpisodeByImdbID(imdbID string, sNum, eNum int) (V
 		return nil, err
 	}
 
-	ep, err := NewShowEpisodeFromPath(si.config.Video.Show, si.config.File, si.log, filePath)
+	ep, err := NewShowEpisodeFromPath(si.showConfig, si.fileConfig, si.log, filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +184,7 @@ func buildShowEpisodeIndex(si *ShowIndex) error {
 	// used to catch if the first root folder have been walked
 	var rootWalked bool
 	// Get only the parent folders
-	err := filepath.Walk(si.config.Video.Show.Dir, func(filePath string, file os.FileInfo, err error) error {
+	err := filepath.Walk(si.showConfig.Dir, func(filePath string, file os.FileInfo, err error) error {
 		// Only check directories
 		if !file.IsDir() {
 			return nil
@@ -203,7 +205,7 @@ func buildShowEpisodeIndex(si *ShowIndex) error {
 		}
 		defer nfoFile.Close()
 
-		show, err := readShowNFO(nfoFile, si.config.Video.Show)
+		show, err := readShowNFO(nfoFile, si.showConfig)
 		if err != nil {
 			si.log.Errorf("video store: failed to read tv show NFO: %q", err)
 			return nil
@@ -341,9 +343,9 @@ func (si *ShowIndex) scanEpisodes(imdbID, showRootPath string) error {
 		ext := path.Ext(filePath)
 
 		var f *File
-		for _, mext := range si.config.File.VideoExtentions {
+		for _, mext := range si.fileConfig.VideoExtentions {
 			if ext == mext {
-				f = NewFileWithConfig(filePath, si.config.File)
+				f = NewFileWithConfig(filePath, si.fileConfig)
 				break
 			}
 		}
@@ -362,7 +364,7 @@ func (si *ShowIndex) scanEpisodes(imdbID, showRootPath string) error {
 		defer nfoFile.Close()
 
 		// Read the nfo file
-		episode, err := readShowEpisodeNFO(nfoFile, si.config.Video.Show)
+		episode, err := readShowEpisodeNFO(nfoFile, si.showConfig)
 		if err != nil {
 			si.log.Errorf("video store: failed to read episode NFO: %q", err)
 			return nil
@@ -370,7 +372,7 @@ func (si *ShowIndex) scanEpisodes(imdbID, showRootPath string) error {
 
 		episode.SetFile(f)
 		episode.ShowImdbID = imdbID
-		episode.ShowConfig = si.config.Video.Show
+		episode.ShowConfig = si.showConfig
 		si.AddToIndex(episode)
 
 		return nil

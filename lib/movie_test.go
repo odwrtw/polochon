@@ -13,8 +13,10 @@ import (
 	"github.com/Sirupsen/logrus"
 )
 
-func newFakeMovie() *Movie {
-	m := NewMovie(MovieConfig{})
+var fakeLogger = logrus.NewEntry(logrus.New())
+
+func newFakeMovie(conf MovieConfig) *Movie {
+	m := NewMovie(conf)
 	m.ImdbID = "tt2562232"
 	m.OriginalTitle = "Birdman"
 	m.Plot = "Awesome plot"
@@ -48,7 +50,7 @@ var movieNFOContent = []byte(`<movie>
 </movie>`)
 
 func TestMovieNFOWriter(t *testing.T) {
-	m := newFakeMovie()
+	m := newFakeMovie(MovieConfig{})
 
 	var b bytes.Buffer
 	err := writeNFO(&b, m)
@@ -62,7 +64,7 @@ func TestMovieNFOWriter(t *testing.T) {
 }
 
 func TestMovieNFOReader(t *testing.T) {
-	expected := newFakeMovie()
+	expected := newFakeMovie(MovieConfig{})
 
 	got, err := readMovieNFO(bytes.NewBuffer(movieNFOContent), MovieConfig{})
 	if err != nil {
@@ -88,7 +90,7 @@ func TestMovieStoreMissingArguments(t *testing.T) {
 }
 
 func TestMovieStorePath(t *testing.T) {
-	m := newFakeMovie()
+	m := newFakeMovie(MovieConfig{})
 	m.MovieConfig = MovieConfig{Dir: "/movies"}
 
 	// New movie has a year in its data, we expect to find it in the store path
@@ -117,10 +119,9 @@ func TestMovieStore(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	fakeLogger := logrus.New()
-	c := VideoConfig{Movie: MovieConfig{Dir: tmpDir}}
-	m := newFakeMovie()
-	m.SetConfig(&c, fakeLogger)
+	c := MovieConfig{Dir: tmpDir}
+	m := newFakeMovie(c)
+	m.SetLogger(fakeLogger)
 
 	// Create a fake movie file
 	file, err := ioutil.TempFile(os.TempDir(), "polochon-fake-movie")
@@ -168,7 +169,7 @@ func TestMovieStore(t *testing.T) {
 }
 
 func TestDownloadImagesInvalidArguments(t *testing.T) {
-	m := newFakeMovie()
+	m := newFakeMovie(MovieConfig{})
 	m.log = logrus.NewEntry(logrus.New())
 
 	m.Fanart = ""
@@ -184,7 +185,7 @@ func TestDownloadImagesInvalidArguments(t *testing.T) {
 }
 
 func TestMovieSlug(t *testing.T) {
-	s := newFakeMovie()
+	s := newFakeMovie(MovieConfig{})
 	got := s.Slug()
 	expected := "birdman"
 

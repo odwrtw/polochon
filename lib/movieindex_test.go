@@ -11,10 +11,11 @@ import (
 func newFakeMovieIndex() *MovieIndex {
 	logger := logrus.NewEntry(logrus.New())
 	return &MovieIndex{
-		config: nil,
-		log:    logger.WithField("function", "movieIndexTest"),
-		ids:    map[string]string{},
-		slugs:  map[string]string{},
+		movieConfig: MovieConfig{},
+		fileConfig:  FileConfig{},
+		log:         logger.WithField("function", "movieIndexTest"),
+		ids:         map[string]string{},
+		slugs:       map[string]string{},
 	}
 }
 
@@ -136,7 +137,7 @@ func TestAddAndRemoveMovieToIndex(t *testing.T) {
 	}
 	// The index is empty
 
-	m := newFakeMovie()
+	m := newFakeMovie(MovieConfig{})
 	m.Path = "/home/test/movie/movie.mp4"
 	err := mi.AddToIndex(m)
 	if err != nil {

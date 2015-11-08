@@ -28,6 +28,13 @@ type WishedShow struct {
 	Qualities []Quality `json:"qualities"`
 }
 
+// WishlistConfig represents the wishlist configurations
+type WishlistConfig struct {
+	Wishlisters           []Wishlister
+	ShowDefaultQualities  []Quality `yaml:"show_default_qualities"`
+	MovieDefaultQualities []Quality `yaml:"movie_default_qualities"`
+}
+
 // Wishlist represents a user wishlist
 type Wishlist struct {
 	WishlistConfig `xml:"-" json:"-"`

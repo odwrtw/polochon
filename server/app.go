@@ -16,7 +16,7 @@ import (
 
 // App represents the polochon app
 type App struct {
-	config *polochon.Config
+	config *Config
 
 	// Automatic downloader
 	downloader *downloader
@@ -51,7 +51,7 @@ func NewApp(configPath string) (*App, error) {
 		FullTimestamp: true,
 	}
 
-	config, err := polochon.LoadConfigFile(configPath, logrus.NewEntry(logger))
+	config, err := LoadConfigFile(configPath, logrus.NewEntry(logger))
 	if err != nil {
 		log.Panic(err)
 	}
@@ -62,7 +62,7 @@ func NewApp(configPath string) (*App, error) {
 		stop:       make(chan struct{}),
 		errc:       make(chan error),
 		logger:     logger,
-		videoStore: polochon.NewVideoStore(config, logger),
+		videoStore: polochon.NewVideoStore(config.File, config.Movie, config.Show, logger),
 		render:     render.New(),
 		mux:        mux.NewRouter(),
 	}, nil
@@ -264,13 +264,13 @@ func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 	}
 
 	// Guess the video inforamtion
-	video, err := file.Guess(a.config.Video, log)
+	video, err := file.Guess(a.config.Movie, a.config.Show, log)
 	if err != nil {
 		log.Errorf("failed to guess video file: %q", err)
 		return file.Ignore()
 	}
 
-	video.SetConfig(&a.config.Video, a.logger)
+	video.SetLogger(log)
 
 	// Get video details
 	if err := video.GetDetails(); err != nil {

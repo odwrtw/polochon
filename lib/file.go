@@ -14,6 +14,14 @@ var (
 	ErrInvalidGuessType = errors.New("file: invalid guess type")
 )
 
+// FileConfig represents the configuration for a file
+type FileConfig struct {
+	ExcludeFileContaining     []string
+	VideoExtentions           []string
+	AllowedExtentionsToDelete []string
+	Guesser                   Guesser
+}
+
 // File handles polochon files
 type File struct {
 	FileConfig `xml:"-" json:"-"`
@@ -87,8 +95,8 @@ func (f *File) Ignore() error {
 }
 
 // Guess video information from file
-func (f *File) Guess(conf VideoConfig, log *logrus.Entry) (Video, error) {
-	return f.Guesser.Guess(conf, *f, log)
+func (f *File) Guess(movieConf MovieConfig, showConf ShowConfig, log *logrus.Entry) (Video, error) {
+	return f.Guesser.Guess(*f, movieConf, showConf, log)
 }
 
 // NfoPath is an helper to get the nfo filename from the video filename

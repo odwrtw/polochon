@@ -10,7 +10,7 @@ import (
 // from a file
 type Guesser interface {
 	Module
-	Guess(conf VideoConfig, file File, log *logrus.Entry) (Video, error)
+	Guess(File, MovieConfig, ShowConfig, *logrus.Entry) (Video, error)
 }
 
 // RegisterGuesser helps register a new detailer

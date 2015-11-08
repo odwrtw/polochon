@@ -12,10 +12,11 @@ import (
 func newFakeShowIndex() *ShowIndex {
 	log := logrus.NewEntry(&logrus.Logger{Out: ioutil.Discard})
 	return &ShowIndex{
-		config: nil,
-		log:    log.WithField("function", "showIndexTest"),
-		ids:    map[string]map[int]map[int]string{},
-		slugs:  map[string]string{},
+		showConfig: ShowConfig{},
+		fileConfig: FileConfig{},
+		log:        log.WithField("function", "showIndexTest"),
+		ids:        map[string]map[int]map[int]string{},
+		slugs:      map[string]string{},
 	}
 }
 

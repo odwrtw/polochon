@@ -18,18 +18,14 @@ var (
 type VideoStore struct {
 	movieIndex *MovieIndex
 	showIndex  *ShowIndex
-	config     *Config
-	log        *logrus.Entry
 }
 
 // NewVideoStore returns a list of videos
-func NewVideoStore(c *Config, log *logrus.Logger) *VideoStore {
+func NewVideoStore(fileConfig FileConfig, movieConfig MovieConfig, showConfig ShowConfig, log *logrus.Logger) *VideoStore {
 	videoStoreLogger := log.WithField("function", "videoStore")
 	return &VideoStore{
-		config:     c,
-		log:        videoStoreLogger,
-		movieIndex: NewMovieIndex(c, videoStoreLogger),
-		showIndex:  NewShowIndex(c, videoStoreLogger),
+		movieIndex: NewMovieIndex(movieConfig, fileConfig, videoStoreLogger),
+		showIndex:  NewShowIndex(showConfig, fileConfig, videoStoreLogger),
 	}
 }
 
@@ -83,12 +79,10 @@ func (vs *VideoStore) Delete(video Video) error {
 func (vs *VideoStore) DeleteMovie(m *Movie) error {
 	// Delete the movie
 	if err := m.Delete(); err != nil {
-		vs.log.Errorf("Error while deleting movie :%q", err)
 		return err
 	}
 	// Remove the movie from the index
 	if err := vs.movieIndex.RemoveFromIndex(m); err != nil {
-		vs.log.Errorf("Error while deleting movie from index :%q", err)
 		return err
 	}
 
@@ -99,12 +93,10 @@ func (vs *VideoStore) DeleteMovie(m *Movie) error {
 func (vs *VideoStore) DeleteShowEpisode(se *ShowEpisode) error {
 	// Delete the episode
 	if err := se.Delete(); err != nil {
-		vs.log.Errorf("Error while deleting episode :%q", err)
 		return err
 	}
 	// Remove the episode from the index
 	if err := vs.showIndex.RemoveFromIndex(se); err != nil {
-		vs.log.Errorf("Error while deleting episode from index :%q", err)
 		return err
 	}
 
@@ -116,12 +108,10 @@ func (vs *VideoStore) DeleteShowEpisode(se *ShowEpisode) error {
 	if ok {
 		// Delete the whole season
 		if err := se.DeleteSeason(); err != nil {
-			vs.log.Errorf("Error while deleting season :%q", err)
 			return err
 		}
 		// Remove the season from the index
 		if err := vs.showIndex.RemoveSeasonFromIndex(se.Show, se.Season); err != nil {
-			vs.log.Errorf("Error while deleting season from index :%q", err)
 			return err
 		}
 	}
@@ -134,12 +124,10 @@ func (vs *VideoStore) DeleteShowEpisode(se *ShowEpisode) error {
 	if ok {
 		// Delete the whole Show
 		if err := se.Show.Delete(); err != nil {
-			vs.log.Errorf("Error while deleting show :%q", err)
 			return err
 		}
 		// Remove the show from the index
 		if err := vs.showIndex.RemoveShowFromIndex(se.Show); err != nil {
-			vs.log.Errorf("Error while deleting show from index :%q", err)
 			return err
 		}
 	}
