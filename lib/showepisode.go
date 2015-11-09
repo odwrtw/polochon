@@ -115,11 +115,7 @@ func (s *ShowEpisode) GetFile() *File {
 
 // SetFile implements the video interface
 func (s *ShowEpisode) SetFile(f *File) {
-	s.Path = f.Path
-	s.ExcludeFileContaining = f.ExcludeFileContaining
-	s.VideoExtentions = f.VideoExtentions
-	s.AllowedExtentionsToDelete = f.AllowedExtentionsToDelete
-	s.Guesser = f.Guesser
+	s.File = *f
 }
 
 // SetLogger sets the logger
