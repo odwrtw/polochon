@@ -124,7 +124,7 @@ func (s *ShowEpisode) SetFile(f *File) {
 
 // SetLogger sets the logger
 func (s *ShowEpisode) SetLogger(log *logrus.Entry) {
-	s.log = log.WithField("type", "show_episode")
+	s.log = log
 }
 
 // readShowEpisodeNFO deserialized a XML file into a ShowEpisode
@@ -268,12 +268,7 @@ func (s *ShowEpisode) Store() error {
 		return ErrMissingShowEpisodeDir
 	}
 
-	s.log = s.log.WithFields(logrus.Fields{
-		"function":   "store",
-		"show_title": s.ShowTitle,
-		"season":     s.Season,
-		"episode":    s.Episode,
-	})
+	s.log = s.log.WithField("function", "store")
 
 	// Create show dir if needed
 	if err := s.createShowDir(); err != nil {
