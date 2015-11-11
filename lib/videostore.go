@@ -227,15 +227,3 @@ func (vs *VideoStore) RebuildIndex() error {
 
 	return nil
 }
-
-// RebuildVideoIndex rebuilds the movie or show index
-func (vs *VideoStore) RebuildVideoIndex(v Video) error {
-	switch v.Type() {
-	case MovieType:
-		return vs.movieIndex.Rebuild()
-	case ShowEpisodeType:
-		return vs.showIndex.Rebuild()
-	default:
-		return ErrInvalidIndexVideoType
-	}
-}
