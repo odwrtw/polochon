@@ -3,7 +3,6 @@ package polochon
 import (
 	"encoding/json"
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -11,6 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/odwrtw/polochon/errors"
 )
 
 // Show episode errors
@@ -139,17 +139,18 @@ func readShowEpisodeNFO(r io.Reader, conf ShowConfig) (*ShowEpisode, error) {
 }
 
 // GetDetails helps getting infos for a show
-func (s *ShowEpisode) GetDetails() error {
-	var err error
+func (s *ShowEpisode) GetDetails() (bool, *errors.Multiple) {
+	merr := errors.NewMultiple()
 	for _, d := range s.Detailers {
-		err = d.GetDetails(s, s.log)
+		err := d.GetDetails(s, s.log)
 		if err == nil {
-			s.log.Debugf("got details from detailer: %q", d.Name())
-			break
+			return true, merr
 		}
-		s.log.Warnf("failed to get details from detailer: %q: %q", d.Name(), err)
+		merr.AddWithContext(err, errors.Context{
+			"detailer": d.Name(),
+		})
 	}
-	return err
+	return false, merr
 }
 
 // GetTorrents helps getting the torrent files for a movie
@@ -203,7 +204,7 @@ func (s *ShowEpisode) createShowDir() error {
 	// If the show nfo does not exist yet, create it
 	if _, err := os.Stat(show.nfoPath()); os.IsNotExist(err) {
 		// Get details
-		if err := show.GetDetails(); err != nil {
+		if ok, err := show.GetDetails(); !ok {
 			return err
 		}
 

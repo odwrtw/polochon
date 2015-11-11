@@ -3,7 +3,6 @@ package polochon
 import (
 	"encoding/json"
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -11,6 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/odwrtw/polochon/errors"
 )
 
 // Movie errors
@@ -137,18 +137,18 @@ func readMovieNFO(r io.Reader, conf MovieConfig) (*Movie, error) {
 }
 
 // GetDetails helps getting infos for a movie
-func (m *Movie) GetDetails() error {
-	var err error
+func (m *Movie) GetDetails() (bool, *errors.Multiple) {
+	merr := errors.NewMultiple()
 	for _, d := range m.Detailers {
-		m.log.Infof("Getting details from %q", d.Name())
-		err = d.GetDetails(m, m.log)
+		err := d.GetDetails(m, m.log)
 		if err == nil {
-			m.log.Debugf("got details from detailer: %q", d.Name())
-			break
+			return true, merr
 		}
-		m.log.Warnf("failed to get details from detailer: %q", err)
+		merr.AddWithContext(err, errors.Context{
+			"detailer": d.Name(),
+		})
 	}
-	return err
+	return false, merr
 }
 
 // GetTorrents helps getting the torrent files for a movie

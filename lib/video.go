@@ -1,11 +1,11 @@
 package polochon
 
 import (
-	"errors"
 	"regexp"
 	"strings"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/odwrtw/polochon/errors"
 )
 
 // Video errors
@@ -63,7 +63,7 @@ type Torrent struct {
 
 // Video represents a generic video type
 type Video interface {
-	GetDetails() error
+	GetDetails() (bool, *errors.Multiple)
 	GetTorrents() error
 	GetSubtitle() error
 	Slug() string

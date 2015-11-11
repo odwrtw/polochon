@@ -273,8 +273,12 @@ func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 	video.SetLogger(log)
 
 	// Get video details
-	if err := video.GetDetails(); err != nil {
-		log.Errorf("failed to get video details: %q", err)
+	ok, merr := video.GetDetails()
+	if !ok {
+		log.Errorf("failed to get video details: %q", merr)
+		for _, err := range merr.Errors {
+			log.Debug(err.ErrorStack())
+		}
 		return file.Ignore()
 	}
 
