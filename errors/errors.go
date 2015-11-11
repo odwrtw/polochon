@@ -15,11 +15,10 @@ func (me *Multiple) Error() string {
 	if me.fatal != nil {
 		return me.fatal.Error()
 	}
-	str := ""
-	for _, e := range me.Errors {
-		str = fmt.Sprintf("%s%s\n", str, e.Error())
+	if len(me.Errors) == 1 {
+		return me.Errors[0].Error()
 	}
-	return str
+	return fmt.Sprintf("Got %d errors", len(me.Errors))
 }
 
 func (me *Multiple) Fatal(err error) {

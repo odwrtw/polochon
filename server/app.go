@@ -277,7 +277,7 @@ func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 	if !ok {
 		log.Errorf("failed to get video details: %q", merr)
 		for _, err := range merr.Errors {
-			log.Debug(err.ErrorStack())
+			log.WithFields(logrus.Fields(err.Ctx)).Debug(err.ErrorStack())
 		}
 		return file.Ignore()
 	}
