@@ -108,11 +108,7 @@ func (m *Movie) Type() VideoType {
 
 // SetFile implements the video interface
 func (m *Movie) SetFile(f *File) {
-	m.Path = f.Path
-	m.ExcludeFileContaining = f.ExcludeFileContaining
-	m.VideoExtentions = f.VideoExtentions
-	m.AllowedExtentionsToDelete = f.AllowedExtentionsToDelete
-	m.Guesser = f.Guesser
+	m.File = *f
 }
 
 // GetFile implements the video interface
