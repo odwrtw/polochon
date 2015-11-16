@@ -66,6 +66,13 @@ modules_params:
     wishlists:
     - url: https://canapeapp.com/users/bob/wishlist.json
       token: 5O32q4D6jlqj492374923749234Kso4aZtarEsAfaJs=
+  - name: kickass
+    shows_users:
+    - z0n321
+    - ettv
+    - etHD
+    movies_users:
+    - YIFY
 show:
   calendar: tvdb
   dir: /home/user/tvshows

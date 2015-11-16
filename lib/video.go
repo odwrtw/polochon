@@ -55,12 +55,6 @@ func (q *Quality) IsAllowed() bool {
 	return false
 }
 
-// Torrent represents a torrent file
-type Torrent struct {
-	Quality Quality
-	URL     string
-}
-
 // Video represents a generic video type
 type Video interface {
 	GetDetails() error

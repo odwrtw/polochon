@@ -47,7 +47,7 @@ type Movie struct {
 	TmdbID        int       `xml:"tmdbid" json:"tmdb_id"`
 	Votes         int       `xml:"votes" json:"votes"`
 	Year          int       `xml:"year" json:"year"`
-	Torrents      []Torrent `xml:"-" json:"-"`
+	Torrents      []Torrent `xml:"-" json:"torrents"`
 	log           *logrus.Entry
 }
 
