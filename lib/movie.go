@@ -3,26 +3,15 @@ package polochon
 import (
 	"encoding/json"
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"io"
 	"os"
-	"path"
-	"path/filepath"
 
 	"github.com/Sirupsen/logrus"
 )
 
-// Movie errors
-var (
-	ErrMissingMovieFilePath = errors.New("polochon: movie has no file path")
-	ErrMissingMovieImageURL = errors.New("polochon: missing movie images URL")
-	ErrMissingMovieDir      = errors.New("polochon: missing movie dir in config")
-)
-
 // MovieConfig represents the configuration for a movie
 type MovieConfig struct {
-	Dir        string
 	Torrenters []Torrenter
 	Detailers  []Detailer
 	Subtitlers []Subtitler
@@ -101,11 +90,6 @@ func NewMovieFromPath(Mconf MovieConfig, Fconf FileConfig, log *logrus.Entry, pa
 	return movie, nil
 }
 
-// Type implements the video interface
-func (m *Movie) Type() VideoType {
-	return MovieType
-}
-
 // SetFile implements the video interface
 func (m *Movie) SetFile(f *File) {
 	m.File = *f
@@ -174,111 +158,6 @@ func (m *Movie) Notify() error {
 	return err
 }
 
-// storePath returns the movie store path from the config
-func (m *Movie) storePath() string {
-	if m.Year != 0 {
-		return filepath.Join(m.Dir, fmt.Sprintf("%s (%d)", m.Title, m.Year))
-	}
-
-	return filepath.Join(m.Dir, m.Title)
-}
-
-// move helps move the movie to the expected destination
-func (m *Movie) move() error {
-	storePath := m.storePath()
-
-	// If the movie already in the right dir there is nothing to do
-	if path.Dir(m.File.Path) == storePath {
-		m.log.Debug("movie already in the destination folder")
-		return nil
-	}
-
-	// Remove movie dir if it exisits
-	if _, err := os.Stat(storePath); err == nil {
-		m.log.Debug("Movie folder exists, remove it")
-		if err = os.RemoveAll(storePath); err != nil {
-			return err
-		}
-	}
-
-	// Create the folder
-	if err := os.Mkdir(storePath, os.ModePerm); err != nil {
-		return err
-	}
-
-	// Move the movie into the folder
-	newPath := filepath.Join(storePath, path.Base(m.File.Path))
-	m.log.Debugf("Moving movie %q to folder", m.Title)
-	m.log.Debugf("Old path: %q", m.File.Path)
-	m.log.Debugf("New path: %q", newPath)
-	if err := os.Rename(m.File.Path, newPath); err != nil {
-		return err
-	}
-
-	// Set the new movie path
-	m.File.Path = newPath
-
-	return nil
-}
-
-// Store stores the movie according to the config
-func (m *Movie) Store() error {
-	if m.Path == "" {
-		return ErrMissingMovieFilePath
-	}
-
-	if m.Dir == "" {
-		return ErrMissingMovieDir
-	}
-
-	// Local logs
-	m.log = m.log.WithFields(logrus.Fields{
-		"function": "store",
-		"title":    m.Title,
-	})
-
-	// Move the file
-	if err := m.move(); err != nil {
-		return err
-	}
-
-	// Write NFO into the file
-	if err := MarshalInFile(m, m.File.NfoPath()); err != nil {
-		return err
-	}
-
-	// Download images
-	if err := m.downloadImages(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Function to be overwritten during the tests
-var downloadMovieImage = func(URL, savePath string, log *logrus.Entry) error {
-	return download(URL, savePath, log)
-}
-
-func (m *Movie) downloadImages() error {
-	if m.Fanart == "" || m.Thumb == "" {
-		return ErrMissingMovieImageURL
-	}
-
-	// Download images
-	images := map[string]string{
-		m.Fanart: m.File.MovieFanartPath(),
-		m.Thumb:  filepath.Join(path.Dir(m.File.Path), "/poster.jpg"),
-	}
-	for URL, savePath := range images {
-		if err := downloadMovieImage(URL, savePath, m.log); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 // GetSubtitle implements the subtitle interface
 func (m *Movie) GetSubtitle() error {
 	var err error
@@ -312,13 +191,4 @@ func (m *Movie) GetSubtitle() error {
 // Slug will slug the movie name
 func (m *Movie) Slug() string {
 	return slug(fmt.Sprintf("%s", m.Title))
-}
-
-// Delete implements the Video interface
-func (m *Movie) Delete() error {
-	// Get directory to remove
-	d := filepath.Dir(m.Path)
-	m.log.Infof("Removing Movie %s", d)
-
-	return os.RemoveAll(d)
 }

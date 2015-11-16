@@ -1,76 +1,59 @@
 package polochon
 
 import (
-	"os"
-	"path"
-	"path/filepath"
 	"sync"
-	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/odwrtw/resync"
 )
 
 // ShowIndex is an index for the shows
 type ShowIndex struct {
 	// Mutex to protect reads / writes made concurrently by the http server
-	sync.Mutex
-	// Build the index only once, use resync to add the Reset capability
-	once resync.Once
-	// Config
-	showConfig ShowConfig
-	fileConfig FileConfig
+	sync.RWMutex
 	// Logger
 	log *logrus.Entry
 	// ids keep the path of the show indexed by id, season and episode
 	ids map[string]map[int]map[int]string
-	// paths keep the path of the shows
-	paths map[string]string
 	// slugs keep the episode index by slug
 	slugs map[string]string
 }
 
 // NewShowIndex returns a new show index
-func NewShowIndex(showConfig ShowConfig, fileConfig FileConfig, log *logrus.Entry) *ShowIndex {
+func NewShowIndex(log *logrus.Entry) *ShowIndex {
 	return &ShowIndex{
-		showConfig: showConfig,
-		fileConfig: fileConfig,
-		log:        log.WithField("function", "showIndex"),
-		ids:        map[string]map[int]map[int]string{},
-		slugs:      map[string]string{},
+		log:   log.WithField("function", "showIndex"),
+		ids:   map[string]map[int]map[int]string{},
+		slugs: map[string]string{},
 	}
 }
 
-// ShowIds returns the show ids
-func (si *ShowIndex) ShowIds() (map[string]map[int]map[int]string, error) {
-	if err := si.index(); err != nil {
-		return map[string]map[int]map[int]string{}, err
-	}
+// Clear clears the show index
+func (si *ShowIndex) Clear() {
+	si.Lock()
+	defer si.Unlock()
+	si.ids = map[string]map[int]map[int]string{}
+	si.slugs = map[string]string{}
+}
 
+// IDs returns the show ids
+func (si *ShowIndex) IDs() (map[string]map[int]map[int]string, error) {
+	si.RLock()
+	defer si.RUnlock()
 	return si.ids, nil
 }
 
-// ShowSlugs returns the show slugs
-func (si *ShowIndex) ShowSlugs() ([]string, error) {
-	if err := si.index(); err != nil {
-		return []string{}, err
-	}
-
-	si.Lock()
-	defer si.Unlock()
-
+// Slugs returns the show slugs
+func (si *ShowIndex) Slugs() ([]string, error) {
+	si.RLock()
+	defer si.RUnlock()
 	return extractMapKeys(si.slugs)
 }
 
 // Has searches for a show episode by id, season and episode and returns true
 // if this episode is indexed
 func (si *ShowIndex) Has(imdbID string, season, episode int) (bool, error) {
-	if err := si.index(); err != nil {
-		return false, err
-	}
-
-	si.Lock()
-	defer si.Unlock()
+	si.RLock()
+	defer si.RUnlock()
 
 	// Search for the show
 	if _, ok := si.ids[imdbID]; !ok {
@@ -92,145 +75,33 @@ func (si *ShowIndex) Has(imdbID string, season, episode int) (bool, error) {
 	return true, nil
 }
 
-// Function to be overwritten during the tests
-var buildShowIndex = func(si *ShowIndex) error {
-	return buildShowEpisodeIndex(si)
-}
+// SearchBySlug returns a show from a slug
+func (si *ShowIndex) SearchBySlug(slug string) (string, error) {
+	si.RLock()
+	defer si.RUnlock()
 
-// Rebuild rebuilds the show index
-func (si *ShowIndex) Rebuild() error {
-	si.once.Reset()
-	return si.index()
-}
-
-// index builds the show index only once
-func (si *ShowIndex) index() error {
-	var err error
-	si.once.Do(func() {
-		err = buildShowIndex(si)
-	})
-	return err
-}
-
-// SearchShowEpisodeBySlug returns a show from a slug
-func (si *ShowIndex) SearchShowEpisodeBySlug(slug string) (Video, error) {
-	if err := si.index(); err != nil {
-		return nil, err
-	}
-
-	// Check if the slug is in the index
 	filePath, err := si.searchShowEpisodeBySlug(slug)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-
-	// Create a File from the path
-	file := NewFileWithConfig(filePath, si.fileConfig)
-
-	// Open the NFO
-	nfoFile, err := os.Open(file.NfoPath())
-	if err != nil {
-		return nil, err
-	}
-	defer nfoFile.Close()
-
-	// Unmarshal the NFO into an episode
-	episode, err := readShowEpisodeNFO(nfoFile, si.showConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	episode.SetFile(file)
-	// Set logger
-	episode.log = si.log.WithFields(logrus.Fields{
-		"type": "show_episode",
-	})
-	episode.Show = NewShowFromEpisode(episode)
-
-	return episode, nil
+	return filePath, nil
 }
 
-// SearchShowEpisodeByImdbID returns a show from a slug
-func (si *ShowIndex) SearchShowEpisodeByImdbID(imdbID string, sNum, eNum int) (Video, error) {
-	if err := si.index(); err != nil {
-		return nil, err
-	}
+// SearchByImdbID returns a show from a slug
+func (si *ShowIndex) SearchByImdbID(imdbID string, sNum, eNum int) (string, error) {
+	si.RLock()
+	defer si.RUnlock()
 
 	// Check if the slug is in the index
 	filePath, err := si.searchShowEpisodeByImdbID(imdbID, sNum, eNum)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-
-	ep, err := NewShowEpisodeFromPath(si.showConfig, si.fileConfig, si.log, filePath)
-	if err != nil {
-		return nil, err
-	}
-
-	ep.Show = NewShowFromEpisode(ep)
-
-	return ep, nil
+	return filePath, nil
 }
 
-// scanShow returns a show with the path for its episodes
-func buildShowEpisodeIndex(si *ShowIndex) error {
-	// Keep track of the time to build the index
-	start := time.Now()
-	si.log.Info("Building show index")
-
-	// Reset the previous values
-	si.slugs = map[string]string{}
-
-	// used to catch if the first root folder have been walked
-	var rootWalked bool
-	// Get only the parent folders
-	err := filepath.Walk(si.showConfig.Dir, func(filePath string, file os.FileInfo, err error) error {
-		// Only check directories
-		if !file.IsDir() {
-			return nil
-		}
-
-		// The root folder is only walk once
-		if !rootWalked {
-			rootWalked = true
-			return nil
-		}
-
-		// Check if we can find the tvshow.nfo file
-		nfoPath := filepath.Join(filePath, "tvshow.nfo")
-		nfoFile, err := os.Open(nfoPath)
-		if err != nil {
-			si.log.Errorf("video store: failed to open tv show NFO: %q", err)
-			return nil
-		}
-		defer nfoFile.Close()
-
-		show, err := readShowNFO(nfoFile, si.showConfig)
-		if err != nil {
-			si.log.Errorf("video store: failed to read tv show NFO: %q", err)
-			return nil
-		}
-
-		// Scan the path for the episodes
-		err = si.scanEpisodes(show.ImdbID, filePath)
-		if err != nil {
-			return err
-		}
-
-		// No need to go deeper, the tvshow.nfo is on the second root folder
-		return filepath.SkipDir
-	})
-	if err != nil {
-		return err
-	}
-
-	si.log.Infof("Index built in %s", time.Since(start))
-
-	return nil
-}
-
-// AddToIndex adds a show episode to the index
-func (si *ShowIndex) AddToIndex(episode *ShowEpisode) error {
+// Add adds a show episode to the index
+func (si *ShowIndex) Add(episode *ShowEpisode) error {
 	si.Lock()
 	defer si.Unlock()
 
@@ -249,11 +120,11 @@ func (si *ShowIndex) AddToIndex(episode *ShowEpisode) error {
 	return nil
 }
 
-// isShowEmpty returns true if the episode is the only episode in the
+// IsShowEmpty returns true if the episode is the only episode in the
 // whole show
-func (si *ShowIndex) isShowEmpty(imdbID string) (bool, error) {
-	si.Lock()
-	defer si.Unlock()
+func (si *ShowIndex) IsShowEmpty(imdbID string) (bool, error) {
+	si.RLock()
+	defer si.RUnlock()
 
 	// Check if there is something in the show index
 	if len(si.ids[imdbID]) != 0 {
@@ -263,10 +134,10 @@ func (si *ShowIndex) isShowEmpty(imdbID string) (bool, error) {
 	return true, nil
 }
 
-// isSeasonEmpty returns true if the season index is empty
-func (si *ShowIndex) isSeasonEmpty(imdbID string, season int) (bool, error) {
-	si.Lock()
-	defer si.Unlock()
+// IsSeasonEmpty returns true if the season index is empty
+func (si *ShowIndex) IsSeasonEmpty(imdbID string, season int) (bool, error) {
+	si.RLock()
+	defer si.RUnlock()
 
 	// More than one season
 	if len(si.ids[imdbID][season]) != 0 {
@@ -276,33 +147,38 @@ func (si *ShowIndex) isSeasonEmpty(imdbID string, season int) (bool, error) {
 	return true, nil
 }
 
-// RemoveSeasonFromIndex removes the season from the index
-func (si *ShowIndex) RemoveSeasonFromIndex(show *Show, season int) error {
+// RemoveSeason removes the season from the index
+func (si *ShowIndex) RemoveSeason(show *Show, season int) error {
 	si.log.Infof("Deleting whole season %d of %s from index", season, show.ImdbID)
 
 	for _, ep := range show.Episodes {
 		if ep.Season == season {
-			si.RemoveFromIndex(ep)
+			si.Remove(ep)
 		}
 	}
 
 	return nil
 }
 
-// RemoveShowFromIndex removes the show from the index
-func (si *ShowIndex) RemoveShowFromIndex(show *Show) error {
+// RemoveShow removes the show from the index
+func (si *ShowIndex) RemoveShow(show *Show) error {
 	si.log.Infof("Deleting whole show %s from index", show.ImdbID)
 
 	for _, ep := range show.Episodes {
-		si.RemoveFromIndex(ep)
+		si.Remove(ep)
 	}
+	si.Lock()
+	defer si.Unlock()
 	delete(si.ids, show.ImdbID)
 
 	return nil
 }
 
-// RemoveFromIndex removes the show episode from the index
-func (si *ShowIndex) RemoveFromIndex(episode *ShowEpisode) error {
+// Remove removes the show episode from the index
+func (si *ShowIndex) Remove(episode *ShowEpisode) error {
+	si.Lock()
+	defer si.Unlock()
+
 	slug := episode.Slug()
 	imdbID := episode.ShowImdbID
 	season := episode.Season
@@ -315,80 +191,15 @@ func (si *ShowIndex) RemoveFromIndex(episode *ShowEpisode) error {
 		return err
 	}
 
-	si.Lock()
 	// Delete the episode from the index
 	delete(si.slugs, slug)
 	delete(si.ids[imdbID][season], episode.Episode)
-	si.Unlock()
-
-	return nil
-}
-
-// scanEpisodes returns the show episodes in a path
-func (si *ShowIndex) scanEpisodes(imdbID, showRootPath string) error {
-	// Walk the files of a show
-	err := filepath.Walk(showRootPath, func(filePath string, file os.FileInfo, err error) error {
-		// Check err
-		if err != nil {
-			si.log.Errorf("video store: failed to walk %q", err)
-			return nil
-		}
-
-		// Nothing to do on dir
-		if file.IsDir() {
-			return nil
-		}
-
-		// search for show type
-		ext := path.Ext(filePath)
-
-		var f *File
-		for _, mext := range si.fileConfig.VideoExtentions {
-			if ext == mext {
-				f = NewFileWithConfig(filePath, si.fileConfig)
-				break
-			}
-		}
-
-		// No file with an allowed extention found
-		if f == nil {
-			return nil
-		}
-
-		// Open the nfo file
-		nfoFile, err := os.Open(f.NfoPath())
-		if err != nil {
-			si.log.Errorf("video store: failed to open file %q", filePath)
-			return nil
-		}
-		defer nfoFile.Close()
-
-		// Read the nfo file
-		episode, err := readShowEpisodeNFO(nfoFile, si.showConfig)
-		if err != nil {
-			si.log.Errorf("video store: failed to read episode NFO: %q", err)
-			return nil
-		}
-
-		episode.SetFile(f)
-		episode.ShowImdbID = imdbID
-		episode.ShowConfig = si.showConfig
-		si.AddToIndex(episode)
-
-		return nil
-	})
-	if err != nil {
-		return err
-	}
 
 	return nil
 }
 
 // searchShowEpisodeBySlug returns a show from a slug
 func (si *ShowIndex) searchShowEpisodeBySlug(slug string) (string, error) {
-	si.Lock()
-	defer si.Unlock()
-
 	filePath, ok := si.slugs[slug]
 	if !ok {
 		return "", ErrSlugNotFound
@@ -399,9 +210,6 @@ func (si *ShowIndex) searchShowEpisodeBySlug(slug string) (string, error) {
 
 // searchShowEpisodeByImdbID searches for a show from its imdbId
 func (si *ShowIndex) searchShowEpisodeByImdbID(imdbID string, sNum, eNum int) (string, error) {
-	si.Lock()
-	defer si.Unlock()
-
 	show, ok := si.ids[imdbID]
 	if !ok {
 		return "", ErrImdbIDNotFound

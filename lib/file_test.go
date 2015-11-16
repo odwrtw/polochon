@@ -1,15 +1,10 @@
 package polochon
 
 import (
-	"fmt"
 	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/Sirupsen/logrus"
 )
 
 func TestFilePathWithoutExt(t *testing.T) {
@@ -24,16 +19,6 @@ func TestFilePathWithoutExt(t *testing.T) {
 		if got != expected {
 			t.Errorf("got %q, expected %q", got, expected)
 		}
-	}
-}
-
-func TestMovieFanartPath(t *testing.T) {
-	file := NewFile("test")
-	expected := "test-fanart.jpg"
-	got := file.MovieFanartPath()
-
-	if got != expected {
-		t.Errorf("got %q, expected %q", got, expected)
 	}
 }
 
@@ -151,36 +136,5 @@ func TestExludedFile(t *testing.T) {
 
 	if !file.IsExcluded() {
 		t.Fatalf("the file should be excluded")
-	}
-}
-
-func TestDownloadImages(t *testing.T) {
-	fakeLogger := logrus.NewEntry(logrus.New())
-
-	// Http test server
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "Hello, client")
-	}))
-	defer ts.Close()
-
-	// Create a fake file
-	file, err := ioutil.TempFile(os.TempDir(), "polochon-image")
-	if err != nil {
-		t.Fatalf("failed to create fake image file")
-	}
-	defer os.Remove(file.Name())
-
-	for savePath, URL := range map[string]string{
-		filepath.Join(os.TempDir(), "fakeImage.jpg"): ts.URL,
-		file.Name(): ts.URL,
-	} {
-		if err := download(URL, savePath, fakeLogger); err != nil {
-			t.Errorf("failed to download image: %q", err)
-		}
-		defer os.Remove(savePath)
-
-		if _, err := os.Stat(savePath); err != nil {
-			t.Errorf("image file was not created")
-		}
 	}
 }

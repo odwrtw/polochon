@@ -62,7 +62,7 @@ func NewApp(configPath string) (*App, error) {
 		stop:       make(chan struct{}),
 		errc:       make(chan error),
 		logger:     logger,
-		videoStore: polochon.NewVideoStore(config.File, config.Movie, config.Show, logger),
+		videoStore: polochon.NewVideoStore(config.File, config.Movie, config.Show, config.VideoStore, logrus.NewEntry(logger)),
 		render:     render.New(),
 		mux:        mux.NewRouter(),
 	}, nil
@@ -278,22 +278,8 @@ func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 		return file.Ignore()
 	}
 
-	// If we already have the video, we delete it to store the new one
-	oldVideo, err := a.videoStore.SearchBySlug(video)
-	if err != nil {
-		// If it's a not and error not found, something's wrong
-		if err != polochon.ErrSlugNotFound {
-			log.Errorf("SearchBySlug returned an error : %q", err)
-		}
-	}
-	if oldVideo != nil {
-		if err := a.videoStore.Delete(oldVideo); err != nil {
-			log.Errorf("failed to delete video : %q", err)
-		}
-	}
-
 	// Store the video
-	if err := video.Store(); err != nil {
+	if err := a.videoStore.Add(video); err != nil {
 		log.Errorf("failed to store video: %q", err)
 		return file.Ignore()
 	}
@@ -306,11 +292,6 @@ func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 	// Notify
 	if err := video.Notify(); err != nil {
 		log.Errorf("failed to notify: %q", err)
-	}
-
-	// Rebuild index
-	if err := a.videoStore.AddToIndex(video); err != nil {
-		log.Errorf("failed to add to index: %q", err)
 	}
 
 	return nil

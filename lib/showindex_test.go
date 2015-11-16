@@ -12,11 +12,9 @@ import (
 func newFakeShowIndex() *ShowIndex {
 	log := logrus.NewEntry(&logrus.Logger{Out: ioutil.Discard})
 	return &ShowIndex{
-		showConfig: ShowConfig{},
-		fileConfig: FileConfig{},
-		log:        log.WithField("function", "showIndexTest"),
-		ids:        map[string]map[int]map[int]string{},
-		slugs:      map[string]string{},
+		log:   log.WithField("function", "showIndexTest"),
+		ids:   map[string]map[int]map[int]string{},
+		slugs: map[string]string{},
 	}
 }
 
@@ -59,9 +57,6 @@ func TestHasShowEpisode(t *testing.T) {
 
 	s.ids = showIdsIndex
 
-	buildShowIndex = func(si *ShowIndex) error {
-		return nil
-	}
 	type has struct {
 		imdbID  string
 		season  int
@@ -89,10 +84,6 @@ func TestSearchShowBySlug(t *testing.T) {
 	si := newFakeShowIndex()
 
 	si.slugs = showSlugsIndex
-
-	buildShowIndex = func(si *ShowIndex) error {
-		return nil
-	}
 
 	type res struct {
 		path string
@@ -135,17 +126,13 @@ func TestIsShowEmpty(t *testing.T) {
 	si := newFakeShowIndex()
 
 	si.ids = showIdsIndex
-
-	buildShowIndex = func(si *ShowIndex) error {
-		return nil
-	}
 	for s, expected := range map[string]bool{
 		"tt456789": true,
 		"tt123456": true,
 		"tt56789":  false,
 		"tt12345":  false,
 	} {
-		res, err := si.isShowEmpty(s)
+		res, err := si.IsShowEmpty(s)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -160,9 +147,6 @@ func TestIsSeasonEmpty(t *testing.T) {
 
 	si.ids = showIdsIndex
 
-	buildShowIndex = func(si *ShowIndex) error {
-		return nil
-	}
 	type test struct {
 		imdbID string
 		season int
@@ -175,7 +159,7 @@ func TestIsSeasonEmpty(t *testing.T) {
 		test{"tt56789", 1}: false,
 		test{"tt56789", 2}: false,
 	} {
-		res, err := si.isSeasonEmpty(s.imdbID, s.season)
+		res, err := si.IsSeasonEmpty(s.imdbID, s.season)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -191,10 +175,7 @@ func TestRemoveSeason(t *testing.T) {
 	si.ids = showIdsIndex
 	si.slugs = showSlugsIndex
 
-	buildShowIndex = func(si *ShowIndex) error {
-		return nil
-	}
-	res, err := si.isSeasonEmpty("tt0397306", 9)
+	res, err := si.IsSeasonEmpty("tt0397306", 9)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -209,9 +190,9 @@ func TestRemoveSeason(t *testing.T) {
 	s.ImdbID = e.ShowImdbID
 	e.Path = "/home/test/show/season-1/showTers-s09e18.mp4"
 
-	si.RemoveSeasonFromIndex(s, 9)
+	si.RemoveSeason(s, 9)
 
-	res, err = si.isSeasonEmpty("tt0397306", 9)
+	res, err = si.IsSeasonEmpty("tt0397306", 9)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -225,10 +206,7 @@ func TestRemoveShow(t *testing.T) {
 
 	si.ids = showIdsIndex
 
-	buildShowIndex = func(si *ShowIndex) error {
-		return nil
-	}
-	res, err := si.isShowEmpty("tt0397306")
+	res, err := si.IsShowEmpty("tt0397306")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -243,9 +221,9 @@ func TestRemoveShow(t *testing.T) {
 	e.Show = s
 	e.Path = "/home/test/show/season-1/showTers-s09e18.mp4"
 
-	si.RemoveShowFromIndex(s)
+	si.RemoveShow(s)
 
-	res, err = si.isShowEmpty("tt0397306")
+	res, err = si.IsShowEmpty("tt0397306")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -257,11 +235,6 @@ func TestRemoveShow(t *testing.T) {
 func TestAddAndDeleteEpisodeToIndex(t *testing.T) {
 	si := newFakeShowIndex()
 
-	buildShowIndex = func(si *ShowIndex) error {
-		return nil
-	}
-	// The index is empty
-
 	// Create a fake show and a fake show episode
 	e := fakeShowEpisode()
 	s := newFakeShow()
@@ -270,7 +243,7 @@ func TestAddAndDeleteEpisodeToIndex(t *testing.T) {
 	e.Path = "/home/test/show/season-1/showTers-s09e18.mp4"
 
 	// Add it to the index
-	err := si.AddToIndex(e)
+	err := si.Add(e)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -285,7 +258,7 @@ func TestAddAndDeleteEpisodeToIndex(t *testing.T) {
 	}
 
 	// Remove it
-	err = si.RemoveFromIndex(e)
+	err = si.Remove(e)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -305,10 +278,6 @@ func TestShowSlugs(t *testing.T) {
 
 	si.slugs = showSlugsIndex
 
-	buildShowIndex = func(si *ShowIndex) error {
-		return nil
-	}
-
 	expectedSlugs := []string{
 		"show-s01e01",
 		"show-s01e02",
@@ -316,7 +285,7 @@ func TestShowSlugs(t *testing.T) {
 		"showBis-s02e01",
 	}
 
-	slugs, err := si.ShowSlugs()
+	slugs, err := si.Slugs()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -337,12 +306,8 @@ func TestShowIDs(t *testing.T) {
 
 	si.ids = showIdsIndex
 
-	buildShowIndex = func(si *ShowIndex) error {
-		return nil
-	}
-
 	expectedIDs := showIdsIndex
-	ids, err := si.ShowIds()
+	ids, err := si.IDs()
 	if err != nil {
 		t.Fatal(err)
 	}

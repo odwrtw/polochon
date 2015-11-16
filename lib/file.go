@@ -114,11 +114,6 @@ func (f *File) IgnorePath() string {
 	return f.Path + ".ignore"
 }
 
-// MovieFanartPath is an helper to get the movie fanart path from the video path
-func (f *File) MovieFanartPath() string {
-	return f.filePathWithoutExt() + "-fanart.jpg"
-}
-
 // filePathWithoutExt returns the file path without the file extension
 func (f *File) filePathWithoutExt() string {
 	return RemoveExt(f.Path)

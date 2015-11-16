@@ -116,6 +116,7 @@ type Config struct {
 	Movie         polochon.MovieConfig
 	Show          polochon.ShowConfig
 	File          polochon.FileConfig
+	VideoStore    polochon.VideoStoreConfig
 }
 
 // WatcherConfig represents the configuration for the detailers
@@ -207,13 +208,6 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 		return nil, err
 	}
 
-	realShowsPath, err := filepath.EvalSymlinks(cf.Show.Dir)
-	if err != nil {
-		return nil, err
-	}
-
-	showConf.Dir = realShowsPath
-
 	showConf.Notifiers = notifiers
 	conf.Show = *showConf
 
@@ -221,13 +215,6 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	realMoviesPath, err := filepath.EvalSymlinks(cf.Movie.Dir)
-	if err != nil {
-		return nil, err
-	}
-
-	movieConf.Dir = realMoviesPath
 
 	movieConf.Notifiers = notifiers
 	conf.Movie = *movieConf
@@ -242,6 +229,21 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 		VideoExtentions:           cf.Video.VideoExtentions,
 		AllowedExtentionsToDelete: cf.Video.AllowedExtentionsToDelete,
 		Guesser:                   guesser,
+	}
+
+	realShowsPath, err := filepath.EvalSymlinks(cf.Show.Dir)
+	if err != nil {
+		return nil, err
+	}
+
+	realMoviesPath, err := filepath.EvalSymlinks(cf.Movie.Dir)
+	if err != nil {
+		return nil, err
+	}
+
+	conf.VideoStore = polochon.VideoStoreConfig{
+		MovieDir: realMoviesPath,
+		ShowDir:  realShowsPath,
 	}
 
 	return conf, nil
