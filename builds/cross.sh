@@ -20,7 +20,7 @@ echo '
 
     echo "Building for $os $arch$armv" >&2
     binname="polochon_${os}_${arch}${armv}"
-    time go build -v -a -o "$binname" -ldflags "-X main.minversion $VERSION" server/*.go || {
+    time go build -v -a -o "$binname" -ldflags "-X main.minversion=$VERSION" server/*.go || {
       echo "Unable to build for $os $arch$armv" >&2
       continue
     }
