@@ -45,7 +45,7 @@ type Wishlist struct {
 
 // Params represents the module params
 type Params struct {
-	Configs []UserConfig `yaml:"whistlists"`
+	Configs []UserConfig `yaml:"wishlists"`
 }
 
 // NewFromRawYaml unmarshals the bytes as yaml as params and call the New
