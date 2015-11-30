@@ -13,7 +13,7 @@ before_install:
 script:
     - ./builds/tests.sh
     - ./builds/cross.sh
-after_success:
+before_deploy:
   - ./builds/travis_github_releases.sh
 deploy:
   provider: releases
@@ -28,4 +28,3 @@ deploy:
   on:
     repo: odwrtw/polochon
     tags: true
-    go: 1.4

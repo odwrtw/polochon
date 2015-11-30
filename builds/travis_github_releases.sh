@@ -4,9 +4,9 @@ export BUILD_DATE=$(date -u "+%Y-%m-%d %H:%M:%S UTC")
 export GIT_TAG=latest
 export GITHUB_PROJECT=https://$GITHUBTOKEN@github.com/odwrtw/polochon
 
-# Only add the GIT_TAG on master and go version 1.4 to avoid pushing the tag
+# Only add the GIT_TAG on master to avoid pushing the tag
 # each time travis builds the project
-if [ $TRAVIS_BRANCH == "master" ] && [ $TRAVIS_GO_VERSION == "1.4" ] && [ $TRAVIS_PULL_REQUEST == "false" ]
+if [ $TRAVIS_BRANCH == "master" ] && [ $TRAVIS_PULL_REQUEST == "false" ]
 then
     git config --global user.email "builds@travis-ci.com"
     git config --global user.name "Travis CI"
