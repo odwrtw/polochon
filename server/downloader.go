@@ -95,8 +95,16 @@ func (d *downloader) downloadMissingMovies(wl *polochon.Wishlist) {
 		log := d.log.WithField("imdbID", m.ImdbID)
 		m.SetLogger(log)
 
+		if err := m.GetDetails(); err != nil {
+			d.errc <- err
+			continue
+		}
+
+		log = d.log.WithField("title", m.Title)
+		m.SetLogger(log)
+
 		if err := m.GetTorrents(); err != nil && err != polochon.ErrMovieTorrentNotFound {
-			log.Error(err)
+			d.errc <- err
 			continue
 		}
 
@@ -130,6 +138,11 @@ func (d *downloader) downloadMissingShows(wl *polochon.Wishlist) {
 		s.ImdbID = wishedShow.ImdbID
 		s.SetLogger(d.log.WithField("imdbID", s.ImdbID))
 
+		if err := s.GetDetails(); err != nil {
+			d.errc <- err
+			continue
+		}
+
 		calendar, err := s.GetCalendar()
 		if err != nil {
 			d.errc <- err
@@ -156,17 +169,19 @@ func (d *downloader) downloadMissingShows(wl *polochon.Wishlist) {
 			// Setup the episode
 			e := polochon.NewShowEpisode(d.config.Show)
 			e.ShowImdbID = wishedShow.ImdbID
+			e.ShowTitle = s.Title
 			e.Season = calEpisode.Season
 			e.Episode = calEpisode.Episode
 			log := d.log.WithFields(logrus.Fields{
-				"showImdbID": e.ShowImdbID,
-				"season":     e.Season,
-				"episode":    e.Episode,
+				"show_imdb_id": e.ShowImdbID,
+				"show_title":   e.ShowTitle,
+				"season":       e.Season,
+				"episode":      e.Episode,
 			})
 			e.SetLogger(log)
 
 			if err := e.GetTorrents(); err != nil && err != polochon.ErrShowEpisodeTorrentNotFound {
-				log.Error(err)
+				d.errc <- err
 				continue
 			}
 
