@@ -13,7 +13,7 @@ before_install:
 script:
     - ./builds/tests.sh
     - ./builds/cross.sh
-before_deploy:
+after_success:
   - ./builds/travis_github_releases.sh
 deploy:
   provider: releases

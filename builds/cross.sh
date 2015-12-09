@@ -2,7 +2,6 @@
 
 echo '
   linux amd64
-  linux 386
   linux arm 6
   linux arm 7
 ' | {
