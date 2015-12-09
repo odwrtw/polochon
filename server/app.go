@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"log"
 	"os"
 	"os/signal"
@@ -13,6 +15,16 @@ import (
 	"github.com/odwrtw/polochon/lib"
 	"gopkg.in/unrolled/render.v1"
 )
+
+func generateID(n int) (string, error) {
+	r := make([]byte, n)
+	_, err := rand.Read(r)
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(r), nil
+}
 
 // App represents the polochon app
 type App struct {
@@ -165,7 +177,6 @@ func (a *App) startFsNotifier() error {
 
 	// Send a notification to organize the whole folder on app start
 	go func() {
-		a.logger.Info("Organize the watched folder")
 		ctx.Event <- a.config.Watcher.Dir
 	}()
 
@@ -202,10 +213,8 @@ func (a *App) Organize(filePath string) error {
 	// If it's a dir we need to walk the dir to organize each file. If it's
 	// only a file, organize it.
 	if fileInfo.IsDir() {
-		log.Debug("Organize folder")
 		err = a.recoverOrganize(a.organizeFolder, filePath, log)
 	} else {
-		log.Debug("Organize file")
 		err = a.recoverOrganize(a.organizeFile, filePath, log)
 	}
 
@@ -234,47 +243,51 @@ func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 	a.wg.Add(1)
 	defer a.wg.Done()
 
-	log = log.WithField("filePath", filePath)
+	log.Infof("Handle file: %q", filePath)
 
 	// Create a file
 	file := polochon.NewFileWithConfig(filePath, a.config.File)
 
 	// Check if file really exists
 	if !file.Exists() {
-		log.Warning("the file has been removed")
+		log.Error("The file has been removed")
 		return nil
 	}
 
 	// Check if file is a video
 	if !file.IsVideo() {
-		log.Debug("the file is not a video")
+		log.Info("The file is not a video, skip it")
 		return nil
 	}
 
 	// Check if file is ignored
 	if file.IsIgnored() {
-		log.Debug("the file is ignored")
+		log.Info("The file is ignored, skip it")
 		return nil
 	}
 
 	// Check if file is ignored
 	if file.IsExcluded() {
-		log.Debug("the file is excluded")
+		log.Info("The file is excluded, skip it")
 		return file.Ignore()
 	}
 
 	// Guess the video inforamtion
 	video, err := file.Guess(a.config.Movie, a.config.Show, log)
 	if err != nil {
-		log.Errorf("failed to guess video file: %q", err)
+		log.Errorf("Failed to guess video file: %q", err)
 		return file.Ignore()
 	}
 
 	video.SetLogger(log)
 
 	// Get video details
-	if err := video.GetDetails(); err != nil {
-		log.Errorf("failed to get video details: %q", err)
+	ok, merr := video.GetDetails()
+	if !ok {
+		log.Errorf("Failed to get video details: %q", merr)
+		for _, err := range merr.Errors {
+			log.WithFields(logrus.Fields(err.Ctx)).Debug(err.ErrorStack())
+		}
 		return file.Ignore()
 	}
 
@@ -288,29 +301,29 @@ func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 	}
 	if oldVideo != nil {
 		if err := a.videoStore.Delete(oldVideo); err != nil {
-			log.Errorf("failed to delete video : %q", err)
+			log.Errorf("Failed to delete video : %q", err)
 		}
 	}
 
 	// Store the video
 	if err := video.Store(); err != nil {
-		log.Errorf("failed to store video: %q", err)
+		log.Errorf("Failed to store video: %q", err)
 		return file.Ignore()
 	}
 
 	// Get subtitle
 	if err := video.GetSubtitle(); err != nil {
-		log.Errorf("failed to get subtitle")
+		log.Errorf("Failed to get subtitle: %q", err)
 	}
 
 	// Notify
 	if err := video.Notify(); err != nil {
-		log.Errorf("failed to notify: %q", err)
+		log.Errorf("Failed to notify: %q", err)
 	}
 
 	// Rebuild index
 	if err := a.videoStore.AddToIndex(video); err != nil {
-		log.Errorf("failed to add to index: %q", err)
+		log.Errorf("Failed to add to index: %q", err)
 	}
 
 	return nil
@@ -329,7 +342,13 @@ func (a *App) organizeFolder(folderPath string, log *logrus.Entry) error {
 		}
 
 		// Organize the file
-		if err := a.organizeFile(filePath, log); err != nil {
+		id, err := generateID(10)
+		if err != nil {
+			log.Errorf("Got an error when generate id: %q", err)
+		}
+		flog := log.WithField("id", id)
+
+		if err := a.organizeFile(filePath, flog); err != nil {
 			return err
 		}
 

@@ -2,13 +2,13 @@ package polochon
 
 import (
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/odwrtw/polochon/errors"
 )
 
 // Show errors
@@ -60,16 +60,18 @@ func (s *Show) SetLogger(log *logrus.Entry) {
 }
 
 // GetDetails helps getting infos for a show
-func (s *Show) GetDetails() error {
-	var err error
+func (s *Show) GetDetails() (bool, *errors.Multiple) {
+	merr := errors.NewMultiple()
 	for _, d := range s.Detailers {
-		err = d.GetDetails(s, s.log)
+		err := d.GetDetails(s, s.log)
 		if err == nil {
-			break
+			return true, merr
 		}
-		s.log.Warnf("failed to get details from detailer: %q", err)
+		merr.AddWithContext(err, errors.Context{
+			"detailer": d.Name(),
+		})
 	}
-	return err
+	return false, merr
 }
 
 // GetCalendar gets the calendar for the show
