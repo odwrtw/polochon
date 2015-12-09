@@ -2,7 +2,7 @@
 
 export BUILD_DATE=$(date -u "+%Y-%m-%d %H:%M:%S UTC")
 export GIT_TAG=latest
-export GITHUB_PROJECT=https://$GITHUBTOKEN@github.com/odwrtw/polochon
+export GITHUB_PROJECT=https://$GITHUBTOKEN@github.com/xunien/polochon
 
 # Only add the GIT_TAG on master to avoid pushing the tag
 # each time travis builds the project
@@ -12,7 +12,7 @@ then
     git config --global user.name "Travis CI"
 
     echo "Get the release of the $GIT_TAG from the github API"
-    GITHUB_RELEASE_URL=`curl -H "Authorization: token $GITHUBTOKEN" https://api.github.com/repos/odwrtw/polochon/releases/tags/$GIT_TAG | grep -m 1 '"url"' | awk -F '"' '{ print $4 }'`
+    GITHUB_RELEASE_URL=`curl -H "Authorization: token $GITHUBTOKEN" https://api.github.com/repos/xunien/polochon/releases/tags/$GIT_TAG | grep -m 1 '"url"' | awk -F '"' '{ print $4 }'`
 
     if [ $GITHUB_RELEASE_URL != "" ]
     then
