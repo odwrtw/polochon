@@ -560,7 +560,7 @@ func (vs *VideoStore) buildMovieIndex() error {
 		movie.SetFile(movieFile)
 
 		// Add the movie to the index
-		vs.Add(movie)
+		vs.addToIndex(movie)
 
 		return nil
 	})
@@ -670,7 +670,7 @@ func (vs *VideoStore) scanEpisodes(imdbID, showRootPath string) error {
 		episode.SetFile(f)
 		episode.ShowImdbID = imdbID
 		episode.ShowConfig = vs.showConfig
-		vs.Add(episode)
+		vs.addToIndex(episode)
 
 		return nil
 	})
