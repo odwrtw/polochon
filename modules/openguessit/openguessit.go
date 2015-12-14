@@ -107,7 +107,9 @@ func (og *OpenGuessit) Guess(file polochon.File, movieConf polochon.MovieConfig,
 			Year:      year,
 		}
 
-		video.ReleaseGroup = guess.Guessit.ReleaseGroup
+		if guess.Guessit != nil {
+			video.ReleaseGroup = guess.Guessit.ReleaseGroup
+		}
 
 		return video, nil
 	case MovieType:
