@@ -10,7 +10,7 @@ import (
 )
 
 func fakeShowEpisode() *ShowEpisode {
-	s := NewShowEpisode(ShowConfig{Dir: "/shows"})
+	s := NewShowEpisode(ShowConfig{})
 	s.XMLName = xml.Name{Space: "", Local: "episodedetails"}
 	s.Title = "Lost in Space"
 	s.ShowTitle = "American Dad!"
@@ -64,23 +64,13 @@ func TestShowEpisodeStoreWriter(t *testing.T) {
 func TestShowEpisodeReader(t *testing.T) {
 	expected := fakeShowEpisode()
 	expected.log = nil
-	got, err := readShowEpisodeNFO(bytes.NewBuffer(episodeNFOContent), ShowConfig{Dir: "/shows"})
+	got, err := readShowEpisodeNFO(bytes.NewBuffer(episodeNFOContent), ShowConfig{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if !reflect.DeepEqual(got, expected) {
 		t.Errorf("Failed to deserialize show episode NFO.\nGot: %#v\nExpected: %#v", got, expected)
-	}
-}
-
-func TestShowEpisodeStorePath(t *testing.T) {
-	s := fakeShowEpisode()
-	got := s.storePath()
-	expected := "/shows/American Dad!/Season 9"
-
-	if got != expected {
-		t.Errorf("got %q, expected %q", got, expected)
 	}
 }
 

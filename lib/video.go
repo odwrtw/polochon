@@ -1,32 +1,16 @@
 package polochon
 
 import (
-	"errors"
 	"regexp"
 	"strings"
 
 	"github.com/Sirupsen/logrus"
 )
 
-// Video errors
-var (
-	ErrInvalidVideoType = errors.New("polochon: invalid video type")
-)
-
 // Regexp used for slugs by Movie and ShowEpisode objects
 var (
 	invalidSlugPattern = regexp.MustCompile(`[^a-z0-9 _-]`)
 	whiteSpacePattern  = regexp.MustCompile(`\s+`)
-)
-
-// VideoType represent the types of video
-type VideoType string
-
-// Possible types of video
-const (
-	MovieType       VideoType = "movie"
-	ShowEpisodeType           = "episode"
-	ShowType                  = "show"
 )
 
 // Quality represents the qualities of a video
@@ -62,11 +46,8 @@ type Video interface {
 	GetSubtitle() error
 	Slug() string
 	Notify() error
-	Type() VideoType
-	Store() error
 	SetFile(f *File)
 	GetFile() *File
-	Delete() error
 	SetLogger(log *logrus.Entry)
 }
 

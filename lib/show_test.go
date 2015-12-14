@@ -2,8 +2,6 @@ package polochon
 
 import (
 	"bytes"
-	"io/ioutil"
-	"os"
 	"reflect"
 	"testing"
 
@@ -25,7 +23,7 @@ var seasonNFOContent = []byte(`<tvshow>
 </tvshow>`)
 
 func newFakeShow() *Show {
-	s := NewShow(ShowConfig{Dir: "/shows"})
+	s := NewShow(ShowConfig{})
 	s.Title = "American Dad!"
 	s.ShowTitle = "American Dad!"
 	s.Rating = 8.5
@@ -59,57 +57,12 @@ func TestShowReader(t *testing.T) {
 	expected := newFakeShow()
 	expected.log = nil
 
-	got, err := readShowNFO(bytes.NewBuffer(seasonNFOContent), ShowConfig{Dir: "/shows"})
+	got, err := readShowNFO(bytes.NewBuffer(seasonNFOContent), ShowConfig{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if !reflect.DeepEqual(got, expected) {
 		t.Errorf("Failed to deserialize show season NFO.\nGot: %#v\nExpected: %#v", got, expected)
-	}
-}
-
-func TestShowStorePath(t *testing.T) {
-	s := newFakeShow()
-	got := s.storePath()
-	expected := "/shows/American Dad!"
-	if got != expected {
-		t.Errorf("got %q, expected %q", got, expected)
-	}
-}
-
-func TestShowNfoPath(t *testing.T) {
-	s := newFakeShow()
-	got := s.nfoPath()
-	expected := "/shows/American Dad!/tvshow.nfo"
-	if got != expected {
-		t.Errorf("got %q, expected %q", got, expected)
-	}
-}
-
-func TestShowStore(t *testing.T) {
-	show := newFakeShow()
-	show.Banner = "fake"
-	show.Poster = "fake"
-	show.Fanart = "fake"
-
-	// Create a tmp dir
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "polochon-show-store")
-	if err != nil {
-		t.Fatalf("failed to create temp dir for show store test")
-	}
-	defer os.RemoveAll(tmpDir)
-	show.Dir = tmpDir
-
-	downloadShowImage = func(URL, savePath string, log *logrus.Entry) error {
-		return nil
-	}
-
-	if err := show.Store(); err != nil {
-		t.Fatalf("failed to store the show: %q", err)
-	}
-
-	if f := NewFile(show.nfoPath()); !f.Exists() {
-		t.Fatalf("the show nfo was not created")
 	}
 }

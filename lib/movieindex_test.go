@@ -11,11 +11,9 @@ import (
 func newFakeMovieIndex() *MovieIndex {
 	logger := logrus.NewEntry(logrus.New())
 	return &MovieIndex{
-		movieConfig: MovieConfig{},
-		fileConfig:  FileConfig{},
-		log:         logger.WithField("function", "movieIndexTest"),
-		ids:         map[string]string{},
-		slugs:       map[string]string{},
+		log:   logger.WithField("function", "movieIndexTest"),
+		ids:   map[string]string{},
+		slugs: map[string]string{},
 	}
 }
 
@@ -33,10 +31,6 @@ func TestHasMovie(t *testing.T) {
 	m := newFakeMovieIndex()
 
 	m.ids = idsIndex
-
-	buildMovieIndex = func(mo *MovieIndex) error {
-		return nil
-	}
 
 	for i, expected := range map[string]bool{
 		"tt56789": true,
@@ -57,10 +51,6 @@ func TestSearchMovieBySlug(t *testing.T) {
 	m := newFakeMovieIndex()
 
 	m.slugs = slugsIndex
-
-	buildMovieIndex = func(mo *MovieIndex) error {
-		return nil
-	}
 
 	type res struct {
 		path string
@@ -96,10 +86,6 @@ func TestSearchMovieByImdbID(t *testing.T) {
 
 	m.ids = idsIndex
 
-	buildMovieIndex = func(mo *MovieIndex) error {
-		return nil
-	}
-
 	type res struct {
 		path string
 		err  error
@@ -132,14 +118,9 @@ func TestSearchMovieByImdbID(t *testing.T) {
 func TestAddAndRemoveMovieToIndex(t *testing.T) {
 	mi := newFakeMovieIndex()
 
-	buildMovieIndex = func(mo *MovieIndex) error {
-		return nil
-	}
-	// The index is empty
-
 	m := newFakeMovie(MovieConfig{})
 	m.Path = "/home/test/movie/movie.mp4"
-	err := mi.AddToIndex(m)
+	err := mi.Add(m)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -153,7 +134,7 @@ func TestAddAndRemoveMovieToIndex(t *testing.T) {
 		t.Errorf("Should have the movie %s in index", m.ImdbID)
 	}
 
-	err = mi.RemoveFromIndex(m)
+	err = mi.Remove(m)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -172,12 +153,8 @@ func TestMovieSlugs(t *testing.T) {
 
 	m.slugs = slugsIndex
 
-	buildMovieIndex = func(mo *MovieIndex) error {
-		return nil
-	}
-
 	expectedSlugs := []string{"movie", "movieBis"}
-	slugs, err := m.MovieSlugs()
+	slugs, err := m.Slugs()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -198,12 +175,8 @@ func TestMovieIDs(t *testing.T) {
 
 	m.ids = idsIndex
 
-	buildMovieIndex = func(mo *MovieIndex) error {
-		return nil
-	}
-
 	expectedIDs := []string{"tt56789", "tt12345"}
-	ids, err := m.MovieIds()
+	ids, err := m.IDs()
 	if err != nil {
 		t.Fatal(err)
 	}
