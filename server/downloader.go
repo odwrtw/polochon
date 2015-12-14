@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/odwrtw/polochon/errors"
 	"github.com/odwrtw/polochon/lib"
 )
 
@@ -93,19 +94,21 @@ func (d *downloader) downloadMissingMovies(wl *polochon.Wishlist) {
 		m := polochon.NewMovie(d.config.Movie)
 		m.ImdbID = wantedMovie.ImdbID
 		log := d.log.WithField("imdbID", m.ImdbID)
-		m.SetLogger(log)
 
-		if err := m.GetDetails(); err != nil {
-			d.errc <- err
-			continue
+		if err := m.GetDetails(log); err != nil {
+			errors.LogErrors(log, err)
+			if errors.IsFatal(err) {
+				continue
+			}
 		}
 
 		log = d.log.WithField("title", m.Title)
-		m.SetLogger(log)
 
-		if err := m.GetTorrents(); err != nil && err != polochon.ErrMovieTorrentNotFound {
-			d.errc <- err
-			continue
+		if err := m.GetTorrents(log); err != nil && err != polochon.ErrMovieTorrentNotFound {
+			errors.LogErrors(log, err)
+			if errors.IsFatal(err) {
+				continue
+			}
 		}
 
 		// Keep the torrent URL
@@ -136,17 +139,21 @@ func (d *downloader) downloadMissingShows(wl *polochon.Wishlist) {
 	for _, wishedShow := range wl.Shows {
 		s := polochon.NewShow(d.config.Show)
 		s.ImdbID = wishedShow.ImdbID
-		s.SetLogger(d.log.WithField("imdbID", s.ImdbID))
+		log := d.log.WithField("imdbID", s.ImdbID)
 
-		if err := s.GetDetails(); err != nil {
-			d.errc <- err
-			continue
+		if err := s.GetDetails(log); err != nil {
+			errors.LogErrors(log, err)
+			if errors.IsFatal(err) {
+				continue
+			}
 		}
 
-		calendar, err := s.GetCalendar()
+		calendar, err := s.GetCalendar(log)
 		if err != nil {
-			d.errc <- err
-			continue
+			errors.LogErrors(log, err)
+			if errors.IsFatal(err) {
+				continue
+			}
 		}
 
 		for _, calEpisode := range calendar.Episodes {
@@ -178,11 +185,12 @@ func (d *downloader) downloadMissingShows(wl *polochon.Wishlist) {
 				"season":       e.Season,
 				"episode":      e.Episode,
 			})
-			e.SetLogger(log)
 
-			if err := e.GetTorrents(); err != nil && err != polochon.ErrShowEpisodeTorrentNotFound {
-				d.errc <- err
-				continue
+			if err := e.GetTorrents(log); err != nil && err != polochon.ErrShowEpisodeTorrentNotFound {
+				errors.LogErrors(log, err)
+				if errors.IsFatal(err) {
+					continue
+				}
 			}
 
 			// Keep the torrent URL

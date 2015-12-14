@@ -1,7 +1,6 @@
 package polochon
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/odwrtw/polochon/errors"
 )
 
 // Video errors
@@ -263,8 +263,11 @@ func (vs *VideoStore) AddShowEpisode(ep *ShowEpisode) error {
 	if !exists(showNFOPath) {
 
 		show := NewShowFromEpisode(ep)
-		if err := show.GetDetails(); err != nil {
-			return err
+		if err := show.GetDetails(vs.log); err != nil {
+			errors.LogErrors(vs.log, err)
+			if errors.IsFatal(err) {
+				return err
+			}
 		}
 
 		// Create show dir if necessary
@@ -446,7 +449,7 @@ func (vs *VideoStore) SearchMovieBySlug(slug string) (Video, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewMovieFromPath(vs.movieConfig, vs.fileConfig, vs.log, path)
+	return NewMovieFromPath(vs.movieConfig, vs.fileConfig, path)
 }
 
 // SearchShowEpisodeBySlug search for a show episode by its slug
@@ -455,7 +458,7 @@ func (vs *VideoStore) SearchShowEpisodeBySlug(slug string) (Video, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewShowEpisodeFromPath(vs.showConfig, vs.fileConfig, vs.log, path)
+	return NewShowEpisodeFromPath(vs.showConfig, vs.fileConfig, path)
 }
 
 // SearchMovieByImdbID returns the video by its imdb ID
@@ -464,7 +467,7 @@ func (vs *VideoStore) SearchMovieByImdbID(imdbID string) (Video, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewMovieFromPath(vs.movieConfig, vs.fileConfig, vs.log, path)
+	return NewMovieFromPath(vs.movieConfig, vs.fileConfig, path)
 }
 
 // SearchShowEpisodeByImdbID search for a show episode by its imdb ID
@@ -473,7 +476,7 @@ func (vs *VideoStore) SearchShowEpisodeByImdbID(imdbID string, sNum, eNum int) (
 	if err != nil {
 		return nil, err
 	}
-	return NewShowEpisodeFromPath(vs.showConfig, vs.fileConfig, vs.log, path)
+	return NewShowEpisodeFromPath(vs.showConfig, vs.fileConfig, path)
 }
 
 // RebuildIndex rebuilds both the movie and show index

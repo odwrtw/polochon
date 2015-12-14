@@ -2,10 +2,10 @@ package polochon
 
 import (
 	"encoding/xml"
-	"fmt"
 	"io"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/odwrtw/polochon/errors"
 )
 
 // Show represents a tv show
@@ -24,7 +24,6 @@ type Show struct {
 	Fanart     string         `xml:"-" json:"fanart"`
 	Poster     string         `xml:"-" json:"poster"`
 	Episodes   []*ShowEpisode `xml:"-" json:"episodes"`
-	log        *logrus.Entry
 }
 
 // NewShow returns a new show
@@ -46,33 +45,46 @@ func readShowNFO(r io.Reader, conf ShowConfig) (*Show, error) {
 	return s, nil
 }
 
-// SetLogger sets the logger
-func (s *Show) SetLogger(log *logrus.Entry) {
-	s.log = log.WithField("type", "show")
-}
-
 // GetDetails helps getting infos for a show
-func (s *Show) GetDetails() error {
-	var err error
+// If there is an error, it will be of type *errors.Collector
+func (s *Show) GetDetails(log *logrus.Entry) error {
+	c := errors.NewCollector()
+
+	if len(s.Detailers) == 0 {
+		c.Push(errors.Wrap("No detailer available").Fatal())
+		return c
+	}
+
+	var done bool
 	for _, d := range s.Detailers {
-		err = d.GetDetails(s, s.log)
+		err := d.GetDetails(s, log)
 		if err == nil {
+			done = true
 			break
 		}
-		s.log.Warnf("failed to get details from detailer: %q", err)
+		c.Push(errors.Wrap(err).Ctx("Detailer", d.Name()))
 	}
-	return err
+	if !done {
+		c.Push(errors.Wrap("All detailers failed").Fatal())
+	}
+
+	if c.HasErrors() {
+		return c
+	}
+
+	return nil
 }
 
 // GetCalendar gets the calendar for the show
-func (s *Show) GetCalendar() (*ShowCalendar, error) {
+// If there is an error, it will be of type *errors.Error
+func (s *Show) GetCalendar(log *logrus.Entry) (*ShowCalendar, *errors.Error) {
 	if s.Calendar == nil {
-		return nil, fmt.Errorf("no show calendar fetcher configured")
+		return nil, errors.Wrap("no show calendar fetcher configured").Fatal()
 	}
 
-	calendar, err := s.Calendar.GetShowCalendar(s, s.log)
+	calendar, err := s.Calendar.GetShowCalendar(s, log)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err).Fatal()
 	}
 
 	return calendar, nil
@@ -91,6 +103,5 @@ func NewShowFromEpisode(e *ShowEpisode) *Show {
 			Subtitlers: e.Subtitlers,
 			Torrenters: e.Torrenters,
 		},
-		log: e.log,
 	}
 }

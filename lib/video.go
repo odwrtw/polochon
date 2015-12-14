@@ -41,14 +41,13 @@ func (q *Quality) IsAllowed() bool {
 
 // Video represents a generic video type
 type Video interface {
-	GetDetails() error
-	GetTorrents() error
-	GetSubtitle() error
+	GetDetails(*logrus.Entry) error
+	GetTorrents(*logrus.Entry) error
+	GetSubtitle(*logrus.Entry) error
 	Slug() string
-	Notify() error
+	Notify(*logrus.Entry) error
 	SetFile(f *File)
 	GetFile() *File
-	SetLogger(log *logrus.Entry)
 }
 
 func slug(text string) string {
