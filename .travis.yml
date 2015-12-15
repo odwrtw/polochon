@@ -1,29 +1,23 @@
 language: go
 go:
-- 1.5
+  - 1.5
 sudo: false
+before_install:
+  - go get github.com/axw/gocov/gocov
+  - go get github.com/mattn/goveralls
+  - go get golang.org/x/tools/cmd/cover
+  - go get github.com/modocache/gover
+  - go get github.com/mitchellh/gox
+  - go get -v ./...
+script:
+  - if [ "${TRAVIS_PULL_REQUEST}" == "false" -a "${TRAVIS_BRANCH}" == "master" ]; then make distclean all crossbuild goveralls; else make distclean all goveralls; fi
+after_success:
+  - . scripts/travis_github_releases.sh
+branches:
+  only:
+    - master
 env:
   global:
-    secure: QKeBOWfLWt1SXHTrv6vf+XozGUbZU7QC4JeLDIudZTR5+sJqvzxPg5KAPq3y81y8DsyxEyjHCCN5CFduq32CwuhzSSueNdnEIui1ij/ktHIH4xEw8vZhfEHaUXQK+cC4uYPfidZJ4enuiIAOmo4gl94RlLtnXsqS4OAur1t84C5Z7j1RQKnR95cMj2hUPyiVNCneAPWkbZIq5DROzF+tEDGOtmuROfvqd1oO2UXXylgZBcXkis0pxnMh+QhUuJjCKQPsvotewAjbdkWBTmoGU5Zb6t/j8rkhthqCqn5TSkKkyIVyRXbYCPRYOES9zvAEJ8FWN1S37ngE1xu8Geo4SSHKqAtG88kaAx6o0gYd85j3shmlNsvd16KlqjPA6Md5cFHwpSCW3OsTozWSMZGb8OgUvYNtI1884Qx9ftcU0UVB+dhjvlopgvM+j1iXB+t2Zzq/o6x6+ceecKtmZ6iZggH9ED2e6uvi4ja3MWdGp12lrEhu7kz5AwJLsDjshgUR2s8knnlbi6GA76dwPeBj27yR46e0M9VCtNhBOCMsAtw6tSOKb3tHXLVo8DAAd143hSdQs10IlpGEkTsWPW3HQ2o+na99d5mwTjRVe8p5CiLcwcDO9qZ0pH7V1OR1IpCvoJo9uffpwDt0FUUjUiWySOOvHjycNRGUnCuyvxk8Azc=
-before_install:
-    - go get github.com/axw/gocov/gocov
-    - go get github.com/mattn/goveralls
-    - if ! go get code.google.com/p/go.tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
-    - go get github.com/modocache/gover
-script:
-    - ./builds/tests.sh
-    - ./builds/cross.sh
-after_success:
-  - ./builds/travis_github_releases.sh
-deploy:
-  provider: releases
-  api_key:
-    secure: V4Hva9O1XppONuFJRonmKtTLO/qonHLErfesH+X6patJbPYd5QtqMjg5N9PajjlXgGXYGp6X0/gagj1vXxOa+gd8aRQLjuAEQuklRaEztOMhy9asU6IitNUKCJmCm7JgGr4NlNzl8i7DKhr5bAD9U54vn70bVJ3pGnQ2FbgnrvY+8xBgHVe0NSfk+HAbVkQGOnFm9lDzyGncbTkukfauIx8TMyXqK6VFeLXeYs27DK73nAGOXh+n8ZoFKxEZ8hKecgdTS8OwZwZ7vSwAHhJauvaKRwMOie35llPcsgy9BQ1Mc6HU0kWfYOBTzGJ3yWHqkhYQe6yzgBbpIIE7yss4CRQywIALkPqGJyhqn7HD07GZbNT2m8HhMtvt+aLb7Y6DkHmgHaOde3zeDSrEEnSUo/xoLT7AKMqaM+hdjlZlb103kzZCnybde6c5aJQ5yjmmPQWXHHKp0/RkuEhGI7W8vyvI8iexE/lQGf8schU/GfgRCvqoUciTO3285W6DRMdHjW1BFbn+Enn3K6RFEGCTmQorgiJ8nQa40LccySXEhuHwE7wJZDQUmng0GCBiR75TV5yuAAPHs085/26/yiglmL1gkJr4cPXzG3GFRsGiHpQHO3swcNQFmjGbzL9ecwjw2luO77IeSaxxvhRmsSs0uzW7fYYHGT8S7ZuveHOxN8g=
-  file:
-    - polochon_linux_amd64
-    - polochon_linux_arm6
-    - polochon_linux_arm7
-  skip_cleanup: true
-  on:
-    repo: odwrtw/polochon
-    tags: true
+  - GITHUB_REPO: polochon
+  - GITHUB_USER: odwrtw
+  - secure: P/YFF883J3zQuSVIWoo4vWvTt8Hy0xfcSWSO7ZUw7cZm8Nrw2noFjrS8BiqBZ5NIFesFB0fEyOrqhZ6mN4R+bpnSVzycKhiyRwCte/blTLC/Bj6EB/o/M0RV6v1M47f4/cGT19zfTXeYiWaLm0IV6ozR5ebziceKI4kaLHm9EqKS2jg0/D1bhwDTki6oVLOlHtUZG4063S7l5ZOG0D6nRlpOCsxloSgevFKQyAmmDHsKXhirwr+Hteewuy3EDOA0CG1ibNkF4VMpTXAEvOe1mpQSXYUHMH7egFrSBduus1e+Q5y6tN3vaA/jYDqnXLBDn9MCSAm3vML0tABABiUoEiS9/mbZFOo93CDYE6J9Gnmzx436P9Os0Kkm8v8+hxfyCUaVmVPM4t8CQxfqM9u1Lvs/4TSiaEK4OFnMbEjx65YUaY8fd/y7Lj3aOazszBVcXw393aD2xkli2f9Ft18Rtxz0qiIYuQbUMbbkKbCvQdmYJlvYcv7dFapi21z4fqc/HRl1uG6oAPOqba3Y5DW69r9M/Cm1jwoTaW3TyuJrXS2RKJwuhPWZ4oZ6iDCqIvNyIoj0Nn8MrNiEBWo40Mx7YH8pz+0Uk2kac40DmRR+3zcYdztY7rAoaPKpnybXNNB+730JlGS0l2KMpelSAv41MYTp6/ZZ3ED7epekOwyTVXA=
