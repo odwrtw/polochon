@@ -42,7 +42,7 @@ release() {
     log "Installing github-release..."
     go get github.com/aktau/github-release
 
-    if [ -n "$(github-release info -t ${GIT_TAG} >/dev/null 2>&1)" ]
+    if [ -z "$(github-release info -t ${GIT_TAG} 2>&1 >/dev/null)" ]
     then
         log "Deleting existing release with tag ${GIT_TAG}..."
         github-release delete --tag ${GIT_TAG}
