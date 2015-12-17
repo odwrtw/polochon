@@ -19,26 +19,26 @@ func newFakeShowIndex() *ShowIndex {
 }
 
 var showIdsIndex = map[string]map[int]map[int]string{
-	"tt56789": map[int]map[int]string{
-		1: map[int]string{
+	"tt56789": {
+		1: {
 			1: "/home/test/show/season-1/show-s01e01.mp4",
 			2: "/home/test/show/season-1/show-s01e02.mp4",
 		},
-		2: map[int]string{
+		2: {
 			2: "/home/test/show/season-2/show-s02e02.mp4",
 		},
 	},
-	"tt12345": map[int]map[int]string{
-		2: map[int]string{
+	"tt12345": {
+		2: {
 			1: "/home/test/showBis/season-2/show-s02e01.mp4",
 		},
 	},
-	"tt123456": map[int]map[int]string{},
-	"tt22222": map[int]map[int]string{
-		2: map[int]string{},
+	"tt123456": {},
+	"tt22222": {
+		2: {},
 	},
-	"tt0397306": map[int]map[int]string{
-		9: map[int]string{
+	"tt0397306": {
+		9: {
 			18: "/home/test/show/season-1/showTers-s09e18.mp4",
 		},
 	},
@@ -91,23 +91,23 @@ func TestSearchShowBySlug(t *testing.T) {
 	}
 
 	for s, expected := range map[string]res{
-		"show-s01e01": res{
+		"show-s01e01": {
 			"/home/test/show/season-1/show-s01e01.mp4",
 			nil,
 		},
-		"show-s02e02": res{
+		"show-s02e02": {
 			"/home/test/show/season-2/show-s02e02.mp4",
 			nil,
 		},
-		"showBis-s02e01": res{
+		"showBis-s02e01": {
 			"/home/test/showBis/season-2/showBis-s01e01.mp4",
 			nil,
 		},
-		"showBisBis-s02e01": res{
+		"showBisBis-s02e01": {
 			"",
 			ErrSlugNotFound,
 		},
-		"show-s01e03": res{
+		"show-s01e03": {
 			"",
 			ErrSlugNotFound,
 		},

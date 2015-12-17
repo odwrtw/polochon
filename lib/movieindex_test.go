@@ -58,15 +58,15 @@ func TestSearchMovieBySlug(t *testing.T) {
 	}
 
 	for s, expected := range map[string]res{
-		"movie": res{
+		"movie": {
 			"/home/test/movie/movie.mp4",
 			nil,
 		},
-		"movieBis": res{
+		"movieBis": {
 			"/home/test/movieBis/movieBis.mp4",
 			nil,
 		},
-		"movieDoubleBis": res{
+		"movieDoubleBis": {
 			"",
 			ErrSlugNotFound,
 		},
@@ -92,15 +92,15 @@ func TestSearchMovieByImdbID(t *testing.T) {
 	}
 
 	for i, expected := range map[string]res{
-		"tt12345": res{
+		"tt12345": {
 			"/home/test/movieBis/movieBis.mp4",
 			nil,
 		},
-		"tt56789": res{
+		"tt56789": {
 			"/home/test/movie/movie.mp4",
 			nil,
 		},
-		"tt1234": res{
+		"tt1234": {
 			"",
 			ErrImdbIDNotFound,
 		},

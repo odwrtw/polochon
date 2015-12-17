@@ -57,7 +57,7 @@ func TestNew(t *testing.T) {
 
 func TestNewError(t *testing.T) {
 	for expectedError, params := range map[error][]byte{
-		ErrMissingSubtitleLang: []byte{},
+		ErrMissingSubtitleLang: {},
 		ErrInvalidSubtitleLang: []byte("lang: yo"),
 	} {
 		_, err := NewFromRawYaml(params)
