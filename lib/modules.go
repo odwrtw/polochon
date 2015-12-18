@@ -187,7 +187,7 @@ func ConfigureDownloader(name string, params []byte) (Downloader, error) {
 	return module, nil
 }
 
-// ConfigureShowCalendarFetcher configures a show calendar fetcher
+// ConfigureCalendar configures a show calendar fetcher
 func ConfigureCalendar(name string, params []byte) (Calendar, error) {
 	f, ok := registeredModules.Calendars[name]
 	if !ok {

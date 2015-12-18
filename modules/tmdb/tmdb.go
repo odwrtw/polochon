@@ -50,14 +50,6 @@ func NewFromRawYaml(p []byte) (polochon.Detailer, error) {
 	return New()
 }
 
-// Ensure that the given interface is an Movie
-func (t *TmDB) getMovieArgument(i interface{}) (*polochon.Movie, error) {
-	if m, ok := i.(*polochon.Movie); ok {
-		return m, nil
-	}
-	return nil, ErrInvalidArgument
-}
-
 // Function to be overwritten during the tests
 var tmdbSearchMovie = func(title string, options map[string]string) (*tmdb.MovieSearchResults, error) {
 	t := tmdb.Init(TmDBAPIKey)
@@ -66,7 +58,7 @@ var tmdbSearchMovie = func(title string, options map[string]string) (*tmdb.Movie
 
 // SearchByTitle searches a movie by its title. It adds the tmdb id into the
 // movie struct so it can get details later
-func (t *TmDB) searchByTitle(m *polochon.Movie) error {
+func (t *TmDB) searchByTitle(m *polochon.Movie, log *logrus.Entry) error {
 	// No title, no search
 	if m.Title == "" {
 		return ErrNoMovieTitle
@@ -91,6 +83,7 @@ func (t *TmDB) searchByTitle(m *polochon.Movie) error {
 
 	// Check if there is any results
 	if len(r.Results) == 0 {
+		log.Debugf("Failed to find movie from imdb title %q", m.Title)
 		return ErrNoMovieFound
 	}
 
@@ -107,6 +100,8 @@ func (t *TmDB) searchByTitle(m *polochon.Movie) error {
 
 	m.TmdbID = movieShort.ID
 
+	log.Debugf("Found movie from title %q", m.Title)
+
 	return nil
 }
 
@@ -117,12 +112,7 @@ var tmdbSearchByImdbID = func(id, source string, options map[string]string) (*tm
 }
 
 // searchByImdbID searches on tmdb based on the imdb id
-func (t *TmDB) searchByImdbID(i interface{}) error {
-	m, err := t.getMovieArgument(i)
-	if err != nil {
-		return err
-	}
-
+func (t *TmDB) searchByImdbID(m *polochon.Movie, log *logrus.Entry) error {
 	// No imdb id, no search
 	if m.ImdbID == "" {
 		return ErrNoMovieImDBID
@@ -141,10 +131,13 @@ func (t *TmDB) searchByImdbID(i interface{}) error {
 
 	// Check if there is any results
 	if len(results.MovieResults) == 0 {
+		log.Debugf("Failed to find movie from imdb ID %q", m.ImdbID)
 		return ErrNoMovieFound
 	}
 
 	m.TmdbID = results.MovieResults[0].ID
+
+	log.Debugf("Found movie from imdb ID %q", m.ImdbID)
 
 	return nil
 }
@@ -162,33 +155,23 @@ func (t *TmDB) Name() string {
 
 // GetDetails implements the Detailer interface
 func (t *TmDB) GetDetails(i interface{}, log *logrus.Entry) error {
-	m, err := t.getMovieArgument(i)
-	if err != nil {
-		return err
+	m, ok := i.(*polochon.Movie)
+	if !ok {
+		return ErrInvalidArgument
 	}
 
 	// Search with imdb id
 	if m.ImdbID != "" && m.TmdbID == 0 {
-		err := t.searchByImdbID(m)
-		switch err {
-		case nil:
-			log.Debugf("Found movie from imdb ID %q", m.ImdbID)
-		case ErrNoMovieFound:
-			log.Debugf("Failed to find movie from imdb ID %q", m.ImdbID)
-		default:
+		err := t.searchByImdbID(m, log)
+		if err != nil && err != ErrNoMovieFound {
 			return err
 		}
 	}
 
-	// Search with imdb id
+	// Search with title
 	if m.Title != "" && m.TmdbID == 0 {
-		err := t.searchByTitle(m)
-		switch err {
-		case nil:
-			log.Debugf("Found movie from title %q", m.Title)
-		case ErrNoMovieFound:
-			log.Debugf("Failed to find movie from imdb title %q", m.Title)
-		default:
+		err := t.searchByTitle(m, log)
+		if err != nil && err != ErrNoMovieFound {
 			return err
 		}
 	}
