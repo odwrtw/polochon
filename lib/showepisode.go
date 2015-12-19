@@ -15,7 +15,6 @@ import (
 type ShowConfig struct {
 	Calendar   Calendar
 	Detailers  []Detailer
-	Notifiers  []Notifier
 	Subtitlers []Subtitler
 	Torrenters []Torrenter
 }
@@ -154,25 +153,6 @@ func (s *ShowEpisode) GetTorrents(log *logrus.Entry) error {
 			break
 		}
 		c.Push(errors.Wrap(err).Ctx("Torrenter", t.Name()))
-	}
-
-	if c.HasErrors() {
-		return c
-	}
-	return nil
-}
-
-// Notify sends a notification
-// If there is an error, it will be of type *errors.Collector
-func (s *ShowEpisode) Notify(log *logrus.Entry) error {
-	c := errors.NewCollector()
-
-	for _, n := range s.Notifiers {
-		err := n.Notify(s, log)
-		if err == nil {
-			break
-		}
-		c.Push(errors.Wrap(err).Ctx("Notifier", n.Name()))
 	}
 
 	if c.HasErrors() {

@@ -117,6 +117,7 @@ type Config struct {
 	Show          polochon.ShowConfig
 	File          polochon.FileConfig
 	VideoStore    polochon.VideoStoreConfig
+	Notifiers     []polochon.Notifier
 }
 
 // WatcherConfig represents the configuration for the detailers
@@ -196,6 +197,7 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	conf.Notifiers = notifiers
 
 	wishlistConf, err := cf.initWishlist(log)
 	if err != nil {
@@ -208,7 +210,6 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 		return nil, err
 	}
 
-	showConf.Notifiers = notifiers
 	conf.Show = *showConf
 
 	movieConf, err := cf.initMovie(log)
@@ -216,7 +217,6 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 		return nil, err
 	}
 
-	movieConf.Notifiers = notifiers
 	conf.Movie = *movieConf
 
 	guesser, err := cf.initFile(log)

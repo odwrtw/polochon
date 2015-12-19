@@ -45,7 +45,6 @@ type Video interface {
 	GetTorrents(*logrus.Entry) error
 	GetSubtitle(*logrus.Entry) error
 	Slug() string
-	Notify(*logrus.Entry) error
 	SetFile(f *File)
 	GetFile() *File
 }
