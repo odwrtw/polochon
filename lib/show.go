@@ -99,7 +99,6 @@ func NewShowFromEpisode(e *ShowEpisode) *Show {
 		ImdbID:    e.ShowImdbID,
 		ShowConfig: ShowConfig{
 			Detailers:  e.Detailers,
-			Notifiers:  e.Notifiers,
 			Subtitlers: e.Subtitlers,
 			Torrenters: e.Torrenters,
 		},

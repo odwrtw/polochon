@@ -186,6 +186,19 @@ func (a *App) errorLogger() {
 	}
 }
 
+// Notify sends video to the notifiers
+func (a *App) Notify(v polochon.Video) {
+	log := a.logger.WithField("function", "notify")
+	for _, n := range a.config.Notifiers {
+		err := n.Notify(v, log)
+		if err != nil {
+			log.Warnf("failed to send a notification from notifier: %q: %q", n.Name(), err)
+		}
+
+	}
+
+}
+
 // Organize stores the videos in the video library
 func (a *App) Organize(filePath string) error {
 	a.wg.Add(1)
@@ -291,9 +304,7 @@ func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 	}
 
 	// Notify
-	if err := video.Notify(log); err != nil {
-		errors.LogErrors(log, err)
-	}
+	a.Notify(video)
 
 	return nil
 }

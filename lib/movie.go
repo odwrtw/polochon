@@ -16,7 +16,6 @@ type MovieConfig struct {
 	Torrenters []Torrenter
 	Detailers  []Detailer
 	Subtitlers []Subtitler
-	Notifiers  []Notifier
 }
 
 // Movie represents a movie
@@ -151,25 +150,6 @@ func (m *Movie) GetTorrents(log *logrus.Entry) error {
 			break
 		}
 		c.Push(errors.Wrap(err).Ctx("Torrenter", t.Name()))
-	}
-
-	if c.HasErrors() {
-		return c
-	}
-	return nil
-}
-
-// Notify sends a notification
-// If there is an error, it will be of type *errors.Collector
-func (m *Movie) Notify(log *logrus.Entry) error {
-	c := errors.NewCollector()
-
-	for _, n := range m.Notifiers {
-		err := n.Notify(m, log)
-		if err == nil {
-			break
-		}
-		c.Push(errors.Wrap(err).Ctx("Notifier", n.Name()))
 	}
 
 	if c.HasErrors() {
