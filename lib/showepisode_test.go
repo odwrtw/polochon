@@ -5,8 +5,6 @@ import (
 	"encoding/xml"
 	"reflect"
 	"testing"
-
-	"github.com/Sirupsen/logrus"
 )
 
 func fakeShowEpisode() *ShowEpisode {
@@ -24,8 +22,6 @@ func fakeShowEpisode() *ShowEpisode {
 	s.Rating = 7.6
 	s.ShowImdbID = "tt0397306"
 	s.ShowTvdbID = 73141
-
-	s.log = logrus.NewEntry(logrus.New())
 
 	return s
 }
@@ -48,7 +44,6 @@ var episodeNFOContent = []byte(`<episodedetails>
 
 func TestShowEpisodeStoreWriter(t *testing.T) {
 	s := fakeShowEpisode()
-	s.log = nil
 
 	var b bytes.Buffer
 	err := writeNFO(&b, s)
@@ -63,7 +58,6 @@ func TestShowEpisodeStoreWriter(t *testing.T) {
 
 func TestShowEpisodeReader(t *testing.T) {
 	expected := fakeShowEpisode()
-	expected.log = nil
 	got, err := readShowEpisodeNFO(bytes.NewBuffer(episodeNFOContent), ShowConfig{})
 	if err != nil {
 		t.Fatal(err)

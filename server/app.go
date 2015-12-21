@@ -10,6 +10,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
+	"github.com/odwrtw/polochon/errors"
 	"github.com/odwrtw/polochon/lib"
 	"gopkg.in/unrolled/render.v1"
 )
@@ -266,32 +267,32 @@ func (a *App) organizeFile(filePath string, log *logrus.Entry) error {
 	// Guess the video inforamtion
 	video, err := file.Guess(a.config.Movie, a.config.Show, log)
 	if err != nil {
-		log.Errorf("failed to guess video file: %q", err)
+		errors.LogErrors(log, err)
 		return file.Ignore()
 	}
 
-	video.SetLogger(log)
-
 	// Get video details
-	if err := video.GetDetails(); err != nil {
-		log.Errorf("failed to get video details: %q", err)
-		return file.Ignore()
+	if err := video.GetDetails(log); err != nil {
+		errors.LogErrors(log, err)
+		if errors.IsFatal(err) {
+			return file.Ignore()
+		}
 	}
 
 	// Store the video
 	if err := a.videoStore.Add(video); err != nil {
-		log.Errorf("failed to store video: %q", err)
+		errors.LogErrors(log, err)
 		return file.Ignore()
 	}
 
 	// Get subtitle
-	if err := video.GetSubtitle(); err != nil {
-		log.Errorf("failed to get subtitle")
+	if err := video.GetSubtitle(log); err != nil {
+		errors.LogErrors(log, err)
 	}
 
 	// Notify
-	if err := video.Notify(); err != nil {
-		log.Errorf("failed to notify: %q", err)
+	if err := video.Notify(log); err != nil {
+		errors.LogErrors(log, err)
 	}
 
 	return nil

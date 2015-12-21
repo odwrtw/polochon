@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"reflect"
 	"testing"
-
-	"github.com/Sirupsen/logrus"
 )
 
 // Content of a season nfo file
@@ -33,14 +31,11 @@ func newFakeShow() *Show {
 	s.ImdbID = "tt0397306"
 	s.Year = 2005
 
-	s.log = logrus.NewEntry(logrus.New())
-
 	return s
 }
 
 func TestShowStoreWriter(t *testing.T) {
 	s := newFakeShow()
-	s.log = nil
 
 	var b bytes.Buffer
 	err := writeNFO(&b, s)
@@ -55,7 +50,6 @@ func TestShowStoreWriter(t *testing.T) {
 
 func TestShowReader(t *testing.T) {
 	expected := newFakeShow()
-	expected.log = nil
 
 	got, err := readShowNFO(bytes.NewBuffer(seasonNFOContent), ShowConfig{})
 	if err != nil {

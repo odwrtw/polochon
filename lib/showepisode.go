@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/odwrtw/polochon/errors"
 )
 
 // ShowConfig represents the configuration for a show and its show episodes
@@ -40,7 +41,6 @@ type ShowEpisode struct {
 	ReleaseGroup  string    `xml:"-"`
 	Torrents      []Torrent `xml:"-" json:"torrents"`
 	Show          *Show     `xml:"-" json:"-"`
-	log           *logrus.Entry
 }
 
 // MarshalJSON is a custom marshal function to handle public path
@@ -73,7 +73,7 @@ func NewShowEpisodeFromFile(showConf ShowConfig, file File) *ShowEpisode {
 }
 
 // NewShowEpisodeFromPath returns a new ShowEpisode object from path, it loads the nfo
-func NewShowEpisodeFromPath(Sconf ShowConfig, Fconf FileConfig, log *logrus.Entry, path string) (*ShowEpisode, error) {
+func NewShowEpisodeFromPath(Sconf ShowConfig, Fconf FileConfig, path string) (*ShowEpisode, error) {
 	file := NewFileWithConfig(path, Fconf)
 
 	// Open the NFO
@@ -89,7 +89,6 @@ func NewShowEpisodeFromPath(Sconf ShowConfig, Fconf FileConfig, log *logrus.Entr
 		return nil, err
 	}
 	ep.SetFile(file)
-	ep.SetLogger(log)
 	return ep, nil
 }
 
@@ -101,11 +100,6 @@ func (s *ShowEpisode) GetFile() *File {
 // SetFile implements the video interface
 func (s *ShowEpisode) SetFile(f *File) {
 	s.File = *f
-}
-
-// SetLogger sets the logger
-func (s *ShowEpisode) SetLogger(log *logrus.Entry) {
-	s.log = log.WithField("type", "show_episode")
 }
 
 // readShowEpisodeNFO deserialized a XML file into a ShowEpisode
@@ -120,73 +114,109 @@ func readShowEpisodeNFO(r io.Reader, conf ShowConfig) (*ShowEpisode, error) {
 }
 
 // GetDetails helps getting infos for a show
-func (s *ShowEpisode) GetDetails() error {
-	var err error
+// If there is an error, it will be of type *errors.Collector
+func (s *ShowEpisode) GetDetails(log *logrus.Entry) error {
+	c := errors.NewCollector()
+
+	if len(s.Detailers) == 0 {
+		c.Push(errors.Wrap("No detailer available").Fatal())
+		return c
+	}
+
+	var done bool
 	for _, d := range s.Detailers {
-		err = d.GetDetails(s, s.log)
+		err := d.GetDetails(s, log)
 		if err == nil {
-			s.log.Debugf("got details from detailer: %q", d.Name())
+			done = true
 			break
 		}
-		s.log.Warnf("failed to get details from detailer: %q: %q", d.Name(), err)
+		c.Push(errors.Wrap(err).Ctx("Detailer", d.Name()))
 	}
-	return err
+
+	if !done {
+		c.Push(errors.Wrap("All detailers failed").Fatal())
+	}
+
+	if c.HasErrors() {
+		return c
+	}
+	return nil
 }
 
 // GetTorrents helps getting the torrent files for a movie
-func (s *ShowEpisode) GetTorrents() error {
-	var err error
+// If there is an error, it will be of type *errors.Collector
+func (s *ShowEpisode) GetTorrents(log *logrus.Entry) error {
+	c := errors.NewCollector()
+
 	for _, t := range s.Torrenters {
-		err = t.GetTorrents(s, s.log)
+		err := t.GetTorrents(s, log)
 		if err == nil {
 			break
 		}
+		c.Push(errors.Wrap(err).Ctx("Torrenter", t.Name()))
 	}
-	return err
+
+	if c.HasErrors() {
+		return c
+	}
+	return nil
 }
 
 // Notify sends a notification
-func (s *ShowEpisode) Notify() error {
-	var err error
+// If there is an error, it will be of type *errors.Collector
+func (s *ShowEpisode) Notify(log *logrus.Entry) error {
+	c := errors.NewCollector()
+
 	for _, n := range s.Notifiers {
-		err = n.Notify(s, s.log)
+		err := n.Notify(s, log)
 		if err == nil {
 			break
 		}
-
-		s.log.Warnf("failed to send a notification from notifier: %q: %q", n.Name(), err)
+		c.Push(errors.Wrap(err).Ctx("Notifier", n.Name()))
 	}
-	return err
+
+	if c.HasErrors() {
+		return c
+	}
+	return nil
 }
 
 // GetSubtitle implements the subtitle interface
-func (s *ShowEpisode) GetSubtitle() error {
-	var err error
+// If there is an error, it will be of type *errors.Collector
+func (s *ShowEpisode) GetSubtitle(log *logrus.Entry) error {
+	c := errors.NewCollector()
+
 	var subtitle Subtitle
 	for _, subtitler := range s.Subtitlers {
-		subtitle, err = subtitler.GetShowSubtitle(s, s.log)
+		var err error
+		subtitle, err = subtitler.GetShowSubtitle(s, log)
 		if err == nil {
-			s.log.Infof("Got subtitle from subtitiler %q", subtitler.Name())
 			break
 		}
 
-		s.log.Warnf("failed to get subtitles from subtitiler %q: %q", subtitler.Name(), err)
+		c.Push(errors.Wrap(err).Ctx("Subtitler", subtitler.Name()))
 	}
 
 	if subtitle != nil {
 		file, err := os.Create(s.SubtitlePath())
 		if err != nil {
-			return err
+			c.Push(errors.Wrap(err).Fatal())
+			return c
+
 		}
 		defer file.Close()
 		defer subtitle.Close()
 
 		if _, err := io.Copy(file, subtitle); err != nil {
-			return err
+			c.Push(errors.Wrap(err).Fatal())
+			return c
 		}
 	}
 
-	return err
+	if c.HasErrors() {
+		return c
+	}
+	return nil
 }
 
 // Slug will slug the show episode
