@@ -63,22 +63,22 @@ func createExpectedManager() *token.Manager {
 	return &token.Manager{
 		Roles: []*token.Role{rGuest, rUser, rAdmin},
 		Tokens: []*token.Token{
-			&token.Token{
+			{
 				Role:  rGuest,
 				Name:  "guest1",
 				Value: "guest1token",
 			},
-			&token.Token{
+			{
 				Role:  rGuest,
 				Name:  "guest2",
 				Value: "guest2token",
 			},
-			&token.Token{
+			{
 				Role:  rUser,
 				Name:  "user1",
 				Value: "user1token",
 			},
-			&token.Token{
+			{
 				Role:  rAdmin,
 				Name:  "admin1",
 				Value: "admin1token",

@@ -8,7 +8,7 @@ import (
 	"github.com/Sirupsen/logrus"
 )
 
-// The maximum number of stackframes on any error.
+// MaxStackDepth represents the maximum number of stackframes on any error
 var MaxStackDepth = 50
 
 // Context type, used to pass to `WithContext`.
