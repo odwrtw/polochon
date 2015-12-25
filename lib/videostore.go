@@ -16,16 +16,13 @@ import (
 
 // Video errors
 var (
-	ErrSlugNotFound          = errors.New("videostore: no such file with this slug")
-	ErrImdbIDNotFound        = errors.New("videostore: no such file with this imdbID")
-	ErrInvalidIndexVideoType = errors.New("videostore: invalid index video type")
-
-	ErrMissingMovieFilePath = errors.New("polochon: movie has no file path")
-	ErrMissingMovieImageURL = errors.New("polochon: missing movie images URL")
-
-	ErrMissingShowImageURL = errors.New("show: missing URL to download show images")
-
-	ErrMissingShowEpisodeFilePath = errors.New("show episode: missing file path")
+	ErrSlugNotFound               = errors.New("polochon: no such file with this slug")
+	ErrImdbIDNotFound             = errors.New("polochon: no such file with this imdbID")
+	ErrInvalidIndexVideoType      = errors.New("polochon: invalid index video type")
+	ErrMissingMovieFilePath       = errors.New("polochon: movie has no file path")
+	ErrMissingMovieImageURL       = errors.New("polochon: missing movie images URL")
+	ErrMissingShowImageURL        = errors.New("polochon: missing URL to download show images")
+	ErrMissingShowEpisodeFilePath = errors.New("polochon: missing file path")
 )
 
 // VideoStoreConfig represents configuration for VideoStore
