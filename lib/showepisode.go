@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/odwrtw/polochon/errors"
+	"github.com/odwrtw/errors"
 )
 
 // ShowConfig represents the configuration for a show and its show episodes

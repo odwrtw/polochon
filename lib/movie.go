@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/odwrtw/polochon/errors"
+	"github.com/odwrtw/errors"
 )
 
 // MovieConfig represents the configuration for a movie

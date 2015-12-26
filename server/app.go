@@ -10,7 +10,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
-	"github.com/odwrtw/polochon/errors"
+	"github.com/odwrtw/errors"
 	"github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/token"
 	"gopkg.in/unrolled/render.v1"

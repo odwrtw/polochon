@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/odwrtw/polochon/errors"
+	"github.com/odwrtw/errors"
 )
 
 // Video errors

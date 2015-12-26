@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/odwrtw/polochon/errors"
+	"github.com/odwrtw/errors"
 	"github.com/odwrtw/polochon/lib"
 )
 
