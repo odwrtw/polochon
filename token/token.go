@@ -17,7 +17,10 @@ type Manager struct {
 // the given token's value
 func (m *Manager) IsAllowed(value, routeName string) bool {
 	if value == "" {
-		return m.NoTokenRole.IsAllowed(routeName)
+		if m.NoTokenRole != nil {
+			return m.NoTokenRole.IsAllowed(routeName)
+		}
+		return false
 	}
 
 	for _, t := range m.Tokens {
