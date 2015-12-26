@@ -286,7 +286,7 @@ func (a *App) HTTPServer() {
 	// Add token auth middleware if token configuration file specified
 	if a.tokenManager != nil {
 		n.Use(token.NewMiddleware(a.tokenManager, a.mux))
-		a.mux.HandleFunc("/token/allowed", a.tokenGetAllowed).Name("TokenGetAllowed")
+		a.mux.HandleFunc("/tokens/allowed", a.tokenGetAllowed).Name("TokenGetAllowed")
 	}
 
 	// Wrap the router
