@@ -34,8 +34,8 @@ func (ms *MovieSearcher) searchStr() string {
 	return ms.Title
 }
 
-func (ms *MovieSearcher) category() string {
-	return "movies"
+func (ms *MovieSearcher) category() Category {
+	return MoviesCategory
 }
 
 func (ms *MovieSearcher) users() []string {

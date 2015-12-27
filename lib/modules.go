@@ -23,6 +23,7 @@ func init() {
 var (
 	ErrNoModuleFound  = errors.New("modules: no module found")
 	ErrModuleNotFound = errors.New("modules: module not found")
+	ErrNotAvailable   = errors.New("modules: function not available")
 )
 
 // ModuleType holds modules type
