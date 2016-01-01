@@ -1,0 +1,13 @@
+polochon:
+  build: .
+  container_name: polochon
+  restart: always
+  environment:
+  - UID=1000
+  - GID=1000
+  - POLOCHON_CONFIG=polochon/config.yml
+  - POLOCHON_TOKEN=polochon/token.yml
+  volumes:
+  - /home/user/polochon:/home/polochon
+  ports:
+      - 127.0.0.1:8080:8080
