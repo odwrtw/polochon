@@ -65,10 +65,20 @@ release() {
     done
 }
 
+trigger_docker_build() {
+    log "Triggering docker build"
+
+    curl -H "Content-Type: application/json" --data '{"build": true}' \
+         -X POST "https://registry.hub.docker.com/u/odwrtw/polochon/trigger/${DOCKER_BUILD_TOKEN}/"
+
+    log "Docker build triggered"
+}
+
 if [ ${TRAVIS_BRANCH} == "master" ] && [ ${TRAVIS_PULL_REQUEST} == "false" ]
 then
     tag
     release
+    trigger_docker_build
 else
     log "No need to create the ${GIT_TAG} tag on this branch"
 fi
