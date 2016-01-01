@@ -113,10 +113,72 @@ func (c *Client) Name() string {
 func (c *Client) Download(URL string, log *logrus.Entry) error {
 	_, err := c.tClient.Add(URL)
 	if err != nil {
-		if err == transmission.ErrDuplicateTorrent {
-			return polochon.ErrDuplicateTorrent
-		}
 		return err
 	}
 	return nil
+}
+
+// List implements the downloader interface
+func (c *Client) List() ([]polochon.Downloadable, error) {
+	torrents, err := c.tClient.GetTorrents()
+	if err != nil {
+		return nil, err
+	}
+
+	var res []polochon.Downloadable
+	for _, t := range torrents {
+		res = append(res, Torrent{
+			T: t,
+		})
+	}
+
+	return res, nil
+}
+
+// Remove implements the downloader interface
+func (c *Client) Remove(d polochon.Downloadable) error {
+	// Get infos from the torrent
+	tInfos := d.Infos()
+
+	// Get the torrentID needed to delete the torrent
+	torrentID, ok := tInfos.AdditionalInfos["id"].(int)
+	if !ok {
+		return fmt.Errorf("Problem when getting torrentID in Remove")
+	}
+
+	// Delete the torrent and the data
+	return c.tClient.RemoveTorrents([]*transmission.Torrent{{ID: torrentID}}, false)
+}
+
+// Torrent represents a Torrent
+type Torrent struct {
+	T *transmission.Torrent
+}
+
+// Infos prints the Torrent status
+func (t Torrent) Infos() *polochon.DownloadableInfos {
+	isFinished := false
+
+	// Check that the torrent is finished
+	if t.T.PercentDone == 1 {
+		isFinished = true
+	}
+
+	// Add the filePaths
+	var filePaths []string
+	for _, f := range *t.T.Files {
+		filePaths = append(filePaths, f.Name)
+	}
+
+	i := polochon.DownloadableInfos{
+		Ratio:      float32(t.T.UploadRatio),
+		IsFinished: isFinished,
+		FilePaths:  filePaths,
+		Name:       t.T.Name,
+		AdditionalInfos: map[string]interface{}{
+			"id": t.T.ID,
+		},
+	}
+
+	return &i
 }
