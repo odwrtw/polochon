@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # Create the polochon user if needed
 [[ "${UID:-""}" =~ ^[0-9]+$ ]] && usermod -u $UID polochon
