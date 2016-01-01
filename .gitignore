@@ -3,3 +3,4 @@ config.yml
 token.yml
 server/app
 polochon
+docker/docker-compose.yml
