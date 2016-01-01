@@ -218,19 +218,3 @@ func (d *downloader) downloadMissingShows(wl *polochon.Wishlist) {
 		}
 	}
 }
-
-// Run launches the downloader
-func (app *App) startDownloader() {
-	app.downloader = &downloader{
-		config:     app.config,
-		videoStore: app.videoStore,
-		event:      make(chan struct{}),
-		done:       app.done,
-		stop:       app.stop,
-		errc:       app.errc,
-		wg:         &app.wg,
-		log:        app.logger.WithField("function", "downloader"),
-	}
-
-	app.downloader.downloadDaemon()
-}

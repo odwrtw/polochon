@@ -89,10 +89,19 @@ type ConfigFileShow struct {
 
 // ConfigFileDownloader represents the configuration for the downloader in the configuration file
 type ConfigFileDownloader struct {
-	Enabled        bool          `yaml:"enabled"`
-	Timer          time.Duration `yaml:"timer"`
-	DownloadDir    string        `yaml:"download_dir"`
-	DownloaderName string        `yaml:"client"`
+	Enabled        bool              `yaml:"enabled"`
+	Timer          time.Duration     `yaml:"timer"`
+	DownloadDir    string            `yaml:"download_dir"`
+	DownloaderName string            `yaml:"client"`
+	Cleaner        ConfigFileCleaner `yaml:"cleaner"`
+}
+
+// ConfigFileCleaner represents the configuration for the downloader in the configuration file
+type ConfigFileCleaner struct {
+	Enabled  bool          `yaml:"enabled"`
+	Timer    time.Duration `yaml:"timer"`
+	TrashDir string        `yaml:"trash_dir"`
+	Ratio    float32       `yaml:"ratio"`
 }
 
 // ConfigFileHTTPServer represents the configuration for the HTTP Server in the configuration file
@@ -132,6 +141,15 @@ type DownloaderConfig struct {
 	Timer       time.Duration
 	DownloadDir string
 	Client      polochon.Downloader
+	Cleaner     CleanerConfig
+}
+
+// CleanerConfig represents the configuration for the cleaner in the configuration file
+type CleanerConfig struct {
+	Enabled  bool
+	Timer    time.Duration
+	TrashDir string
+	Ratio    float32
 }
 
 // HTTPServerConfig represents the configuration for the HTTP Server
@@ -197,6 +215,7 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	conf.Notifiers = notifiers
 
 	wishlistConf, err := cf.initWishlist(log)
@@ -345,7 +364,24 @@ func (c *ConfigFileRoot) initDownloader(log *logrus.Entry) (*DownloaderConfig, e
 		downloaderConf.Client = downloader
 	}
 
+	cleanerConf, err := c.initCleaner(log)
+	if err != nil {
+		return nil, err
+	}
+	downloaderConf.Cleaner = *cleanerConf
+
 	return downloaderConf, nil
+}
+
+func (c *ConfigFileRoot) initCleaner(log *logrus.Entry) (*CleanerConfig, error) {
+	cleanerConf := &CleanerConfig{
+		Timer:    c.Downloader.Cleaner.Timer,
+		Enabled:  c.Downloader.Cleaner.Enabled,
+		Ratio:    c.Downloader.Cleaner.Ratio,
+		TrashDir: c.Downloader.Cleaner.TrashDir,
+	}
+
+	return cleanerConf, nil
 }
 
 func (c *ConfigFileRoot) initNotifiers() ([]polochon.Notifier, error) {
