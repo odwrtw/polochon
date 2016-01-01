@@ -48,8 +48,8 @@ func (se *ShowEpisodeSearcher) searchStr() string {
 	return fmt.Sprintf("%s S%02dE%02d", se.ShowTitle, se.Season, se.Episode)
 }
 
-func (se *ShowEpisodeSearcher) category() string {
-	return "tv"
+func (se *ShowEpisodeSearcher) category() Category {
+	return ShowsCategory
 }
 
 func (se *ShowEpisodeSearcher) users() []string {
