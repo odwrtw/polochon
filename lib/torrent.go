@@ -2,10 +2,12 @@ package polochon
 
 // Torrent represents a torrent file
 type Torrent struct {
-	Quality  Quality `json:"quality"`
-	URL      string  `json:"url"`
-	Seeders  int     `json:"seeders"`
-	Leechers int     `json:"leechers"`
+	Quality    Quality `json:"quality"`
+	URL        string  `json:"url"`
+	Seeders    int     `json:"seeders"`
+	Leechers   int     `json:"leechers"`
+	Source     string  `json:"source"`
+	UploadUser string  `json:"upload_user"`
 }
 
 // FilterTorrents filters the torrents to keep only the best ones
