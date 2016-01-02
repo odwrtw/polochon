@@ -85,7 +85,6 @@ func (d *FakeShowDetailer) GetDetails(i interface{}, log *logrus.Entry) error {
 
 func (d *FakeShowDetailer) showDetails(s *Show) error {
 	s.Title = d.show.Title
-	s.ShowTitle = d.show.ShowTitle
 	s.Plot = d.show.Plot
 	s.TvdbID = d.show.TvdbID
 	s.URL = d.show.URL
@@ -122,15 +121,14 @@ func TestStoreShow(t *testing.T) {
 
 	showDetailer := &FakeShowDetailer{
 		show: Show{
-			Title:     "Test show",
-			ShowTitle: "Test show",
-			Plot:      "Test show plot",
-			TvdbID:    0,
-			URL:       "http://fakeurl.test",
-			ImdbID:    "ttFakeShow",
-			Banner:    "/",
-			Fanart:    "/",
-			Poster:    "/",
+			Title:  "Test show",
+			Plot:   "Test show plot",
+			TvdbID: 0,
+			URL:    "http://fakeurl.test",
+			ImdbID: "ttFakeShow",
+			Banner: "/",
+			Fanart: "/",
+			Poster: "/",
 		},
 	}
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"reflect"
 	"testing"
+	"time"
 )
 
 // Content of a season nfo file
@@ -18,24 +19,26 @@ var seasonNFOContent = []byte(`<tvshow>
   <tvdbid>73141</tvdbid>
   <imdbid>tt0397306</imdbid>
   <year>2005</year>
+  <premiered>2015-09-24</premiered>
 </tvshow>`)
 
-func newFakeShow() *Show {
-	s := NewShow(ShowConfig{})
-	s.Title = "American Dad!"
-	s.ShowTitle = "American Dad!"
-	s.Rating = 8.5
-	s.Plot = "Awesome plot"
-	s.URL = "http://www.thetvdb.com/api/1D62F2F90030C444/series/73141/all/en.zip"
-	s.TvdbID = 73141
-	s.ImdbID = "tt0397306"
-	s.Year = 2005
-
-	return s
+func mockShow() *Show {
+	premiered := time.Date(2015, time.September, 24, 0, 0, 0, 0, time.UTC)
+	return &Show{
+		ShowConfig: ShowConfig{},
+		Title:      "American Dad!",
+		Rating:     8.5,
+		Plot:       "Awesome plot",
+		URL:        "http://www.thetvdb.com/api/1D62F2F90030C444/series/73141/all/en.zip",
+		TvdbID:     73141,
+		ImdbID:     "tt0397306",
+		Year:       2005,
+		FirstAired: &premiered,
+	}
 }
 
 func TestShowStoreWriter(t *testing.T) {
-	s := newFakeShow()
+	s := mockShow()
 
 	var b bytes.Buffer
 	err := writeNFO(&b, s)
@@ -49,7 +52,7 @@ func TestShowStoreWriter(t *testing.T) {
 }
 
 func TestShowReader(t *testing.T) {
-	expected := newFakeShow()
+	expected := mockShow()
 
 	got, err := readShowNFO(bytes.NewBuffer(seasonNFOContent), ShowConfig{})
 	if err != nil {
