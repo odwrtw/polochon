@@ -7,6 +7,19 @@ import (
 	"os"
 )
 
+// ShowNFO represents a show NFO in kodi
+type ShowNFO struct {
+	Title     string  `xml:"title"`
+	ShowTitle string  `xml:"showtitle"`
+	Rating    float32 `xml:"rating"`
+	Plot      string  `xml:"plot"`
+	URL       string  `xml:"episodeguide>url"`
+	TvdbID    int     `xml:"tvdbid"`
+	ImdbID    string  `xml:"imdbid"`
+	Year      int     `xml:"year"`
+	Premiered string  `xml:"premiered"`
+}
+
 // readNFO deserialized a XML file from a reader
 func readNFO(r io.Reader, i interface{}) error {
 	b, err := ioutil.ReadAll(r)
