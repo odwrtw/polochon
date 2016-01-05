@@ -2,5 +2,6 @@ config.yaml
 config.yml
 token.yml
 server/app
+server/server
 polochon
 docker/docker-compose.yml

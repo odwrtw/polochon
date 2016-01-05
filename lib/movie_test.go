@@ -2,15 +2,16 @@ package polochon
 
 import (
 	"bytes"
+	"io/ioutil"
 	"reflect"
 	"testing"
 
 	"github.com/Sirupsen/logrus"
 )
 
-var fakeLogger = logrus.NewEntry(logrus.New())
+var mockLogEntry = logrus.NewEntry(&logrus.Logger{Out: ioutil.Discard})
 
-func newFakeMovie(conf MovieConfig) *Movie {
+func mockMovie(conf MovieConfig) *Movie {
 	m := NewMovie(conf)
 	m.ImdbID = "tt2562232"
 	m.OriginalTitle = "Birdman"
@@ -45,10 +46,10 @@ var movieNFOContent = []byte(`<movie>
 </movie>`)
 
 func TestMovieNFOWriter(t *testing.T) {
-	m := newFakeMovie(MovieConfig{})
+	m := mockMovie(MovieConfig{})
 
 	var b bytes.Buffer
-	err := writeNFO(&b, m)
+	err := WriteNFO(&b, m)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,10 +60,10 @@ func TestMovieNFOWriter(t *testing.T) {
 }
 
 func TestMovieNFOReader(t *testing.T) {
-	expected := newFakeMovie(MovieConfig{})
+	expected := mockMovie(MovieConfig{})
 
-	got, err := readMovieNFO(bytes.NewBuffer(movieNFOContent), MovieConfig{})
-	if err != nil {
+	got := &Movie{}
+	if err := ReadNFO(bytes.NewBuffer(movieNFOContent), got); err != nil {
 		t.Fatal(err)
 	}
 
@@ -72,7 +73,7 @@ func TestMovieNFOReader(t *testing.T) {
 }
 
 func TestMovieSlug(t *testing.T) {
-	s := newFakeMovie(MovieConfig{})
+	s := mockMovie(MovieConfig{})
 	got := s.Slug()
 	expected := "birdman"
 

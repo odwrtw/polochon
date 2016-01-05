@@ -8,7 +8,7 @@ import (
 )
 
 // NewMovieIndex returns a new movie index
-func newFakeMovieIndex() *MovieIndex {
+func mockMovieIndex() *MovieIndex {
 	logger := logrus.NewEntry(logrus.New())
 	return &MovieIndex{
 		log:   logger.WithField("function", "movieIndexTest"),
@@ -28,7 +28,7 @@ var slugsIndex = map[string]string{
 }
 
 func TestHasMovie(t *testing.T) {
-	m := newFakeMovieIndex()
+	m := mockMovieIndex()
 
 	m.ids = idsIndex
 
@@ -48,7 +48,7 @@ func TestHasMovie(t *testing.T) {
 }
 
 func TestSearchMovieBySlug(t *testing.T) {
-	m := newFakeMovieIndex()
+	m := mockMovieIndex()
 
 	m.slugs = slugsIndex
 
@@ -82,7 +82,7 @@ func TestSearchMovieBySlug(t *testing.T) {
 }
 
 func TestSearchMovieByImdbID(t *testing.T) {
-	m := newFakeMovieIndex()
+	m := mockMovieIndex()
 
 	m.ids = idsIndex
 
@@ -116,9 +116,9 @@ func TestSearchMovieByImdbID(t *testing.T) {
 }
 
 func TestAddAndRemoveMovieToIndex(t *testing.T) {
-	mi := newFakeMovieIndex()
+	mi := mockMovieIndex()
 
-	m := newFakeMovie(MovieConfig{})
+	m := mockMovie(MovieConfig{})
 	m.Path = "/home/test/movie/movie.mp4"
 	err := mi.Add(m)
 	if err != nil {
@@ -149,7 +149,7 @@ func TestAddAndRemoveMovieToIndex(t *testing.T) {
 }
 
 func TestMovieSlugs(t *testing.T) {
-	m := newFakeMovieIndex()
+	m := mockMovieIndex()
 
 	m.slugs = slugsIndex
 
@@ -171,7 +171,7 @@ LOOP:
 }
 
 func TestMovieIDs(t *testing.T) {
-	m := newFakeMovieIndex()
+	m := mockMovieIndex()
 
 	m.ids = idsIndex
 

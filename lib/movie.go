@@ -2,7 +2,6 @@ package polochon
 
 import (
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"io"
 	"os"
@@ -20,23 +19,22 @@ type MovieConfig struct {
 
 // Movie represents a movie
 type Movie struct {
-	MovieConfig `xml:"-" json:"-"`
+	MovieConfig `json:"-"`
 	File
-	XMLName       xml.Name  `xml:"movie" json:"-"`
-	ImdbID        string    `xml:"id" json:"imdb_id"`
-	OriginalTitle string    `xml:"originaltitle" json:"original_title"`
-	Plot          string    `xml:"plot" json:"plot"`
-	Rating        float32   `xml:"rating" json:"rating"`
-	Runtime       int       `xml:"runtime" json:"runtime"`
-	SortTitle     string    `xml:"sorttitle" json:"sort_title"`
-	Tagline       string    `xml:"tagline" json:"tag_line"`
-	Thumb         string    `xml:"thumb" json:"thumb"`
-	Fanart        string    `xml:"customfanart" json:"fanart"`
-	Title         string    `xml:"title" json:"title"`
-	TmdbID        int       `xml:"tmdbid" json:"tmdb_id"`
-	Votes         int       `xml:"votes" json:"votes"`
-	Year          int       `xml:"year" json:"year"`
-	Torrents      []Torrent `xml:"-" json:"torrents"`
+	ImdbID        string    `json:"imdb_id"`
+	OriginalTitle string    `json:"original_title"`
+	Plot          string    `json:"plot"`
+	Rating        float32   `json:"rating"`
+	Runtime       int       `json:"runtime"`
+	SortTitle     string    `json:"sort_title"`
+	Tagline       string    `json:"tag_line"`
+	Thumb         string    `json:"thumb"`
+	Fanart        string    `json:"fanart"`
+	Title         string    `json:"title"`
+	TmdbID        int       `json:"tmdb_id"`
+	Votes         int       `json:"votes"`
+	Year          int       `json:"year"`
+	Torrents      []Torrent `json:"torrents"`
 }
 
 // MarshalJSON is a custom marshal function to handle public path
@@ -55,7 +53,6 @@ func (m *Movie) MarshalJSON() ([]byte, error) {
 func NewMovie(movieConfig MovieConfig) *Movie {
 	return &Movie{
 		MovieConfig: movieConfig,
-		XMLName:     xml.Name{Space: "", Local: "movie"},
 	}
 }
 
@@ -64,28 +61,7 @@ func NewMovieFromFile(movieConfig MovieConfig, file File) *Movie {
 	return &Movie{
 		MovieConfig: movieConfig,
 		File:        file,
-		XMLName:     xml.Name{Space: "", Local: "movie"},
 	}
-}
-
-// NewMovieFromPath returns a new movie object from path, it loads the nfo
-func NewMovieFromPath(Mconf MovieConfig, Fconf FileConfig, path string) (*Movie, error) {
-	file := NewFileWithConfig(path, Fconf)
-
-	// Open the NFO
-	nfoFile, err := os.Open(file.NfoPath())
-	if err != nil {
-		return nil, err
-	}
-	defer nfoFile.Close()
-
-	// Unmarshal the NFO into an episode
-	movie, err := readMovieNFO(nfoFile, Mconf)
-	if err != nil {
-		return nil, err
-	}
-	movie.SetFile(file)
-	return movie, nil
 }
 
 // SetFile implements the video interface
@@ -96,17 +72,6 @@ func (m *Movie) SetFile(f *File) {
 // GetFile implements the video interface
 func (m *Movie) GetFile() *File {
 	return &m.File
-}
-
-// readShowSeasonNFO deserialized a XML file into a ShowSeason
-func readMovieNFO(r io.Reader, conf MovieConfig) (*Movie, error) {
-	m := NewMovie(conf)
-
-	if err := readNFO(r, m); err != nil {
-		return nil, err
-	}
-
-	return m, nil
 }
 
 // GetDetails helps getting infos for a movie

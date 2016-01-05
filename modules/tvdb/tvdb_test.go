@@ -1,10 +1,10 @@
 package tvdb
 
 import (
-	"encoding/xml"
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/garfunkel/go-tvdb"
@@ -18,6 +18,8 @@ var testDetailer = &TvDB{}
 func TestTvdbUpdateShow(t *testing.T) {
 	getShowFromTvdb = func(s *tvdb.Series) error { return nil }
 	s := polochon.NewShow(polochon.ShowConfig{})
+
+	firstAired := time.Date(2005, time.February, 6, 0, 0, 0, 0, time.UTC)
 
 	// Tvdb input
 	input := &tvdb.Series{
@@ -74,19 +76,18 @@ func TestTvdbUpdateShow(t *testing.T) {
 	// Expected show values
 	expected := polochon.NewShow(polochon.ShowConfig{})
 	expected.Title = "American Dad!"
-	expected.ShowTitle = "American Dad!"
 	expected.Rating = 8.5
 	expected.Plot = "Awesome plot"
 	expected.URL = fmt.Sprintf("%s/%s/series/%d/all/en.zip", APIendpoint, Token, 73141)
 	expected.TvdbID = 73141
 	expected.ImdbID = "tt0397306"
 	expected.Year = 2005
+	expected.FirstAired = &firstAired
 	expected.Banner = "http://thetvdb.com/banners/graphical/73141-g10.jpg"
 	expected.Fanart = "http://thetvdb.com/banners/fanart/original/73141-12.jpg"
 	expected.Poster = "http://thetvdb.com/banners/posters/73141-8.jpg"
 	expected.Episodes = []*polochon.ShowEpisode{
 		{
-			XMLName:       xml.Name{Space: "", Local: "episodedetails"},
 			Title:         "1600 Candles",
 			ShowTitle:     "American Dad!",
 			Season:        5,
