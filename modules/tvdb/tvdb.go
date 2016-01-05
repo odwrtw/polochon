@@ -88,7 +88,6 @@ func updateShow(s *polochon.Show, tvSeries *tvdb.Series) error {
 	}
 
 	s.Title = tvSeries.SeriesName
-	s.ShowTitle = tvSeries.SeriesName
 	s.Plot = tvSeries.Overview
 	s.TvdbID = int(tvSeries.ID)
 	s.URL = fmt.Sprintf("%s/%s/series/%d/all/en.zip", APIendpoint, Token, s.TvdbID)
@@ -104,6 +103,7 @@ func updateShow(s *polochon.Show, tvSeries *tvdb.Series) error {
 			return err
 		}
 		s.Year = date.Year()
+		s.FirstAired = &date
 	}
 
 	// Convert rating string to a float

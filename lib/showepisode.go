@@ -2,7 +2,6 @@ package polochon
 
 import (
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"io"
 	"os"
@@ -21,25 +20,24 @@ type ShowConfig struct {
 
 // ShowEpisode represents a tvshow episode
 type ShowEpisode struct {
-	ShowConfig `xml:"-" json:"-"`
+	ShowConfig `json:"-"`
 	File
-	XMLName       xml.Name  `xml:"episodedetails" json:"-"`
-	Title         string    `xml:"title" json:"title"`
-	ShowTitle     string    `xml:"showtitle" json:"-"`
-	Season        int       `xml:"season" json:"season"`
-	Episode       int       `xml:"episode" json:"episode"`
-	TvdbID        int       `xml:"uniqueid" json:"tvdb_id"`
-	Aired         string    `xml:"aired" json:"aired"`
-	Plot          string    `xml:"plot" json:"plot"`
-	Runtime       int       `xml:"runtime" json:"runtime"`
-	Thumb         string    `xml:"thumb" json:"thumb"`
-	Rating        float32   `xml:"rating" json:"rating"`
-	ShowImdbID    string    `xml:"showimdbid" json:"-"`
-	ShowTvdbID    int       `xml:"showtvdbid" json:"-"`
-	EpisodeImdbID string    `xml:"episodeimdbid" json:"imdb_id"`
-	ReleaseGroup  string    `xml:"-"`
-	Torrents      []Torrent `xml:"-" json:"torrents"`
-	Show          *Show     `xml:"-" json:"-"`
+	Title         string    `json:"title"`
+	ShowTitle     string    `json:"-"`
+	Season        int       `json:"season"`
+	Episode       int       `json:"episode"`
+	TvdbID        int       `json:"tvdb_id"`
+	Aired         string    `json:"aired"`
+	Plot          string    `json:"plot"`
+	Runtime       int       `json:"runtime"`
+	Thumb         string    `json:"thumb"`
+	Rating        float32   `json:"rating"`
+	ShowImdbID    string    `json:"show_imdb_id"`
+	ShowTvdbID    int       `json:"show_tvdb_id"`
+	EpisodeImdbID string    `json:"imdb_id"`
+	ReleaseGroup  string    `json:"release_group"`
+	Torrents      []Torrent `json:"torrents"`
+	Show          *Show     `json:"-"`
 }
 
 // MarshalJSON is a custom marshal function to handle public path
@@ -58,7 +56,6 @@ func (s *ShowEpisode) MarshalJSON() ([]byte, error) {
 func NewShowEpisode(showConf ShowConfig) *ShowEpisode {
 	return &ShowEpisode{
 		ShowConfig: showConf,
-		XMLName:    xml.Name{Space: "", Local: "episodedetails"},
 	}
 }
 
@@ -67,28 +64,7 @@ func NewShowEpisodeFromFile(showConf ShowConfig, file File) *ShowEpisode {
 	return &ShowEpisode{
 		ShowConfig: showConf,
 		File:       file,
-		XMLName:    xml.Name{Space: "", Local: "episodedetails"},
 	}
-}
-
-// NewShowEpisodeFromPath returns a new ShowEpisode object from path, it loads the nfo
-func NewShowEpisodeFromPath(Sconf ShowConfig, Fconf FileConfig, path string) (*ShowEpisode, error) {
-	file := NewFileWithConfig(path, Fconf)
-
-	// Open the NFO
-	nfoFile, err := os.Open(file.NfoPath())
-	if err != nil {
-		return nil, err
-	}
-	defer nfoFile.Close()
-
-	// Unmarshal the NFO into an episode
-	ep, err := readShowEpisodeNFO(nfoFile, Sconf)
-	if err != nil {
-		return nil, err
-	}
-	ep.SetFile(file)
-	return ep, nil
 }
 
 // GetFile implements the video interface
@@ -99,17 +75,6 @@ func (s *ShowEpisode) GetFile() *File {
 // SetFile implements the video interface
 func (s *ShowEpisode) SetFile(f *File) {
 	s.File = *f
-}
-
-// readShowEpisodeNFO deserialized a XML file into a ShowEpisode
-func readShowEpisodeNFO(r io.Reader, conf ShowConfig) (*ShowEpisode, error) {
-	s := NewShowEpisode(conf)
-
-	if err := readNFO(r, s); err != nil {
-		return nil, err
-	}
-
-	return s, nil
 }
 
 // GetDetails helps getting infos for a show

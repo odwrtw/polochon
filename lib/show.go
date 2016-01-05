@@ -1,8 +1,7 @@
 package polochon
 
 import (
-	"encoding/xml"
-	"io"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/errors"
@@ -10,39 +9,26 @@ import (
 
 // Show represents a tv show
 type Show struct {
-	ShowConfig `xml:"-" json:"-"`
-	XMLName    xml.Name       `xml:"tvshow" json:"-"`
-	Title      string         `xml:"title" json:"title"`
-	ShowTitle  string         `xml:"showtitle" json:"-"`
-	Rating     float32        `xml:"rating" json:"rating"`
-	Plot       string         `xml:"plot" json:"plot"`
-	URL        string         `xml:"episodeguide>url" json:"-"`
-	TvdbID     int            `xml:"tvdbid" json:"tvdb_id"`
-	ImdbID     string         `xml:"imdbid" json:"imdb_id"`
-	Year       int            `xml:"year" json:"year"`
-	Banner     string         `xml:"-" json:"banner"`
-	Fanart     string         `xml:"-" json:"fanart"`
-	Poster     string         `xml:"-" json:"poster"`
-	Episodes   []*ShowEpisode `xml:"-" json:"episodes"`
+	ShowConfig `json:"-"`
+	Title      string         `json:"title"`
+	Rating     float32        `json:"rating"`
+	Plot       string         `json:"plot"`
+	URL        string         `json:"-"`
+	TvdbID     int            `json:"tvdb_id"`
+	ImdbID     string         `json:"imdb_id"`
+	Year       int            `json:"year"`
+	FirstAired *time.Time     `json:"first_aired"`
+	Banner     string         `json:"banner"`
+	Fanart     string         `json:"fanart"`
+	Poster     string         `json:"poster"`
+	Episodes   []*ShowEpisode `json:"episodes"`
 }
 
 // NewShow returns a new show
 func NewShow(showConf ShowConfig) *Show {
 	return &Show{
 		ShowConfig: showConf,
-		XMLName:    xml.Name{Space: "", Local: "tvshow"},
 	}
-}
-
-// readShowNFO deserialized a XML file into a ShowSeason
-func readShowNFO(r io.Reader, conf ShowConfig) (*Show, error) {
-	s := &Show{ShowConfig: conf}
-
-	if err := readNFO(r, s); err != nil {
-		return nil, err
-	}
-
-	return s, nil
 }
 
 // GetDetails helps getting infos for a show
@@ -93,10 +79,9 @@ func (s *Show) GetCalendar(log *logrus.Entry) (*ShowCalendar, *errors.Error) {
 // NewShowFromEpisode will return a show from an episode
 func NewShowFromEpisode(e *ShowEpisode) *Show {
 	return &Show{
-		Title:     e.ShowTitle,
-		ShowTitle: e.ShowTitle,
-		TvdbID:    e.ShowTvdbID,
-		ImdbID:    e.ShowImdbID,
+		Title:  e.ShowTitle,
+		TvdbID: e.ShowTvdbID,
+		ImdbID: e.ShowImdbID,
 		ShowConfig: ShowConfig{
 			Detailers:  e.Detailers,
 			Subtitlers: e.Subtitlers,

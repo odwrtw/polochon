@@ -184,8 +184,8 @@ func TestRemoveSeason(t *testing.T) {
 	}
 
 	// Create a fake show and a fake show episode
-	e := fakeShowEpisode()
-	s := newFakeShow()
+	e := mockShowEpisode()
+	s := mockShow()
 	s.Episodes = append(s.Episodes, e)
 	s.ImdbID = e.ShowImdbID
 	e.Path = "/home/test/show/season-1/showTers-s09e18.mp4"
@@ -215,8 +215,8 @@ func TestRemoveShow(t *testing.T) {
 	}
 
 	// Create a fake show and a fake show episode
-	e := fakeShowEpisode()
-	s := newFakeShow()
+	e := mockShowEpisode()
+	s := mockShow()
 	s.ImdbID = e.ShowImdbID
 	e.Show = s
 	e.Path = "/home/test/show/season-1/showTers-s09e18.mp4"
@@ -236,8 +236,8 @@ func TestAddAndDeleteEpisodeToIndex(t *testing.T) {
 	si := newFakeShowIndex()
 
 	// Create a fake show and a fake show episode
-	e := fakeShowEpisode()
-	s := newFakeShow()
+	e := mockShowEpisode()
+	s := mockShow()
 	s.ImdbID = e.ShowImdbID
 	e.Show = s
 	e.Path = "/home/test/show/season-1/showTers-s09e18.mp4"

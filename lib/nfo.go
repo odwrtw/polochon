@@ -2,29 +2,55 @@ package polochon
 
 import (
 	"encoding/xml"
+	"errors"
 	"io"
 	"io/ioutil"
-	"os"
 )
 
-// readNFO deserialized a XML file from a reader
-func readNFO(r io.Reader, i interface{}) error {
+// Custom error
+var (
+	ErrInvalidArgument = errors.New("invalid argument")
+)
+
+// ReadNFO reads the NFO from a reader
+func ReadNFO(r io.Reader, i interface{}) error {
+	var nfo interface{}
+
+	switch t := i.(type) {
+	case *Movie:
+		nfo = NewMovieNFO(t)
+	case *Show:
+		nfo = NewShowNFO(t)
+	case *ShowEpisode:
+		nfo = NewShowEpisodeNFO(t)
+	default:
+		return ErrInvalidArgument
+	}
+
 	b, err := ioutil.ReadAll(r)
 	if err != nil {
 		return err
 	}
 
-	err = xml.Unmarshal(b, i)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return xml.Unmarshal(b, nfo)
 }
 
-// writeNFO serialized a XML into writer
-func writeNFO(w io.Writer, i interface{}) error {
-	b, err := xml.MarshalIndent(i, "", "  ")
+// WriteNFO writes the NFO into a writer
+func WriteNFO(w io.Writer, i interface{}) error {
+	var nfo interface{}
+
+	switch t := i.(type) {
+	case *Movie:
+		nfo = NewMovieNFO(t)
+	case *Show:
+		nfo = NewShowNFO(t)
+	case *ShowEpisode:
+		nfo = NewShowEpisodeNFO(t)
+	default:
+		return ErrInvalidArgument
+	}
+
+	b, err := xml.MarshalIndent(nfo, "", "  ")
 	if err != nil {
 		return err
 	}
@@ -35,16 +61,4 @@ func writeNFO(w io.Writer, i interface{}) error {
 	}
 
 	return nil
-}
-
-// MarshalInFile write a nfo into a file
-var MarshalInFile = func(i interface{}, filePath string) error {
-	file, err := os.Create(filePath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	// Write the data into the file
-	return writeNFO(file, i)
 }

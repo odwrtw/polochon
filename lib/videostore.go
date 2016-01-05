@@ -227,7 +227,7 @@ func (vs *VideoStore) AddMovie(movie *Movie) error {
 	}
 
 	// Write NFO into the file
-	if err := MarshalInFile(movie, movie.NfoPath()); err != nil {
+	if err := vs.WriteNFOFile(movie.NfoPath(), movie); err != nil {
 		return err
 	}
 
@@ -284,7 +284,7 @@ func (vs *VideoStore) AddShowEpisode(ep *ShowEpisode) error {
 		}
 
 		// Write NFO into the file
-		if err := MarshalInFile(show, showNFOPath); err != nil {
+		if err := vs.WriteNFOFile(showNFOPath, show); err != nil {
 			return err
 		}
 
@@ -340,9 +340,10 @@ func (vs *VideoStore) AddShowEpisode(ep *ShowEpisode) error {
 	}
 
 	// Create show NFO if necessary
-	if err := MarshalInFile(ep, ep.NfoPath()); err != nil {
+	if err := vs.WriteNFOFile(ep.NfoPath(), ep); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -463,7 +464,7 @@ func (vs *VideoStore) SearchMovieBySlug(slug string) (Video, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewMovieFromPath(vs.movieConfig, vs.fileConfig, path)
+	return vs.NewMovieFromPath(path)
 }
 
 // SearchShowEpisodeBySlug search for a show episode by its slug
@@ -472,7 +473,7 @@ func (vs *VideoStore) SearchShowEpisodeBySlug(slug string) (Video, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewShowEpisodeFromPath(vs.showConfig, vs.fileConfig, path)
+	return vs.NewShowEpisodeFromPath(path)
 }
 
 // SearchMovieByImdbID returns the video by its imdb ID
@@ -481,7 +482,7 @@ func (vs *VideoStore) SearchMovieByImdbID(imdbID string) (Video, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewMovieFromPath(vs.movieConfig, vs.fileConfig, path)
+	return vs.NewMovieFromPath(path)
 }
 
 // SearchShowEpisodeByImdbID search for a show episode by its imdb ID
@@ -490,7 +491,7 @@ func (vs *VideoStore) SearchShowEpisodeByImdbID(imdbID string, sNum, eNum int) (
 	if err != nil {
 		return nil, err
 	}
-	return NewShowEpisodeFromPath(vs.showConfig, vs.fileConfig, path)
+	return vs.NewShowEpisodeFromPath(path)
 }
 
 // RebuildIndex rebuilds both the movie and show index
@@ -560,21 +561,12 @@ func (vs *VideoStore) buildMovieIndex() error {
 			return nil
 		}
 
-		// load nfo
-		nfoFile, err := os.Open(movieFile.NfoPath())
-		if err != nil {
-			vs.log.Errorf("video store: failed to open file %q", filePath)
-			return nil
-		}
-		defer nfoFile.Close()
-
 		// Read the movie informations
-		movie, err := readMovieNFO(nfoFile, vs.movieConfig)
+		movie, err := vs.NewMovieFromPath(movieFile.NfoPath())
 		if err != nil {
 			vs.log.Errorf("video store: failed to read movie NFO: %q", err)
 			return nil
 		}
-		movie.SetFile(movieFile)
 
 		// Add the movie to the index
 		vs.addToIndex(movie)
@@ -607,14 +599,7 @@ func (vs *VideoStore) buildShowIndex() error {
 
 		// Check if we can find the tvshow.nfo file
 		nfoPath := filepath.Join(filePath, "tvshow.nfo")
-		nfoFile, err := os.Open(nfoPath)
-		if err != nil {
-			vs.log.Errorf("video store: failed to open tv show NFO: %q", err)
-			return nil
-		}
-		defer nfoFile.Close()
-
-		show, err := readShowNFO(nfoFile, vs.showConfig)
+		show, err := vs.NewShowFromPath(nfoPath)
 		if err != nil {
 			vs.log.Errorf("video store: failed to read tv show NFO: %q", err)
 			return nil
@@ -669,22 +654,13 @@ func (vs *VideoStore) scanEpisodes(imdbID, showRootPath string) error {
 			return nil
 		}
 
-		// Open the nfo file
-		nfoFile, err := os.Open(f.NfoPath())
-		if err != nil {
-			vs.log.Errorf("video store: failed to open file %q", filePath)
-			return nil
-		}
-		defer nfoFile.Close()
-
 		// Read the nfo file
-		episode, err := readShowEpisodeNFO(nfoFile, vs.showConfig)
+		episode, err := vs.NewShowEpisodeFromPath(f.NfoPath())
 		if err != nil {
 			vs.log.Errorf("video store: failed to read episode NFO: %q", err)
 			return nil
 		}
 
-		episode.SetFile(f)
 		episode.ShowImdbID = imdbID
 		episode.ShowConfig = vs.showConfig
 		vs.addToIndex(episode)
@@ -696,5 +672,67 @@ func (vs *VideoStore) scanEpisodes(imdbID, showRootPath string) error {
 	}
 
 	return nil
+}
 
+// ReadNFOFile reads the NFO file
+func (vs *VideoStore) ReadNFOFile(filePath string, i interface{}) error {
+	// Open the file
+	nfoFile, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer nfoFile.Close()
+
+	return ReadNFO(nfoFile, i)
+}
+
+// WriteNFOFile write the NFO into a file
+func (vs *VideoStore) WriteNFOFile(filePath string, i interface{}) error {
+	return writeNFOFile(filePath, i, vs)
+}
+
+// Fuction to be overwritten during the tests
+var writeNFOFile = func(filePath string, i interface{}, vs *VideoStore) error {
+	// Open the file
+	nfoFile, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer nfoFile.Close()
+
+	return WriteNFO(nfoFile, i)
+}
+
+// NewShowFromPath returns a new Show from its path
+func (vs *VideoStore) NewShowFromPath(path string) (*Show, error) {
+	s := &Show{}
+	if err := vs.ReadNFOFile(path, s); err != nil {
+		return nil, err
+	}
+
+	return s, nil
+}
+
+// NewShowEpisodeFromPath returns a new ShowEpisode from its path
+func (vs *VideoStore) NewShowEpisodeFromPath(path string) (*ShowEpisode, error) {
+	file := NewFileWithConfig(path, vs.fileConfig)
+	se := NewShowEpisodeFromFile(vs.showConfig, *file)
+
+	if err := vs.ReadNFOFile(file.NfoPath(), se); err != nil {
+		return nil, err
+	}
+
+	return se, nil
+}
+
+// NewMovieFromPath returns a new Movie from its path
+func (vs *VideoStore) NewMovieFromPath(path string) (*Movie, error) {
+	file := NewFileWithConfig(path, vs.fileConfig)
+	m := NewMovieFromFile(vs.movieConfig, *file)
+
+	if err := vs.ReadNFOFile(file.NfoPath(), m); err != nil {
+		return nil, err
+	}
+
+	return m, nil
 }

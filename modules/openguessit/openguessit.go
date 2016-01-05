@@ -101,10 +101,9 @@ func (og *OpenGuessit) Guess(file polochon.File, movieConf polochon.MovieConfig,
 
 		// Add some infos on the show
 		video.Show = &polochon.Show{
-			ImdbID:    guess.ImdbID(),
-			ShowTitle: showTitle,
-			Title:     showTitle,
-			Year:      year,
+			ImdbID: guess.ImdbID(),
+			Title:  showTitle,
+			Year:   year,
 		}
 
 		if guess.Guessit != nil {

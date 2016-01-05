@@ -2,14 +2,12 @@ package polochon
 
 import (
 	"bytes"
-	"encoding/xml"
 	"reflect"
 	"testing"
 )
 
-func fakeShowEpisode() *ShowEpisode {
+func mockShowEpisode() *ShowEpisode {
 	s := NewShowEpisode(ShowConfig{})
-	s.XMLName = xml.Name{Space: "", Local: "episodedetails"}
 	s.Title = "Lost in Space"
 	s.ShowTitle = "American Dad!"
 	s.Season = 9
@@ -33,6 +31,7 @@ var episodeNFOContent = []byte(`<episodedetails>
   <episode>18</episode>
   <uniqueid>4488786</uniqueid>
   <aired>2013-05-05</aired>
+  <premiered>2013-05-05</premiered>
   <plot>Awesome plot</plot>
   <runtime>30</runtime>
   <thumb>http://thetvdb.com/banners/episodes/73141/4488786.jpg</thumb>
@@ -43,10 +42,10 @@ var episodeNFOContent = []byte(`<episodedetails>
 </episodedetails>`)
 
 func TestShowEpisodeStoreWriter(t *testing.T) {
-	s := fakeShowEpisode()
+	s := mockShowEpisode()
 
 	var b bytes.Buffer
-	err := writeNFO(&b, s)
+	err := WriteNFO(&b, s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,9 +56,9 @@ func TestShowEpisodeStoreWriter(t *testing.T) {
 }
 
 func TestShowEpisodeReader(t *testing.T) {
-	expected := fakeShowEpisode()
-	got, err := readShowEpisodeNFO(bytes.NewBuffer(episodeNFOContent), ShowConfig{})
-	if err != nil {
+	expected := mockShowEpisode()
+	got := &ShowEpisode{}
+	if err := ReadNFO(bytes.NewBuffer(episodeNFOContent), got); err != nil {
 		t.Fatal(err)
 	}
 
@@ -69,7 +68,7 @@ func TestShowEpisodeReader(t *testing.T) {
 }
 
 func TestShowEpisodeSlug(t *testing.T) {
-	s := fakeShowEpisode()
+	s := mockShowEpisode()
 	got := s.Slug()
 	expected := "american-dad-s09e18"
 
