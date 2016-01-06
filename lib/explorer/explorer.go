@@ -11,6 +11,13 @@ type Option int
 // Available explorer options
 const (
 	BySeeds Option = iota
+	ByPeers
+	ByTitle
+	ByYear
+	ByRate
+	ByDownloadCount
+	ByLikeCount
+	ByDateAdded
 )
 
 // Explorer is the interface explore new videos from different sources

@@ -5,6 +5,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib/explorer"
 	"github.com/odwrtw/yts"
 )
 
@@ -34,6 +35,11 @@ func NewFromRawYaml(p []byte) (polochon.Torrenter, error) {
 
 // New returns a new Yts
 func New() (polochon.Torrenter, error) {
+	return &Yts{}, nil
+}
+
+// NewExplorer returns a new explorer
+func NewExplorer() (explorer.Explorer, error) {
 	return &Yts{}, nil
 }
 
