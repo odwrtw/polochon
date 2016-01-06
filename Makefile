@@ -26,10 +26,6 @@ all: clean test
 .PHONY: test
 test: build fmt .test
 
-.PHONY: quicktest
-quicktest:
-	$(GO) test $(GOTEST_FLAGS) $(SUBPACKAGES)
-
 .PHONY: .test
 .test: coverage.html
 
