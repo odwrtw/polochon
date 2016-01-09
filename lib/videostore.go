@@ -549,20 +549,20 @@ func (vs *VideoStore) buildMovieIndex() error {
 		// search for movie type
 		ext := path.Ext(filePath)
 
-		var movieFile *File
+		var moviePath string
 		for _, mext := range vs.fileConfig.VideoExtentions {
 			if ext == mext {
-				movieFile = NewFileWithConfig(filePath, vs.fileConfig)
+				moviePath = filePath
 				break
 			}
 		}
 
-		if movieFile == nil {
+		if moviePath == "" {
 			return nil
 		}
 
 		// Read the movie informations
-		movie, err := vs.NewMovieFromPath(movieFile.NfoPath())
+		movie, err := vs.NewMovieFromPath(moviePath)
 		if err != nil {
 			vs.log.Errorf("video store: failed to read movie NFO: %q", err)
 			return nil
@@ -641,21 +641,20 @@ func (vs *VideoStore) scanEpisodes(imdbID, showRootPath string) error {
 		// search for show type
 		ext := path.Ext(filePath)
 
-		var f *File
+		var epPath string
 		for _, mext := range vs.fileConfig.VideoExtentions {
 			if ext == mext {
-				f = NewFileWithConfig(filePath, vs.fileConfig)
+				epPath = filePath
 				break
 			}
 		}
 
-		// No file with an allowed extention found
-		if f == nil {
+		if epPath == "" {
 			return nil
 		}
 
 		// Read the nfo file
-		episode, err := vs.NewShowEpisodeFromPath(f.NfoPath())
+		episode, err := vs.NewShowEpisodeFromPath(epPath)
 		if err != nil {
 			vs.log.Errorf("video store: failed to read episode NFO: %q", err)
 			return nil
