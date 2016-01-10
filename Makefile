@@ -33,7 +33,9 @@ coverage.html: gover.coverprofile
 	$(GO) tool cover -html=$^ -o $@
 
 gover.coverprofile:
-	set -e; for pkg in $(shell find -name "*.go" -printf "%h\n" | sort -u); do $(GO) test -v $$pkg -coverprofile $$pkg.coverprofile ; done && gover
+	set -e; \
+	$(GO) list -f '"echo {{ .ImportPath }} && $(GO) test -v -coverprofile={{ .Dir }}/{{.Name}}.coverprofile {{ .ImportPath }}"' ./... | xargs -L1 sh -c && \
+	gover
 
 goveralls: gover.coverprofile
 	$(HOME)/gopath/bin/goveralls -coverprofile=gover.coverprofile -service=travis-ci
