@@ -5,3 +5,7 @@ server/app
 server/server
 polochon
 docker/docker-compose.yml
+
+*.coverprofile
+coverage.html
+builds
