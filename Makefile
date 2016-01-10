@@ -6,16 +6,19 @@ REPO_VERSION := $(shell git describe --always --dirty --tags)
 REV_VAR  := main.RevisionString
 REPO_REV := $(shell git rev-parse -q HEAD)
 
-GO  ?= go
-GOX ?= gox
+GO       ?= go
+GOX      ?= gox
+BIN_NAME ?= polochon
 GOBUILD_LDFLAGS := -ldflags "\
 	-X '$(VERSION_VAR)=$(REPO_VERSION)' \
 	-X '$(REV_VAR)=$(REPO_REV)' \
 "
-GOBUILD_FLAGS ?=
-GOTEST_FLAGS  ?=
-GOX_OSARCH    ?= linux/amd64 linux/arm darwin/amd64
-GOX_FLAGS     ?= -output="builds/polochon_{{.OS}}_{{.Arch}}" -osarch="$(GOX_OSARCH)" -parallel=3
+GOX_DEFAULT_OS        ?= $(shell $(GO) env GOOS)
+GOX_DEFAULT_ARCH      ?= $(shell $(GO) env GOARCH)
+GOX_CROSS_OSARCH_FLAG ?= -osarch="linux/amd64 linux/arm darwin/amd64"
+GOX_OSARCH_FLAG       ?= -osarch="$(GOX_DEFAULT_OS)/$(GOX_DEFAULT_ARCH)"
+GOX_OUTPUT_FLAG       ?= -output="builds/$(BIN_NAME)_{{.OS}}_{{.Arch}}"
+GOX_PARALLEL_FLAG     ?= -parallel=3
 
 TRAVIS_BUILD_DIR ?= .
 export TRAVIS_BUILD_DIR
@@ -26,10 +29,6 @@ all: clean test
 .PHONY: test
 test: build fmt .test
 
-.PHONY: quicktest
-quicktest:
-	$(GO) test $(GOTEST_FLAGS) $(SUBPACKAGES)
-
 .PHONY: .test
 .test: coverage.html
 
@@ -37,7 +36,9 @@ coverage.html: gover.coverprofile
 	$(GO) tool cover -html=$^ -o $@
 
 gover.coverprofile:
-	set -e; for pkg in $(shell find -name "*.go" -printf "%h\n" | sort -u); do $(GO) test -v $$pkg -coverprofile $$pkg.coverprofile ; done && gover
+	set -e; \
+	$(GO) list -f '"echo {{ .ImportPath }} && $(GO) test -v -coverprofile={{ .Dir }}/{{.Name}}.coverprofile {{ .ImportPath }}"' ./... | xargs -L1 sh -c && \
+	gover
 
 goveralls: gover.coverprofile
 	$(HOME)/gopath/bin/goveralls -coverprofile=gover.coverprofile -service=travis-ci
@@ -47,11 +48,11 @@ build: deps .build
 
 .PHONY: .build
 .build:
-	$(GO) build $(GOBUILD_FLAGS) $(GOBUILD_LDFLAGS) ./...
+	$(GOX) $(GOX_OUTPUT_FLAG) $(GOX_OSARCH_FLAG) $(GOX_PARALLEL_FLAG) $(GOBUILD_LDFLAGS) ./...
 
 .PHONY: crossbuild
 crossbuild: deps
-	$(GOX) $(GOX_FLAGS) $(GOBUILD_FLAGS) $(GOBUILD_LDFLAGS) ./...
+	$(GOX) $(GOX_OUTPUT_FLAG) $(GOX_CROSS_OSARCH_FLAG) $(GOX_PARALLEL_FLAG) $(GOBUILD_LDFLAGS) ./...
 
 .PHONY: deps
 deps: .gox-install .goveralls-install .gover-install
