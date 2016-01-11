@@ -11,12 +11,12 @@ import (
 	"golang.org/x/exp/inotify"
 )
 
-// Time to wait before sending an event
-const DELAY time.Duration = 100 * time.Millisecond
-
-// Module constants
 const (
+	// Module name
 	moduleName = "inotify"
+
+	// DELAY represents the time to wait before sending an event
+	DELAY time.Duration = 100 * time.Millisecond
 )
 
 // Register fsnotify as a FsNotifier
@@ -70,6 +70,8 @@ func (i *Inotifier) Watch(pathToWatch string, ctx polochon.FsNotifierCtx, log *l
 		return err
 	}
 
+	log = log.WithField("module", moduleName)
+
 	// Run the event handler
 	go i.eventHandler(ctx, log)
 
@@ -104,9 +106,9 @@ func (i *Inotifier) eventHandler(ctx polochon.FsNotifierCtx, log *logrus.Entry) 
 				}
 			}
 		case err := <-i.watcher.Error:
-			ctx.Errc <- err
+			log.Error(err)
 		case <-ctx.Done:
-			log.Info("inotify is done watching")
+			log.Debug("inotify is done watching")
 			return
 		}
 	}

@@ -1,18 +1,13 @@
 package polochon
 
 import (
-	"io/ioutil"
 	"reflect"
 	"testing"
-
-	"github.com/Sirupsen/logrus"
 )
 
 // NewMovieIndex returns a new movie index
 func newFakeShowIndex() *ShowIndex {
-	log := logrus.NewEntry(&logrus.Logger{Out: ioutil.Discard})
 	return &ShowIndex{
-		log:   log.WithField("function", "showIndexTest"),
 		ids:   map[string]map[int]map[int]string{},
 		slugs: map[string]string{},
 	}
@@ -190,7 +185,7 @@ func TestRemoveSeason(t *testing.T) {
 	s.ImdbID = e.ShowImdbID
 	e.Path = "/home/test/show/season-1/showTers-s09e18.mp4"
 
-	si.RemoveSeason(s, 9)
+	si.RemoveSeason(s, 9, mockLogEntry)
 
 	res, err = si.IsSeasonEmpty("tt0397306", 9)
 	if err != nil {
@@ -221,7 +216,7 @@ func TestRemoveShow(t *testing.T) {
 	e.Show = s
 	e.Path = "/home/test/show/season-1/showTers-s09e18.mp4"
 
-	si.RemoveShow(s)
+	si.RemoveShow(s, mockLogEntry)
 
 	res, err = si.IsShowEmpty("tt0397306")
 	if err != nil {
@@ -258,7 +253,7 @@ func TestAddAndDeleteEpisodeToIndex(t *testing.T) {
 	}
 
 	// Remove it
-	err = si.Remove(e)
+	err = si.Remove(e, mockLogEntry)
 	if err != nil {
 		t.Fatal(err)
 	}

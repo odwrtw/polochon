@@ -8,10 +8,10 @@ import (
 )
 
 func TestStoreMovieNoPath(t *testing.T) {
-	vs := NewVideoStore(FileConfig{}, MovieConfig{}, ShowConfig{}, VideoStoreConfig{}, mockLogEntry)
+	vs := NewVideoStore(FileConfig{}, MovieConfig{}, ShowConfig{}, VideoStoreConfig{})
 	movie := mockMovie(MovieConfig{})
 
-	if err := vs.Add(movie); err != ErrMissingMovieFilePath {
+	if err := vs.Add(movie, mockLogEntry); err != ErrMissingMovieFilePath {
 		t.Errorf("Expected %q, got %q", ErrMissingMovieFilePath, err)
 	}
 }
@@ -39,7 +39,7 @@ func TestStoreMovie(t *testing.T) {
 	vs := NewVideoStore(FileConfig{}, MovieConfig{}, ShowConfig{}, VideoStoreConfig{
 		MovieDir: "/movie",
 		ShowDir:  "/show",
-	}, mockLogEntry)
+	})
 
 	writeNFOFile = func(filePath string, i interface{}, vs *VideoStore) error {
 		return nil
@@ -57,7 +57,7 @@ func TestStoreMovie(t *testing.T) {
 
 	expectedNewPath := "/movie/Test Movie (1)/testmovie.avi"
 
-	if err := vs.Add(movie); err != nil {
+	if err := vs.Add(movie, mockLogEntry); err != nil {
 		t.Errorf("Expected nil, got %q", err)
 	}
 
@@ -131,7 +131,7 @@ func TestStoreShow(t *testing.T) {
 	vs := NewVideoStore(FileConfig{}, MovieConfig{}, ShowConfig{}, VideoStoreConfig{
 		MovieDir: "/movie",
 		ShowDir:  "/show",
-	}, mockLogEntry)
+	})
 
 	writeNFOFile = func(filePath string, i interface{}, vs *VideoStore) error {
 		return nil
@@ -151,7 +151,7 @@ func TestStoreShow(t *testing.T) {
 
 	expectedNewPath := "/show/Test show/Season 1/episode.avi"
 
-	if err := vs.Add(episode); err != nil {
+	if err := vs.Add(episode, mockLogEntry); err != nil {
 		t.Errorf("Expected nil, got %q", err)
 	}
 

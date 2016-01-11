@@ -1,12 +1,10 @@
-package token_test
+package token
 
 import (
 	"io"
 	"reflect"
 	"strings"
 	"testing"
-
-	"github.com/odwrtw/polochon/token"
 )
 
 var configFile = strings.NewReader(`
@@ -41,28 +39,28 @@ var configFile = strings.NewReader(`
     value: admin1token
 `)
 
-func createExpectedManager() *token.Manager {
-	rGuest := &token.Role{
+func createExpectedManager() *Manager {
+	rGuest := &Role{
 		Name:    "guest",
 		Allowed: []string{"TokenGetAllowed", "MoviesListIDs", "ShowsListSlugs"},
-		Include: []*token.Role{},
+		Include: []*Role{},
 	}
 
-	rUser := &token.Role{
+	rUser := &Role{
 		Name:    "user",
 		Allowed: []string{"TorrentsAdd"},
-		Include: []*token.Role{rGuest},
+		Include: []*Role{rGuest},
 	}
 
-	rAdmin := &token.Role{
+	rAdmin := &Role{
 		Name:    "admin",
 		Allowed: []string{"DeleteBySlugs"},
-		Include: []*token.Role{rUser},
+		Include: []*Role{rUser},
 	}
 
-	return &token.Manager{
-		Roles: []*token.Role{rGuest, rUser, rAdmin},
-		Tokens: []*token.Token{
+	return &Manager{
+		Roles: []*Role{rGuest, rUser, rAdmin},
+		Tokens: []*Token{
 			{
 				Role:  rGuest,
 				Name:  "guest1",
@@ -185,7 +183,7 @@ var invalidMock = []struct {
 }
 
 func TestLoadValidConfig(t *testing.T) {
-	manager, err := token.LoadFromYaml(configFile)
+	manager, err := LoadFromYaml(configFile)
 
 	if err != nil {
 		t.Fatal(err)
@@ -201,7 +199,7 @@ func TestLoadValidConfig(t *testing.T) {
 
 func TestInvalidConfig(t *testing.T) {
 	for _, cfg := range invalidMock {
-		manager, err := token.LoadFromYaml(cfg.File)
+		manager, err := LoadFromYaml(cfg.File)
 		if manager != nil {
 			t.Error("Unexpected manager")
 		}

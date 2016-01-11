@@ -10,8 +10,6 @@ import (
 type MovieIndex struct {
 	// Mutex to protect reads / writes made concurrently by the http server
 	sync.RWMutex
-	// Logger
-	log *logrus.Entry
 	// ids keep the imdb ids and their associated paths
 	ids map[string]string
 	// slugs keep the movie index by slug
@@ -19,9 +17,8 @@ type MovieIndex struct {
 }
 
 // NewMovieIndex returns a new movie index
-func NewMovieIndex(log *logrus.Entry) *MovieIndex {
+func NewMovieIndex() *MovieIndex {
 	return &MovieIndex{
-		log:   log.WithField("function", "movieIndex"),
 		ids:   map[string]string{},
 		slugs: map[string]string{},
 	}
@@ -94,20 +91,20 @@ func (mi *MovieIndex) Add(movie *Movie) error {
 }
 
 // Remove will delete the movie from the index
-func (mi *MovieIndex) Remove(m *Movie) error {
+func (mi *MovieIndex) Remove(m *Movie, log *logrus.Entry) error {
 	mi.Lock()
 	defer mi.Unlock()
 
 	slug := m.Slug()
 
 	if _, ok := mi.slugs[slug]; !ok {
-		mi.log.Errorf("Movie not in slug index, WEIRD")
+		log.Errorf("Movie not in slug index, WEIRD")
 		return ErrSlugNotFound
 	}
 	delete(mi.slugs, slug)
 
 	if _, ok := mi.ids[m.ImdbID]; !ok {
-		mi.log.Errorf("Movie not in ids index, WEIRD")
+		log.Errorf("Movie not in ids index, WEIRD")
 		return ErrSlugNotFound
 	}
 	delete(mi.ids, m.ImdbID)

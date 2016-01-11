@@ -1,4 +1,4 @@
-package token_test
+package token
 
 import (
 	"fmt"
@@ -9,7 +9,6 @@ import (
 
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
-	"github.com/odwrtw/polochon/token"
 )
 
 func fakeHandler(http.ResponseWriter, *http.Request) {}
@@ -23,7 +22,7 @@ func createTestNegroni() *negroni.Negroni {
 	router.HandleFunc("/admin", fakeHandler).Name("DeleteBySlugs")
 	router.HandleFunc("/noname", fakeHandler)
 
-	tmiddleware := token.NewMiddleware(manager, router)
+	tmiddleware := NewMiddleware(manager, router)
 
 	n := negroni.New()
 	n.Use(tmiddleware)

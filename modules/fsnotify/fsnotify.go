@@ -9,12 +9,12 @@ import (
 	"gopkg.in/fsnotify.v1"
 )
 
-// Time to wait before sending an event
-const DELAY time.Duration = 100 * time.Millisecond
-
-// Module constants
 const (
+	// Module name
 	moduleName = "fsnotify"
+
+	// DELAY represents the time to wait before sending an event
+	DELAY time.Duration = 100 * time.Millisecond
 )
 
 // Register fsnotify as a FsNotifier
@@ -52,8 +52,10 @@ func (fs *FsNotify) Watch(watchPath string, ctx polochon.FsNotifierCtx, log *log
 		return err
 	}
 
+	log = log.WithField("module", moduleName)
+
 	// Run the event handler
-	go fs.eventHandler(ctx)
+	go fs.eventHandler(ctx, log)
 
 	// Watch the path
 	if err := fs.watcher.Add(watchPath); err != nil {
@@ -63,7 +65,7 @@ func (fs *FsNotify) Watch(watchPath string, ctx polochon.FsNotifierCtx, log *log
 	return nil
 }
 
-func (fs *FsNotify) eventHandler(ctx polochon.FsNotifierCtx) {
+func (fs *FsNotify) eventHandler(ctx polochon.FsNotifierCtx, log *logrus.Entry) {
 	// Notify the waitgroup
 	ctx.Wg.Add(1)
 	defer ctx.Wg.Done()
@@ -74,6 +76,7 @@ func (fs *FsNotify) eventHandler(ctx polochon.FsNotifierCtx) {
 	for {
 		select {
 		case <-ctx.Done:
+			log.Debug("fsnotify is done watching")
 			return
 		case ev := <-fs.watcher.Events:
 			if ev.Op != fsnotify.Create && ev.Op != fsnotify.Chmod {
@@ -89,7 +92,7 @@ func (fs *FsNotify) eventHandler(ctx polochon.FsNotifierCtx) {
 				ctx.Event <- ev.Name
 			}()
 		case err := <-fs.watcher.Errors:
-			ctx.Errc <- err
+			log.Error(err)
 		}
 	}
 }

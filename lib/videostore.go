@@ -39,20 +39,17 @@ type VideoStore struct {
 	showConfig  ShowConfig
 	movieConfig MovieConfig
 	fileConfig  FileConfig
-	log         *logrus.Entry
 }
 
 // NewVideoStore returns a list of videos
-func NewVideoStore(fileConfig FileConfig, movieConfig MovieConfig, showConfig ShowConfig, vsConfig VideoStoreConfig, log *logrus.Entry) *VideoStore {
-	videoStoreLogger := log.WithField("function", "videoStore")
+func NewVideoStore(fileConfig FileConfig, movieConfig MovieConfig, showConfig ShowConfig, vsConfig VideoStoreConfig) *VideoStore {
 	return &VideoStore{
-		movieIndex:       NewMovieIndex(videoStoreLogger),
-		showIndex:        NewShowIndex(videoStoreLogger),
+		movieIndex:       NewMovieIndex(),
+		showIndex:        NewShowIndex(),
 		showConfig:       showConfig,
 		movieConfig:      movieConfig,
 		fileConfig:       fileConfig,
 		VideoStoreConfig: vsConfig,
-		log:              videoStoreLogger,
 	}
 }
 
@@ -142,7 +139,7 @@ func (vs *VideoStore) SearchBySlug(video Video) (Video, error) {
 }
 
 // Add video
-func (vs *VideoStore) Add(video Video) error {
+func (vs *VideoStore) Add(video Video, log *logrus.Entry) error {
 	ok, err := vs.Has(video)
 	if err != nil {
 		return err
@@ -152,18 +149,18 @@ func (vs *VideoStore) Add(video Video) error {
 		if err != nil {
 			return err
 		}
-		if err := vs.Delete(v); err != nil {
+		if err := vs.Delete(v, log); err != nil {
 			return err
 		}
 	}
 
 	switch v := video.(type) {
 	case *Movie:
-		if err := vs.AddMovie(v); err != nil {
+		if err := vs.AddMovie(v, log); err != nil {
 			return err
 		}
 	case *ShowEpisode:
-		if err := vs.AddShowEpisode(v); err != nil {
+		if err := vs.AddShowEpisode(v, log); err != nil {
 			return err
 		}
 	default:
@@ -181,7 +178,7 @@ func (vs *VideoStore) getMovieDir(movie *Movie) string {
 }
 
 // AddMovie adds a movie to the store
-func (vs *VideoStore) AddMovie(movie *Movie) error {
+func (vs *VideoStore) AddMovie(movie *Movie, log *logrus.Entry) error {
 	if movie.Path == "" {
 		return ErrMissingMovieFilePath
 	}
@@ -190,13 +187,13 @@ func (vs *VideoStore) AddMovie(movie *Movie) error {
 
 	// If the movie already in the right dir there is nothing to do
 	if path.Dir(movie.Path) == storePath {
-		vs.log.Debug("Movie already in the destination folder")
+		log.Debug("Movie already in the destination folder")
 		return nil
 	}
 
 	// Remove movie dir if it exisits
 	if ok := exists(storePath); ok {
-		vs.log.Debug("Movie folder exists, remove it")
+		log.Debug("Movie folder exists, remove it")
 		if err := remove(storePath); err != nil {
 			return err
 		}
@@ -213,7 +210,7 @@ func (vs *VideoStore) AddMovie(movie *Movie) error {
 	// Save the old path
 	oldPath := movie.Path
 
-	vs.log.Debugf("Old path: %q, new path %q", movie.Path, newPath)
+	log.Debugf("Old path: %q, new path %q", movie.Path, newPath)
 	if err := move(movie.Path, newPath); err != nil {
 		return err
 	}
@@ -223,7 +220,7 @@ func (vs *VideoStore) AddMovie(movie *Movie) error {
 
 	// Create a symlink between the new and the old location
 	if err := os.Symlink(movie.Path, oldPath); err != nil {
-		vs.log.Warnf("Error while making symlink between %s and %s : %+v", oldPath, movie.Path, err)
+		log.Warnf("Error while making symlink between %s and %s : %+v", oldPath, movie.Path, err)
 	}
 
 	// Write NFO into the file
@@ -257,7 +254,7 @@ func (vs *VideoStore) getSeasonDir(ep *ShowEpisode) string {
 }
 
 // AddShowEpisode adds an episode to the store
-func (vs *VideoStore) AddShowEpisode(ep *ShowEpisode) error {
+func (vs *VideoStore) AddShowEpisode(ep *ShowEpisode, log *logrus.Entry) error {
 	if ep.Path == "" {
 		return ErrMissingShowEpisodeFilePath
 	}
@@ -269,8 +266,8 @@ func (vs *VideoStore) AddShowEpisode(ep *ShowEpisode) error {
 	if !exists(showNFOPath) {
 
 		show := NewShowFromEpisode(ep)
-		if err := show.GetDetails(vs.log); err != nil {
-			errors.LogErrors(vs.log, err)
+		if err := show.GetDetails(log); err != nil {
+			errors.LogErrors(log, err)
 			if errors.IsFatal(err) {
 				return err
 			}
@@ -317,7 +314,7 @@ func (vs *VideoStore) AddShowEpisode(ep *ShowEpisode) error {
 	// Move the file
 	// If the show episode already in the right dir there is nothing to do
 	if path.Dir(ep.Path) == seasonDir {
-		vs.log.Debug("show episode already in the destination folder")
+		log.Debug("show episode already in the destination folder")
 		return nil
 	}
 
@@ -326,7 +323,7 @@ func (vs *VideoStore) AddShowEpisode(ep *ShowEpisode) error {
 
 	// Move the episode into the folder
 	newPath := filepath.Join(seasonDir, path.Base(ep.Path))
-	vs.log.Debugf("Moving episode to folder Old path: %q, New path: %q", ep.Path, newPath)
+	log.Debugf("Moving episode to folder Old path: %q, New path: %q", ep.Path, newPath)
 	if err := move(ep.Path, newPath); err != nil {
 		return err
 	}
@@ -336,7 +333,7 @@ func (vs *VideoStore) AddShowEpisode(ep *ShowEpisode) error {
 
 	// Create a symlink between the new and the old location
 	if err := os.Symlink(ep.Path, oldPath); err != nil {
-		vs.log.Warnf("Error while making symlink between %s and %s : %+v", oldPath, ep.Path, err)
+		log.Warnf("Error while making symlink between %s and %s : %+v", oldPath, ep.Path, err)
 	}
 
 	// Create show NFO if necessary
@@ -348,28 +345,28 @@ func (vs *VideoStore) AddShowEpisode(ep *ShowEpisode) error {
 }
 
 // Delete will delete the video
-func (vs *VideoStore) Delete(video Video) error {
+func (vs *VideoStore) Delete(video Video, log *logrus.Entry) error {
 	switch v := video.(type) {
 	case *Movie:
-		return vs.DeleteMovie(v)
+		return vs.DeleteMovie(v, log)
 	case *ShowEpisode:
-		return vs.DeleteShowEpisode(v)
+		return vs.DeleteShowEpisode(v, log)
 	default:
 		return ErrInvalidIndexVideoType
 	}
 }
 
 // DeleteMovie will delete the movie
-func (vs *VideoStore) DeleteMovie(m *Movie) error {
+func (vs *VideoStore) DeleteMovie(m *Movie, log *logrus.Entry) error {
 	// Delete the movie
 	d := filepath.Dir(m.Path)
-	vs.log.Infof("Removing Movie %s", d)
+	log.Infof("Removing Movie %s", d)
 
 	if err := os.RemoveAll(d); err != nil {
 		return err
 	}
 	// Remove the movie from the index
-	if err := vs.movieIndex.Remove(m); err != nil {
+	if err := vs.movieIndex.Remove(m, log); err != nil {
 		return err
 	}
 
@@ -377,9 +374,9 @@ func (vs *VideoStore) DeleteMovie(m *Movie) error {
 }
 
 // DeleteShowEpisode will delete the showEpisode
-func (vs *VideoStore) DeleteShowEpisode(se *ShowEpisode) error {
+func (vs *VideoStore) DeleteShowEpisode(se *ShowEpisode, log *logrus.Entry) error {
 	// Delete the episode
-	vs.log.Infof("Removing ShowEpisode %q", se.Path)
+	log.Infof("Removing ShowEpisode %q", se.Path)
 	// Remove the episode
 	if err := os.RemoveAll(se.Path); err != nil {
 		return err
@@ -388,7 +385,7 @@ func (vs *VideoStore) DeleteShowEpisode(se *ShowEpisode) error {
 	// Remove also the .nfo and .srt files
 	for _, ext := range []string{"nfo", "srt"} {
 		fileToDelete := fmt.Sprintf("%s.%s", pathWithoutExt, ext)
-		vs.log.Debugf("Removing %q", fileToDelete)
+		log.Debugf("Removing %q", fileToDelete)
 		// Remove file
 		if err := os.RemoveAll(fileToDelete); err != nil {
 			return err
@@ -396,7 +393,7 @@ func (vs *VideoStore) DeleteShowEpisode(se *ShowEpisode) error {
 	}
 
 	// Remove the episode from the index
-	if err := vs.showIndex.Remove(se); err != nil {
+	if err := vs.showIndex.Remove(se, log); err != nil {
 		return err
 	}
 
@@ -412,7 +409,7 @@ func (vs *VideoStore) DeleteShowEpisode(se *ShowEpisode) error {
 			return err
 		}
 		// Remove the season from the index
-		if err := vs.showIndex.RemoveSeason(se.Show, se.Season); err != nil {
+		if err := vs.showIndex.RemoveSeason(se.Show, se.Season, log); err != nil {
 			return err
 		}
 	}
@@ -429,7 +426,7 @@ func (vs *VideoStore) DeleteShowEpisode(se *ShowEpisode) error {
 			return err
 		}
 		// Remove the show from the index
-		if err := vs.showIndex.RemoveShow(se.Show); err != nil {
+		if err := vs.showIndex.RemoveShow(se.Show, log); err != nil {
 			return err
 		}
 	}
@@ -495,7 +492,7 @@ func (vs *VideoStore) SearchShowEpisodeByImdbID(imdbID string, sNum, eNum int) (
 }
 
 // RebuildIndex rebuilds both the movie and show index
-func (vs *VideoStore) RebuildIndex() error {
+func (vs *VideoStore) RebuildIndex(log *logrus.Entry) error {
 	// Create a goroutine for each index
 	var wg sync.WaitGroup
 	errc := make(chan error, 2)
@@ -505,7 +502,7 @@ func (vs *VideoStore) RebuildIndex() error {
 	vs.movieIndex.Clear()
 	go func() {
 		defer wg.Done()
-		if err := vs.buildMovieIndex(); err != nil {
+		if err := vs.buildMovieIndex(log); err != nil {
 			errc <- err
 		}
 	}()
@@ -514,7 +511,7 @@ func (vs *VideoStore) RebuildIndex() error {
 	vs.showIndex.Clear()
 	go func() {
 		defer wg.Done()
-		if err := vs.buildShowIndex(); err != nil {
+		if err := vs.buildShowIndex(log); err != nil {
 			errc <- err
 		}
 	}()
@@ -532,12 +529,12 @@ func (vs *VideoStore) RebuildIndex() error {
 	return nil
 }
 
-func (vs *VideoStore) buildMovieIndex() error {
+func (vs *VideoStore) buildMovieIndex(log *logrus.Entry) error {
 	start := time.Now()
 	err := filepath.Walk(vs.MovieDir, func(filePath string, file os.FileInfo, err error) error {
 		// Check err
 		if err != nil {
-			vs.log.Errorf("video store: failed to walk %q", err)
+			log.Errorf("video store: failed to walk %q", err)
 			return nil
 		}
 
@@ -564,7 +561,7 @@ func (vs *VideoStore) buildMovieIndex() error {
 		// Read the movie informations
 		movie, err := vs.NewMovieFromPath(moviePath)
 		if err != nil {
-			vs.log.Errorf("video store: failed to read movie NFO: %q", err)
+			log.Errorf("video store: failed to read movie NFO: %q", err)
 			return nil
 		}
 
@@ -574,12 +571,12 @@ func (vs *VideoStore) buildMovieIndex() error {
 		return nil
 	})
 
-	vs.log.Infof("Index built in %s", time.Since(start))
+	log.Infof("Index built in %s", time.Since(start))
 
 	return err
 }
 
-func (vs *VideoStore) buildShowIndex() error {
+func (vs *VideoStore) buildShowIndex(log *logrus.Entry) error {
 	start := time.Now()
 
 	// used to catch if the first root folder have been walked
@@ -601,12 +598,12 @@ func (vs *VideoStore) buildShowIndex() error {
 		nfoPath := filepath.Join(filePath, "tvshow.nfo")
 		show, err := vs.NewShowFromPath(nfoPath)
 		if err != nil {
-			vs.log.Errorf("video store: failed to read tv show NFO: %q", err)
+			log.Errorf("video store: failed to read tv show NFO: %q", err)
 			return nil
 		}
 
 		// Scan the path for the episodes
-		err = vs.scanEpisodes(show.ImdbID, filePath)
+		err = vs.scanEpisodes(show.ImdbID, filePath, log)
 		if err != nil {
 			return err
 		}
@@ -618,18 +615,18 @@ func (vs *VideoStore) buildShowIndex() error {
 		return err
 	}
 
-	vs.log.Infof("Index built in %s", time.Since(start))
+	log.Infof("Index built in %s", time.Since(start))
 
 	return nil
 
 }
 
-func (vs *VideoStore) scanEpisodes(imdbID, showRootPath string) error {
+func (vs *VideoStore) scanEpisodes(imdbID, showRootPath string, log *logrus.Entry) error {
 	// Walk the files of a show
 	err := filepath.Walk(showRootPath, func(filePath string, file os.FileInfo, err error) error {
 		// Check err
 		if err != nil {
-			vs.log.Errorf("video store: failed to walk %q", err)
+			log.Errorf("video store: failed to walk %q", err)
 			return nil
 		}
 
@@ -656,7 +653,7 @@ func (vs *VideoStore) scanEpisodes(imdbID, showRootPath string) error {
 		// Read the nfo file
 		episode, err := vs.NewShowEpisodeFromPath(epPath)
 		if err != nil {
-			vs.log.Errorf("video store: failed to read episode NFO: %q", err)
+			log.Errorf("video store: failed to read episode NFO: %q", err)
 			return nil
 		}
 
