@@ -10,14 +10,20 @@
 Copy config.yml.example and customize it as you wish
 
 ### Build and launch
+
+#### From GitHub release
+
 ```
-go build -o polochon server/*.go
-./polochon -configPath=/home/user/config.yml
+$ curl -L https://github.com/odwrtw/polochon/releases/download/latest/polochon_$(go env GOOS)_$(go env GOARCH) -o polochon
+$ chmod +x polochon
+$ ./polochon -configPath=/home/user/config.yml
 ```
 
-### Run
+#### From source
+
 ```
-go run server/*.go -configPath=/home/user/config.yml
+$ make build
+$ builds/polochon_$(go env GOOS)_$(go env GOARCH) -configPath=/home/user/config.yml
 ```
 
 ## Modules
