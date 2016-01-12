@@ -3,15 +3,11 @@ package polochon
 import (
 	"log"
 	"testing"
-
-	"github.com/Sirupsen/logrus"
 )
 
 // NewMovieIndex returns a new movie index
 func mockMovieIndex() *MovieIndex {
-	logger := logrus.NewEntry(logrus.New())
 	return &MovieIndex{
-		log:   logger.WithField("function", "movieIndexTest"),
 		ids:   map[string]string{},
 		slugs: map[string]string{},
 	}
@@ -134,7 +130,7 @@ func TestAddAndRemoveMovieToIndex(t *testing.T) {
 		t.Errorf("Should have the movie %s in index", m.ImdbID)
 	}
 
-	err = mi.Remove(m)
+	err = mi.Remove(m, mockLogEntry)
 	if err != nil {
 		t.Fatal(err)
 	}

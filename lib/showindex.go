@@ -10,8 +10,6 @@ import (
 type ShowIndex struct {
 	// Mutex to protect reads / writes made concurrently by the http server
 	sync.RWMutex
-	// Logger
-	log *logrus.Entry
 	// ids keep the path of the show indexed by id, season and episode
 	ids map[string]map[int]map[int]string
 	// slugs keep the episode index by slug
@@ -19,9 +17,8 @@ type ShowIndex struct {
 }
 
 // NewShowIndex returns a new show index
-func NewShowIndex(log *logrus.Entry) *ShowIndex {
+func NewShowIndex() *ShowIndex {
 	return &ShowIndex{
-		log:   log.WithField("function", "showIndex"),
 		ids:   map[string]map[int]map[int]string{},
 		slugs: map[string]string{},
 	}
@@ -148,12 +145,12 @@ func (si *ShowIndex) IsSeasonEmpty(imdbID string, season int) (bool, error) {
 }
 
 // RemoveSeason removes the season from the index
-func (si *ShowIndex) RemoveSeason(show *Show, season int) error {
-	si.log.Infof("Deleting whole season %d of %s from index", season, show.ImdbID)
+func (si *ShowIndex) RemoveSeason(show *Show, season int, log *logrus.Entry) error {
+	log.Infof("Deleting whole season %d of %s from index", season, show.ImdbID)
 
 	for _, ep := range show.Episodes {
 		if ep.Season == season {
-			si.Remove(ep)
+			si.Remove(ep, log)
 		}
 	}
 
@@ -161,11 +158,11 @@ func (si *ShowIndex) RemoveSeason(show *Show, season int) error {
 }
 
 // RemoveShow removes the show from the index
-func (si *ShowIndex) RemoveShow(show *Show) error {
-	si.log.Infof("Deleting whole show %s from index", show.ImdbID)
+func (si *ShowIndex) RemoveShow(show *Show, log *logrus.Entry) error {
+	log.Infof("Deleting whole show %s from index", show.ImdbID)
 
 	for _, ep := range show.Episodes {
-		si.Remove(ep)
+		si.Remove(ep, log)
 	}
 	si.Lock()
 	defer si.Unlock()
@@ -175,7 +172,7 @@ func (si *ShowIndex) RemoveShow(show *Show) error {
 }
 
 // Remove removes the show episode from the index
-func (si *ShowIndex) Remove(episode *ShowEpisode) error {
+func (si *ShowIndex) Remove(episode *ShowEpisode, log *logrus.Entry) error {
 	si.Lock()
 	defer si.Unlock()
 
@@ -187,7 +184,7 @@ func (si *ShowIndex) Remove(episode *ShowEpisode) error {
 	// Check if the slug is in the index
 	_, err := si.searchShowEpisodeBySlug(slug)
 	if err != nil {
-		si.log.Errorf("Show not in slug index, WEIRD")
+		log.Errorf("Show not in slug index, WEIRD")
 		return err
 	}
 

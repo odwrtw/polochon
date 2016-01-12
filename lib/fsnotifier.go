@@ -10,8 +10,7 @@ import (
 // FsNotifierCtx is the context of the notifier
 type FsNotifierCtx struct {
 	Event chan string
-	Done  chan struct{}
-	Errc  chan error
+	Done  <-chan struct{}
 	Wg    *sync.WaitGroup
 }
 

@@ -1,4 +1,4 @@
-package token_test
+package token
 
 import (
 	"reflect"
