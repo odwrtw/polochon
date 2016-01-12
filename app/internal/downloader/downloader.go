@@ -26,6 +26,7 @@ func New(config *configuration.Config, vs *polochon.VideoStore) *Downloader {
 	return &Downloader{
 		config:     config,
 		videoStore: vs,
+		event:      make(chan struct{}),
 		done:       make(chan struct{}),
 	}
 }
