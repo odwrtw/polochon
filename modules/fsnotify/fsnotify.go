@@ -34,19 +34,18 @@ func (fs *FsNotify) Name() string {
 
 // NewFsNotify returns a new FsNotify
 func NewFsNotify(p []byte) (polochon.FsNotifier, error) {
-	// Create a new watcher
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return nil, err
-	}
-
-	return &FsNotify{
-		watcher: watcher,
-	}, nil
+	return &FsNotify{}, nil
 }
 
 // Watch implements the modules fsNotifier interface
 func (fs *FsNotify) Watch(watchPath string, ctx polochon.FsNotifierCtx, log *logrus.Entry) error {
+	// Create a new watcher
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return err
+	}
+	fs.watcher = watcher
+
 	// Ensure that the watch path exists
 	if _, err := os.Stat(watchPath); os.IsNotExist(err) {
 		return err

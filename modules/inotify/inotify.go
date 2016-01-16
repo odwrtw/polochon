@@ -26,12 +26,6 @@ func init() {
 
 // NewInotify returns a new Inotify
 func NewInotify(p []byte) (polochon.FsNotifier, error) {
-	// Create a new inotify watcher
-	watcher, err := inotify.NewWatcher()
-	if err != nil {
-		return nil, err
-	}
-
 	return &Inotifier{
 		Events: []uint32{
 			// File created
@@ -47,7 +41,6 @@ func NewInotify(p []byte) (polochon.FsNotifier, error) {
 			inotify.IN_MOVED_TO + inotify.IN_ISDIR,
 			inotify.IN_MOVE_SELF + inotify.IN_ISDIR,
 		},
-		watcher: watcher,
 	}, nil
 }
 
@@ -65,6 +58,13 @@ func (i *Inotifier) Name() string {
 
 // Watch start watching all the paths
 func (i *Inotifier) Watch(pathToWatch string, ctx polochon.FsNotifierCtx, log *logrus.Entry) error {
+	// Create a new inotify watcher
+	watcher, err := inotify.NewWatcher()
+	if err != nil {
+		return err
+	}
+	i.watcher = watcher
+
 	// Ensure that the watch path exists
 	if _, err := os.Stat(pathToWatch); os.IsNotExist(err) {
 		return err
