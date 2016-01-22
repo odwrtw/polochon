@@ -7,25 +7,17 @@ import (
 	"syscall"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/odwrtw/errors"
 	"github.com/odwrtw/polochon/app/internal/cleaner"
 	"github.com/odwrtw/polochon/app/internal/configuration"
 	"github.com/odwrtw/polochon/app/internal/downloader"
 	"github.com/odwrtw/polochon/app/internal/organizer"
+	"github.com/odwrtw/polochon/app/internal/safeguard"
 	"github.com/odwrtw/polochon/app/internal/server"
+	"github.com/odwrtw/polochon/app/internal/subapp"
 	"github.com/odwrtw/polochon/app/internal/token"
 	"github.com/odwrtw/polochon/lib"
 )
-
-// SubApp represents an application launched by the App
-type SubApp interface {
-	// Name returns the name of the sub app
-	Name() string
-	// Run starts the SubApp, it should be a synchronous call
-	Run(log *logrus.Entry) error
-	// Stop sends a signal to the SubApp to stop gracefully, this should be an
-	// asynchronous call
-	Stop(log *logrus.Entry)
-}
 
 // App represents the polochon app
 type App struct {
@@ -34,10 +26,15 @@ type App struct {
 	tokenConfigPath string
 
 	// subApps hold the sub applications
-	subApps []SubApp
+	subApps []subapp.App
 
 	// done is channel used to stop the app
 	done chan struct{}
+
+	// safeguard
+	safeguard *safeguard.Safeguard
+
+	reload chan subapp.App
 
 	// wait group sync the goroutines launched by the app
 	wg sync.WaitGroup
@@ -61,7 +58,9 @@ func NewApp(configPath, tokenManagerPath string) (*App, error) {
 	app := &App{
 		configPath:      configPath,
 		tokenConfigPath: tokenManagerPath,
+		safeguard:       safeguard.New(),
 		done:            make(chan struct{}),
+		reload:          make(chan subapp.App),
 		logger:          logger,
 	}
 
@@ -91,7 +90,7 @@ func (a *App) init() error {
 	}
 
 	// Add the organizer
-	a.subApps = []SubApp{organizer.New(config, videoStore)}
+	a.subApps = []subapp.App{organizer.New(config, videoStore)}
 
 	if config.Downloader.Enabled {
 		// Add the downloader
@@ -139,19 +138,36 @@ func (a *App) Run() {
 	signal.Notify(osSig, syscall.SIGINT, syscall.SIGKILL, syscall.SIGHUP)
 
 	log := logrus.NewEntry(a.logger)
-	a.logger.Info("starting the app")
+	log.Info("starting the app")
+
+	// Panic loop safeguard
+	go func() {
+		if err := a.safeguard.Run(log); err != nil {
+			errors.LogErrors(log, err)
+			go a.Stop(log)
+		}
+	}()
 
 	// Start all the apps
-	a.startApps(log)
+	a.startSubApps(log)
 
 	// Handle graceful shutdown
 	var forceShutdown bool
 
+	// Main loop
 	for {
 		select {
 		case <-a.done:
-			a.logger.Info("all done, exiting")
+			log.Info("all done, exiting")
 			return
+		case subApp := <-a.reload:
+			log.Infof("reloading sub app %q", subApp.Name())
+			a.wg.Add(1)
+			go func() {
+				defer a.wg.Done()
+				subApp.BlockingStop(log)
+				a.subAppStart(subApp, log)
+			}()
 		case sig := <-osSig:
 			log.WithField("os_event", sig).Info("got an os event")
 			switch sig {
@@ -177,7 +193,7 @@ func (a *App) Run() {
 					log.Fatal(err)
 				}
 
-				a.startApps(log)
+				a.startSubApps(log)
 
 				log.Info("app reloaded")
 			}
@@ -185,18 +201,11 @@ func (a *App) Run() {
 	}
 }
 
-// startApps launches all the sub app in their own goroutine
-func (a *App) startApps(log *logrus.Entry) {
+// startSubApps launches all the sub app
+func (a *App) startSubApps(log *logrus.Entry) {
 	log.Debug("starting the sub apps")
 	for _, subApp := range a.subApps {
-		log.Debugf("starting sub app %q", subApp.Name())
-		a.wg.Add(1)
-		go func(app SubApp) {
-			defer a.wg.Done()
-			if err := app.Run(log); err != nil {
-				log.Error(err)
-			}
-		}(subApp)
+		a.subAppStart(subApp, log)
 	}
 }
 
@@ -215,5 +224,37 @@ func (a *App) stopApps(log *logrus.Entry) {
 // Stop stops the app
 func (a *App) Stop(log *logrus.Entry) {
 	a.stopApps(log)
+	a.safeguard.BlockingStop(log)
 	close(a.done)
+}
+
+// Start statrs a sub app in its own goroutine
+func (a *App) subAppStart(app subapp.App, log *logrus.Entry) {
+	log.Debugf("starting sub app %q", app.Name())
+	a.wg.Add(1)
+	go func() {
+		defer a.wg.Done()
+
+		if err := app.Run(log); err != nil {
+			// Check the error type, if it comes from a panic recovery
+			// reload the app
+			switch e := err.(type) {
+			case *errors.Error:
+				errors.LogErrors(log.WithField("app", app.Name()), e)
+
+				// Notify the safeguard of the error
+				a.safeguard.Event()
+
+				// Write to the reload channel in a goroutine to prevent deadlocks
+				go func() {
+					a.reload <- app
+				}()
+			// Only log the error
+			default:
+				log.Error(err)
+				go a.Stop(log)
+			}
+		}
+	}()
+	log.Debugf("sub app %q started", app.Name())
 }

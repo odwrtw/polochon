@@ -3,11 +3,11 @@ package organizer
 import (
 	"os"
 	"path/filepath"
-	"sync"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/errors"
 	"github.com/odwrtw/polochon/app/internal/configuration"
+	"github.com/odwrtw/polochon/app/internal/subapp"
 	"github.com/odwrtw/polochon/lib"
 )
 
@@ -16,66 +16,70 @@ const AppName = "organizer"
 
 // Organizer represents the organizer
 type Organizer struct {
+	*subapp.Base
+
 	config     *configuration.Config
 	videoStore *polochon.VideoStore
-	done       chan struct{}
 	event      chan string
 }
 
 // New returns a new organizer
 func New(config *configuration.Config, vs *polochon.VideoStore) *Organizer {
 	return &Organizer{
+		Base:       subapp.NewBase(AppName),
 		config:     config,
 		videoStore: vs,
-		done:       make(chan struct{}),
-		event:      make(chan string),
 	}
-}
-
-// Name returns the name of the app
-func (o *Organizer) Name() string {
-	return AppName
 }
 
 // Run starts the downloader
 func (o *Organizer) Run(log *logrus.Entry) error {
+	// Create the channels
+	o.event = make(chan string, 1)
+	// Init the app
+	o.InitStart(log)
+
 	log = log.WithField("app", AppName)
 
-	log.Debug("organizer started")
+	defer log.Debug("organizer stopped")
 
 	// Start the file system notifier
 	if err := o.startFsNotifier(log); err != nil {
 		return err
 	}
 
-	log.Debug("organizer stopped")
-
 	return nil
-}
-
-// Stop stops the downloader
-func (o *Organizer) Stop(log *logrus.Entry) {
-	close(o.done)
 }
 
 // startFsNotifier starts the FsNotifier
 func (o *Organizer) startFsNotifier(log *logrus.Entry) error {
-	var wg sync.WaitGroup
-
 	ctx := polochon.FsNotifierCtx{
 		Event: o.event,
-		Done:  o.done,
-		Wg:    &wg,
+		Done:  o.Done,
+		Wg:    &o.Wg,
 	}
 
+	// Send a notification to organize the whole folder on app start
+	watcherPath := o.config.Watcher.Dir
+	ctx.Event <- watcherPath
+
 	// Launch the FsNotifier
-	if err := o.config.Watcher.FsNotifier.Watch(o.config.Watcher.Dir, ctx, log); err != nil {
+	if err := o.config.Watcher.FsNotifier.Watch(watcherPath, ctx, log); err != nil {
 		return err
 	}
 
-	wg.Add(1)
+	var err error
+	o.Wg.Add(1)
 	go func() {
-		defer wg.Done()
+		defer func() {
+			o.Wg.Done()
+			if r := recover(); r != nil {
+				err = errors.New("panic recovered").Fatal().AddContext(errors.Context{
+					"sub_app": AppName,
+				})
+				o.Stop(log)
+			}
+		}()
 
 		for {
 			select {
@@ -84,25 +88,16 @@ func (o *Organizer) startFsNotifier(log *logrus.Entry) error {
 				if err := o.organize(file, log); err != nil {
 					log.Errorf("failed to organize file: %q", err)
 				}
-			case <-o.done:
+			case <-o.Done:
 				log.Debug("organizer done handling events")
 				return
 			}
 		}
 	}()
 
-	// Send a notification to organize the whole folder on app start
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	o.Wg.Wait()
 
-		log.Info("organize the watched folder")
-		ctx.Event <- o.config.Watcher.Dir
-	}()
-
-	wg.Wait()
-
-	return nil
+	return err
 }
 
 // Organize stores the videos in the video library

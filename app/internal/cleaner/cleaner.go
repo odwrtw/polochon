@@ -6,11 +6,12 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"sync"
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/odwrtw/errors"
 	"github.com/odwrtw/polochon/app/internal/configuration"
+	"github.com/odwrtw/polochon/app/internal/subapp"
 	"github.com/odwrtw/polochon/lib"
 )
 
@@ -19,63 +20,63 @@ const AppName = "cleaner"
 
 // Cleaner represents a cleaner
 type Cleaner struct {
+	*subapp.Base
+
 	config *configuration.Config
 	event  chan struct{}
-	done   chan struct{}
 }
 
 // New returns a new cleaner
 func New(config *configuration.Config) *Cleaner {
 	return &Cleaner{
+		Base:   subapp.NewBase(AppName),
 		config: config,
-		done:   make(chan struct{}),
-		event:  make(chan struct{}),
 	}
-}
-
-// Name returns the name of the app
-func (c *Cleaner) Name() string {
-	return AppName
 }
 
 // Run starts the cleaner
 func (c *Cleaner) Run(log *logrus.Entry) error {
 	log = log.WithField("app", AppName)
 
+	// Init the app
+	c.InitStart(log)
+
+	c.event = make(chan struct{}, 1)
+
 	log.Debug("cleaner started")
 
-	var wg sync.WaitGroup
+	log.Debug("initial cleaner launch")
+	c.event <- struct{}{}
 
 	// Start the ticker
-	wg.Add(1)
+	c.Wg.Add(1)
 	go func() {
-		defer wg.Done()
+		defer c.Wg.Done()
 		c.ticker(log)
 	}()
 
 	// Start the cleaner
-	wg.Add(1)
+	var err error
+	c.Wg.Add(1)
 	go func() {
-		defer wg.Done()
+		defer func() {
+			if r := recover(); r != nil {
+				err = errors.New("panic recovered").Fatal().AddContext(errors.Context{
+					"sub_app": AppName,
+				})
+				c.Stop(log)
+			}
+
+			c.Wg.Done()
+		}()
 		c.cleaner(log)
 	}()
 
-	// Lauch the cleaner at startup
-	go func() {
-		log.Debug("initial cleaner launch")
-		c.event <- struct{}{}
-	}()
+	defer log.Debug("cleaner stopped")
 
-	wg.Wait()
+	c.Wg.Wait()
 
-	log.Debug("cleaner stopped")
-
-	return nil
-}
-
-// Stop stops the cleaner
-func (c *Cleaner) Stop(log *logrus.Entry) {
-	close(c.done)
+	return err
 }
 
 func (c *Cleaner) ticker(log *logrus.Entry) {
@@ -85,7 +86,7 @@ func (c *Cleaner) ticker(log *logrus.Entry) {
 		case <-tick:
 			log.Debug("cleaner timer triggered")
 			c.event <- struct{}{}
-		case <-c.done:
+		case <-c.Done:
 			log.Debug("cleaner timer stopped")
 			return
 		}
@@ -98,7 +99,7 @@ func (c *Cleaner) cleaner(log *logrus.Entry) {
 		case <-c.event:
 			log.Debug("cleaner event")
 			c.cleanDoneVideos(log)
-		case <-c.done:
+		case <-c.Done:
 			log.Debug("cleaner done handling events")
 			return
 		}
