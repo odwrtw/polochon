@@ -13,6 +13,7 @@ import (
 	"github.com/braintree/manners"
 	"github.com/gorilla/mux"
 	"github.com/odwrtw/polochon/app/internal/configuration"
+	"github.com/odwrtw/polochon/app/internal/subapp"
 	"github.com/odwrtw/polochon/app/internal/token"
 	"github.com/odwrtw/polochon/lib"
 )
@@ -22,6 +23,8 @@ const AppName = "http_server"
 
 // Server represents a http server
 type Server struct {
+	*subapp.Base
+
 	config         *configuration.Config
 	videoStore     *polochon.VideoStore
 	tokenManager   *token.Manager
@@ -33,6 +36,7 @@ type Server struct {
 // New returns a new server
 func New(config *configuration.Config, vs *polochon.VideoStore, tm *token.Manager) *Server {
 	return &Server{
+		Base:         subapp.NewBase(AppName),
 		config:       config,
 		videoStore:   vs,
 		tokenManager: tm,
@@ -40,14 +44,13 @@ func New(config *configuration.Config, vs *polochon.VideoStore, tm *token.Manage
 	}
 }
 
-// Name returns the name of the app
-func (s *Server) Name() string {
-	return AppName
-}
-
 // Run starts the server
 func (s *Server) Run(log *logrus.Entry) error {
 	s.log = log.WithField("app", AppName)
+
+	// Init the app
+	s.InitStart(log)
+
 	s.gracefulServer = manners.NewWithServer(s.httpServer(s.log))
 	return s.gracefulServer.ListenAndServe()
 }
@@ -55,6 +58,11 @@ func (s *Server) Run(log *logrus.Entry) error {
 // Stop stops the http server
 func (s *Server) Stop(log *logrus.Entry) {
 	s.gracefulServer.Close()
+}
+
+// BlockingStop stops the http server and waits for it to be done
+func (s *Server) BlockingStop(log *logrus.Entry) {
+	s.gracefulServer.BlockingClose()
 }
 
 func (s *Server) movieSlugs(w http.ResponseWriter, req *http.Request) {

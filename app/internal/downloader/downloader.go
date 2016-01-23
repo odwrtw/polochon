@@ -1,12 +1,12 @@
 package downloader
 
 import (
-	"sync"
 	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/errors"
 	"github.com/odwrtw/polochon/app/internal/configuration"
+	"github.com/odwrtw/polochon/app/internal/subapp"
 	"github.com/odwrtw/polochon/lib"
 )
 
@@ -15,18 +15,19 @@ const AppName = "downloader"
 
 // Downloader represents the downloader
 type Downloader struct {
+	*subapp.Base
+
 	config     *configuration.Config
 	videoStore *polochon.VideoStore
 	event      chan struct{}
-	done       chan struct{}
 }
 
 // New returns a new downloader
 func New(config *configuration.Config, vs *polochon.VideoStore) *Downloader {
 	return &Downloader{
+		Base:       subapp.NewBase(AppName),
 		config:     config,
 		videoStore: vs,
-		done:       make(chan struct{}),
 	}
 }
 
@@ -39,40 +40,45 @@ func (d *Downloader) Name() string {
 func (d *Downloader) Run(log *logrus.Entry) error {
 	log = log.WithField("app", AppName)
 
+	// Init the app
+	d.InitStart(log)
+
 	log.Debug("downloader started")
 
-	var wg sync.WaitGroup
+	// Lauch the downloader at startup
+	log.Debug("initial downloader launch")
+	d.event = make(chan struct{}, 1)
+	d.event <- struct{}{}
 
 	// Start the ticker
-	wg.Add(1)
+	d.Wg.Add(1)
 	go func() {
-		defer wg.Done()
+		defer d.Wg.Done()
 		d.ticker(log)
 	}()
 
 	// Start the downloader
-	wg.Add(1)
+	var err error
+	d.Wg.Add(1)
 	go func() {
-		defer wg.Done()
+		defer func() {
+			if r := recover(); r != nil {
+				err = errors.New("panic recovered").Fatal().AddContext(errors.Context{
+					"sub_app": AppName,
+				})
+				d.Stop(log)
+			}
+
+			d.Wg.Done()
+		}()
 		d.downloader(log)
 	}()
 
-	// Lauch the downloader at startup
-	go func() {
-		log.Debug("initial downloader launch")
-		d.event <- struct{}{}
-	}()
+	defer log.Debug("downloader stopped")
 
-	wg.Wait()
+	d.Wg.Wait()
 
-	log.Debug("downloader stopped")
-
-	return nil
-}
-
-// Stop stops the downloader
-func (d *Downloader) Stop(log *logrus.Entry) {
-	close(d.done)
+	return err
 }
 
 func (d *Downloader) ticker(log *logrus.Entry) {
@@ -82,7 +88,7 @@ func (d *Downloader) ticker(log *logrus.Entry) {
 		case <-tick:
 			log.Debug("downloader timer triggered")
 			d.event <- struct{}{}
-		case <-d.done:
+		case <-d.Done:
 			log.Debug("downloader timer stopped")
 			return
 		}
@@ -95,7 +101,7 @@ func (d *Downloader) downloader(log *logrus.Entry) {
 		case <-d.event:
 			log.Debug("downloader event")
 			d.downloadMissingVideos(log)
-		case <-d.done:
+		case <-d.Done:
 			log.Debug("downloader done handling events")
 			return
 		}
@@ -110,17 +116,8 @@ func (d *Downloader) downloadMissingVideos(log *logrus.Entry) {
 		return
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		d.downloadMissingMovies(wl, log)
-	}()
-	go func() {
-		defer wg.Done()
-		d.downloadMissingShows(wl, log)
-	}()
-	wg.Wait()
+	d.downloadMissingMovies(wl, log)
+	d.downloadMissingShows(wl, log)
 }
 
 func (d *Downloader) downloadMissingMovies(wl *polochon.Wishlist, log *logrus.Entry) {
