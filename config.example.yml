@@ -78,6 +78,8 @@ modules_params:
     - etHD
     movies_users:
     - YIFY
+  - name: tmdb
+    apikey: my@w3$0m3@pIk3y
 show:
   calendar: tvdb
   dir: /home/user/tvshows

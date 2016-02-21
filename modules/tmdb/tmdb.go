@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/arbovm/levenshtein"
 	"github.com/odwrtw/polochon/lib"
@@ -23,13 +25,13 @@ func init() {
 
 // API constants
 const (
-	TmDBAPIKey       = "9b939aee0aaafc12a65bf448e4af9543"
 	TmDBimageBaseURL = "https://image.tmdb.org/t/p/original"
 )
 
 // TmDB errors
 var (
 	ErrInvalidArgument    = errors.New("tmdb: invalid argument")
+	ErrMissingArgument    = errors.New("tmdb: missing argument")
 	ErrNoMovieFound       = errors.New("tmdb: movie not found")
 	ErrNoMovieTitle       = errors.New("tmdb: can not search for a movie with no title")
 	ErrNoMovieImDBID      = errors.New("tmdb: can not search for a movie with no imdb")
@@ -37,22 +39,39 @@ var (
 )
 
 // TmDB implents the Detailer interface
-type TmDB struct{}
+type TmDB struct {
+	client *tmdb.TMDb
+}
+
+// Params represents the module params
+type Params struct {
+	ApiKey string `yaml:"apikey"`
+}
 
 // New is an helper to avoid passing bytes
-func New() (polochon.Detailer, error) {
-	return &TmDB{}, nil
+func New(p *Params) (polochon.Detailer, error) {
+	if p.ApiKey == "" {
+		return nil, ErrMissingArgument
+	}
+
+	return &TmDB{
+		client: tmdb.Init(p.ApiKey),
+	}, nil
 }
 
 // NewFromRawYaml unmarshals the bytes as yaml as params and call the New
 // function
 func NewFromRawYaml(p []byte) (polochon.Detailer, error) {
-	return New()
+	params := &Params{}
+	if err := yaml.Unmarshal(p, params); err != nil {
+		return nil, err
+	}
+
+	return New(params)
 }
 
 // Function to be overwritten during the tests
-var tmdbSearchMovie = func(title string, options map[string]string) (*tmdb.MovieSearchResults, error) {
-	t := tmdb.Init(TmDBAPIKey)
+var tmdbSearchMovie = func(t *tmdb.TMDb, title string, options map[string]string) (*tmdb.MovieSearchResults, error) {
 	return t.SearchMovie(title, options)
 }
 
@@ -76,7 +95,7 @@ func (t *TmDB) searchByTitle(m *polochon.Movie, log *logrus.Entry) error {
 	}
 
 	// Search on tmdb
-	r, err := tmdbSearchMovie(m.Title, options)
+	r, err := tmdbSearchMovie(t.client, m.Title, options)
 	if err != nil {
 		return err
 	}
@@ -106,8 +125,7 @@ func (t *TmDB) searchByTitle(m *polochon.Movie, log *logrus.Entry) error {
 }
 
 // Function to be overwritten during the tests
-var tmdbSearchByImdbID = func(id, source string, options map[string]string) (*tmdb.FindResults, error) {
-	t := tmdb.Init(TmDBAPIKey)
+var tmdbSearchByImdbID = func(t *tmdb.TMDb, id, source string, options map[string]string) (*tmdb.FindResults, error) {
 	return t.GetFind(id, "imdb_id", options)
 }
 
@@ -124,7 +142,7 @@ func (t *TmDB) searchByImdbID(m *polochon.Movie, log *logrus.Entry) error {
 	}
 
 	// Search on tmdb
-	results, err := tmdbSearchByImdbID(m.ImdbID, "imdb_id", map[string]string{})
+	results, err := tmdbSearchByImdbID(t.client, m.ImdbID, "imdb_id", map[string]string{})
 	if err != nil {
 		return err
 	}
@@ -143,8 +161,7 @@ func (t *TmDB) searchByImdbID(m *polochon.Movie, log *logrus.Entry) error {
 }
 
 // Function to be overwritten during the tests
-var tmdbGetMovieInfo = func(tmdbID int, options map[string]string) (*tmdb.Movie, error) {
-	t := tmdb.Init(TmDBAPIKey)
+var tmdbGetMovieInfo = func(t *tmdb.TMDb, tmdbID int, options map[string]string) (*tmdb.Movie, error) {
 	return t.GetMovieInfo(tmdbID, options)
 }
 
@@ -183,7 +200,7 @@ func (t *TmDB) GetDetails(i interface{}, log *logrus.Entry) error {
 	}
 
 	// Search on tmdb
-	details, err := tmdbGetMovieInfo(m.TmdbID, map[string]string{})
+	details, err := tmdbGetMovieInfo(t.client, m.TmdbID, map[string]string{})
 	if err != nil {
 		return err
 	}
