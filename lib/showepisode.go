@@ -89,7 +89,8 @@ func (s *ShowEpisode) GetDetails(log *logrus.Entry) error {
 
 	var done bool
 	for _, d := range s.Detailers {
-		err := d.GetDetails(s, log)
+		detailerLog := log.WithField("detailer", d.Name())
+		err := d.GetDetails(s, detailerLog)
 		if err == nil {
 			done = true
 			break
@@ -113,7 +114,8 @@ func (s *ShowEpisode) GetTorrents(log *logrus.Entry) error {
 	c := errors.NewCollector()
 
 	for _, t := range s.Torrenters {
-		err := t.GetTorrents(s, log)
+		torrenterLog := log.WithField("torrenter", t.Name())
+		err := t.GetTorrents(s, torrenterLog)
 		if err == nil {
 			break
 		}
@@ -134,7 +136,8 @@ func (s *ShowEpisode) GetSubtitle(log *logrus.Entry) error {
 	var subtitle Subtitle
 	for _, subtitler := range s.Subtitlers {
 		var err error
-		subtitle, err = subtitler.GetShowSubtitle(s, log)
+		subtitlerLog := log.WithField("subtitler", subtitler.Name())
+		subtitle, err = subtitler.GetShowSubtitle(s, subtitlerLog)
 		if err == nil {
 			break
 		}

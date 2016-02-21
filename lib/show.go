@@ -43,7 +43,8 @@ func (s *Show) GetDetails(log *logrus.Entry) error {
 
 	var done bool
 	for _, d := range s.Detailers {
-		err := d.GetDetails(s, log)
+		detailerLog := log.WithField("detailer", d.Name())
+		err := d.GetDetails(s, detailerLog)
 		if err == nil {
 			done = true
 			break
