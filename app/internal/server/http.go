@@ -87,6 +87,43 @@ func (s *Server) movieIds(w http.ResponseWriter, req *http.Request) {
 	s.renderOK(w, movieIds)
 }
 
+func (s *Server) getMovieDetails(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	idType := vars["idType"]
+	id := vars["id"]
+
+	s.log.Debugf("looking for a movie by %q with ID %q", idType, id)
+
+	var searchFunc func(id string) (polochon.Video, error)
+	switch idType {
+	case "ids":
+		searchFunc = s.videoStore.SearchMovieByImdbID
+	case "slugs":
+		searchFunc = s.videoStore.SearchMovieBySlug
+	default:
+		s.renderError(w, fmt.Errorf("invalid id type: %q", idType))
+	}
+
+	// Find the file by Slug
+	v, err := searchFunc(id)
+	if err != nil {
+		s.log.Error(err)
+		var status int
+		if err == polochon.ErrSlugNotFound {
+			status = http.StatusNotFound
+		} else {
+			status = http.StatusInternalServerError
+		}
+		s.renderError(w, &Error{
+			Code:    status,
+			Message: "URL not found",
+		})
+		return
+	}
+
+	s.renderOK(w, v)
+}
+
 func (s *Server) showIds(w http.ResponseWriter, req *http.Request) {
 	s.log.Debug("listing shows")
 
@@ -128,6 +165,67 @@ func (s *Server) showSlugs(w http.ResponseWriter, req *http.Request) {
 	}
 
 	s.renderOK(w, slugs)
+}
+
+func (s *Server) getShowEpisodeSlugDetails(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	slug := vars["slug"]
+
+	v, err := s.videoStore.SearchShowEpisodeBySlug(slug)
+	if err != nil {
+		s.log.Error(err)
+		var status int
+		if err == polochon.ErrSlugNotFound {
+			status = http.StatusNotFound
+		} else {
+			status = http.StatusInternalServerError
+		}
+		s.renderError(w, &Error{
+			Code:    status,
+			Message: "URL not found",
+		})
+		return
+	}
+
+	s.renderOK(w, v)
+}
+
+func (s *Server) getShowEpisodeIDDetails(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	id := vars["id"]
+	seasonStr := vars["season"]
+	episodeStr := vars["episode"]
+
+	var season, episode int
+	for ptr, str := range map[*int]string{
+		&season:  seasonStr,
+		&episode: episodeStr,
+	} {
+		v, err := strconv.Atoi(str)
+		if err != nil {
+			s.renderError(w, fmt.Errorf("invalid season or episode"))
+			return
+		}
+		*ptr = v
+	}
+
+	v, err := s.videoStore.SearchShowEpisodeByImdbID(id, season, episode)
+	if err != nil {
+		s.log.Error(err)
+		var status int
+		if err == polochon.ErrImdbIDNotFound {
+			status = http.StatusNotFound
+		} else {
+			status = http.StatusInternalServerError
+		}
+		s.renderError(w, &Error{
+			Code:    status,
+			Message: "URL not found",
+		})
+		return
+	}
+
+	s.renderOK(w, v)
 }
 
 func (s *Server) wishlist(w http.ResponseWriter, req *http.Request) {
