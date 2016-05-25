@@ -54,14 +54,9 @@ func (o *openSubtitle) Close() error {
 
 // Read the subtitle
 func (o *openSubtitle) Read(b []byte) (int, error) {
-	id, err := strconv.Atoi(o.os.IDSubtitleFile)
-	if err != nil {
-		return 0, err
-	}
-
 	// Download
 	if o.conn == nil {
-		files, err := o.client.DownloadSubtitles([]int{id})
+		files, err := o.client.DownloadSubtitles([]osdb.Subtitle{*o.os})
 		if err != nil {
 			return 0, err
 		}
