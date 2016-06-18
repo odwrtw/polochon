@@ -65,17 +65,6 @@ func (s *Server) BlockingStop(log *logrus.Entry) {
 	s.gracefulServer.BlockingClose()
 }
 
-func (s *Server) movieSlugs(w http.ResponseWriter, req *http.Request) {
-	s.log.Debug("listing movies by slugs")
-
-	movieSlugs, err := s.videoStore.MovieSlugs()
-	if err != nil {
-		s.renderError(w, err)
-		return
-	}
-	s.renderOK(w, movieSlugs)
-}
-
 func (s *Server) movieIds(w http.ResponseWriter, req *http.Request) {
 	s.log.Debug("listing movies by ids")
 
@@ -89,27 +78,16 @@ func (s *Server) movieIds(w http.ResponseWriter, req *http.Request) {
 
 func (s *Server) getMovieDetails(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	idType := vars["idType"]
 	id := vars["id"]
 
-	s.log.Debugf("looking for a movie by %q with ID %q", idType, id)
+	s.log.Debugf("looking for a movie with ID %q", id)
 
-	var searchFunc func(id string) (polochon.Video, error)
-	switch idType {
-	case "ids":
-		searchFunc = s.videoStore.SearchMovieByImdbID
-	case "slugs":
-		searchFunc = s.videoStore.SearchMovieBySlug
-	default:
-		s.renderError(w, fmt.Errorf("invalid id type: %q", idType))
-	}
-
-	// Find the file by Slug
-	v, err := searchFunc(id)
+	// Find the file
+	v, err := s.videoStore.SearchMovieByImdbID(id)
 	if err != nil {
 		s.log.Error(err)
 		var status int
-		if err == polochon.ErrSlugNotFound {
+		if err == polochon.ErrImdbIDNotFound {
 			status = http.StatusNotFound
 		} else {
 			status = http.StatusInternalServerError
@@ -153,41 +131,6 @@ func (s *Server) showIds(w http.ResponseWriter, req *http.Request) {
 	}
 
 	s.renderOK(w, ret)
-}
-
-func (s *Server) showSlugs(w http.ResponseWriter, req *http.Request) {
-	s.log.Debug("listing shows by slugs")
-
-	slugs, err := s.videoStore.ShowSlugs()
-	if err != nil {
-		s.renderError(w, err)
-		return
-	}
-
-	s.renderOK(w, slugs)
-}
-
-func (s *Server) getShowEpisodeSlugDetails(w http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	slug := vars["slug"]
-
-	v, err := s.videoStore.SearchShowEpisodeBySlug(slug)
-	if err != nil {
-		s.log.Error(err)
-		var status int
-		if err == polochon.ErrSlugNotFound {
-			status = http.StatusNotFound
-		} else {
-			status = http.StatusInternalServerError
-		}
-		s.renderError(w, &Error{
-			Code:    status,
-			Message: "URL not found",
-		})
-		return
-	}
-
-	s.renderOK(w, v)
 }
 
 func (s *Server) getShowEpisodeIDDetails(w http.ResponseWriter, req *http.Request) {
@@ -248,9 +191,6 @@ func serveFile(w http.ResponseWriter, r *http.Request, file *polochon.File) {
 func (s *Server) serveMovie(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	switch {
-	case vars["slug"] != "":
-		v, err := s.videoStore.SearchMovieBySlug(vars["slug"])
-		s.serveVideo(w, req, v, err)
 	case vars["id"] != "":
 		v, err := s.videoStore.SearchMovieByImdbID(vars["id"])
 		s.serveVideo(w, req, v, err)
@@ -265,9 +205,6 @@ func (s *Server) serveMovie(w http.ResponseWriter, req *http.Request) {
 func (s *Server) serveShow(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	switch {
-	case vars["slug"] != "":
-		v, err := s.videoStore.SearchShowEpisodeBySlug(vars["slug"])
-		s.serveVideo(w, r, v, err)
 	case vars["id"] != "" && vars["season"] != "" && vars["episode"] != "":
 		sStr := vars["season"]
 		eStr := vars["episode"]
@@ -291,7 +228,7 @@ func (s *Server) serveVideo(w http.ResponseWriter, r *http.Request, v polochon.V
 	if err != nil {
 		s.log.Error(err)
 		var status int
-		if err == polochon.ErrSlugNotFound {
+		if err == polochon.ErrImdbIDNotFound {
 			status = http.StatusNotFound
 		} else {
 			status = http.StatusInternalServerError
@@ -304,53 +241,6 @@ func (s *Server) serveVideo(w http.ResponseWriter, r *http.Request, v polochon.V
 	}
 
 	serveFile(w, r, v.GetFile())
-}
-
-func (s *Server) deleteFile(w http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	videoType := vars["videoType"]
-	slug := vars["slug"]
-
-	s.log.Debugf("looking for the %s: %s", videoType, slug)
-
-	var searchFunc func(slug string) (polochon.Video, error)
-	switch videoType {
-	case "movies":
-		searchFunc = s.videoStore.SearchMovieBySlug
-	case "shows":
-		searchFunc = s.videoStore.SearchShowEpisodeBySlug
-	default:
-		s.renderError(w, fmt.Errorf("invalid video type: %q", videoType))
-		return
-	}
-
-	// Find the file by Slug
-	v, err := searchFunc(slug)
-	if err != nil {
-		s.log.Error(err)
-		var status int
-		if err == polochon.ErrSlugNotFound {
-			status = http.StatusNotFound
-		} else {
-			status = http.StatusInternalServerError
-		}
-		s.renderError(w, &Error{
-			Code:    status,
-			Message: "URL not found",
-		})
-		return
-	}
-
-	videoFile := v.GetFile()
-	s.log.Debugf("got the file to delete: %s", filepath.Base(videoFile.Path))
-
-	err = s.videoStore.Delete(v, s.log)
-	if err != nil {
-		s.log.Errorf("failed to delete video : %q", err)
-		s.renderError(w, err)
-	}
-
-	s.renderOK(w, nil)
 }
 
 func (s *Server) addTorrent(w http.ResponseWriter, r *http.Request) {

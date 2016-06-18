@@ -19,7 +19,7 @@ func createTestNegroni() *negroni.Negroni {
 	router := mux.NewRouter()
 	router.HandleFunc("/guest", fakeHandler).Name("TokenGetAllowed")
 	router.HandleFunc("/user", fakeHandler).Name("TorrentsAdd")
-	router.HandleFunc("/admin", fakeHandler).Name("DeleteBySlugs")
+	router.HandleFunc("/admin", fakeHandler).Name("DeleteByID")
 	router.HandleFunc("/noname", fakeHandler)
 
 	tmiddleware := NewMiddleware(manager, router)
@@ -90,15 +90,15 @@ func TestMiddlewareAllow(t *testing.T) {
 	defer s.Close()
 
 	for _, tt := range testMock {
-		resp, err := http.Get(s.URL + tt.Path + "?token=" + tt.Value)
+		url := s.URL + tt.Path + "?token=" + tt.Value
+		resp, err := http.Get(url)
 		if err != nil {
 			t.Error(err)
 		}
 
 		if resp.StatusCode != tt.Expected {
-			t.Error("Expected:", tt.Expected, ", got:", resp.StatusCode)
+			t.Errorf("Expected: %d got %d for the URL %q", tt.Expected, resp.StatusCode, url)
 		}
-
 	}
 }
 

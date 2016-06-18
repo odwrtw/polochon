@@ -16,7 +16,6 @@ import (
 
 // Video errors
 var (
-	ErrSlugNotFound               = errors.New("polochon: no such file with this slug")
 	ErrImdbIDNotFound             = errors.New("polochon: no such file with this imdbID")
 	ErrInvalidIndexVideoType      = errors.New("polochon: invalid index video type")
 	ErrMissingMovieFilePath       = errors.New("polochon: movie has no file path")
@@ -99,11 +98,6 @@ func (vs *VideoStore) MovieIds() ([]string, error) {
 	return vs.movieIndex.IDs()
 }
 
-// MovieSlugs returns the movie slugs
-func (vs *VideoStore) MovieSlugs() ([]string, error) {
-	return vs.movieIndex.Slugs()
-}
-
 // Has returns true if the video is in the store
 func (vs *VideoStore) Has(video Video) (bool, error) {
 	switch v := video.(type) {
@@ -126,40 +120,32 @@ func (vs *VideoStore) HasShowEpisode(imdbID string, season, episode int) (bool, 
 	return vs.showIndex.Has(imdbID, season, episode)
 }
 
-// SearchBySlug search the video by its slug
-func (vs *VideoStore) SearchBySlug(video Video) (Video, error) {
-	switch v := video.(type) {
-	case *Movie:
-		return vs.SearchMovieBySlug(v.Slug())
-	case *ShowEpisode:
-		return vs.SearchShowEpisodeBySlug(v.Slug())
-	default:
-		return nil, ErrInvalidIndexVideoType
-	}
-}
-
 // Add video
 func (vs *VideoStore) Add(video Video, log *logrus.Entry) error {
 	ok, err := vs.Has(video)
 	if err != nil {
 		return err
 	}
-	if ok {
-		v, err := vs.SearchBySlug(video)
-		if err != nil {
-			return err
-		}
-		if err := vs.Delete(v, log); err != nil {
-			return err
-		}
-	}
-
 	switch v := video.(type) {
 	case *Movie:
+		if ok {
+			err := vs.DeleteMovie(v, log)
+			if err != nil {
+				return err
+			}
+		}
+
 		if err := vs.AddMovie(v, log); err != nil {
 			return err
 		}
 	case *ShowEpisode:
+		if ok {
+			err := vs.DeleteShowEpisode(v, log)
+			if err != nil {
+				return err
+			}
+		}
+
 		if err := vs.AddShowEpisode(v, log); err != nil {
 			return err
 		}
@@ -448,29 +434,6 @@ func (vs *VideoStore) addToIndex(video Video) error {
 // ShowIds returns the show ids, seasons and episodes
 func (vs *VideoStore) ShowIds() (map[string]map[int]map[int]string, error) {
 	return vs.showIndex.IDs()
-}
-
-// ShowSlugs returns the show slugs
-func (vs *VideoStore) ShowSlugs() ([]string, error) {
-	return vs.showIndex.Slugs()
-}
-
-// SearchMovieBySlug returns the video by its slug
-func (vs *VideoStore) SearchMovieBySlug(slug string) (Video, error) {
-	path, err := vs.movieIndex.SearchBySlug(slug)
-	if err != nil {
-		return nil, err
-	}
-	return vs.NewMovieFromPath(path)
-}
-
-// SearchShowEpisodeBySlug search for a show episode by its slug
-func (vs *VideoStore) SearchShowEpisodeBySlug(slug string) (Video, error) {
-	path, err := vs.showIndex.SearchBySlug(slug)
-	if err != nil {
-		return nil, err
-	}
-	return vs.NewShowEpisodeFromPath(path)
 }
 
 // SearchMovieByImdbID returns the video by its imdb ID

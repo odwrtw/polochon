@@ -8,8 +8,7 @@ import (
 // NewMovieIndex returns a new movie index
 func newFakeShowIndex() *ShowIndex {
 	return &ShowIndex{
-		ids:   map[string]map[int]map[int]string{},
-		slugs: map[string]string{},
+		ids: map[string]map[int]map[int]string{},
 	}
 }
 
@@ -39,14 +38,6 @@ var showIdsIndex = map[string]map[int]map[int]string{
 	},
 }
 
-var showSlugsIndex = map[string]string{
-	"show-s01e01":         "/home/test/show/season-1/show-s01e01.mp4",
-	"show-s01e02":         "/home/test/show/season-1/show-s01e02.mp4",
-	"show-s02e02":         "/home/test/show/season-2/show-s02e02.mp4",
-	"showBis-s02e01":      "/home/test/showBis/season-2/showBis-s01e01.mp4",
-	"american-dad-s09e18": "/home/test/show/season-1/showTers-s09e18.mp4",
-}
-
 func TestHasShowEpisode(t *testing.T) {
 	s := newFakeShowIndex()
 
@@ -71,48 +62,6 @@ func TestHasShowEpisode(t *testing.T) {
 		}
 		if expected != res {
 			t.Errorf("TestHasMovie: expected %t, got %t for %s s%d e%d", expected, res, h.imdbID, h.season, h.episode)
-		}
-	}
-}
-
-func TestSearchShowBySlug(t *testing.T) {
-	si := newFakeShowIndex()
-
-	si.slugs = showSlugsIndex
-
-	type res struct {
-		path string
-		err  error
-	}
-
-	for s, expected := range map[string]res{
-		"show-s01e01": {
-			"/home/test/show/season-1/show-s01e01.mp4",
-			nil,
-		},
-		"show-s02e02": {
-			"/home/test/show/season-2/show-s02e02.mp4",
-			nil,
-		},
-		"showBis-s02e01": {
-			"/home/test/showBis/season-2/showBis-s01e01.mp4",
-			nil,
-		},
-		"showBisBis-s02e01": {
-			"",
-			ErrSlugNotFound,
-		},
-		"show-s01e03": {
-			"",
-			ErrSlugNotFound,
-		},
-	} {
-		res, err := si.searchShowEpisodeBySlug(s)
-		if expected.path != res {
-			t.Errorf("TestSearchBySlug: expected %s, got %s for %s", expected.path, res, s)
-		}
-		if expected.err != err {
-			t.Errorf("TestSearchBySlug: expected error %s, got %s for %s", expected.err, err, s)
 		}
 	}
 }
@@ -168,7 +117,6 @@ func TestRemoveSeason(t *testing.T) {
 	si := newFakeShowIndex()
 
 	si.ids = showIdsIndex
-	si.slugs = showSlugsIndex
 
 	res, err := si.IsSeasonEmpty("tt0397306", 9)
 	if err != nil {
@@ -265,34 +213,6 @@ func TestAddAndDeleteEpisodeToIndex(t *testing.T) {
 	}
 	if res != false {
 		t.Errorf("Should not have the episode %+v in index", e)
-	}
-}
-
-func TestShowSlugs(t *testing.T) {
-	si := newFakeShowIndex()
-
-	si.slugs = showSlugsIndex
-
-	expectedSlugs := []string{
-		"show-s01e01",
-		"show-s01e02",
-		"show-s02e02",
-		"showBis-s02e01",
-	}
-
-	slugs, err := si.Slugs()
-	if err != nil {
-		t.Fatal(err)
-	}
-LOOP:
-	for _, exp := range expectedSlugs {
-		for _, s := range slugs {
-			// if we found the element, go to the next one
-			if exp == s {
-				continue LOOP
-			}
-		}
-		t.Errorf("TestIDs: %s is not in the result", exp)
 	}
 }
 

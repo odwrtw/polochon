@@ -8,19 +8,13 @@ import (
 // NewMovieIndex returns a new movie index
 func mockMovieIndex() *MovieIndex {
 	return &MovieIndex{
-		ids:   map[string]string{},
-		slugs: map[string]string{},
+		ids: map[string]string{},
 	}
 }
 
 var idsIndex = map[string]string{
 	"tt56789": "/home/test/movie/movie.mp4",
 	"tt12345": "/home/test/movieBis/movieBis.mp4",
-}
-
-var slugsIndex = map[string]string{
-	"movie":    "/home/test/movie/movie.mp4",
-	"movieBis": "/home/test/movieBis/movieBis.mp4",
 }
 
 func TestHasMovie(t *testing.T) {
@@ -39,40 +33,6 @@ func TestHasMovie(t *testing.T) {
 		}
 		if expected != res {
 			t.Errorf("TestHasMovie: expected %t, got %t for %s", expected, res, i)
-		}
-	}
-}
-
-func TestSearchMovieBySlug(t *testing.T) {
-	m := mockMovieIndex()
-
-	m.slugs = slugsIndex
-
-	type res struct {
-		path string
-		err  error
-	}
-
-	for s, expected := range map[string]res{
-		"movie": {
-			"/home/test/movie/movie.mp4",
-			nil,
-		},
-		"movieBis": {
-			"/home/test/movieBis/movieBis.mp4",
-			nil,
-		},
-		"movieDoubleBis": {
-			"",
-			ErrSlugNotFound,
-		},
-	} {
-		res, err := m.searchMovieBySlug(s)
-		if expected.path != res {
-			t.Errorf("TestSearchBySlug: expected %s, got %s for %s", expected.path, res, s)
-		}
-		if expected.err != err {
-			t.Errorf("TestSearchBySlug: expected error %s, got %s for %s", expected.err, err, s)
 		}
 	}
 }
@@ -141,28 +101,6 @@ func TestAddAndRemoveMovieToIndex(t *testing.T) {
 	}
 	if res != false {
 		t.Errorf("Should not have the movie %s in index", m.ImdbID)
-	}
-}
-
-func TestMovieSlugs(t *testing.T) {
-	m := mockMovieIndex()
-
-	m.slugs = slugsIndex
-
-	expectedSlugs := []string{"movie", "movieBis"}
-	slugs, err := m.Slugs()
-	if err != nil {
-		t.Fatal(err)
-	}
-LOOP:
-	for _, exp := range expectedSlugs {
-		for _, s := range slugs {
-			// if we found the element, go to the next one
-			if exp == s {
-				continue LOOP
-			}
-		}
-		t.Errorf("TestIDs: %s is not in the result", exp)
 	}
 }
 

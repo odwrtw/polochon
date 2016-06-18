@@ -19,25 +19,19 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 
 	mux := mux.NewRouter()
 
-	mux.HandleFunc("/movies/slugs", s.movieSlugs).Name("MoviesListSlugs")
-	mux.HandleFunc("/movies/ids", s.movieIds).Name("MoviesListIDs")
-	mux.HandleFunc("/movies/{idType:ids|slugs}/{id}", s.getMovieDetails).Name("GetMovieDetails")
+	mux.HandleFunc("/movies", s.movieIds).Name("MoviesListIDs")
+	mux.HandleFunc("/movies/{id}", s.getMovieDetails).Name("GetMovieDetails")
 
-	mux.HandleFunc("/shows/ids", s.showIds).Name("ShowsListIDs")
-	mux.HandleFunc("/shows/slugs", s.showSlugs).Name("ShowsListSlugs")
-	mux.HandleFunc("/shows/slugs/{slug}", s.getShowEpisodeSlugDetails).Name("GetShowEpisodeSlugDetails")
-	mux.HandleFunc("/shows/ids/{id}/{season:[0-9]+}/{episode:[0-9]+}", s.getShowEpisodeIDDetails).Name("GetShowEpisodeIDDetails")
+	mux.HandleFunc("/shows", s.showIds).Name("ShowsListIDs")
+	mux.HandleFunc("/shows/{id}/{season:[0-9]+}/{episode:[0-9]+}", s.getShowEpisodeIDDetails).Name("GetShowEpisodeIDDetails")
 	mux.HandleFunc("/wishlist", s.wishlist).Name("Wishlist")
 
 	mux.HandleFunc("/torrents", s.addTorrent).Methods("POST").Name("TorrentsAdd")
 
 	if s.config.HTTPServer.ServeFiles {
 		log.Debug("server will be serving files")
-		mux.HandleFunc("/{videoType:movies|shows}/slugs/{slug}/delete", s.deleteFile).Name("DeleteBySlugs")
-		mux.HandleFunc("/shows/slugs/{slug}/download", s.serveShow).Name("ServeShowsBySlugs")
-		mux.HandleFunc("/shows/ids/{id}/{season}/{episode}/download", s.serveShow).Name("ServeShowsByIDs")
-		mux.HandleFunc("/movies/ids/{id}/download", s.serveMovie).Name("ServeMoviesByIDs")
-		mux.HandleFunc("/movies/slugs/{slug}/download", s.serveMovie).Name("ServeMoviesBySlugs")
+		mux.HandleFunc("/shows/{id}/{season:[0-9]+}/{episode:[0-9]+}/download", s.serveShow).Name("ServeShowsByIDs")
+		mux.HandleFunc("/movies/{id}/download", s.serveMovie).Name("ServeMoviesByIDs")
 	}
 
 	n := negroni.New()

@@ -66,13 +66,3 @@ func TestShowEpisodeReader(t *testing.T) {
 		t.Errorf("Failed to deserialize show episode NFO.\nGot: %#v\nExpected: %#v", got, expected)
 	}
 }
-
-func TestShowEpisodeSlug(t *testing.T) {
-	s := mockShowEpisode()
-	got := s.Slug()
-	expected := "american-dad-s09e18"
-
-	if got != expected {
-		t.Errorf("got %q, expected %q", got, expected)
-	}
-}
