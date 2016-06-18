@@ -168,7 +168,7 @@ func (c *Cleaner) clean(d polochon.Downloadable, log *logrus.Entry) error {
 		filePath := filepath.Join(c.config.Watcher.Dir, tPath)
 		file := polochon.NewFile(filePath)
 
-		// Check extention
+		// Check extension
 		ext := path.Ext(filePath)
 		if !stringInSlice(ext, c.config.File.AllowedExtentionsToDelete) {
 			if !file.IsSymlink() {

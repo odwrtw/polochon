@@ -61,7 +61,7 @@ func RegisterWishlister(name string, f func(params []byte) (Wishlister, error)) 
 	registeredModules.Wishlisters[name] = f
 }
 
-// Fetch the infomations from the wishlister an returns a merged wishlist
+// Fetch the informations from the wishlister an returns a merged wishlist
 // TODO: merge the wishlists from the different wishlisters
 func (w *Wishlist) Fetch() error {
 	// Movie wishlists

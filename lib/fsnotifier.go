@@ -14,7 +14,7 @@ type FsNotifierCtx struct {
 	Wg    *sync.WaitGroup
 }
 
-// FsNotifier is an interface to notify on filesytem change
+// FsNotifier is an interface to notify on filesystem change
 type FsNotifier interface {
 	Module
 	Watch(watchPath string, ctx FsNotifierCtx, log *logrus.Entry) error

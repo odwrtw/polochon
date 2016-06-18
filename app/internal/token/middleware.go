@@ -32,7 +32,7 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http
 		return
 	}
 
-	// No route name forbiden
+	// No route name forbidden
 	if match.Route.GetName() == "" {
 		http.Error(w, "Invalid route", http.StatusForbidden)
 		return

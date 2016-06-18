@@ -24,7 +24,7 @@ type Safeguard struct {
 	wg    sync.WaitGroup
 }
 
-// New retuns a new safeguard
+// New returns a new safeguard
 func New() *Safeguard {
 	return &Safeguard{
 		event: make(chan struct{}),
