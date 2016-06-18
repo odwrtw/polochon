@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/odwrtw/polochon.svg?branch=master)](https://travis-ci.org/odwrtw/polochon)
 [![Coverage Status](https://coveralls.io/repos/odwrtw/polochon/badge.svg?branch=master&service=github)](https://coveralls.io/github/odwrtw/polochon?branch=master)
-[![Go Report Card](http://goreportcard.com/badge/odwrtw/polochon)](http://goreportcard.com/report/odwrtw/polochon)
+[![Go Report Card](https://goreportcard.com/badge/github.com/odwrtw/polochon)](https://goreportcard.com/report/github.com/odwrtw/polochon)
 
 
 ## How to use
