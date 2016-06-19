@@ -115,12 +115,12 @@ func (f *File) Guess(movieConf MovieConfig, showConf ShowConfig, log *logrus.Ent
 
 // NfoPath is an helper to get the nfo filename from the video filename
 func (f *File) NfoPath() string {
-	return f.filePathWithoutExt() + ".nfo"
+	return f.PathWithoutExt() + ".nfo"
 }
 
 // SubtitlePath is an helper to get the subtitle path from the  filename
 func (f *File) SubtitlePath() string {
-	return f.filePathWithoutExt() + ".srt"
+	return f.PathWithoutExt() + ".srt"
 }
 
 // IgnorePath is an helper to get the ignore file path
@@ -128,8 +128,8 @@ func (f *File) IgnorePath() string {
 	return f.Path + ".ignore"
 }
 
-// filePathWithoutExt returns the file path without the file extension
-func (f *File) filePathWithoutExt() string {
+// PathWithoutExt returns the file path without the file extension
+func (f *File) PathWithoutExt() string {
 	return RemoveExt(f.Path)
 }
 

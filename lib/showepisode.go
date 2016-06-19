@@ -1,8 +1,6 @@
 package polochon
 
 import (
-	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 
@@ -38,18 +36,6 @@ type ShowEpisode struct {
 	ReleaseGroup  string    `json:"release_group"`
 	Torrents      []Torrent `json:"torrents"`
 	Show          *Show     `json:"-"`
-}
-
-// MarshalJSON is a custom marshal function to handle public path
-func (s *ShowEpisode) MarshalJSON() ([]byte, error) {
-	var aux struct {
-		ShowEpisode
-		Slug string `json:"slug"`
-	}
-	aux.Slug = s.Slug()
-	aux.ShowEpisode = *s
-
-	return json.Marshal(aux)
 }
 
 // NewShowEpisode returns a new show episode
@@ -165,9 +151,4 @@ func (s *ShowEpisode) GetSubtitle(log *logrus.Entry) error {
 		return c
 	}
 	return nil
-}
-
-// Slug will slug the show episode
-func (s *ShowEpisode) Slug() string {
-	return slug(fmt.Sprintf("%s-s%02de%02d", s.ShowTitle, s.Season, s.Episode))
 }

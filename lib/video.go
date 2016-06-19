@@ -1,17 +1,6 @@
 package polochon
 
-import (
-	"regexp"
-	"strings"
-
-	"github.com/Sirupsen/logrus"
-)
-
-// Regexp used for slugs by Movie and ShowEpisode objects
-var (
-	invalidSlugPattern = regexp.MustCompile(`[^a-z0-9 _-]`)
-	whiteSpacePattern  = regexp.MustCompile(`\s+`)
-)
+import "github.com/Sirupsen/logrus"
 
 // Quality represents the qualities of a video
 type Quality string
@@ -44,16 +33,6 @@ type Video interface {
 	GetDetails(*logrus.Entry) error
 	GetTorrents(*logrus.Entry) error
 	GetSubtitle(*logrus.Entry) error
-	Slug() string
 	SetFile(f *File)
 	GetFile() *File
-}
-
-func slug(text string) string {
-	separator := "-"
-	text = strings.ToLower(text)
-	text = invalidSlugPattern.ReplaceAllString(text, "")
-	text = whiteSpacePattern.ReplaceAllString(text, separator)
-	text = strings.Trim(text, separator)
-	return text
 }

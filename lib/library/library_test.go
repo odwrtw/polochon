@@ -1,17 +1,21 @@
-package polochon
+package library
 
 import (
 	"fmt"
+	"io/ioutil"
 	"testing"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/odwrtw/polochon/lib"
 )
 
-func TestStoreMovieNoPath(t *testing.T) {
-	vs := NewVideoStore(FileConfig{}, MovieConfig{}, ShowConfig{}, VideoStoreConfig{})
-	movie := mockMovie(MovieConfig{})
+var mockLogEntry = logrus.NewEntry(&logrus.Logger{Out: ioutil.Discard})
 
-	if err := vs.Add(movie, mockLogEntry); err != ErrMissingMovieFilePath {
+func TestStoreMovieNoPath(t *testing.T) {
+	library := New(polochon.FileConfig{}, polochon.MovieConfig{}, polochon.ShowConfig{}, Config{})
+	movie := &polochon.Movie{}
+
+	if err := library.Add(movie, mockLogEntry); err != ErrMissingMovieFilePath {
 		t.Errorf("Expected %q, got %q", ErrMissingMovieFilePath, err)
 	}
 }
@@ -36,19 +40,19 @@ func TestStoreMovie(t *testing.T) {
 		return nil
 	}
 
-	vs := NewVideoStore(FileConfig{}, MovieConfig{}, ShowConfig{}, VideoStoreConfig{
+	library := New(polochon.FileConfig{}, polochon.MovieConfig{}, polochon.ShowConfig{}, Config{
 		MovieDir: "/movie",
 		ShowDir:  "/show",
 	})
 
-	writeNFOFile = func(filePath string, i interface{}, vs *VideoStore) error {
+	writeNFOFile = func(filePath string, i interface{}, library *Library) error {
 		return nil
 	}
 
-	movie := &Movie{
+	movie := &polochon.Movie{
 		Title: "Test Movie",
 		Year:  1,
-		File: File{
+		File: polochon.File{
 			Path: "/testmovie.avi",
 		},
 		Fanart: "/",
@@ -57,7 +61,7 @@ func TestStoreMovie(t *testing.T) {
 
 	expectedNewPath := "/movie/Test Movie (1)/testmovie.avi"
 
-	if err := vs.Add(movie, mockLogEntry); err != nil {
+	if err := library.Add(movie, mockLogEntry); err != nil {
 		t.Errorf("Expected nil, got %q", err)
 	}
 
@@ -67,7 +71,7 @@ func TestStoreMovie(t *testing.T) {
 }
 
 type FakeShowDetailer struct {
-	show Show
+	show polochon.Show
 }
 
 func (d *FakeShowDetailer) Name() string {
@@ -76,14 +80,14 @@ func (d *FakeShowDetailer) Name() string {
 
 func (d *FakeShowDetailer) GetDetails(i interface{}, log *logrus.Entry) error {
 	switch v := i.(type) {
-	case *Show:
+	case *polochon.Show:
 		return d.showDetails(v)
 	default:
 		return fmt.Errorf("Error invalid type")
 	}
 }
 
-func (d *FakeShowDetailer) showDetails(s *Show) error {
+func (d *FakeShowDetailer) showDetails(s *polochon.Show) error {
 	s.Title = d.show.Title
 	s.Plot = d.show.Plot
 	s.TvdbID = d.show.TvdbID
@@ -116,11 +120,11 @@ func TestStoreShow(t *testing.T) {
 	}
 
 	showDetailer := &FakeShowDetailer{
-		show: Show{
+		show: polochon.Show{
 			Title:  "Test show",
 			Plot:   "Test show plot",
 			TvdbID: 0,
-			URL:    "http://fakeurl.test",
+			URL:    "http://fakeurlibrary.test",
 			ImdbID: "ttFakeShow",
 			Banner: "/",
 			Fanart: "/",
@@ -128,30 +132,30 @@ func TestStoreShow(t *testing.T) {
 		},
 	}
 
-	vs := NewVideoStore(FileConfig{}, MovieConfig{}, ShowConfig{}, VideoStoreConfig{
+	library := New(polochon.FileConfig{}, polochon.MovieConfig{}, polochon.ShowConfig{}, Config{
 		MovieDir: "/movie",
 		ShowDir:  "/show",
 	})
 
-	writeNFOFile = func(filePath string, i interface{}, vs *VideoStore) error {
+	writeNFOFile = func(filePath string, i interface{}, library *Library) error {
 		return nil
 	}
 
-	episode := &ShowEpisode{
+	episode := &polochon.ShowEpisode{
 		Title:     "Test Episode",
 		ShowTitle: "Test show",
 		Season:    1,
-		File: File{
+		File: polochon.File{
 			Path: "/episode.avi",
 		},
-		ShowConfig: ShowConfig{
-			Detailers: []Detailer{showDetailer},
+		ShowConfig: polochon.ShowConfig{
+			Detailers: []polochon.Detailer{showDetailer},
 		},
 	}
 
 	expectedNewPath := "/show/Test show/Season 1/episode.avi"
 
-	if err := vs.Add(episode, mockLogEntry); err != nil {
+	if err := library.Add(episode, mockLogEntry); err != nil {
 		t.Errorf("Expected nil, got %q", err)
 	}
 

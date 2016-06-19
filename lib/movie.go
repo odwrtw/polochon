@@ -1,8 +1,6 @@
 package polochon
 
 import (
-	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 
@@ -35,18 +33,6 @@ type Movie struct {
 	Votes         int       `json:"votes"`
 	Year          int       `json:"year"`
 	Torrents      []Torrent `json:"torrents"`
-}
-
-// MarshalJSON is a custom marshal function to handle public path
-func (m *Movie) MarshalJSON() ([]byte, error) {
-	var aux struct {
-		Movie
-		Slug string `json:"slug"`
-	}
-	aux.Slug = m.Slug()
-	aux.Movie = *m
-
-	return json.Marshal(aux)
 }
 
 // NewMovie returns a new movie
@@ -161,9 +147,4 @@ func (m *Movie) GetSubtitle(log *logrus.Entry) error {
 		return c
 	}
 	return nil
-}
-
-// Slug will slug the movie name
-func (m *Movie) Slug() string {
-	return slug(fmt.Sprintf("%s", m.Title))
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib/library"
 	"gopkg.in/yaml.v2"
 )
 
@@ -125,7 +126,7 @@ type Config struct {
 	Movie         polochon.MovieConfig
 	Show          polochon.ShowConfig
 	File          polochon.FileConfig
-	VideoStore    polochon.VideoStoreConfig
+	Library       library.Config
 	Notifiers     []polochon.Notifier
 }
 
@@ -260,7 +261,7 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 		return nil, err
 	}
 
-	conf.VideoStore = polochon.VideoStoreConfig{
+	conf.Library = library.Config{
 		MovieDir: realMoviesPath,
 		ShowDir:  realShowsPath,
 	}

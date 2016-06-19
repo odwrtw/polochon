@@ -71,13 +71,3 @@ func TestMovieNFOReader(t *testing.T) {
 		t.Errorf("Failed to deserialize movie NFO")
 	}
 }
-
-func TestMovieSlug(t *testing.T) {
-	s := mockMovie(MovieConfig{})
-	got := s.Slug()
-	expected := "birdman"
-
-	if got != expected {
-		t.Errorf("got %q, expected %q", got, expected)
-	}
-}

@@ -12,7 +12,6 @@ var configFile = strings.NewReader(`
   allowed:
     - TokenGetAllowed
     - MoviesListIDs
-    - ShowsListSlugs
   allownotoken: true
   token:
   - name: guest1
@@ -33,7 +32,7 @@ var configFile = strings.NewReader(`
   include:
     - user
   allowed:
-    - DeleteBySlugs
+    - DeleteEpisode
   token:
   - name: admin1
     value: admin1token
@@ -42,7 +41,7 @@ var configFile = strings.NewReader(`
 func createExpectedManager() *Manager {
 	rGuest := &Role{
 		Name:    "guest",
-		Allowed: []string{"TokenGetAllowed", "MoviesListIDs", "ShowsListSlugs"},
+		Allowed: []string{"TokenGetAllowed", "MoviesListIDs"},
 		Include: []*Role{},
 	}
 
@@ -54,7 +53,7 @@ func createExpectedManager() *Manager {
 
 	rAdmin := &Role{
 		Name:    "admin",
-		Allowed: []string{"DeleteBySlugs"},
+		Allowed: []string{"DeleteEpisode"},
 		Include: []*Role{rUser},
 	}
 
@@ -97,7 +96,6 @@ var invalidMock = []struct {
   allowed:
     - TokenGetAllowed
     - MoviesListIDs
-    - ShowsListSlugs
   token:
   - name: guest2
     value: guest2token
@@ -105,7 +103,6 @@ var invalidMock = []struct {
   allowed:
     - TokenGetAllowed
     - MoviesListIDs
-    - ShowsListSlugs
   token:
   - name: guest1
     value: guest1token
@@ -118,7 +115,6 @@ var invalidMock = []struct {
   allowed:
     - TokenGetAllowed
     - MoviesListIDs
-    - ShowsListSlugs
   token:
   - name: guest1
     value: guest1token
@@ -133,7 +129,6 @@ var invalidMock = []struct {
   allowed:
     - TokenGetAllowed
     - MoviesListIDs
-    - ShowsListSlugs
   token:
   - name: guest1
     value: guest1token
@@ -148,7 +143,6 @@ var invalidMock = []struct {
   allowed:
     - TokenGetAllowed
     - MoviesListIDs
-    - ShowsListSlugs
   include:
     - user
   token:
@@ -164,7 +158,6 @@ var invalidMock = []struct {
   allowed:
     - TokenGetAllowed
     - MoviesListIDs
-    - ShowsListSlugs
   token:
   - name: guest2
     value: guest2token
@@ -173,7 +166,6 @@ var invalidMock = []struct {
   allowed:
     - TokenGetAllowed
     - MoviesListIDs
-    - ShowsListSlugs
   token:
   - name: guest1
     value: guest1token

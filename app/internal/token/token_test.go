@@ -11,9 +11,9 @@ func TestGetAllowed(t *testing.T) {
 		Value    string
 		Expected []string
 	}{
-		{"guest1token", []string{"TokenGetAllowed", "MoviesListIDs", "ShowsListSlugs"}},
-		{"user1token", []string{"TorrentsAdd", "TokenGetAllowed", "MoviesListIDs", "ShowsListSlugs"}},
-		{"admin1token", []string{"DeleteBySlugs", "TorrentsAdd", "TokenGetAllowed", "MoviesListIDs", "ShowsListSlugs"}},
+		{"guest1token", []string{"TokenGetAllowed", "MoviesListIDs"}},
+		{"user1token", []string{"TorrentsAdd", "TokenGetAllowed", "MoviesListIDs"}},
+		{"admin1token", []string{"DeleteEpisode", "TorrentsAdd", "TokenGetAllowed", "MoviesListIDs"}},
 	}
 
 	for _, tt := range testMock {
@@ -35,8 +35,6 @@ func TestIsAllowed(t *testing.T) {
 		{"guest1token", "TorrentsAdd", false},
 		{"user1token", "TokenGetAllowed", true},
 		{"user1token", "TorrentsAdd", true},
-		{"user1token", "DeleteBySlugs", false},
-		{"admin1token", "DeleteBySlugs", true},
 	}
 
 	for _, tt := range testMock {

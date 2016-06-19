@@ -1,7 +1,6 @@
 - role: guest
   allowed:
     - MoviesListIDs
-    - ShowsListSlugs
   token:
   - name: toto
     value: wwiuiuwbjqwndjqubyuui
@@ -15,7 +14,8 @@
   include:
     - user
   allowed:
-    - DeleteBySlugs
+    - DeleteMovies
+    - DeleteEpisode
   token:
   - name: skywalker
     value: owoifupqkjlknkn

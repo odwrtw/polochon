@@ -14,7 +14,7 @@ func TestFilePathWithoutExt(t *testing.T) {
 		"file":          "file",
 	} {
 		file := NewFile(path)
-		got := file.filePathWithoutExt()
+		got := file.PathWithoutExt()
 
 		if got != expected {
 			t.Errorf("got %q, expected %q", got, expected)
