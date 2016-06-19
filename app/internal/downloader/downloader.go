@@ -8,6 +8,7 @@ import (
 	"github.com/odwrtw/polochon/app/internal/configuration"
 	"github.com/odwrtw/polochon/app/internal/subapp"
 	"github.com/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib/library"
 )
 
 // AppName is the application name
@@ -17,17 +18,17 @@ const AppName = "downloader"
 type Downloader struct {
 	*subapp.Base
 
-	config     *configuration.Config
-	videoStore *polochon.VideoStore
-	event      chan struct{}
+	config  *configuration.Config
+	library *library.VideoStore
+	event   chan struct{}
 }
 
 // New returns a new downloader
-func New(config *configuration.Config, vs *polochon.VideoStore) *Downloader {
+func New(config *configuration.Config, vs *library.VideoStore) *Downloader {
 	return &Downloader{
-		Base:       subapp.NewBase(AppName),
-		config:     config,
-		videoStore: vs,
+		Base:    subapp.NewBase(AppName),
+		config:  config,
+		library: vs,
 	}
 }
 
@@ -124,7 +125,7 @@ func (d *Downloader) downloadMissingMovies(wl *polochon.Wishlist, log *logrus.En
 	log = log.WithField("function", "download_movies")
 
 	for _, wantedMovie := range wl.Movies {
-		ok, err := d.videoStore.HasMovie(wantedMovie.ImdbID)
+		ok, err := d.library.HasMovie(wantedMovie.ImdbID)
 		if err != nil {
 			log.Error(err)
 			continue
@@ -209,7 +210,7 @@ func (d *Downloader) downloadMissingShows(wl *polochon.Wishlist, log *logrus.Ent
 			}
 
 			// Check if the episode has already been downloaded
-			ok, err := d.videoStore.HasShowEpisode(wishedShow.ImdbID, calEpisode.Season, calEpisode.Episode)
+			ok, err := d.library.HasShowEpisode(wishedShow.ImdbID, calEpisode.Season, calEpisode.Episode)
 			if err != nil {
 				log.Error(err)
 				continue

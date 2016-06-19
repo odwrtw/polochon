@@ -1,10 +1,11 @@
-package polochon
+package index
 
 import (
 	"path/filepath"
 	"sync"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/odwrtw/polochon/lib"
 )
 
 // ShowIndex is an index for the shows
@@ -81,17 +82,17 @@ func (si *ShowIndex) EpisodePath(imdbID string, sNum, eNum int) (string, error) 
 
 	show, ok := si.shows[imdbID]
 	if !ok {
-		return "", ErrImdbIDNotFound
+		return "", ErrNotFound
 	}
 
 	season, ok := show.Seasons[sNum]
 	if !ok {
-		return "", ErrImdbIDNotFound
+		return "", ErrNotFound
 	}
 
 	filePath, ok := season.Episodes[eNum]
 	if !ok {
-		return "", ErrImdbIDNotFound
+		return "", ErrNotFound
 	}
 
 	return filePath, nil
@@ -104,12 +105,12 @@ func (si *ShowIndex) SeasonPath(imdbID string, sNum int) (string, error) {
 
 	show, ok := si.shows[imdbID]
 	if !ok {
-		return "", ErrImdbIDNotFound
+		return "", ErrNotFound
 	}
 
 	season, ok := show.Seasons[sNum]
 	if !ok {
-		return "", ErrImdbIDNotFound
+		return "", ErrNotFound
 	}
 
 	return season.Path, nil
@@ -122,14 +123,14 @@ func (si *ShowIndex) ShowPath(imdbID string) (string, error) {
 
 	show, ok := si.shows[imdbID]
 	if !ok {
-		return "", ErrImdbIDNotFound
+		return "", ErrNotFound
 	}
 
 	return show.Path, nil
 }
 
 // Add adds a show episode to the index
-func (si *ShowIndex) Add(episode *ShowEpisode) error {
+func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 	si.Lock()
 	defer si.Unlock()
 
@@ -201,7 +202,7 @@ func (si *ShowIndex) IsSeasonEmpty(imdbID string, season int) (bool, error) {
 }
 
 // RemoveSeason removes the season from the index
-func (si *ShowIndex) RemoveSeason(show *Show, season int, log *logrus.Entry) error {
+func (si *ShowIndex) RemoveSeason(show *polochon.Show, season int, log *logrus.Entry) error {
 	log.Infof("Deleting whole season %d of %s from index", season, show.ImdbID)
 
 	delete(si.shows[show.ImdbID].Seasons, season)
@@ -210,7 +211,7 @@ func (si *ShowIndex) RemoveSeason(show *Show, season int, log *logrus.Entry) err
 }
 
 // RemoveShow removes the show from the index
-func (si *ShowIndex) RemoveShow(show *Show, log *logrus.Entry) error {
+func (si *ShowIndex) RemoveShow(show *polochon.Show, log *logrus.Entry) error {
 	log.Infof("Deleting whole show %s from index", show.ImdbID)
 
 	for _, ep := range show.Episodes {
@@ -224,7 +225,7 @@ func (si *ShowIndex) RemoveShow(show *Show, log *logrus.Entry) error {
 }
 
 // Remove removes the show episode from the index
-func (si *ShowIndex) Remove(episode *ShowEpisode, log *logrus.Entry) error {
+func (si *ShowIndex) Remove(episode *polochon.ShowEpisode, log *logrus.Entry) error {
 	si.Lock()
 	defer si.Unlock()
 

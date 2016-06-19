@@ -1,15 +1,19 @@
-package polochon
+package library
 
 import (
 	"fmt"
+	"io/ioutil"
 	"testing"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/odwrtw/polochon/lib"
 )
 
+var mockLogEntry = logrus.NewEntry(&logrus.Logger{Out: ioutil.Discard})
+
 func TestStoreMovieNoPath(t *testing.T) {
-	vs := NewVideoStore(FileConfig{}, MovieConfig{}, ShowConfig{}, VideoStoreConfig{})
-	movie := mockMovie(MovieConfig{})
+	vs := NewVideoStore(polochon.FileConfig{}, polochon.MovieConfig{}, polochon.ShowConfig{}, VideoStoreConfig{})
+	movie := &polochon.Movie{}
 
 	if err := vs.Add(movie, mockLogEntry); err != ErrMissingMovieFilePath {
 		t.Errorf("Expected %q, got %q", ErrMissingMovieFilePath, err)
@@ -36,7 +40,7 @@ func TestStoreMovie(t *testing.T) {
 		return nil
 	}
 
-	vs := NewVideoStore(FileConfig{}, MovieConfig{}, ShowConfig{}, VideoStoreConfig{
+	vs := NewVideoStore(polochon.FileConfig{}, polochon.MovieConfig{}, polochon.ShowConfig{}, VideoStoreConfig{
 		MovieDir: "/movie",
 		ShowDir:  "/show",
 	})
@@ -45,10 +49,10 @@ func TestStoreMovie(t *testing.T) {
 		return nil
 	}
 
-	movie := &Movie{
+	movie := &polochon.Movie{
 		Title: "Test Movie",
 		Year:  1,
-		File: File{
+		File: polochon.File{
 			Path: "/testmovie.avi",
 		},
 		Fanart: "/",
@@ -67,7 +71,7 @@ func TestStoreMovie(t *testing.T) {
 }
 
 type FakeShowDetailer struct {
-	show Show
+	show polochon.Show
 }
 
 func (d *FakeShowDetailer) Name() string {
@@ -76,14 +80,14 @@ func (d *FakeShowDetailer) Name() string {
 
 func (d *FakeShowDetailer) GetDetails(i interface{}, log *logrus.Entry) error {
 	switch v := i.(type) {
-	case *Show:
+	case *polochon.Show:
 		return d.showDetails(v)
 	default:
 		return fmt.Errorf("Error invalid type")
 	}
 }
 
-func (d *FakeShowDetailer) showDetails(s *Show) error {
+func (d *FakeShowDetailer) showDetails(s *polochon.Show) error {
 	s.Title = d.show.Title
 	s.Plot = d.show.Plot
 	s.TvdbID = d.show.TvdbID
@@ -116,7 +120,7 @@ func TestStoreShow(t *testing.T) {
 	}
 
 	showDetailer := &FakeShowDetailer{
-		show: Show{
+		show: polochon.Show{
 			Title:  "Test show",
 			Plot:   "Test show plot",
 			TvdbID: 0,
@@ -128,7 +132,7 @@ func TestStoreShow(t *testing.T) {
 		},
 	}
 
-	vs := NewVideoStore(FileConfig{}, MovieConfig{}, ShowConfig{}, VideoStoreConfig{
+	vs := NewVideoStore(polochon.FileConfig{}, polochon.MovieConfig{}, polochon.ShowConfig{}, VideoStoreConfig{
 		MovieDir: "/movie",
 		ShowDir:  "/show",
 	})
@@ -137,15 +141,15 @@ func TestStoreShow(t *testing.T) {
 		return nil
 	}
 
-	episode := &ShowEpisode{
+	episode := &polochon.ShowEpisode{
 		Title:     "Test Episode",
 		ShowTitle: "Test show",
 		Season:    1,
-		File: File{
+		File: polochon.File{
 			Path: "/episode.avi",
 		},
-		ShowConfig: ShowConfig{
-			Detailers: []Detailer{showDetailer},
+		ShowConfig: polochon.ShowConfig{
+			Detailers: []polochon.Detailer{showDetailer},
 		},
 	}
 

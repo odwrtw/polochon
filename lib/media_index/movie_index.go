@@ -1,9 +1,10 @@
-package polochon
+package index
 
 import (
 	"sync"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/odwrtw/polochon/lib"
 )
 
 // MovieIndex is an index for the movies
@@ -46,14 +47,14 @@ func (mi *MovieIndex) SearchByImdbID(imdbID string) (string, error) {
 func (mi *MovieIndex) searchMovieByImdbID(imdbID string) (string, error) {
 	filePath, ok := mi.ids[imdbID]
 	if !ok {
-		return "", ErrImdbIDNotFound
+		return "", ErrNotFound
 	}
 
 	return filePath, nil
 }
 
 // Add adds a movie to an index
-func (mi *MovieIndex) Add(movie *Movie) error {
+func (mi *MovieIndex) Add(movie *polochon.Movie) error {
 	mi.Lock()
 	defer mi.Unlock()
 
@@ -63,13 +64,13 @@ func (mi *MovieIndex) Add(movie *Movie) error {
 }
 
 // Remove will delete the movie from the index
-func (mi *MovieIndex) Remove(m *Movie, log *logrus.Entry) error {
+func (mi *MovieIndex) Remove(m *polochon.Movie, log *logrus.Entry) error {
 	mi.Lock()
 	defer mi.Unlock()
 
 	if _, ok := mi.ids[m.ImdbID]; !ok {
 		log.Errorf("Movie not in ids index, WEIRD")
-		return ErrImdbIDNotFound
+		return ErrNotFound
 	}
 	delete(mi.ids, m.ImdbID)
 

@@ -9,6 +9,7 @@ import (
 	"github.com/odwrtw/polochon/app/internal/configuration"
 	"github.com/odwrtw/polochon/app/internal/subapp"
 	"github.com/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib/library"
 )
 
 // AppName is the application name
@@ -18,17 +19,17 @@ const AppName = "organizer"
 type Organizer struct {
 	*subapp.Base
 
-	config     *configuration.Config
-	videoStore *polochon.VideoStore
-	event      chan string
+	config  *configuration.Config
+	library *library.VideoStore
+	event   chan string
 }
 
 // New returns a new organizer
-func New(config *configuration.Config, vs *polochon.VideoStore) *Organizer {
+func New(config *configuration.Config, vs *library.VideoStore) *Organizer {
 	return &Organizer{
-		Base:       subapp.NewBase(AppName),
-		config:     config,
-		videoStore: vs,
+		Base:    subapp.NewBase(AppName),
+		config:  config,
+		library: vs,
 	}
 }
 
@@ -173,7 +174,7 @@ func (o *Organizer) organizeFile(filePath string, log *logrus.Entry) error {
 	}
 
 	// Store the video
-	if err := o.videoStore.Add(video, log); err != nil {
+	if err := o.library.Add(video, log); err != nil {
 		errors.LogErrors(log, err)
 		return file.Ignore()
 	}

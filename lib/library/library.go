@@ -1,4 +1,4 @@
-package polochon
+package library
 
 import (
 	"fmt"
@@ -12,6 +12,8 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/errors"
+	"github.com/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib/media_index"
 )
 
 // Video errors
@@ -33,18 +35,18 @@ type VideoStoreConfig struct {
 // VideoStore represent a collection of videos
 type VideoStore struct {
 	VideoStoreConfig
-	movieIndex  *MovieIndex
-	showIndex   *ShowIndex
-	showConfig  ShowConfig
-	movieConfig MovieConfig
-	fileConfig  FileConfig
+	movieIndex  *index.MovieIndex
+	showIndex   *index.ShowIndex
+	showConfig  polochon.ShowConfig
+	movieConfig polochon.MovieConfig
+	fileConfig  polochon.FileConfig
 }
 
 // NewVideoStore returns a list of videos
-func NewVideoStore(fileConfig FileConfig, movieConfig MovieConfig, showConfig ShowConfig, vsConfig VideoStoreConfig) *VideoStore {
+func NewVideoStore(fileConfig polochon.FileConfig, movieConfig polochon.MovieConfig, showConfig polochon.ShowConfig, vsConfig VideoStoreConfig) *VideoStore {
 	return &VideoStore{
-		movieIndex:       NewMovieIndex(),
-		showIndex:        NewShowIndex(),
+		movieIndex:       index.NewMovieIndex(),
+		showIndex:        index.NewShowIndex(),
 		showConfig:       showConfig,
 		movieConfig:      movieConfig,
 		fileConfig:       fileConfig,
@@ -99,11 +101,11 @@ func (vs *VideoStore) MovieIds() ([]string, error) {
 }
 
 // Has returns true if the video is in the store
-func (vs *VideoStore) Has(video Video) (bool, error) {
+func (vs *VideoStore) Has(video polochon.Video) (bool, error) {
 	switch v := video.(type) {
-	case *Movie:
+	case *polochon.Movie:
 		return vs.HasMovie(v.ImdbID)
-	case *ShowEpisode:
+	case *polochon.ShowEpisode:
 		return vs.HasShowEpisode(v.ShowImdbID, v.Season, v.Episode)
 	default:
 		return false, ErrInvalidIndexVideoType
@@ -121,13 +123,13 @@ func (vs *VideoStore) HasShowEpisode(imdbID string, season, episode int) (bool, 
 }
 
 // Add video
-func (vs *VideoStore) Add(video Video, log *logrus.Entry) error {
+func (vs *VideoStore) Add(video polochon.Video, log *logrus.Entry) error {
 	ok, err := vs.Has(video)
 	if err != nil {
 		return err
 	}
 	switch v := video.(type) {
-	case *Movie:
+	case *polochon.Movie:
 		if ok {
 			err := vs.DeleteMovie(v, log)
 			if err != nil {
@@ -138,7 +140,7 @@ func (vs *VideoStore) Add(video Video, log *logrus.Entry) error {
 		if err := vs.AddMovie(v, log); err != nil {
 			return err
 		}
-	case *ShowEpisode:
+	case *polochon.ShowEpisode:
 		if ok {
 			err := vs.DeleteShowEpisode(v, log)
 			if err != nil {
@@ -156,7 +158,7 @@ func (vs *VideoStore) Add(video Video, log *logrus.Entry) error {
 	return vs.addToIndex(video)
 }
 
-func (vs *VideoStore) getMovieDir(movie *Movie) string {
+func (vs *VideoStore) getMovieDir(movie *polochon.Movie) string {
 	if movie.Year != 0 {
 		return filepath.Join(vs.MovieDir, fmt.Sprintf("%s (%d)", movie.Title, movie.Year))
 	}
@@ -164,7 +166,7 @@ func (vs *VideoStore) getMovieDir(movie *Movie) string {
 }
 
 // AddMovie adds a movie to the store
-func (vs *VideoStore) AddMovie(movie *Movie, log *logrus.Entry) error {
+func (vs *VideoStore) AddMovie(movie *polochon.Movie, log *logrus.Entry) error {
 	if movie.Path == "" {
 		return ErrMissingMovieFilePath
 	}
@@ -220,7 +222,7 @@ func (vs *VideoStore) AddMovie(movie *Movie, log *logrus.Entry) error {
 
 	// Download images
 	images := map[string]string{
-		movie.Fanart: movie.File.filePathWithoutExt() + "-fanart.jpg",
+		movie.Fanart: movie.File.PathWithoutExt() + "-fanart.jpg",
 		movie.Thumb:  filepath.Join(path.Dir(movie.File.Path), "/poster.jpg"),
 	}
 	for URL, savePath := range images {
@@ -231,11 +233,11 @@ func (vs *VideoStore) AddMovie(movie *Movie, log *logrus.Entry) error {
 	return nil
 }
 
-func (vs *VideoStore) getShowDir(ep *ShowEpisode) string {
+func (vs *VideoStore) getShowDir(ep *polochon.ShowEpisode) string {
 	return filepath.Join(vs.ShowDir, ep.ShowTitle)
 }
 
-func (vs *VideoStore) getSeasonDir(ep *ShowEpisode) string {
+func (vs *VideoStore) getSeasonDir(ep *polochon.ShowEpisode) string {
 	return filepath.Join(vs.ShowDir, ep.ShowTitle, fmt.Sprintf("Season %d", ep.Season))
 }
 
@@ -244,7 +246,7 @@ func (vs *VideoStore) showNFOPath(showDir string) string {
 }
 
 // AddShowEpisode adds an episode to the store
-func (vs *VideoStore) AddShowEpisode(ep *ShowEpisode, log *logrus.Entry) error {
+func (vs *VideoStore) AddShowEpisode(ep *polochon.ShowEpisode, log *logrus.Entry) error {
 	if ep.Path == "" {
 		return ErrMissingShowEpisodeFilePath
 	}
@@ -255,7 +257,7 @@ func (vs *VideoStore) AddShowEpisode(ep *ShowEpisode, log *logrus.Entry) error {
 
 	if !exists(showNFOPath) {
 
-		show := NewShowFromEpisode(ep)
+		show := polochon.NewShowFromEpisode(ep)
 		if err := show.GetDetails(log); err != nil {
 			errors.LogErrors(log, err)
 			if errors.IsFatal(err) {
@@ -335,11 +337,11 @@ func (vs *VideoStore) AddShowEpisode(ep *ShowEpisode, log *logrus.Entry) error {
 }
 
 // Delete will delete the video
-func (vs *VideoStore) Delete(video Video, log *logrus.Entry) error {
+func (vs *VideoStore) Delete(video polochon.Video, log *logrus.Entry) error {
 	switch v := video.(type) {
-	case *Movie:
+	case *polochon.Movie:
 		return vs.DeleteMovie(v, log)
-	case *ShowEpisode:
+	case *polochon.ShowEpisode:
 		return vs.DeleteShowEpisode(v, log)
 	default:
 		return ErrInvalidIndexVideoType
@@ -347,7 +349,7 @@ func (vs *VideoStore) Delete(video Video, log *logrus.Entry) error {
 }
 
 // DeleteMovie will delete the movie
-func (vs *VideoStore) DeleteMovie(m *Movie, log *logrus.Entry) error {
+func (vs *VideoStore) DeleteMovie(m *polochon.Movie, log *logrus.Entry) error {
 	// Delete the movie
 	d := filepath.Dir(m.Path)
 	log.Infof("Removing Movie %s", d)
@@ -364,14 +366,14 @@ func (vs *VideoStore) DeleteMovie(m *Movie, log *logrus.Entry) error {
 }
 
 // DeleteShowEpisode will delete the showEpisode
-func (vs *VideoStore) DeleteShowEpisode(se *ShowEpisode, log *logrus.Entry) error {
+func (vs *VideoStore) DeleteShowEpisode(se *polochon.ShowEpisode, log *logrus.Entry) error {
 	// Delete the episode
 	log.Infof("Removing ShowEpisode %q", se.Path)
 	// Remove the episode
 	if err := os.RemoveAll(se.Path); err != nil {
 		return err
 	}
-	pathWithoutExt := se.filePathWithoutExt()
+	pathWithoutExt := se.PathWithoutExt()
 	// Remove also the .nfo and .srt files
 	for _, ext := range []string{"nfo", "srt"} {
 		fileToDelete := fmt.Sprintf("%s.%s", pathWithoutExt, ext)
@@ -424,11 +426,11 @@ func (vs *VideoStore) DeleteShowEpisode(se *ShowEpisode, log *logrus.Entry) erro
 	return nil
 }
 
-func (vs *VideoStore) addToIndex(video Video) error {
+func (vs *VideoStore) addToIndex(video polochon.Video) error {
 	switch v := video.(type) {
-	case *Movie:
+	case *polochon.Movie:
 		return vs.movieIndex.Add(v)
-	case *ShowEpisode:
+	case *polochon.ShowEpisode:
 		return vs.showIndex.Add(v)
 	default:
 		return ErrInvalidIndexVideoType
@@ -436,12 +438,12 @@ func (vs *VideoStore) addToIndex(video Video) error {
 }
 
 // ShowIds returns the show ids, seasons and episodes
-func (vs *VideoStore) ShowIds() (map[string]IndexedShow, error) {
+func (vs *VideoStore) ShowIds() (map[string]index.IndexedShow, error) {
 	return vs.showIndex.IDs()
 }
 
 // SearchMovieByImdbID returns the video by its imdb ID
-func (vs *VideoStore) SearchMovieByImdbID(imdbID string) (Video, error) {
+func (vs *VideoStore) SearchMovieByImdbID(imdbID string) (polochon.Video, error) {
 	path, err := vs.movieIndex.SearchByImdbID(imdbID)
 	if err != nil {
 		return nil, err
@@ -450,7 +452,7 @@ func (vs *VideoStore) SearchMovieByImdbID(imdbID string) (Video, error) {
 }
 
 // SearchShowEpisodeByImdbID search for a show episode by its imdb ID
-func (vs *VideoStore) SearchShowEpisodeByImdbID(imdbID string, sNum, eNum int) (Video, error) {
+func (vs *VideoStore) SearchShowEpisodeByImdbID(imdbID string, sNum, eNum int) (polochon.Video, error) {
 	path, err := vs.showIndex.EpisodePath(imdbID, sNum, eNum)
 	if err != nil {
 		return nil, err
@@ -646,7 +648,7 @@ func (vs *VideoStore) ReadNFOFile(filePath string, i interface{}) error {
 	}
 	defer nfoFile.Close()
 
-	return ReadNFO(nfoFile, i)
+	return polochon.ReadNFO(nfoFile, i)
 }
 
 // WriteNFOFile write the NFO into a file
@@ -663,18 +665,18 @@ var writeNFOFile = func(filePath string, i interface{}, vs *VideoStore) error {
 	}
 	defer nfoFile.Close()
 
-	return WriteNFO(nfoFile, i)
+	return polochon.WriteNFO(nfoFile, i)
 }
 
 // NewShowFromID returns a new Show from its id
-func (vs *VideoStore) NewShowFromID(id string) (*Show, error) {
+func (vs *VideoStore) NewShowFromID(id string) (*polochon.Show, error) {
 	path, err := vs.showIndex.ShowPath(id)
 	if err != nil {
 		return nil, err
 	}
 	nfoPath := vs.showNFOPath(path)
 
-	s := &Show{}
+	s := &polochon.Show{}
 	if err := vs.ReadNFOFile(nfoPath, s); err != nil {
 		return nil, err
 	}
@@ -683,8 +685,8 @@ func (vs *VideoStore) NewShowFromID(id string) (*Show, error) {
 }
 
 // NewShowFromPath returns a new Show from its path
-func (vs *VideoStore) NewShowFromPath(path string) (*Show, error) {
-	s := &Show{}
+func (vs *VideoStore) NewShowFromPath(path string) (*polochon.Show, error) {
+	s := &polochon.Show{}
 	if err := vs.ReadNFOFile(path, s); err != nil {
 		return nil, err
 	}
@@ -693,9 +695,9 @@ func (vs *VideoStore) NewShowFromPath(path string) (*Show, error) {
 }
 
 // NewShowEpisodeFromPath returns a new ShowEpisode from its path
-func (vs *VideoStore) NewShowEpisodeFromPath(path string) (*ShowEpisode, error) {
-	file := NewFileWithConfig(path, vs.fileConfig)
-	se := NewShowEpisodeFromFile(vs.showConfig, *file)
+func (vs *VideoStore) NewShowEpisodeFromPath(path string) (*polochon.ShowEpisode, error) {
+	file := polochon.NewFileWithConfig(path, vs.fileConfig)
+	se := polochon.NewShowEpisodeFromFile(vs.showConfig, *file)
 
 	if err := vs.ReadNFOFile(file.NfoPath(), se); err != nil {
 		return nil, err
@@ -705,9 +707,9 @@ func (vs *VideoStore) NewShowEpisodeFromPath(path string) (*ShowEpisode, error) 
 }
 
 // NewMovieFromPath returns a new Movie from its path
-func (vs *VideoStore) NewMovieFromPath(path string) (*Movie, error) {
-	file := NewFileWithConfig(path, vs.fileConfig)
-	m := NewMovieFromFile(vs.movieConfig, *file)
+func (vs *VideoStore) NewMovieFromPath(path string) (*polochon.Movie, error) {
+	file := polochon.NewFileWithConfig(path, vs.fileConfig)
+	m := polochon.NewMovieFromFile(vs.movieConfig, *file)
 
 	if err := vs.ReadNFOFile(file.NfoPath(), m); err != nil {
 		return nil, err

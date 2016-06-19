@@ -1,9 +1,15 @@
-package polochon
+package index
 
 import (
+	"io/ioutil"
 	"path/filepath"
 	"testing"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/odwrtw/polochon/lib"
 )
+
+var mockLogEntry = logrus.NewEntry(&logrus.Logger{Out: ioutil.Discard})
 
 func mockShowIndex() ShowIndex {
 	return ShowIndex{
@@ -146,7 +152,7 @@ func TestRemoveSeason(t *testing.T) {
 		t.Fatal("season should not be empty")
 	}
 
-	s := &Show{ImdbID: id}
+	s := &polochon.Show{ImdbID: id}
 	if err := idx.RemoveSeason(s, season, mockLogEntry); err != nil {
 		t.Fatalf("error while removing season from the index: %q", err)
 	}
@@ -172,7 +178,7 @@ func TestRemoveShow(t *testing.T) {
 		t.Fatal("show should not be empty")
 	}
 
-	s := &Show{ImdbID: id}
+	s := &polochon.Show{ImdbID: id}
 	if err := idx.RemoveShow(s, mockLogEntry); err != nil {
 		t.Fatalf("error while removing show from the index: %q", err)
 	}
@@ -193,10 +199,11 @@ func TestAddEpisodeToIndex(t *testing.T) {
 	expectedSeasonPath := filepath.Join(expectedShowPath, "Season 1")
 
 	// Create a fake show and a fake show episode
-	e := mockShowEpisode()
-	s := mockShow()
-	s.ImdbID = e.ShowImdbID
-	e.Show = s
+	e := &polochon.ShowEpisode{
+		ShowImdbID: "tt0397306",
+		Season:     1,
+		Episode:    1,
+	}
 	e.Path = filepath.Join(expectedSeasonPath, "My show 1 - s01e01.mp4")
 
 	// Add it to the index

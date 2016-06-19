@@ -1,4 +1,4 @@
-package polochon
+package index
 
 // tool to extract the keys of the map
 func extractMapKeys(input map[string]string) ([]string, error) {

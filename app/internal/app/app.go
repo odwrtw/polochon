@@ -16,7 +16,7 @@ import (
 	"github.com/odwrtw/polochon/app/internal/server"
 	"github.com/odwrtw/polochon/app/internal/subapp"
 	"github.com/odwrtw/polochon/app/internal/token"
-	"github.com/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib/library"
 )
 
 // App represents the polochon app
@@ -82,19 +82,19 @@ func (a *App) init() error {
 		return err
 	}
 
-	videoStore := polochon.NewVideoStore(config.File, config.Movie, config.Show, config.VideoStore)
+	library := library.NewVideoStore(config.File, config.Movie, config.Show, config.VideoStore)
 
-	// Build the videoStore index
-	if err := videoStore.RebuildIndex(log); err != nil {
+	// Build the library index
+	if err := library.RebuildIndex(log); err != nil {
 		log.WithField("function", "rebuild_index").Error(err)
 	}
 
 	// Add the organizer
-	a.subApps = []subapp.App{organizer.New(config, videoStore)}
+	a.subApps = []subapp.App{organizer.New(config, library)}
 
 	if config.Downloader.Enabled {
 		// Add the downloader
-		a.subApps = append(a.subApps, downloader.New(config, videoStore))
+		a.subApps = append(a.subApps, downloader.New(config, library))
 
 		if config.Downloader.Cleaner.Enabled {
 			// Add the cleaner
@@ -123,7 +123,7 @@ func (a *App) init() error {
 		}
 
 		// Add the http server
-		a.subApps = append(a.subApps, server.New(config, videoStore, tokenManager))
+		a.subApps = append(a.subApps, server.New(config, library, tokenManager))
 	}
 
 	log.Debug("app configuration loaded")

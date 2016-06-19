@@ -16,6 +16,8 @@ import (
 	"github.com/odwrtw/polochon/app/internal/subapp"
 	"github.com/odwrtw/polochon/app/internal/token"
 	"github.com/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib/library"
+	"github.com/odwrtw/polochon/lib/media_index"
 )
 
 // AppName is the application name
@@ -26,7 +28,7 @@ type Server struct {
 	*subapp.Base
 
 	config         *configuration.Config
-	videoStore     *polochon.VideoStore
+	library        *library.VideoStore
 	tokenManager   *token.Manager
 	gracefulServer *manners.GracefulServer
 	log            *logrus.Entry
@@ -34,11 +36,11 @@ type Server struct {
 }
 
 // New returns a new server
-func New(config *configuration.Config, vs *polochon.VideoStore, tm *token.Manager) *Server {
+func New(config *configuration.Config, vs *library.VideoStore, tm *token.Manager) *Server {
 	return &Server{
 		Base:         subapp.NewBase(AppName),
 		config:       config,
-		videoStore:   vs,
+		library:      vs,
 		tokenManager: tm,
 		render:       render.New(),
 	}
@@ -68,7 +70,7 @@ func (s *Server) BlockingStop(log *logrus.Entry) {
 func (s *Server) movieIds(w http.ResponseWriter, req *http.Request) {
 	s.log.Debug("listing movies by ids")
 
-	movieIds, err := s.videoStore.MovieIds()
+	movieIds, err := s.library.MovieIds()
 	if err != nil {
 		s.renderError(w, err)
 		return
@@ -83,11 +85,11 @@ func (s *Server) getMovieDetails(w http.ResponseWriter, req *http.Request) {
 	s.log.Debugf("looking for a movie with ID %q", id)
 
 	// Find the file
-	v, err := s.videoStore.SearchMovieByImdbID(id)
+	v, err := s.library.SearchMovieByImdbID(id)
 	if err != nil {
 		s.log.Error(err)
 		var status int
-		if err == polochon.ErrImdbIDNotFound {
+		if err == index.ErrNotFound {
 			status = http.StatusNotFound
 		} else {
 			status = http.StatusInternalServerError
@@ -105,7 +107,7 @@ func (s *Server) getMovieDetails(w http.ResponseWriter, req *http.Request) {
 func (s *Server) showIds(w http.ResponseWriter, req *http.Request) {
 	s.log.Debug("listing shows")
 
-	ids, err := s.videoStore.ShowIds()
+	ids, err := s.library.ShowIds()
 	if err != nil {
 		s.renderError(w, err)
 		return
@@ -134,11 +136,11 @@ func (s *Server) showIds(w http.ResponseWriter, req *http.Request) {
 func (s *Server) getShowDetails(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 
-	v, err := s.videoStore.NewShowFromID(vars["id"])
+	v, err := s.library.NewShowFromID(vars["id"])
 	if err != nil {
 		s.log.Error(err)
 		var status int
-		if err == polochon.ErrImdbIDNotFound {
+		if err == index.ErrNotFound {
 			status = http.StatusNotFound
 		} else {
 			status = http.StatusInternalServerError
@@ -169,11 +171,11 @@ func (s *Server) getShowEpisodeIDDetails(w http.ResponseWriter, req *http.Reques
 		*ptr = v
 	}
 
-	v, err := s.videoStore.SearchShowEpisodeByImdbID(vars["id"], season, episode)
+	v, err := s.library.SearchShowEpisodeByImdbID(vars["id"], season, episode)
 	if err != nil {
 		s.log.Error(err)
 		var status int
-		if err == polochon.ErrImdbIDNotFound {
+		if err == index.ErrNotFound {
 			status = http.StatusNotFound
 		} else {
 			status = http.StatusInternalServerError
@@ -207,7 +209,7 @@ func serveFile(w http.ResponseWriter, r *http.Request, file *polochon.File) {
 
 func (s *Server) serveMovie(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	v, err := s.videoStore.SearchMovieByImdbID(vars["id"])
+	v, err := s.library.SearchMovieByImdbID(vars["id"])
 	s.serveVideo(w, req, v, err)
 }
 
@@ -232,7 +234,7 @@ func (s *Server) serveShow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	v, err := s.videoStore.SearchShowEpisodeByImdbID(vars["id"], season, episode)
+	v, err := s.library.SearchShowEpisodeByImdbID(vars["id"], season, episode)
 	s.serveVideo(w, r, v, err)
 }
 
@@ -240,7 +242,7 @@ func (s *Server) serveVideo(w http.ResponseWriter, r *http.Request, v polochon.V
 	if err != nil {
 		s.log.Error(err)
 		var status int
-		if err == polochon.ErrImdbIDNotFound {
+		if err == index.ErrNotFound {
 			status = http.StatusNotFound
 		} else {
 			status = http.StatusInternalServerError

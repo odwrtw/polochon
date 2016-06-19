@@ -1,8 +1,10 @@
-package polochon
+package index
 
 import (
 	"log"
 	"testing"
+
+	"github.com/odwrtw/polochon/lib"
 )
 
 // NewMovieIndex returns a new movie index
@@ -58,7 +60,7 @@ func TestSearchMovieByImdbID(t *testing.T) {
 		},
 		"tt1234": {
 			"",
-			ErrImdbIDNotFound,
+			ErrNotFound,
 		},
 	} {
 		res, err := m.searchMovieByImdbID(i)
@@ -74,7 +76,7 @@ func TestSearchMovieByImdbID(t *testing.T) {
 func TestAddAndRemoveMovieToIndex(t *testing.T) {
 	mi := mockMovieIndex()
 
-	m := mockMovie(MovieConfig{})
+	m := &polochon.Movie{ImdbID: "tt2562232"}
 	m.Path = "/home/test/movie/movie.mp4"
 	err := mi.Add(m)
 	if err != nil {
