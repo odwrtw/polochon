@@ -19,7 +19,7 @@ const (
 // Category represents the category of a movie or a tv show
 type Category string
 
-// Availabe categories
+// Available categories
 const (
 	MoviesCategory Category = "movies"
 	ShowsCategory  Category = "tv"

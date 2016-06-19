@@ -49,12 +49,12 @@ func (f *File) Exists() bool {
 }
 
 // IsVideo returns true is the file is considered as a video, using the allowed
-// extentions in the configuration
+// extensions in the configuration
 func (f *File) IsVideo() bool {
-	// Get the lower case extention
+	// Get the lower case extension
 	ext := path.Ext(strings.ToLower(f.Path))
 
-	// Check in the video extentions
+	// Check in the video extensions
 	for _, e := range f.VideoExtentions {
 		if e == ext {
 			return true
@@ -133,9 +133,9 @@ func (f *File) filePathWithoutExt() string {
 	return RemoveExt(f.Path)
 }
 
-// RemoveExt returns file path without the extention
+// RemoveExt returns file path without the extension
 func RemoveExt(filepath string) string {
-	// Extention
+	// Extension
 	ext := path.Ext(filepath)
 	// File length without the extension
 	l := len(filepath) - len(ext)

@@ -22,7 +22,7 @@ func init() {
 	polochon.RegisterDetailer(moduleName, NewDetailer)
 }
 
-// Fake is a mock Detailer for test purposes
+// Mock is a mock Detailer for test purposes
 type Mock struct{}
 
 // NewDetailer is an helper to avoid passing bytes
