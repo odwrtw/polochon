@@ -30,21 +30,12 @@ func (mi *MovieIndex) Clear() {
 	mi.ids = map[string]string{}
 }
 
-// SearchByImdbID searches for a movie from its IMDB ID
-func (mi *MovieIndex) SearchByImdbID(imdbID string) (string, error) {
+// MoviePath returns the movie path from its ID
+func (mi *MovieIndex) MoviePath(imdbID string) (string, error) {
 	mi.RLock()
 	defer mi.RUnlock()
 
 	// Check if the id is in the index and get the filePath
-	filePath, err := mi.searchMovieByImdbID(imdbID)
-	if err != nil {
-		return "", err
-	}
-
-	return filePath, nil
-}
-
-func (mi *MovieIndex) searchMovieByImdbID(imdbID string) (string, error) {
 	filePath, ok := mi.ids[imdbID]
 	if !ok {
 		return "", ErrNotFound
@@ -65,13 +56,12 @@ func (mi *MovieIndex) Add(movie *polochon.Movie) error {
 
 // Remove will delete the movie from the index
 func (mi *MovieIndex) Remove(m *polochon.Movie, log *logrus.Entry) error {
+	if _, err := mi.MoviePath(m.ImdbID); err != nil {
+		return err
+	}
+
 	mi.Lock()
 	defer mi.Unlock()
-
-	if _, ok := mi.ids[m.ImdbID]; !ok {
-		log.Errorf("Movie not in ids index, WEIRD")
-		return ErrNotFound
-	}
 	delete(mi.ids, m.ImdbID)
 
 	return nil
@@ -82,7 +72,7 @@ func (mi *MovieIndex) IDs() ([]string, error) {
 	mi.RLock()
 	defer mi.RUnlock()
 
-	return extractMapKeys(mi.ids)
+	return extractAndSortMapKeys(mi.ids)
 }
 
 // Has searches the movie index for an ImdbID and returns true if the movie is
@@ -90,10 +80,14 @@ func (mi *MovieIndex) IDs() ([]string, error) {
 func (mi *MovieIndex) Has(imdbID string) (bool, error) {
 	mi.RLock()
 	defer mi.RUnlock()
-	filePath, err := mi.searchMovieByImdbID(imdbID)
-	if filePath != "" && err == nil {
-		return true, nil
-	}
 
-	return false, nil
+	_, err := mi.MoviePath(imdbID)
+	switch err {
+	case nil:
+		return true, nil
+	case ErrNotFound:
+		return false, nil
+	default:
+		return false, err
+	}
 }

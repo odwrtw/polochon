@@ -119,7 +119,7 @@ func (l *Library) HasMovie(imdbID string) (bool, error) {
 
 // HasShowEpisode returns true if the show is in the store
 func (l *Library) HasShowEpisode(imdbID string, season, episode int) (bool, error) {
-	return l.showIndex.Has(imdbID, season, episode)
+	return l.showIndex.HasEpisode(imdbID, season, episode)
 }
 
 // Add video
@@ -385,7 +385,7 @@ func (l *Library) DeleteShowEpisode(se *polochon.ShowEpisode, log *logrus.Entry)
 	}
 
 	// Remove the episode from the index
-	if err := l.showIndex.Remove(se, log); err != nil {
+	if err := l.showIndex.RemoveEpisode(se, log); err != nil {
 		return err
 	}
 
@@ -444,7 +444,7 @@ func (l *Library) ShowIds() (map[string]index.IndexedShow, error) {
 
 // SearchMovieByImdbID returns the video by its imdb ID
 func (l *Library) SearchMovieByImdbID(imdbID string) (polochon.Video, error) {
-	path, err := l.movieIndex.SearchByImdbID(imdbID)
+	path, err := l.movieIndex.MoviePath(imdbID)
 	if err != nil {
 		return nil, err
 	}

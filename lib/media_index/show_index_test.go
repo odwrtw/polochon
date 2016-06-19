@@ -2,7 +2,7 @@ package index
 
 import (
 	"io/ioutil"
-	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/Sirupsen/logrus"
@@ -11,56 +11,57 @@ import (
 
 var mockLogEntry = logrus.NewEntry(&logrus.Logger{Out: ioutil.Discard})
 
-func mockShowIndex() ShowIndex {
-	return ShowIndex{
+func mockShowIndex() *ShowIndex {
+	return &ShowIndex{
 		shows: map[string]IndexedShow{
-			"tt56789": {
-				Path: "/home/test/tt56789",
+			// Game Of Thrones
+			"tt0944947": {
+				Path: "/home/shows/Game Of Thrones",
 				Seasons: map[int]IndexedSeason{
 					1: {
-						Path: "/home/test/tt56789/1",
+						Path: "/home/shows/Game Of Thrones/Season 1",
 						Episodes: map[int]string{
-							1: "/home/test/tt56789/1/s01e01.mp4",
-							2: "/home/test/tt56789/1/s01e02.mp4",
+							1: "/home/shows/Game Of Thrones/Season 1/s01e01.mp4",
+							2: "/home/shows/Game Of Thrones/Season 1/s01e02.mp4",
 						},
 					},
 					2: {
-						Path: "/home/test/tt56789/2",
+						Path: "/home/shows/Game Of Thrones/Season 2",
 						Episodes: map[int]string{
-							2: "/home/test/tt56789/2/s02e02.mp4",
+							2: "/home/shows/Game Of Thrones/Season 2/s02e02.mp4",
 						},
 					},
 				},
 			},
-
-			"tt12345": {
-				Path: "/home/test/tt12345",
+			// The Walking Dead
+			"tt1520211": {
+				Path: "/home/shows/The Walking Dead",
 				Seasons: map[int]IndexedSeason{
 					2: {
-						Path: "/home/test/tt12345/2",
+						Path: "/home/shows/The Walking Dead/Season 2",
 						Episodes: map[int]string{
-							1: "/home/test/tt12345/2/s02e01.mp4",
+							1: "/home/shows/The Walking Dead/Season 2/s02e01.mp4",
 						},
 					},
 				},
 			},
-
-			"tt0397306": {
-				Path: "/home/test/tt0397306",
+			// Vickings
+			"tt2306299": {
+				Path: "/home/shows/Vikings",
 				Seasons: map[int]IndexedSeason{
 					9: {
-						Path: "/home/test/tt0397306/9",
+						Path: "/home/shows/Vikings/Season 9",
 						Episodes: map[int]string{
-							18: "/home/test/tt0397306/18/s09e18.mp4",
+							18: "/home/shows/Vikings/Season 9/s09e18.mp4",
 						},
 					},
 				},
 			},
-
-			"tt123456": {},
-
-			"tt22222": {
-				Path: "/home/test/tt0397306",
+			// Dexter
+			"tt0773262": {},
+			// Family Guy
+			"tt0182576": {
+				Path: "/home/shows/Family Guy",
 				Seasons: map[int]IndexedSeason{
 					2: {},
 				},
@@ -69,7 +70,53 @@ func mockShowIndex() ShowIndex {
 	}
 }
 
-func TestHasShowEpisode(t *testing.T) {
+func TestShowIndexHasShow(t *testing.T) {
+	idx := mockShowIndex()
+
+	for _, mock := range []struct {
+		imdbID   string
+		expected bool
+	}{
+		{"tt0944947", true},
+		{"not_in_index", false},
+	} {
+		got, err := idx.HasShow(mock.imdbID)
+		if err != nil {
+			t.Fatalf("expected no error, got %q", err)
+		}
+
+		if mock.expected != got {
+			t.Errorf("expected %t, got %t for %s", mock.expected, got, mock.imdbID)
+		}
+	}
+}
+
+func TestShowIndexHasSeason(t *testing.T) {
+	idx := mockShowIndex()
+
+	for _, mock := range []struct {
+		imdbID   string
+		season   int
+		expected bool
+	}{
+		{"tt0944947", 1, true},
+		{"tt0944947", 2, true},
+		{"tt0182576", 2, true},
+		{"tt0182576", 3, false},
+		{"tt912918291", 1, false},
+	} {
+		got, err := idx.HasSeason(mock.imdbID, mock.season)
+		if err != nil {
+			t.Fatalf("expected no error, got %q", err)
+		}
+
+		if mock.expected != got {
+			t.Errorf("expected %t, got %t for %s season %d", mock.expected, got, mock.imdbID, mock.season)
+		}
+	}
+}
+
+func TestShowIndexHasEpisode(t *testing.T) {
 	idx := mockShowIndex()
 
 	for _, mock := range []struct {
@@ -78,16 +125,16 @@ func TestHasShowEpisode(t *testing.T) {
 		episode  int
 		expected bool
 	}{
-		{"tt56789", 1, 1, true},
-		{"tt56789", 1, 2, true},
-		{"tt56789", 1, 3, false},
-		{"tt12345", 1, 3, false},
-		{"tt12345", 2, 1, true},
+		{"tt0944947", 1, 1, true},
+		{"tt0944947", 1, 2, true},
+		{"tt0944947", 1, 3, false},
+		{"tt1520211", 1, 3, false},
+		{"tt1520211", 2, 1, true},
 		{"tt11111", 2, 1, false},
 	} {
-		got, err := idx.Has(mock.imdbID, mock.season, mock.episode)
+		got, err := idx.HasEpisode(mock.imdbID, mock.season, mock.episode)
 		if err != nil {
-			t.Fatalf("failed to get episode from index: %q", err)
+			t.Fatalf("expected no error, got %q", err)
 		}
 
 		if mock.expected != got {
@@ -96,13 +143,13 @@ func TestHasShowEpisode(t *testing.T) {
 	}
 }
 
-func TestIsShowEmpty(t *testing.T) {
+func TestShowIndexIsShowEmpty(t *testing.T) {
 	idx := mockShowIndex()
 	for id, expected := range map[string]bool{
-		"tt456789": true,
-		"tt123456": true,
-		"tt56789":  false,
-		"tt12345":  false,
+		"tt456789":  true,
+		"tt0773262": true,
+		"tt0944947": false,
+		"tt1520211": false,
 	} {
 		got, err := idx.IsShowEmpty(id)
 		if err != nil {
@@ -114,19 +161,19 @@ func TestIsShowEmpty(t *testing.T) {
 	}
 }
 
-func TestIsSeasonEmpty(t *testing.T) {
+func TestShowIndexIsSeasonEmpty(t *testing.T) {
 	idx := mockShowIndex()
 	for _, mock := range []struct {
 		imdbID   string
 		season   int
 		expected bool
 	}{
-		{"tt12345", 2, false},
-		{"tt12345", 3, true},
-		{"tt22222", 2, true},
-		{"tt22222", 1, true},
-		{"tt56789", 1, false},
-		{"tt56789", 2, false},
+		{"tt1520211", 2, false},
+		{"tt1520211", 3, true},
+		{"tt0182576", 2, true},
+		{"tt0182576", 1, true},
+		{"tt0944947", 1, false},
+		{"tt0944947", 2, false},
 	} {
 		got, err := idx.IsSeasonEmpty(mock.imdbID, mock.season)
 		if err != nil {
@@ -138,10 +185,42 @@ func TestIsSeasonEmpty(t *testing.T) {
 	}
 }
 
-func TestRemoveSeason(t *testing.T) {
+func TestShowIndexRemoveEpisode(t *testing.T) {
+	idx := mockShowIndex()
+	id := "tt0944947"
+	season := 1
+	episode := 2
+
+	inIndex, err := idx.HasEpisode(id, season, episode)
+	if err != nil {
+		t.Fatalf("expected no error, got %q", err)
+	}
+	if !inIndex {
+		t.Fatal("episode should be empty")
+	}
+
+	e := &polochon.ShowEpisode{
+		ShowImdbID: id,
+		Season:     season,
+		Episode:    episode,
+	}
+	if err := idx.RemoveEpisode(e, mockLogEntry); err != nil {
+		t.Fatalf("expected no error, got %q", err)
+	}
+
+	inIndex, err = idx.HasEpisode(id, season, episode)
+	if err != nil {
+		t.Fatalf("expected no error, got %q", err)
+	}
+	if inIndex {
+		t.Fatal("episode should not be empty")
+	}
+}
+
+func TestShowIndexRemoveSeason(t *testing.T) {
 	idx := mockShowIndex()
 
-	id := "tt0397306"
+	id := "tt2306299"
 	season := 9
 
 	empty, err := idx.IsSeasonEmpty(id, season)
@@ -166,9 +245,9 @@ func TestRemoveSeason(t *testing.T) {
 	}
 }
 
-func TestRemoveShow(t *testing.T) {
+func TestShowIndexRemoveShow(t *testing.T) {
 	idx := mockShowIndex()
-	id := "tt0397306"
+	id := "tt2306299"
 
 	empty, err := idx.IsShowEmpty(id)
 	if err != nil {
@@ -192,48 +271,103 @@ func TestRemoveShow(t *testing.T) {
 	}
 }
 
-func TestAddEpisodeToIndex(t *testing.T) {
+func TestShowIndexAdd(t *testing.T) {
+	for _, mock := range []struct {
+		expectedShowPath   string
+		expectedSeasonPath string
+		episodePath        string
+		episode            *polochon.ShowEpisode
+	}{
+		{
+			// New show, nothing is in the index yet
+			expectedShowPath:   "/home/shows/How I Met Your Mother",
+			expectedSeasonPath: "/home/shows/How I Met Your Mother/Season 1",
+			episodePath:        "/home/shows/How I Met Your Mother/Season 1/s01e01.mp4",
+			episode: &polochon.ShowEpisode{
+				ShowImdbID: "tt0460649",
+				Season:     1,
+				Episode:    1,
+			},
+		},
+		{
+			// New season, the show is already in the index
+			expectedShowPath:   "/home/shows/Game Of Thrones",
+			expectedSeasonPath: "/home/shows/Game Of Thrones/Season 3",
+			episodePath:        "/home/shows/Game Of Thrones/Season 3/s03e01.mp4",
+			episode: &polochon.ShowEpisode{
+				ShowImdbID: "tt0944947", // Game Of Thrones
+				Season:     3,
+				Episode:    1,
+			},
+		},
+		{
+			// New episode, the show and the season are already in the index
+			expectedShowPath:   "/home/shows/Game Of Thrones",
+			expectedSeasonPath: "/home/shows/Game Of Thrones/Season 1",
+			episodePath:        "/home/shows/Game Of Thrones/Season 1/s01e03.mp4",
+			episode: &polochon.ShowEpisode{
+				ShowImdbID: "tt0944947", // Game Of Thrones
+				Season:     1,
+				Episode:    3,
+			},
+		},
+	} {
+		idx := mockShowIndex()
+		mock.episode.Path = mock.episodePath
+
+		// Add it to the index
+		if err := idx.Add(mock.episode); err != nil {
+			t.Fatalf("error while adding show in the index: %q", err)
+		}
+
+		// Check
+		hasEpisode, err := idx.HasEpisode(mock.episode.ShowImdbID, mock.episode.Season, mock.episode.Episode)
+		if err != nil {
+			t.Fatalf("expected no error, got %q", err)
+		}
+		if !hasEpisode {
+			t.Fatal("the index should have the episode")
+		}
+
+		// Ensures the paths are correct
+		showPath, err := idx.ShowPath(mock.episode.ShowImdbID)
+		if err != nil {
+			t.Fatalf("expected no error, got %q", err)
+		}
+		if showPath != mock.expectedShowPath {
+			t.Errorf("expected show path to be %q, got %q", mock.expectedShowPath, showPath)
+		}
+
+		seasonPath, err := idx.SeasonPath(mock.episode.ShowImdbID, mock.episode.Season)
+		if err != nil {
+			t.Fatalf("expected no error, got %q", err)
+		}
+		if seasonPath != mock.expectedSeasonPath {
+			t.Errorf("expected season path to be %q, got %q", mock.expectedSeasonPath, seasonPath)
+		}
+	}
+}
+
+func TestShowIndexClear(t *testing.T) {
 	idx := NewShowIndex()
+	expected := map[string]IndexedShow{}
+	idx.Clear()
 
-	expectedShowPath := "/home/shows/My show 1"
-	expectedSeasonPath := filepath.Join(expectedShowPath, "Season 1")
-
-	// Create a fake show and a fake show episode
-	e := &polochon.ShowEpisode{
-		ShowImdbID: "tt0397306",
-		Season:     1,
-		Episode:    1,
+	if !reflect.DeepEqual(idx.shows, expected) {
+		t.Errorf("expected %+v , got %+v", expected, idx)
 	}
-	e.Path = filepath.Join(expectedSeasonPath, "My show 1 - s01e01.mp4")
+}
 
-	// Add it to the index
-	if err := idx.Add(e); err != nil {
-		t.Fatalf("error while adding show in the index: %q", err)
-	}
+func TestShowIDs(t *testing.T) {
+	idx := NewShowIndex()
+	expected := idx.shows
 
-	// Check
-	hasEpisode, err := idx.Has(e.ShowImdbID, e.Season, e.Episode)
+	got, err := idx.IDs()
 	if err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
-	if !hasEpisode {
-		t.Fatal("the index should have the episode")
-	}
 
-	// Ensures the paths are correct
-	showPath, err := idx.ShowPath(e.ShowImdbID)
-	if err != nil {
-		t.Fatalf("expected no error, got %q", err)
-	}
-	if showPath != expectedShowPath {
-		t.Errorf("expected show path to be %q, got %q", expectedShowPath, showPath)
-	}
-
-	seasonPath, err := idx.SeasonPath(e.ShowImdbID, e.Season)
-	if err != nil {
-		t.Fatalf("expected no error, got %q", err)
-	}
-	if seasonPath != expectedSeasonPath {
-		t.Errorf("expected season path to be %q, got %q", expectedSeasonPath, seasonPath)
+	if !reflect.DeepEqual(got, expected) {
+		t.Errorf("expected %+v , got %+v", expected, got)
 	}
 }

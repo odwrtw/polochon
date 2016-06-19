@@ -1,132 +1,124 @@
 package index
 
 import (
-	"log"
+	"reflect"
 	"testing"
 
 	"github.com/odwrtw/polochon/lib"
 )
 
-// NewMovieIndex returns a new movie index
+// mockMovieIndex returns a mock movie index
 func mockMovieIndex() *MovieIndex {
 	return &MovieIndex{
-		ids: map[string]string{},
+		ids: map[string]string{
+			"tt56789": "/home/test/movie/movie.mp4",
+			"tt12345": "/home/test/movieBis/movieBis.mp4",
+		},
 	}
 }
 
-var idsIndex = map[string]string{
-	"tt56789": "/home/test/movie/movie.mp4",
-	"tt12345": "/home/test/movieBis/movieBis.mp4",
-}
-
-func TestHasMovie(t *testing.T) {
-	m := mockMovieIndex()
-
-	m.ids = idsIndex
-
-	for i, expected := range map[string]bool{
+func TestMovieIndexHas(t *testing.T) {
+	idx := mockMovieIndex()
+	for id, expected := range map[string]bool{
 		"tt56789": true,
 		"tt12345": true,
 		"tt1234":  false,
 	} {
-		res, err := m.Has(i)
+		got, err := idx.Has(id)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatalf("expected no error, got %q", err)
 		}
-		if expected != res {
-			t.Errorf("TestHasMovie: expected %t, got %t for %s", expected, res, i)
+		if expected != got {
+			t.Errorf("expected %t, got %t for %s", expected, got, id)
 		}
 	}
 }
 
-func TestSearchMovieByImdbID(t *testing.T) {
-	m := mockMovieIndex()
-
-	m.ids = idsIndex
-
-	type res struct {
-		path string
-		err  error
-	}
-
-	for i, expected := range map[string]res{
-		"tt12345": {
-			"/home/test/movieBis/movieBis.mp4",
-			nil,
+func TestMovieIndexMoviePath(t *testing.T) {
+	idx := mockMovieIndex()
+	for _, mock := range []struct {
+		id            string
+		expectedPath  string
+		expectedError error
+	}{
+		{
+			id:            "tt12345",
+			expectedPath:  "/home/test/movieBis/movieBis.mp4",
+			expectedError: nil,
 		},
-		"tt56789": {
-			"/home/test/movie/movie.mp4",
-			nil,
+		{
+			id:            "tt56789",
+			expectedPath:  "/home/test/movie/movie.mp4",
+			expectedError: nil,
 		},
-		"tt1234": {
-			"",
-			ErrNotFound,
+		{
+			id:            "tt1234",
+			expectedPath:  "",
+			expectedError: ErrNotFound,
 		},
 	} {
-		res, err := m.searchMovieByImdbID(i)
-		if expected.path != res {
-			t.Errorf("TestSearchByImdbID: expected %s, got %s for %s", expected.path, res, i)
+		path, err := idx.MoviePath(mock.id)
+		if path != mock.expectedPath {
+			t.Errorf("expected %s, got %s for %s", mock.expectedPath, path, mock.id)
 		}
-		if expected.err != err {
-			t.Errorf("TestSearchByImdbID: expected error %s, got %s for %s", expected.err, err, i)
+
+		if err != mock.expectedError {
+			t.Errorf("expected error %s, got %s for %s", mock.expectedError, err, mock.id)
 		}
 	}
 }
 
-func TestAddAndRemoveMovieToIndex(t *testing.T) {
-	mi := mockMovieIndex()
-
+func TestMovieIndexAddAndRemove(t *testing.T) {
+	idx := NewMovieIndex()
 	m := &polochon.Movie{ImdbID: "tt2562232"}
 	m.Path = "/home/test/movie/movie.mp4"
-	err := mi.Add(m)
-	if err != nil {
-		t.Fatal(err)
+
+	if err := idx.Add(m); err != nil {
+		t.Fatalf("expected no error, got %q", err)
 	}
 
-	res, err := mi.Has(m.ImdbID)
+	inIndex, err := idx.Has(m.ImdbID)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("expected no error, got %q", err)
 	}
-	if res != true {
-		log.Println("index : ", mi.ids)
-		t.Errorf("Should have the movie %s in index", m.ImdbID)
+	if !inIndex {
+		t.Fatalf("the movie %q should be in the index", m.ImdbID)
 	}
 
-	err = mi.Remove(m, mockLogEntry)
-	if err != nil {
-		t.Fatal(err)
+	if err = idx.Remove(m, mockLogEntry); err != nil {
+		t.Fatalf("expected no error, got %q", err)
 	}
 
-	res, err = mi.Has(m.ImdbID)
+	inIndex, err = idx.Has(m.ImdbID)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("expected no error, got %q", err)
 	}
-	if res != false {
-		t.Errorf("Should not have the movie %s in index", m.ImdbID)
+	if inIndex {
+		t.Fatalf("the movie %q should not be in the index", m.ImdbID)
 	}
 }
 
-func TestMovieIDs(t *testing.T) {
-	m := mockMovieIndex()
+func TestMovieIndexIDs(t *testing.T) {
+	idx := mockMovieIndex()
+	expected := []string{"tt12345", "tt56789"}
 
-	m.ids = idsIndex
-
-	expectedIDs := []string{"tt56789", "tt12345"}
-	ids, err := m.IDs()
+	got, err := idx.IDs()
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("expected no error, got %q", err)
 	}
-	if len(expectedIDs) != len(ids) {
-		t.Errorf("TestIDs: not the same number of elements in the result")
+
+	if !reflect.DeepEqual(got, expected) {
+		t.Errorf("expected %+v , got %+v", expected, got)
 	}
-LOOP:
-	for _, exp := range expectedIDs {
-		for _, i := range ids {
-			// if we found the element, go to the next one
-			if exp == i {
-				continue LOOP
-			}
-		}
-		t.Errorf("TestIDs: %s is not in the result", exp)
+}
+
+func TestMovieIndexClear(t *testing.T) {
+	idx := mockMovieIndex()
+	expected := map[string]string{}
+
+	idx.Clear()
+
+	if !reflect.DeepEqual(idx.ids, expected) {
+		t.Errorf("expected %+v , got %+v", expected, idx)
 	}
 }

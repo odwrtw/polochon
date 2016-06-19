@@ -1,7 +1,9 @@
 package index
 
+import "sort"
+
 // tool to extract the keys of the map
-func extractMapKeys(input map[string]string) ([]string, error) {
+func extractAndSortMapKeys(input map[string]string) ([]string, error) {
 	// Prepare the return slice
 	ret := make([]string, len(input))
 
@@ -10,6 +12,9 @@ func extractMapKeys(input map[string]string) ([]string, error) {
 		ret[i] = k
 		i++
 	}
+
+	// Sort the result for a deterministic result
+	sort.Strings(ret)
 
 	return ret, nil
 }
