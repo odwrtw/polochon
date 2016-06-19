@@ -82,7 +82,7 @@ func (a *App) init() error {
 		return err
 	}
 
-	library := library.NewVideoStore(config.File, config.Movie, config.Show, config.VideoStore)
+	library := library.New(config.File, config.Movie, config.Show, config.Library)
 
 	// Build the library index
 	if err := library.RebuildIndex(log); err != nil {

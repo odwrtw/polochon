@@ -19,12 +19,12 @@ type Downloader struct {
 	*subapp.Base
 
 	config  *configuration.Config
-	library *library.VideoStore
+	library *library.Library
 	event   chan struct{}
 }
 
 // New returns a new downloader
-func New(config *configuration.Config, vs *library.VideoStore) *Downloader {
+func New(config *configuration.Config, vs *library.Library) *Downloader {
 	return &Downloader{
 		Base:    subapp.NewBase(AppName),
 		config:  config,

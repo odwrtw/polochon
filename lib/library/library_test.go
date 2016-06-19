@@ -12,10 +12,10 @@ import (
 var mockLogEntry = logrus.NewEntry(&logrus.Logger{Out: ioutil.Discard})
 
 func TestStoreMovieNoPath(t *testing.T) {
-	vs := NewVideoStore(polochon.FileConfig{}, polochon.MovieConfig{}, polochon.ShowConfig{}, VideoStoreConfig{})
+	library := New(polochon.FileConfig{}, polochon.MovieConfig{}, polochon.ShowConfig{}, Config{})
 	movie := &polochon.Movie{}
 
-	if err := vs.Add(movie, mockLogEntry); err != ErrMissingMovieFilePath {
+	if err := library.Add(movie, mockLogEntry); err != ErrMissingMovieFilePath {
 		t.Errorf("Expected %q, got %q", ErrMissingMovieFilePath, err)
 	}
 }
@@ -40,12 +40,12 @@ func TestStoreMovie(t *testing.T) {
 		return nil
 	}
 
-	vs := NewVideoStore(polochon.FileConfig{}, polochon.MovieConfig{}, polochon.ShowConfig{}, VideoStoreConfig{
+	library := New(polochon.FileConfig{}, polochon.MovieConfig{}, polochon.ShowConfig{}, Config{
 		MovieDir: "/movie",
 		ShowDir:  "/show",
 	})
 
-	writeNFOFile = func(filePath string, i interface{}, vs *VideoStore) error {
+	writeNFOFile = func(filePath string, i interface{}, library *Library) error {
 		return nil
 	}
 
@@ -61,7 +61,7 @@ func TestStoreMovie(t *testing.T) {
 
 	expectedNewPath := "/movie/Test Movie (1)/testmovie.avi"
 
-	if err := vs.Add(movie, mockLogEntry); err != nil {
+	if err := library.Add(movie, mockLogEntry); err != nil {
 		t.Errorf("Expected nil, got %q", err)
 	}
 
@@ -124,7 +124,7 @@ func TestStoreShow(t *testing.T) {
 			Title:  "Test show",
 			Plot:   "Test show plot",
 			TvdbID: 0,
-			URL:    "http://fakeurl.test",
+			URL:    "http://fakeurlibrary.test",
 			ImdbID: "ttFakeShow",
 			Banner: "/",
 			Fanart: "/",
@@ -132,12 +132,12 @@ func TestStoreShow(t *testing.T) {
 		},
 	}
 
-	vs := NewVideoStore(polochon.FileConfig{}, polochon.MovieConfig{}, polochon.ShowConfig{}, VideoStoreConfig{
+	library := New(polochon.FileConfig{}, polochon.MovieConfig{}, polochon.ShowConfig{}, Config{
 		MovieDir: "/movie",
 		ShowDir:  "/show",
 	})
 
-	writeNFOFile = func(filePath string, i interface{}, vs *VideoStore) error {
+	writeNFOFile = func(filePath string, i interface{}, library *Library) error {
 		return nil
 	}
 
@@ -155,7 +155,7 @@ func TestStoreShow(t *testing.T) {
 
 	expectedNewPath := "/show/Test show/Season 1/episode.avi"
 
-	if err := vs.Add(episode, mockLogEntry); err != nil {
+	if err := library.Add(episode, mockLogEntry); err != nil {
 		t.Errorf("Expected nil, got %q", err)
 	}
 

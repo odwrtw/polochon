@@ -126,7 +126,7 @@ type Config struct {
 	Movie         polochon.MovieConfig
 	Show          polochon.ShowConfig
 	File          polochon.FileConfig
-	VideoStore    library.VideoStoreConfig
+	Library       library.Config
 	Notifiers     []polochon.Notifier
 }
 
@@ -261,7 +261,7 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 		return nil, err
 	}
 
-	conf.VideoStore = library.VideoStoreConfig{
+	conf.Library = library.Config{
 		MovieDir: realMoviesPath,
 		ShowDir:  realShowsPath,
 	}

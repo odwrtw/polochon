@@ -28,7 +28,7 @@ type Server struct {
 	*subapp.Base
 
 	config         *configuration.Config
-	library        *library.VideoStore
+	library        *library.Library
 	tokenManager   *token.Manager
 	gracefulServer *manners.GracefulServer
 	log            *logrus.Entry
@@ -36,7 +36,7 @@ type Server struct {
 }
 
 // New returns a new server
-func New(config *configuration.Config, vs *library.VideoStore, tm *token.Manager) *Server {
+func New(config *configuration.Config, vs *library.Library, tm *token.Manager) *Server {
 	return &Server{
 		Base:         subapp.NewBase(AppName),
 		config:       config,

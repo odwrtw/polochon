@@ -20,12 +20,12 @@ type Organizer struct {
 	*subapp.Base
 
 	config  *configuration.Config
-	library *library.VideoStore
+	library *library.Library
 	event   chan string
 }
 
 // New returns a new organizer
-func New(config *configuration.Config, vs *library.VideoStore) *Organizer {
+func New(config *configuration.Config, vs *library.Library) *Organizer {
 	return &Organizer{
 		Base:    subapp.NewBase(AppName),
 		config:  config,
