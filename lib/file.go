@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/Sirupsen/logrus"
@@ -131,6 +132,16 @@ func (f *File) IgnorePath() string {
 // PathWithoutExt returns the file path without the file extension
 func (f *File) PathWithoutExt() string {
 	return RemoveExt(f.Path)
+}
+
+// MovieFanartPath returns the movie fanart path
+func (f *File) MovieFanartPath() string {
+	return f.PathWithoutExt() + "-fanart.jpg"
+}
+
+// MovieThumbPath returns the movie thumb path
+func (f *File) MovieThumbPath() string {
+	return filepath.Join(path.Dir(f.Path), "/poster.jpg")
 }
 
 // RemoveExt returns file path without the extension

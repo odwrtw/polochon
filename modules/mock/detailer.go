@@ -66,6 +66,12 @@ func (mock *Mock) getMovieDetails(m *polochon.Movie) {
 	if m.SortTitle == "" {
 		m.SortTitle = m.Title
 	}
+	if m.Thumb == "" {
+		m.Thumb = fmt.Sprintf("http://base-photo.com/thumb/%s.jpg", m.ImdbID)
+	}
+	if m.Fanart == "" {
+		m.Fanart = fmt.Sprintf("http://base-photo.com/fanart/%s.jpg", m.ImdbID)
+	}
 
 	m.Plot = fmt.Sprintf("This is the plot of the movie %s", m.Title)
 	m.Rating = 5.0
@@ -73,8 +79,6 @@ func (mock *Mock) getMovieDetails(m *polochon.Movie) {
 	m.Tagline = "What the fuck is a tagline"
 	m.Votes = 1000
 	m.Year = 2000
-	m.Thumb = fmt.Sprintf("http://base-photo.com/thumb/%s.jpg", m.ImdbID)
-	m.Fanart = fmt.Sprintf("http://base-photo.com/fanart/%s.jpg", m.ImdbID)
 }
 
 func (mock *Mock) getShowEpisodeDetails(s *polochon.ShowEpisode) {

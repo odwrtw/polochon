@@ -60,18 +60,6 @@ var exists = func(path string) bool {
 	return false
 }
 
-var mkdir = func(path string) error {
-	return os.Mkdir(path, os.ModePerm)
-}
-
-var move = func(from string, to string) error {
-	return os.Rename(from, to)
-}
-
-var remove = func(path string) error {
-	return os.RemoveAll(path)
-}
-
 var download = func(URL, savePath string) error {
 	resp, err := http.Get(URL)
 	if err != nil {
@@ -181,13 +169,13 @@ func (l *Library) AddMovie(movie *polochon.Movie, log *logrus.Entry) error {
 	// Remove movie dir if it exisits
 	if ok := exists(storePath); ok {
 		log.Debug("Movie folder exists, remove it")
-		if err := remove(storePath); err != nil {
+		if err := os.RemoveAll(storePath); err != nil {
 			return err
 		}
 	}
 
 	// Create the folder
-	if err := mkdir(storePath); err != nil {
+	if err := os.Mkdir(storePath, os.ModePerm); err != nil {
 		return err
 	}
 
@@ -198,7 +186,7 @@ func (l *Library) AddMovie(movie *polochon.Movie, log *logrus.Entry) error {
 	oldPath := movie.Path
 
 	log.Debugf("Old path: %q, new path %q", movie.Path, newPath)
-	if err := move(movie.Path, newPath); err != nil {
+	if err := os.Rename(movie.Path, newPath); err != nil {
 		return err
 	}
 
@@ -220,15 +208,24 @@ func (l *Library) AddMovie(movie *polochon.Movie, log *logrus.Entry) error {
 	}
 
 	// Download images
-	images := map[string]string{
-		movie.Fanart: movie.File.PathWithoutExt() + "-fanart.jpg",
-		movie.Thumb:  filepath.Join(path.Dir(movie.File.Path), "/poster.jpg"),
-	}
-	for URL, savePath := range images {
-		if err := download(URL, savePath); err != nil {
+	for _, img := range []struct {
+		url      string
+		savePath string
+	}{
+		{
+			url:      movie.Fanart,
+			savePath: movie.MovieFanartPath(),
+		},
+		{
+			url:      movie.Thumb,
+			savePath: movie.MovieThumbPath(),
+		},
+	} {
+		if err := download(img.url, img.savePath); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -266,7 +263,7 @@ func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode, log *logrus.Entry) er
 
 		// Create show dir if necessary
 		if !exists(showDir) {
-			if err := mkdir(showDir); err != nil {
+			if err := os.Mkdir(showDir, os.ModePerm); err != nil {
 				return err
 			}
 		}
@@ -297,7 +294,7 @@ func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode, log *logrus.Entry) er
 	// Create show season dir if necessary
 	seasonDir := l.getSeasonDir(ep)
 	if !exists(seasonDir) {
-		if err := mkdir(seasonDir); err != nil {
+		if err := os.Mkdir(seasonDir, os.ModePerm); err != nil {
 			return err
 		}
 	}
@@ -315,7 +312,7 @@ func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode, log *logrus.Entry) er
 	// Move the episode into the folder
 	newPath := filepath.Join(seasonDir, path.Base(ep.Path))
 	log.Debugf("Moving episode to folder Old path: %q, New path: %q", ep.Path, newPath)
-	if err := move(ep.Path, newPath); err != nil {
+	if err := os.Rename(ep.Path, newPath); err != nil {
 		return err
 	}
 
