@@ -32,7 +32,7 @@ var configFile = strings.NewReader(`
   include:
     - user
   allowed:
-    - DeleteByID
+    - DeleteEpisode
   token:
   - name: admin1
     value: admin1token
@@ -53,7 +53,7 @@ func createExpectedManager() *Manager {
 
 	rAdmin := &Role{
 		Name:    "admin",
-		Allowed: []string{"DeleteByID"},
+		Allowed: []string{"DeleteEpisode"},
 		Include: []*Role{rUser},
 	}
 

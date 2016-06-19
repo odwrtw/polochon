@@ -13,7 +13,7 @@ func TestGetAllowed(t *testing.T) {
 	}{
 		{"guest1token", []string{"TokenGetAllowed", "MoviesListIDs"}},
 		{"user1token", []string{"TorrentsAdd", "TokenGetAllowed", "MoviesListIDs"}},
-		{"admin1token", []string{"DeleteByID", "TorrentsAdd", "TokenGetAllowed", "MoviesListIDs"}},
+		{"admin1token", []string{"DeleteEpisode", "TorrentsAdd", "TokenGetAllowed", "MoviesListIDs"}},
 	}
 
 	for _, tt := range testMock {

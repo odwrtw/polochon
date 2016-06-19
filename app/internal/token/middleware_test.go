@@ -19,7 +19,7 @@ func createTestNegroni() *negroni.Negroni {
 	router := mux.NewRouter()
 	router.HandleFunc("/guest", fakeHandler).Name("TokenGetAllowed")
 	router.HandleFunc("/user", fakeHandler).Name("TorrentsAdd")
-	router.HandleFunc("/admin", fakeHandler).Name("DeleteByID")
+	router.HandleFunc("/admin", fakeHandler).Name("DeleteEpisode")
 	router.HandleFunc("/noname", fakeHandler)
 
 	tmiddleware := NewMiddleware(manager, router)

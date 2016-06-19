@@ -14,7 +14,8 @@
   include:
     - user
   allowed:
-    - DeleteByIDs
+    - DeleteMovies
+    - DeleteEpisode
   token:
   - name: skywalker
     value: owoifupqkjlknkn

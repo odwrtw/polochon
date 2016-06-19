@@ -401,7 +401,8 @@ func (l *Library) DeleteShowEpisode(se *polochon.ShowEpisode, log *logrus.Entry)
 			return err
 		}
 		// Remove the season from the index
-		if err := l.showIndex.RemoveSeason(se.Show, se.Season, log); err != nil {
+		show := &polochon.Show{ImdbID: se.ShowImdbID}
+		if err := l.showIndex.RemoveSeason(show, se.Season, log); err != nil {
 			return err
 		}
 	}
@@ -418,7 +419,8 @@ func (l *Library) DeleteShowEpisode(se *polochon.ShowEpisode, log *logrus.Entry)
 			return err
 		}
 		// Remove the show from the index
-		if err := l.showIndex.RemoveShow(se.Show, log); err != nil {
+		show := &polochon.Show{ImdbID: se.ShowImdbID}
+		if err := l.showIndex.RemoveShow(show, log); err != nil {
 			return err
 		}
 	}
