@@ -1,6 +1,7 @@
 package polochon
 
 import (
+	"path/filepath"
 	"sync"
 
 	"github.com/Sirupsen/logrus"
@@ -10,14 +11,26 @@ import (
 type ShowIndex struct {
 	// Mutex to protect reads / writes made concurrently by the http server
 	sync.RWMutex
-	// ids keep the path of the show indexed by id, season and episode
-	ids map[string]map[int]map[int]string
+	// shows represents the index of the show
+	shows map[string]IndexedShow
+}
+
+// IndexedSeason represents an indexed season
+type IndexedSeason struct {
+	Path     string
+	Episodes map[int]string
+}
+
+// IndexedShow represents an indexed show
+type IndexedShow struct {
+	Path    string
+	Seasons map[int]IndexedSeason
 }
 
 // NewShowIndex returns a new show index
 func NewShowIndex() *ShowIndex {
 	return &ShowIndex{
-		ids: map[string]map[int]map[int]string{},
+		shows: map[string]IndexedShow{},
 	}
 }
 
@@ -25,14 +38,14 @@ func NewShowIndex() *ShowIndex {
 func (si *ShowIndex) Clear() {
 	si.Lock()
 	defer si.Unlock()
-	si.ids = map[string]map[int]map[int]string{}
+	si.shows = map[string]IndexedShow{}
 }
 
 // IDs returns the show ids
-func (si *ShowIndex) IDs() (map[string]map[int]map[int]string, error) {
+func (si *ShowIndex) IDs() (map[string]IndexedShow, error) {
 	si.RLock()
 	defer si.RUnlock()
-	return si.ids, nil
+	return si.shows, nil
 }
 
 // Has searches for a show episode by id, season and episode and returns true
@@ -42,18 +55,18 @@ func (si *ShowIndex) Has(imdbID string, season, episode int) (bool, error) {
 	defer si.RUnlock()
 
 	// Search for the show
-	if _, ok := si.ids[imdbID]; !ok {
+	if _, ok := si.shows[imdbID]; !ok {
 		return false, nil
 	}
 
 	// Search for the show
-	_, ok := si.ids[imdbID][season]
+	_, ok := si.shows[imdbID].Seasons[season]
 	if !ok {
 		return false, nil
 	}
 
 	// Search for the episode
-	_, ok = si.ids[imdbID][season][episode]
+	_, ok = si.shows[imdbID].Seasons[season].Episodes[episode]
 	if !ok {
 		return false, nil
 	}
@@ -61,17 +74,58 @@ func (si *ShowIndex) Has(imdbID string, season, episode int) (bool, error) {
 	return true, nil
 }
 
-// SearchByImdbID returns a show from an id
-func (si *ShowIndex) SearchByImdbID(imdbID string, sNum, eNum int) (string, error) {
+// EpisodePath returns the episode path from the index
+func (si *ShowIndex) EpisodePath(imdbID string, sNum, eNum int) (string, error) {
 	si.RLock()
 	defer si.RUnlock()
 
-	// Check if the id is in the index
-	filePath, err := si.searchShowEpisodeByImdbID(imdbID, sNum, eNum)
-	if err != nil {
-		return "", err
+	show, ok := si.shows[imdbID]
+	if !ok {
+		return "", ErrImdbIDNotFound
 	}
+
+	season, ok := show.Seasons[sNum]
+	if !ok {
+		return "", ErrImdbIDNotFound
+	}
+
+	filePath, ok := season.Episodes[eNum]
+	if !ok {
+		return "", ErrImdbIDNotFound
+	}
+
 	return filePath, nil
+}
+
+// SeasonPath returns the season path from the index
+func (si *ShowIndex) SeasonPath(imdbID string, sNum int) (string, error) {
+	si.RLock()
+	defer si.RUnlock()
+
+	show, ok := si.shows[imdbID]
+	if !ok {
+		return "", ErrImdbIDNotFound
+	}
+
+	season, ok := show.Seasons[sNum]
+	if !ok {
+		return "", ErrImdbIDNotFound
+	}
+
+	return season.Path, nil
+}
+
+// ShowPath returns the show path from the index
+func (si *ShowIndex) ShowPath(imdbID string) (string, error) {
+	si.RLock()
+	defer si.RUnlock()
+
+	show, ok := si.shows[imdbID]
+	if !ok {
+		return "", ErrImdbIDNotFound
+	}
+
+	return show.Path, nil
 }
 
 // Add adds a show episode to the index
@@ -79,15 +133,34 @@ func (si *ShowIndex) Add(episode *ShowEpisode) error {
 	si.Lock()
 	defer si.Unlock()
 
-	// Add the episode to the index
-	// first by id
-	if _, ok := si.ids[episode.ShowImdbID][episode.Season]; !ok {
-		if _, ok := si.ids[episode.ShowImdbID]; !ok {
-			si.ids[episode.ShowImdbID] = map[int]map[int]string{}
+	// Get the parent paths
+	seasonPath := filepath.Dir(episode.Path)
+	showPath := filepath.Dir(seasonPath)
+
+	// The show is not yet indexed
+	if _, ok := si.shows[episode.ShowImdbID]; !ok {
+		si.shows[episode.ShowImdbID] = IndexedShow{
+			Path: showPath,
+			Seasons: map[int]IndexedSeason{
+				episode.Season: {
+					Path:     seasonPath,
+					Episodes: map[int]string{episode.Episode: episode.Path},
+				},
+			},
 		}
-		si.ids[episode.ShowImdbID][episode.Season] = map[int]string{}
+		return nil
 	}
-	si.ids[episode.ShowImdbID][episode.Season][episode.Episode] = episode.Path
+
+	// The season is not yet indexed
+	if _, ok := si.shows[episode.ShowImdbID].Seasons[episode.Season]; !ok {
+		si.shows[episode.ShowImdbID].Seasons[episode.Season] = IndexedSeason{
+			Path:     "mama",
+			Episodes: map[int]string{episode.Episode: episode.Path},
+		}
+		return nil
+	}
+
+	si.shows[episode.ShowImdbID].Seasons[episode.Season].Episodes[episode.Episode] = episode.Path
 
 	return nil
 }
@@ -99,7 +172,7 @@ func (si *ShowIndex) IsShowEmpty(imdbID string) (bool, error) {
 	defer si.RUnlock()
 
 	// Check if there is something in the show index
-	if len(si.ids[imdbID]) != 0 {
+	if len(si.shows[imdbID].Seasons) != 0 {
 		return false, nil
 	}
 
@@ -111,8 +184,16 @@ func (si *ShowIndex) IsSeasonEmpty(imdbID string, season int) (bool, error) {
 	si.RLock()
 	defer si.RUnlock()
 
+	if _, ok := si.shows[imdbID]; !ok {
+		return true, nil
+	}
+
+	if _, ok := si.shows[imdbID].Seasons[season]; !ok {
+		return true, nil
+	}
+
 	// More than one season
-	if len(si.ids[imdbID][season]) != 0 {
+	if len(si.shows[imdbID].Seasons[season].Episodes) != 0 {
 		return false, nil
 	}
 
@@ -123,11 +204,7 @@ func (si *ShowIndex) IsSeasonEmpty(imdbID string, season int) (bool, error) {
 func (si *ShowIndex) RemoveSeason(show *Show, season int, log *logrus.Entry) error {
 	log.Infof("Deleting whole season %d of %s from index", season, show.ImdbID)
 
-	for _, ep := range show.Episodes {
-		if ep.Season == season {
-			si.Remove(ep, log)
-		}
-	}
+	delete(si.shows[show.ImdbID].Seasons, season)
 
 	return nil
 }
@@ -141,7 +218,7 @@ func (si *ShowIndex) RemoveShow(show *Show, log *logrus.Entry) error {
 	}
 	si.Lock()
 	defer si.Unlock()
-	delete(si.ids, show.ImdbID)
+	delete(si.shows, show.ImdbID)
 
 	return nil
 }
@@ -156,32 +233,14 @@ func (si *ShowIndex) Remove(episode *ShowEpisode, log *logrus.Entry) error {
 	eNum := episode.Episode
 
 	// Delete from the index
-	_, err := si.searchShowEpisodeByImdbID(id, sNum, eNum)
+	_, err := si.EpisodePath(id, sNum, eNum)
 	if err != nil {
 		log.Errorf("Show not in the index, WEIRD")
 		return err
 	}
 
 	// Delete the episode from the index
-	delete(si.ids[id][sNum], eNum)
+	delete(si.shows[id].Seasons[sNum].Episodes, eNum)
 
 	return nil
-}
-
-// searchShowEpisodeByImdbID searches for a show from its imdbId
-func (si *ShowIndex) searchShowEpisodeByImdbID(imdbID string, sNum, eNum int) (string, error) {
-	show, ok := si.ids[imdbID]
-	if !ok {
-		return "", ErrImdbIDNotFound
-	}
-	season, ok := show[sNum]
-	if !ok {
-		return "", ErrImdbIDNotFound
-	}
-	filePath, ok := season[eNum]
-	if !ok {
-		return "", ErrImdbIDNotFound
-	}
-
-	return filePath, nil
 }

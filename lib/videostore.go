@@ -239,6 +239,10 @@ func (vs *VideoStore) getSeasonDir(ep *ShowEpisode) string {
 	return filepath.Join(vs.ShowDir, ep.ShowTitle, fmt.Sprintf("Season %d", ep.Season))
 }
 
+func (vs *VideoStore) showNFOPath(showDir string) string {
+	return filepath.Join(showDir, "tvshow.nfo")
+}
+
 // AddShowEpisode adds an episode to the store
 func (vs *VideoStore) AddShowEpisode(ep *ShowEpisode, log *logrus.Entry) error {
 	if ep.Path == "" {
@@ -247,7 +251,7 @@ func (vs *VideoStore) AddShowEpisode(ep *ShowEpisode, log *logrus.Entry) error {
 
 	// If the show nfo does not exist yet, create it
 	showDir := vs.getShowDir(ep)
-	showNFOPath := filepath.Join(showDir, "tvshow.nfo")
+	showNFOPath := vs.showNFOPath(showDir)
 
 	if !exists(showNFOPath) {
 
@@ -432,7 +436,7 @@ func (vs *VideoStore) addToIndex(video Video) error {
 }
 
 // ShowIds returns the show ids, seasons and episodes
-func (vs *VideoStore) ShowIds() (map[string]map[int]map[int]string, error) {
+func (vs *VideoStore) ShowIds() (map[string]IndexedShow, error) {
 	return vs.showIndex.IDs()
 }
 
@@ -447,7 +451,7 @@ func (vs *VideoStore) SearchMovieByImdbID(imdbID string) (Video, error) {
 
 // SearchShowEpisodeByImdbID search for a show episode by its imdb ID
 func (vs *VideoStore) SearchShowEpisodeByImdbID(imdbID string, sNum, eNum int) (Video, error) {
-	path, err := vs.showIndex.SearchByImdbID(imdbID, sNum, eNum)
+	path, err := vs.showIndex.EpisodePath(imdbID, sNum, eNum)
 	if err != nil {
 		return nil, err
 	}
@@ -660,6 +664,22 @@ var writeNFOFile = func(filePath string, i interface{}, vs *VideoStore) error {
 	defer nfoFile.Close()
 
 	return WriteNFO(nfoFile, i)
+}
+
+// NewShowFromID returns a new Show from its id
+func (vs *VideoStore) NewShowFromID(id string) (*Show, error) {
+	path, err := vs.showIndex.ShowPath(id)
+	if err != nil {
+		return nil, err
+	}
+	nfoPath := vs.showNFOPath(path)
+
+	s := &Show{}
+	if err := vs.ReadNFOFile(nfoPath, s); err != nil {
+		return nil, err
+	}
+
+	return s, nil
 }
 
 // NewShowFromPath returns a new Show from its path

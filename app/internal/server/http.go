@@ -111,21 +111,19 @@ func (s *Server) showIds(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// JSON only allows strings as keys, the ids must me converted from int to
-	// string
 	ret := map[string]map[string][]string{}
-	for imdbID, seasons := range ids {
-		ret[imdbID] = map[string][]string{}
-		for season, episodes := range seasons {
-			s := fmt.Sprintf("%02d", season)
-			for episode := range episodes {
+	for id, show := range ids {
+		ret[id] = map[string][]string{}
+		for seasonNum, season := range show.Seasons {
+			s := fmt.Sprintf("%02d", seasonNum)
+			for episode := range season.Episodes {
 				e := fmt.Sprintf("%02d", episode)
 
-				if _, ok := ret[imdbID][s]; !ok {
-					ret[imdbID][s] = []string{}
+				if _, ok := ret[id][s]; !ok {
+					ret[id][s] = []string{}
 				}
 
-				ret[imdbID][s] = append(ret[imdbID][s], e)
+				ret[id][s] = append(ret[id][s], e)
 			}
 		}
 	}
@@ -135,14 +133,11 @@ func (s *Server) showIds(w http.ResponseWriter, req *http.Request) {
 
 func (s *Server) getShowEpisodeIDDetails(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	id := vars["id"]
-	seasonStr := vars["season"]
-	episodeStr := vars["episode"]
 
 	var season, episode int
 	for ptr, str := range map[*int]string{
-		&season:  seasonStr,
-		&episode: episodeStr,
+		&season:  vars["season"],
+		&episode: vars["episode"],
 	} {
 		v, err := strconv.Atoi(str)
 		if err != nil {
@@ -152,7 +147,7 @@ func (s *Server) getShowEpisodeIDDetails(w http.ResponseWriter, req *http.Reques
 		*ptr = v
 	}
 
-	v, err := s.videoStore.SearchShowEpisodeByImdbID(id, season, episode)
+	v, err := s.videoStore.SearchShowEpisodeByImdbID(vars["id"], season, episode)
 	if err != nil {
 		s.log.Error(err)
 		var status int
@@ -190,38 +185,33 @@ func serveFile(w http.ResponseWriter, r *http.Request, file *polochon.File) {
 
 func (s *Server) serveMovie(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	switch {
-	case vars["id"] != "":
-		v, err := s.videoStore.SearchMovieByImdbID(vars["id"])
-		s.serveVideo(w, req, v, err)
-	default:
-		s.renderError(w, &Error{
-			Code:    http.StatusNotFound,
-			Message: "URL not found",
-		})
-	}
+	v, err := s.videoStore.SearchMovieByImdbID(vars["id"])
+	s.serveVideo(w, req, v, err)
 }
 
 func (s *Server) serveShow(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	switch {
-	case vars["id"] != "" && vars["season"] != "" && vars["episode"] != "":
-		sStr := vars["season"]
-		eStr := vars["episode"]
-		season, err := strconv.Atoi(sStr)
-		episode, err := strconv.Atoi(eStr)
-		if err != nil {
-			s.renderError(w, err)
-			return
-		}
-		v, err := s.videoStore.SearchShowEpisodeByImdbID(vars["id"], season, episode)
-		s.serveVideo(w, r, v, err)
-	default:
+	if vars["id"] == "" && vars["season"] == "" && vars["episode"] == "" {
 		s.renderError(w, &Error{
 			Code:    http.StatusNotFound,
 			Message: "URL not found",
 		})
 	}
+
+	season, err := strconv.Atoi(vars["season"])
+	if err != nil {
+		s.renderError(w, err)
+		return
+	}
+
+	episode, err := strconv.Atoi(vars["episode"])
+	if err != nil {
+		s.renderError(w, err)
+		return
+	}
+
+	v, err := s.videoStore.SearchShowEpisodeByImdbID(vars["id"], season, episode)
+	s.serveVideo(w, r, v, err)
 }
 
 func (s *Server) serveVideo(w http.ResponseWriter, r *http.Request, v polochon.Video, err error) {
