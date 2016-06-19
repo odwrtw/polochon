@@ -13,7 +13,7 @@ import (
 func (s *Server) showIds(w http.ResponseWriter, req *http.Request) {
 	s.log.Debug("listing shows")
 
-	ids, err := s.library.ShowIds()
+	ids, err := s.library.ShowIDs()
 	if err != nil {
 		s.renderError(w, err)
 		return
@@ -56,7 +56,7 @@ func (s *Server) getEpisode(w http.ResponseWriter, req *http.Request) *polochon.
 		*ptr = v
 	}
 
-	v, err := s.library.SearchShowEpisodeByImdbID(vars["id"], season, episode)
+	e, err := s.library.GetEpisode(vars["id"], season, episode)
 	if err != nil {
 		s.log.Error(err)
 		var status int
@@ -68,15 +68,6 @@ func (s *Server) getEpisode(w http.ResponseWriter, req *http.Request) *polochon.
 		s.renderError(w, &Error{
 			Code:    status,
 			Message: "URL not found",
-		})
-		return nil
-	}
-
-	e, ok := v.(*polochon.ShowEpisode)
-	if !ok {
-		s.renderError(w, &Error{
-			Code:    http.StatusInternalServerError,
-			Message: "invalid type",
 		})
 		return nil
 	}

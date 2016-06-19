@@ -11,7 +11,7 @@ import (
 func (s *Server) movieIds(w http.ResponseWriter, req *http.Request) {
 	s.log.Debug("listing movies by ids")
 
-	movieIds, err := s.library.MovieIds()
+	movieIds, err := s.library.MovieIDs()
 	if err != nil {
 		s.renderError(w, err)
 		return
@@ -27,7 +27,7 @@ func (s *Server) getMovie(w http.ResponseWriter, req *http.Request) *polochon.Mo
 	s.log.Debugf("looking for a movie with ID %q", id)
 
 	// Find the file
-	v, err := s.library.SearchMovieByImdbID(id)
+	m, err := s.library.GetMovie(id)
 	if err != nil {
 		s.log.Error(err)
 		var status int
@@ -39,15 +39,6 @@ func (s *Server) getMovie(w http.ResponseWriter, req *http.Request) *polochon.Mo
 		s.renderError(w, &Error{
 			Code:    status,
 			Message: "URL not found",
-		})
-		return nil
-	}
-
-	m, ok := v.(*polochon.Movie)
-	if !ok {
-		s.renderError(w, &Error{
-			Code:    http.StatusInternalServerError,
-			Message: "invalid type",
 		})
 		return nil
 	}
