@@ -23,6 +23,7 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 	mux.HandleFunc("/movies/{id}", s.getMovieDetails).Name("GetMovieDetails")
 
 	mux.HandleFunc("/shows", s.showIds).Name("ShowsListIDs")
+	mux.HandleFunc("/shows/{id}", s.getShowDetails).Name("GetShowDetails")
 	mux.HandleFunc("/shows/{id}/{season:[0-9]+}/{episode:[0-9]+}", s.getShowEpisodeIDDetails).Name("GetShowEpisodeIDDetails")
 	mux.HandleFunc("/wishlist", s.wishlist).Name("Wishlist")
 

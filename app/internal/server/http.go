@@ -131,6 +131,28 @@ func (s *Server) showIds(w http.ResponseWriter, req *http.Request) {
 	s.renderOK(w, ret)
 }
 
+func (s *Server) getShowDetails(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+
+	v, err := s.videoStore.NewShowFromID(vars["id"])
+	if err != nil {
+		s.log.Error(err)
+		var status int
+		if err == polochon.ErrImdbIDNotFound {
+			status = http.StatusNotFound
+		} else {
+			status = http.StatusInternalServerError
+		}
+		s.renderError(w, &Error{
+			Code:    status,
+			Message: "URL not found",
+		})
+		return
+	}
+
+	s.renderOK(w, v)
+}
+
 func (s *Server) getShowEpisodeIDDetails(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 
