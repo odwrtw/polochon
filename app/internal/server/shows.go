@@ -78,7 +78,7 @@ func (s *Server) getEpisode(w http.ResponseWriter, req *http.Request) *polochon.
 func (s *Server) getShowDetails(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 
-	v, err := s.library.NewShowFromID(vars["id"])
+	v, err := s.library.GetShow(vars["id"])
 	if err != nil {
 		s.log.Error(err)
 		var status int

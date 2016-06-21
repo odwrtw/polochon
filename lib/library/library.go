@@ -199,7 +199,7 @@ func (l *Library) AddMovie(movie *polochon.Movie, log *logrus.Entry) error {
 	}
 
 	// Write NFO into the file
-	if err := l.WriteNFOFile(movie.NfoPath(), movie); err != nil {
+	if err := l.writeNFOFile(movie.NfoPath(), movie); err != nil {
 		return err
 	}
 
@@ -269,7 +269,7 @@ func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode, log *logrus.Entry) er
 		}
 
 		// Write NFO into the file
-		if err := l.WriteNFOFile(showNFOPath, show); err != nil {
+		if err := l.writeNFOFile(showNFOPath, show); err != nil {
 			return err
 		}
 
@@ -325,7 +325,7 @@ func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode, log *logrus.Entry) er
 	}
 
 	// Create show NFO if necessary
-	if err := l.WriteNFOFile(ep.NfoPath(), ep); err != nil {
+	if err := l.writeNFOFile(ep.NfoPath(), ep); err != nil {
 		return err
 	}
 
@@ -637,8 +637,8 @@ func (l *Library) scanEpisodes(imdbID, showRootPath string, log *logrus.Entry) e
 	return nil
 }
 
-// ReadNFOFile reads the NFO file
-func (l *Library) ReadNFOFile(filePath string, i interface{}) error {
+// readNFOFile reads the NFO file
+func (l *Library) readNFOFile(filePath string, i interface{}) error {
 	// Open the file
 	nfoFile, err := os.Open(filePath)
 	if err != nil {
@@ -649,13 +649,8 @@ func (l *Library) ReadNFOFile(filePath string, i interface{}) error {
 	return polochon.ReadNFO(nfoFile, i)
 }
 
-// WriteNFOFile write the NFO into a file
-func (l *Library) WriteNFOFile(filePath string, i interface{}) error {
-	return writeNFOFile(filePath, i, l)
-}
-
-// Fuction to be overwritten during the tests
-var writeNFOFile = func(filePath string, i interface{}, l *Library) error {
+// writeNFOFile write the NFO into a file
+func (l *Library) writeNFOFile(filePath string, i interface{}) error {
 	// Open the file
 	nfoFile, err := os.Create(filePath)
 	if err != nil {
@@ -666,8 +661,8 @@ var writeNFOFile = func(filePath string, i interface{}, l *Library) error {
 	return polochon.WriteNFO(nfoFile, i)
 }
 
-// NewShowFromID returns a new Show from its id
-func (l *Library) NewShowFromID(id string) (*polochon.Show, error) {
+// GetShow returns a Show from its id
+func (l *Library) GetShow(id string) (*polochon.Show, error) {
 	path, err := l.showIndex.ShowPath(id)
 	if err != nil {
 		return nil, err
@@ -675,7 +670,7 @@ func (l *Library) NewShowFromID(id string) (*polochon.Show, error) {
 	nfoPath := l.showNFOPath(path)
 
 	s := &polochon.Show{}
-	if err := l.ReadNFOFile(nfoPath, s); err != nil {
+	if err := l.readNFOFile(nfoPath, s); err != nil {
 		return nil, err
 	}
 
@@ -685,7 +680,7 @@ func (l *Library) NewShowFromID(id string) (*polochon.Show, error) {
 // newShowFromPath returns a new Show from its path
 func (l *Library) newShowFromPath(path string) (*polochon.Show, error) {
 	s := &polochon.Show{}
-	if err := l.ReadNFOFile(path, s); err != nil {
+	if err := l.readNFOFile(path, s); err != nil {
 		return nil, err
 	}
 
@@ -697,7 +692,7 @@ func (l *Library) newEpisodeFromPath(path string) (*polochon.ShowEpisode, error)
 	file := polochon.NewFile(path)
 	se := polochon.NewShowEpisodeFromFile(l.showConfig, *file)
 
-	if err := l.ReadNFOFile(file.NfoPath(), se); err != nil {
+	if err := l.readNFOFile(file.NfoPath(), se); err != nil {
 		return nil, err
 	}
 
@@ -709,7 +704,7 @@ func (l *Library) newMovieFromPath(path string) (*polochon.Movie, error) {
 	file := polochon.NewFile(path)
 	m := polochon.NewMovieFromFile(l.movieConfig, *file)
 
-	if err := l.ReadNFOFile(file.NfoPath(), m); err != nil {
+	if err := l.readNFOFile(file.NfoPath(), m); err != nil {
 		return nil, err
 	}
 
