@@ -11,7 +11,7 @@ import (
 
 // Custom error
 var (
-	ErrInvalidArgument = errors.New("nfo: invalid argument")
+	ErrInvalidType = errors.New("nfo: invalid type")
 )
 
 // Read reads the NFO from a reader
@@ -26,7 +26,7 @@ func Read(r io.Reader, i interface{}) error {
 	case *polochon.ShowEpisode:
 		nfo = NewEpisode(t)
 	default:
-		return ErrInvalidArgument
+		return ErrInvalidType
 	}
 
 	b, err := ioutil.ReadAll(r)
@@ -49,7 +49,7 @@ func Write(w io.Writer, i interface{}) error {
 	case *polochon.ShowEpisode:
 		nfo = NewEpisode(t)
 	default:
-		return ErrInvalidArgument
+		return ErrInvalidType
 	}
 
 	b, err := xml.MarshalIndent(nfo, "", "  ")
