@@ -46,7 +46,7 @@ func NewFileWithConfig(path string, conf FileConfig) *File {
 
 // Exists returns true is the file exists
 func (f *File) Exists() bool {
-	return Exists(f.Path)
+	return exists(f.Path)
 }
 
 // IsVideo returns true is the file is considered as a video, using the allowed
@@ -131,7 +131,7 @@ func (f *File) IgnorePath() string {
 
 // PathWithoutExt returns the file path without the file extension
 func (f *File) PathWithoutExt() string {
-	return RemoveExt(f.Path)
+	return removeExt(f.Path)
 }
 
 // MovieFanartPath returns the movie fanart path
@@ -144,8 +144,8 @@ func (f *File) MovieThumbPath() string {
 	return filepath.Join(path.Dir(f.Path), "/poster.jpg")
 }
 
-// RemoveExt returns file path without the extension
-func RemoveExt(filepath string) string {
+// removeExt returns file path without the extension
+func removeExt(filepath string) string {
 	// Extension
 	ext := path.Ext(filepath)
 	// File length without the extension
@@ -155,7 +155,7 @@ func RemoveExt(filepath string) string {
 }
 
 // Exists tests if file exists
-func Exists(path string) bool {
+func exists(path string) bool {
 	if _, err := os.Stat(path); err == nil {
 		return true
 	}
