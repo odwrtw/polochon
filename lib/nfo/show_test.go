@@ -1,14 +1,16 @@
-package polochon
+package nfo
 
 import (
 	"bytes"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/odwrtw/polochon/lib"
 )
 
-// Content of a season nfo file
-var seasonNFOContent = []byte(`<tvshow>
+// Content of a show nfo file
+var showNFOContent = []byte(`<tvshow>
   <title>American Dad!</title>
   <showtitle>American Dad!</showtitle>
   <rating>8.5</rating>
@@ -22,9 +24,9 @@ var seasonNFOContent = []byte(`<tvshow>
   <premiered>2015-09-24</premiered>
 </tvshow>`)
 
-func mockShow() *Show {
+func mockShow() *polochon.Show {
 	premiered := time.Date(2015, time.September, 24, 0, 0, 0, 0, time.UTC)
-	return &Show{
+	return &polochon.Show{
 		Title:      "American Dad!",
 		Rating:     8.5,
 		Plot:       "Awesome plot",
@@ -36,24 +38,24 @@ func mockShow() *Show {
 	}
 }
 
-func TestShowStoreWriter(t *testing.T) {
+func TestShowWriteNFO(t *testing.T) {
 	s := mockShow()
 
 	var b bytes.Buffer
-	if err := WriteNFO(&b, s); err != nil {
+	if err := Write(&b, s); err != nil {
 		t.Fatal(err)
 	}
 
-	if !bytes.Equal(seasonNFOContent, b.Bytes()) {
+	if !bytes.Equal(showNFOContent, b.Bytes()) {
 		t.Fatalf("Failed to serialize show season NFO")
 	}
 }
 
-func TestShowReader(t *testing.T) {
+func TestShowReadNFO(t *testing.T) {
 	expected := mockShow()
 
-	got := &Show{}
-	if err := ReadNFO(bytes.NewBuffer(seasonNFOContent), got); err != nil {
+	got := &polochon.Show{}
+	if err := Read(bytes.NewBuffer(showNFOContent), got); err != nil {
 		t.Fatal(err)
 	}
 

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib/nfo"
 )
 
 // download helps download a file to a path
@@ -41,7 +41,7 @@ func readNFOFile(filePath string, i interface{}) error {
 	}
 	defer nfoFile.Close()
 
-	return polochon.ReadNFO(nfoFile, i)
+	return nfo.Read(nfoFile, i)
 }
 
 // writeNFOFile write the NFO into a file
@@ -53,7 +53,7 @@ func writeNFOFile(filePath string, i interface{}) error {
 	}
 	defer nfoFile.Close()
 
-	return polochon.WriteNFO(nfoFile, i)
+	return nfo.Write(nfoFile, i)
 }
 
 // exists is a func to check if a path exists. It could be a file or a folder,

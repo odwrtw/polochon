@@ -1,19 +1,23 @@
-package polochon
+package nfo
 
-import "encoding/xml"
+import (
+	"encoding/xml"
 
-// MovieNFO represents a movie NFO in kodi
-type MovieNFO struct {
-	*Movie
+	"github.com/odwrtw/polochon/lib"
+)
+
+// Movie represents a movie NFO
+type Movie struct {
+	*polochon.Movie
 }
 
-// NewMovieNFO returns a MovieNFO from a Movie
-func NewMovieNFO(m *Movie) *MovieNFO {
-	return &MovieNFO{Movie: m}
+// NewMovie returns a MovieNFO from a Movie
+func NewMovie(m *polochon.Movie) *Movie {
+	return &Movie{Movie: m}
 }
 
-// NFO represents a show NFO in kodi
-type movieNFODetails struct {
+// movieFields represents the fields in the NFO file
+type movieFields struct {
 	ImdbID        string  `xml:"id"`
 	OriginalTitle string  `xml:"originaltitle"`
 	Plot          string  `xml:"plot"`
@@ -30,10 +34,10 @@ type movieNFODetails struct {
 }
 
 // MarshalXML implements the XML Marshaler interface
-func (m *MovieNFO) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+func (m *Movie) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	start.Name = xml.Name{Space: "", Local: "movie"}
 
-	nfo := &movieNFODetails{
+	nfo := &movieFields{
 		ImdbID:        m.ImdbID,
 		OriginalTitle: m.OriginalTitle,
 		Plot:          m.Plot,
@@ -53,8 +57,8 @@ func (m *MovieNFO) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 }
 
 // UnmarshalXML implements the XML Unmarshaler interface
-func (m *MovieNFO) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	nfo := movieNFODetails{}
+func (m *Movie) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	nfo := movieFields{}
 	if err := d.DecodeElement(&nfo, &start); err != nil {
 		return err
 	}
