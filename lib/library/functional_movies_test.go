@@ -83,11 +83,7 @@ func TestAddMovie(t *testing.T) {
 
 	// Check the movie index
 	expectedIDs := []string{m.ImdbID}
-	gotIDs, err := lib.MovieIDs()
-	if err != nil {
-		t.Fatalf("expected no error, got %q", err)
-	}
-
+	gotIDs := lib.MovieIDs()
 	if !reflect.DeepEqual(gotIDs, expectedIDs) {
 		t.Errorf("invalid ids, expected %+v got %+v", expectedIDs, gotIDs)
 	}
@@ -108,11 +104,7 @@ func TestAddMovie(t *testing.T) {
 	}
 
 	// Check the movie index again
-	gotIDs, err = lib.MovieIDs()
-	if err != nil {
-		t.Fatalf("expected no error, got %q", err)
-	}
-
+	gotIDs = lib.MovieIDs()
 	if !reflect.DeepEqual(gotIDs, expectedIDs) {
 		t.Errorf("invalid ids, expected %+v got %+v", expectedIDs, gotIDs)
 	}
@@ -136,10 +128,7 @@ func TestDeleteMovie(t *testing.T) {
 	}
 
 	// Count the movies in the index
-	ids, err := lib.MovieIDs()
-	if err != nil {
-		t.Fatalf("expected no error, got %q", err)
-	}
+	ids := lib.MovieIDs()
 	movieCount := len(ids)
 	if movieCount != 1 {
 		t.Fatalf("the library should contains %d movie instead of 1", movieCount)
@@ -151,10 +140,7 @@ func TestDeleteMovie(t *testing.T) {
 	}
 
 	// Count the movies in the index
-	ids, err = lib.MovieIDs()
-	if err != nil {
-		t.Fatalf("expected no error, got %q", err)
-	}
+	ids = lib.MovieIDs()
 	movieCount = len(ids)
 	if movieCount != 0 {
 		t.Fatalf("the library should contains %d movie instead of 0", movieCount)

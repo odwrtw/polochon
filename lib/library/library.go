@@ -52,7 +52,7 @@ func New(fileConfig polochon.FileConfig, movieConfig polochon.MovieConfig, showC
 }
 
 // MovieIDs returns the movie ids
-func (l *Library) MovieIDs() ([]string, error) {
+func (l *Library) MovieIDs() []string {
 	return l.movieIndex.IDs()
 }
 
@@ -428,7 +428,7 @@ func (l *Library) addToIndex(video polochon.Video) error {
 }
 
 // ShowIDs returns the show ids, seasons and episodes
-func (l *Library) ShowIDs() (map[string]index.IndexedShow, error) {
+func (l *Library) ShowIDs() map[string]index.IndexedShow {
 	return l.showIndex.IDs()
 }
 
@@ -645,6 +645,16 @@ func (l *Library) GetShow(id string) (*polochon.Show, error) {
 	return s, nil
 }
 
+// GetIndexedShow returns an indexed Show from its id
+func (l *Library) GetIndexedShow(id string) (index.IndexedShow, error) {
+	s, err := l.showIndex.IndexedShow(id)
+	if err != nil {
+		return index.IndexedShow{}, err
+	}
+
+	return s, nil
+}
+
 // GetSeason returns a ShowSeason from its id
 func (l *Library) GetSeason(id string, season int) (*polochon.ShowSeason, error) {
 	_, err := l.showIndex.SeasonPath(id, season)
@@ -655,6 +665,16 @@ func (l *Library) GetSeason(id string, season int) (*polochon.ShowSeason, error)
 	s := polochon.NewShowSeason(l.showConfig)
 	s.Season = season
 	s.ShowImdbID = id
+
+	return s, nil
+}
+
+// GetIndexedSeason returns a ShowSeason from its id
+func (l *Library) GetIndexedSeason(id string, season int) (index.IndexedSeason, error) {
+	s, err := l.showIndex.IndexedSeason(id, season)
+	if err != nil {
+		return index.IndexedSeason{}, err
+	}
 
 	return s, nil
 }

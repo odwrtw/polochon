@@ -68,11 +68,11 @@ func (mi *MovieIndex) Remove(m *polochon.Movie, log *logrus.Entry) error {
 }
 
 // IDs returns the movie ids
-func (mi *MovieIndex) IDs() ([]string, error) {
+func (mi *MovieIndex) IDs() []string {
 	mi.RLock()
 	defer mi.RUnlock()
 
-	return extractAndSortMapKeys(mi.ids)
+	return extractAndSortStringMapKeys(mi.ids)
 }
 
 // Has searches the movie index for an ImdbID and returns true if the movie is

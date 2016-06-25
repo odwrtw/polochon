@@ -111,29 +111,51 @@ func TestAddEpisode(t *testing.T) {
 		t.Errorf("invalid episode from lib, expected %+v got %+v", episode, episodeFromLib)
 	}
 
-	// Expected IDs
-	expectedIDs := map[string]index.IndexedShow{
-		"tt12345": {
-			Path: filepath.Join(lib.tmpDir, "shows/Show tt12345"),
-			Seasons: map[int]index.IndexedSeason{
-				1: {
-					Path: filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1"),
-					Episodes: map[int]string{
-						1: filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1/episodeTest.mp4"),
-					},
-				},
-			},
+	// Expected indexed season
+	expectedIndexedSeason := index.IndexedSeason{
+		Path: filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1"),
+		Episodes: map[int]string{
+			1: filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1/episodeTest.mp4"),
 		},
 	}
 
+	// Expected indexed show
+	expectedIndexedShow := index.IndexedShow{
+		Path: filepath.Join(lib.tmpDir, "shows/Show tt12345"),
+		Seasons: map[int]index.IndexedSeason{
+			1: expectedIndexedSeason,
+		},
+	}
+
+	// Expected IDs
+	expectedIDs := map[string]index.IndexedShow{
+		"tt12345": expectedIndexedShow,
+	}
+
 	// Ensure the index if valid
-	gotIDs, err := lib.ShowIDs()
+	gotIDs := lib.ShowIDs()
+	if !reflect.DeepEqual(expectedIDs, gotIDs) {
+		t.Errorf("invalid show ids, expected %+v got %+v", expectedIDs, gotIDs)
+	}
+
+	// Get the indexed show
+	gotIndexedShow, err := lib.GetIndexedShow(episode.ShowImdbID)
 	if err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
 
-	if !reflect.DeepEqual(expectedIDs, gotIDs) {
-		t.Errorf("invalid show ids, expected %+v got %+v", expectedIDs, gotIDs)
+	if !reflect.DeepEqual(expectedIndexedShow, gotIndexedShow) {
+		t.Errorf("invalid show ids, expected %+v got %+v", expectedIndexedShow, gotIndexedShow)
+	}
+
+	// Get the indexed season
+	gotIndexedSeason, err := lib.GetIndexedSeason(episode.ShowImdbID, episode.Season)
+	if err != nil {
+		t.Fatalf("expected no error, got %q", err)
+	}
+
+	if !reflect.DeepEqual(expectedIndexedSeason, gotIndexedSeason) {
+		t.Errorf("invalid show ids, expected %+v got %+v", expectedIndexedSeason, gotIndexedSeason)
 	}
 
 	// Rebuild the index, the movie should be found and added to the index
@@ -142,11 +164,7 @@ func TestAddEpisode(t *testing.T) {
 	}
 
 	// Ensure the index is still valid after a rebuild
-	gotIDs, err = lib.ShowIDs()
-	if err != nil {
-		t.Fatalf("expected no error, got %q", err)
-	}
-
+	gotIDs = lib.ShowIDs()
 	if !reflect.DeepEqual(expectedIDs, gotIDs) {
 		t.Errorf("invalid show ids, expected %+v got %+v", expectedIDs, gotIDs)
 	}
@@ -238,11 +256,7 @@ func TestDeleteEpisode(t *testing.T) {
 	}
 
 	// Ensure the index if valid
-	gotIDs, err := lib.ShowIDs()
-	if err != nil {
-		t.Fatalf("expected no error, got %q", err)
-	}
-
+	gotIDs := lib.ShowIDs()
 	expectedIDs := map[string]index.IndexedShow{}
 
 	if !reflect.DeepEqual(expectedIDs, gotIDs) {

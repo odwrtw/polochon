@@ -18,17 +18,17 @@ func mockShowIndex() *ShowIndex {
 			"tt0944947": {
 				Path: "/home/shows/Game Of Thrones",
 				Seasons: map[int]IndexedSeason{
-					1: {
-						Path: "/home/shows/Game Of Thrones/Season 1",
-						Episodes: map[int]string{
-							1: "/home/shows/Game Of Thrones/Season 1/s01e01.mp4",
-							2: "/home/shows/Game Of Thrones/Season 1/s01e02.mp4",
-						},
-					},
 					2: {
 						Path: "/home/shows/Game Of Thrones/Season 2",
 						Episodes: map[int]string{
 							2: "/home/shows/Game Of Thrones/Season 2/s02e02.mp4",
+						},
+					},
+					1: {
+						Path: "/home/shows/Game Of Thrones/Season 1",
+						Episodes: map[int]string{
+							2: "/home/shows/Game Of Thrones/Season 1/s01e02.mp4",
+							1: "/home/shows/Game Of Thrones/Season 1/s01e01.mp4",
 						},
 					},
 				},
@@ -348,7 +348,7 @@ func TestShowIndexAdd(t *testing.T) {
 	}
 }
 
-func TestShowIndexClear(t *testing.T) {
+func TestEmptyShowIndex(t *testing.T) {
 	idx := NewShowIndex()
 	expected := map[string]IndexedShow{}
 	idx.Clear()
@@ -362,11 +362,37 @@ func TestShowIDs(t *testing.T) {
 	idx := NewShowIndex()
 	expected := idx.shows
 
-	got, err := idx.IDs()
+	got := idx.IDs()
+	if !reflect.DeepEqual(got, expected) {
+		t.Errorf("expected %+v , got %+v", expected, got)
+	}
+}
+
+func TestSeasonList(t *testing.T) {
+	idx := mockShowIndex()
+
+	indexedShow, err := idx.IndexedShow("tt0944947")
 	if err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
 
+	expected := []int{1, 2}
+	got := indexedShow.SeasonList()
+	if !reflect.DeepEqual(got, expected) {
+		t.Errorf("expected %+v , got %+v", expected, got)
+	}
+}
+
+func TestEpisodeList(t *testing.T) {
+	idx := mockShowIndex()
+
+	indexedSeason, err := idx.IndexedSeason("tt0944947", 1)
+	if err != nil {
+		t.Fatalf("expected no error, got %q", err)
+	}
+
+	expected := []int{1, 2}
+	got := indexedSeason.EpisodeList()
 	if !reflect.DeepEqual(got, expected) {
 		t.Errorf("expected %+v , got %+v", expected, got)
 	}

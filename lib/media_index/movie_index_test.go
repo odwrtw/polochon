@@ -102,11 +102,7 @@ func TestMovieIndexIDs(t *testing.T) {
 	idx := mockMovieIndex()
 	expected := []string{"tt12345", "tt56789"}
 
-	got, err := idx.IDs()
-	if err != nil {
-		t.Fatalf("expected no error, got %q", err)
-	}
-
+	got := idx.IDs()
 	if !reflect.DeepEqual(got, expected) {
 		t.Errorf("expected %+v , got %+v", expected, got)
 	}
