@@ -95,6 +95,9 @@ func TestAddEpisode(t *testing.T) {
 	// Test the show content
 	testShow(t, episode, lib)
 
+	// Test the season
+	testSeason(t, episode, lib)
+
 	episodeFromLib, err := lib.GetEpisode(episode.ShowImdbID, episode.Season, episode.Episode)
 	if err != nil {
 		t.Fatalf("expected no error, got %q", err)
@@ -181,6 +184,22 @@ func testShow(t *testing.T, episode *polochon.ShowEpisode, lib *mockLibrary) {
 
 	if !reflect.DeepEqual(episode.Show, showFromLib) {
 		t.Errorf("invalid show from lib, expected %+v got %+v", episode.Show, showFromLib)
+	}
+}
+
+func testSeason(t *testing.T, episode *polochon.ShowEpisode, lib *mockLibrary) {
+	// Get the season from the library
+	seasonFromLib, err := lib.GetSeason(episode.ShowImdbID, episode.Season)
+	if err != nil {
+		t.Fatalf("expected no error, got %q", err)
+	}
+
+	expected := polochon.NewShowSeason(lib.showConfig)
+	expected.Season = episode.Season
+	expected.ShowImdbID = episode.ShowImdbID
+
+	if !reflect.DeepEqual(seasonFromLib, expected) {
+		t.Errorf("invalid show from lib, expected %+v got %+v", expected, seasonFromLib)
 	}
 }
 

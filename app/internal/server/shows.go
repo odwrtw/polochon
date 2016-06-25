@@ -75,6 +75,34 @@ func (s *Server) getEpisode(w http.ResponseWriter, req *http.Request) *polochon.
 	return e
 }
 
+func (s *Server) getSeasonDetails(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+
+	season, err := strconv.Atoi(vars["season"])
+	if err != nil {
+		s.renderError(w, fmt.Errorf("invalid season"))
+		return
+	}
+
+	v, err := s.library.GetSeason(vars["id"], season)
+	if err != nil {
+		s.log.Error(err)
+		var status int
+		if err == index.ErrNotFound {
+			status = http.StatusNotFound
+		} else {
+			status = http.StatusInternalServerError
+		}
+		s.renderError(w, &Error{
+			Code:    status,
+			Message: "URL not found",
+		})
+		return
+	}
+
+	s.renderOK(w, v)
+}
+
 func (s *Server) getShowDetails(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 

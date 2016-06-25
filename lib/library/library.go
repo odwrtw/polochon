@@ -645,6 +645,20 @@ func (l *Library) GetShow(id string) (*polochon.Show, error) {
 	return s, nil
 }
 
+// GetSeason returns a ShowSeason from its id
+func (l *Library) GetSeason(id string, season int) (*polochon.ShowSeason, error) {
+	_, err := l.showIndex.SeasonPath(id, season)
+	if err != nil {
+		return nil, err
+	}
+
+	s := polochon.NewShowSeason(l.showConfig)
+	s.Season = season
+	s.ShowImdbID = id
+
+	return s, nil
+}
+
 // newShowFromPath returns a new Show from its path
 func (l *Library) newShowFromPath(path string) (*polochon.Show, error) {
 	s := &polochon.Show{}
