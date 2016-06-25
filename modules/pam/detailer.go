@@ -62,16 +62,16 @@ func New(params *Params) (*Pam, error) {
 	}
 
 	client := &papi.Client{}
-	var err error
-	if params.BasicAuthUser != "" && params.BasicAuthPassword != "" {
-		client, err = papi.NewWithBasicAuth(params.Endpoint, params.Token, params.BasicAuthUser, params.BasicAuthPassword)
-	} else {
-		client, err = papi.New(params.Endpoint, params.Token)
-	}
+	// var err error
+	// if params.BasicAuthUser != "" && params.BasicAuthPassword != "" {
+	// 	client, err = papi.NewWithBasicAuth(params.Endpoint, params.Token, params.BasicAuthUser, params.BasicAuthPassword)
+	// } else {
+	// 	client, err = papi.New(params.Endpoint, params.Token)
+	// }
 
-	if err != nil {
-		return nil, err
-	}
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return &Pam{client: client}, nil
 }

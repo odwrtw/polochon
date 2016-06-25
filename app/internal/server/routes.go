@@ -18,24 +18,101 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 	log.Debugf("http server will listen on: %s", addr)
 
 	mux := mux.NewRouter()
+	for _, route := range []struct {
+		// name of the route
+		name string
+		// path of the route
+		path string
+		// allowed methods for this route
+		methods string
+		// handler is the http handler to run if the route matches
+		handler func(http.ResponseWriter, *http.Request)
+		// excluded tells if the route should be added to the router,
+		// it's in the negative form so that the default behaviour is to add
+		// the route to the router
+		excluded bool
+	}{
+		{
+			name:    "GetMovies",
+			path:    "/movies",
+			methods: "GET",
+			handler: s.movieIds,
+		},
+		{
+			name:    "GetMovie",
+			path:    "/movies/{id}",
+			methods: "GET",
+			handler: s.getMovieDetails,
+		},
+		{
+			name:    "DeleteMovie",
+			path:    "/movies/{id}",
+			methods: "DELETE",
+			handler: s.deleteMovie,
+		},
+		{
+			name:     "DownloadMovie",
+			path:     "/movies/{id}/download",
+			methods:  "GET",
+			handler:  s.serveMovie,
+			excluded: !s.config.HTTPServer.ServeFiles,
+		},
+		{
+			name:    "GetShows",
+			path:    "/shows",
+			methods: "GET",
+			handler: s.showIds,
+		},
+		{
+			name:    "GetShow",
+			path:    "/shows/{id}",
+			methods: "GET",
+			handler: s.getShowDetails,
+		},
+		{
+			name:    "GetSeason",
+			path:    "/shows/{id}/seasons/{season:[0-9]+}",
+			methods: "GET",
+			handler: s.getSeasonDetails,
+		},
+		{
+			name:    "GetEpisode",
+			path:    "/shows/{id}/seasons/{season:[0-9]+}/episodes/{episode:[0-9]+}",
+			methods: "GET",
+			handler: s.getShowEpisodeIDDetails,
+		},
+		{
+			name:    "DeleteEpisode",
+			path:    "/shows/{id}/seasons/{season:[0-9]+}/episodes/{episode:[0-9]+}",
+			methods: "DELETE",
+			handler: s.deleteEpisode,
+		},
+		{
+			name:     "DownloadEpisode",
+			path:     "/shows/{id}/seasons/{season:[0-9]+}/episodes/{episode:[0-9]+}/download",
+			methods:  "GET",
+			handler:  s.serveShow,
+			excluded: !s.config.HTTPServer.ServeFiles,
+		},
+		{
+			name:    "Wishlist",
+			path:    "/wishlist",
+			methods: "GET",
+			handler: s.deleteEpisode,
+		},
+		{
+			name:    "AddTorrent",
+			path:    "/torrents",
+			methods: "POST",
+			handler: s.addTorrent,
+		},
+	} {
+		if route.excluded {
+			continue
+		}
 
-	mux.HandleFunc("/movies", s.movieIds).Name("MoviesListIDs").Methods("GET")
-	mux.HandleFunc("/movies/{id}", s.getMovieDetails).Name("GetMovieDetails").Methods("GET")
-	mux.HandleFunc("/movies/{id}", s.deleteMovie).Name("DeleteMovie").Methods("DELETE")
-
-	mux.HandleFunc("/shows", s.showIds).Name("ShowsListIDs").Methods("GET")
-	mux.HandleFunc("/shows/{id}", s.getShowDetails).Name("GetShowDetails").Methods("GET")
-	mux.HandleFunc("/shows/{id}/{season:[0-9]+}", s.getSeasonDetails).Name("GetSeasonDetails").Methods("GET")
-	mux.HandleFunc("/shows/{id}/{season:[0-9]+}/{episode:[0-9]+}", s.getShowEpisodeIDDetails).Name("GetShowEpisodeIDDetails").Methods("GET")
-	mux.HandleFunc("/shows/{id}/{season:[0-9]+}/{episode:[0-9]+}", s.deleteEpisode).Name("DeleteEpisode").Methods("DELETE")
-	mux.HandleFunc("/wishlist", s.wishlist).Name("Wishlist").Methods("GET")
-
-	mux.HandleFunc("/torrents", s.addTorrent).Name("TorrentsAdd").Methods("POST")
-
-	if s.config.HTTPServer.ServeFiles {
-		log.Debug("server will be serving files")
-		mux.HandleFunc("/shows/{id}/{season:[0-9]+}/{episode:[0-9]+}/download", s.serveShow).Name("ServeShowsByIDs").Methods("GET")
-		mux.HandleFunc("/movies/{id}/download", s.serveMovie).Name("ServeMoviesByIDs").Methods("GET")
+		// Register the route
+		mux.HandleFunc(route.path, route.handler).Name(route.name).Methods(route.methods)
 	}
 
 	n := negroni.New()
