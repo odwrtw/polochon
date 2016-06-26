@@ -17,9 +17,11 @@ const (
 
 // Pam module errors
 var (
-	ErrMissingArgument = errors.New("pam: missing argument")
-	ErrInvalidArgument = errors.New("pam: invalid argument type")
-	ErrMissingImdbID   = errors.New("pam: missing imdb id")
+	ErrMissingArgument        = errors.New("pam: missing argument")
+	ErrInvalidArgument        = errors.New("pam: invalid argument type")
+	ErrMissingImdbID          = errors.New("pam: missing imdb id")
+	ErrMissingEpisodeOrSeason = errors.New("pam: missing episode or season number")
+	ErrInvalidType            = errors.New("pam: invalid type")
 )
 
 // Params represents the module params
@@ -57,21 +59,18 @@ func New(params *Params) (*Pam, error) {
 		return nil, ErrMissingArgument
 	}
 
-	if params.Token == "" {
-		return nil, ErrMissingArgument
+	client, err := papi.New(params.Endpoint)
+	if err != nil {
+		return nil, err
 	}
 
-	client := &papi.Client{}
-	// var err error
-	// if params.BasicAuthUser != "" && params.BasicAuthPassword != "" {
-	// 	client, err = papi.NewWithBasicAuth(params.Endpoint, params.Token, params.BasicAuthUser, params.BasicAuthPassword)
-	// } else {
-	// 	client, err = papi.New(params.Endpoint, params.Token)
-	// }
+	if params.Token != "" {
+		client.SetToken(params.Token)
+	}
 
-	// if err != nil {
-	// 	return nil, err
-	// }
+	if params.BasicAuthUser != "" && params.BasicAuthPassword != "" {
+		client.SetBasicAuth(params.BasicAuthUser, params.BasicAuthPassword)
+	}
 
 	return &Pam{client: client}, nil
 }
@@ -93,32 +92,14 @@ func (p *Pam) Name() string {
 
 // GetDetails implements the Detailer interface
 func (p *Pam) GetDetails(i interface{}, log *logrus.Entry) error {
-	m, ok := i.(*polochon.Movie)
-	if !ok {
-		return ErrInvalidArgument
+	switch resource := i.(type) {
+	case *polochon.Movie:
+		return p.getMovieDetails(resource)
+	case *polochon.Show:
+		return p.getShowDetails(resource)
+	case *polochon.ShowEpisode:
+		return p.getEpisodeDetails(resource)
+	default:
+		return ErrInvalidType
 	}
-
-	if m.ImdbID == "" {
-		return ErrMissingImdbID
-	}
-
-	movie, err := p.client.MovieByID(m.ImdbID)
-	if err != nil {
-		return err
-	}
-
-	m.OriginalTitle = movie.OriginalTitle
-	m.Plot = movie.Plot
-	m.Rating = movie.Rating
-	m.Runtime = movie.Runtime
-	m.SortTitle = movie.SortTitle
-	m.Tagline = movie.Tagline
-	m.Thumb = movie.Thumb
-	m.Fanart = movie.Fanart
-	m.Title = movie.Title
-	m.TmdbID = movie.TmdbID
-	m.Votes = movie.Votes
-	m.Year = movie.Year
-
-	return nil
 }
