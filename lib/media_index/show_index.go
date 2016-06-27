@@ -22,10 +22,20 @@ type IndexedSeason struct {
 	Episodes map[int]string
 }
 
+// EpisodeList returns the episodes numbers of the indexed season
+func (si *IndexedSeason) EpisodeList() []int {
+	return extractAndSortIntMapKeys(si.Episodes)
+}
+
 // IndexedShow represents an indexed show
 type IndexedShow struct {
 	Path    string
 	Seasons map[int]IndexedSeason
+}
+
+// SeasonList returns the season numbers of the indexed show
+func (si *IndexedShow) SeasonList() []int {
+	return extractAndSortIndexedSeasonsMapKeys(si.Seasons)
 }
 
 // NewShowIndex returns a new show index
@@ -43,10 +53,10 @@ func (si *ShowIndex) Clear() {
 }
 
 // IDs returns the show ids
-func (si *ShowIndex) IDs() (map[string]IndexedShow, error) {
+func (si *ShowIndex) IDs() map[string]IndexedShow {
 	si.RLock()
 	defer si.RUnlock()
-	return si.shows, nil
+	return si.shows
 }
 
 // HasShow returns true if the show is already in the index
@@ -112,32 +122,52 @@ func (si *ShowIndex) EpisodePath(imdbID string, sNum, eNum int) (string, error) 
 	return filePath, nil
 }
 
-// SeasonPath returns the season path from the index
-func (si *ShowIndex) SeasonPath(imdbID string, sNum int) (string, error) {
+// IndexedSeason returns the indexed season from the index
+func (si *ShowIndex) IndexedSeason(imdbID string, sNum int) (IndexedSeason, error) {
 	si.RLock()
 	defer si.RUnlock()
 
 	show, ok := si.shows[imdbID]
 	if !ok {
-		return "", ErrNotFound
+		return IndexedSeason{}, ErrNotFound
 	}
 
 	season, ok := show.Seasons[sNum]
 	if !ok {
-		return "", ErrNotFound
+		return IndexedSeason{}, ErrNotFound
+	}
+
+	return season, nil
+}
+
+// SeasonPath returns the season path from the index
+func (si *ShowIndex) SeasonPath(imdbID string, sNum int) (string, error) {
+	season, err := si.IndexedSeason(imdbID, sNum)
+	if err != nil {
+		return "", err
 	}
 
 	return season.Path, nil
 }
 
-// ShowPath returns the show path from the index
-func (si *ShowIndex) ShowPath(imdbID string) (string, error) {
+// IndexedShow returns the indexed show from the index
+func (si *ShowIndex) IndexedShow(imdbID string) (IndexedShow, error) {
 	si.RLock()
 	defer si.RUnlock()
 
 	show, ok := si.shows[imdbID]
 	if !ok {
-		return "", ErrNotFound
+		return IndexedShow{}, ErrNotFound
+	}
+
+	return show, nil
+}
+
+// ShowPath returns the show path from the index
+func (si *ShowIndex) ShowPath(imdbID string) (string, error) {
+	show, err := si.IndexedShow(imdbID)
+	if err != nil {
+		return "", err
 	}
 
 	return show.Path, nil

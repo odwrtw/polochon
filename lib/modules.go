@@ -3,10 +3,10 @@ package polochon
 import "errors"
 
 // Registerd modules
-var registeredModules *RegisteredModules
+var registeredModules *modules
 
 func init() {
-	registeredModules = &RegisteredModules{
+	registeredModules = &modules{
 		Detailers:   make(map[string]func(params []byte) (Detailer, error)),
 		Torrenters:  make(map[string]func(params []byte) (Torrenter, error)),
 		Guessers:    make(map[string]func(params []byte) (Guesser, error)),
@@ -47,8 +47,8 @@ const (
 	TypeCalendar              = "calendar"
 )
 
-// RegisteredModules holds the modules registered during the init process
-type RegisteredModules struct {
+// modules holds the modules registered during the init process
+type modules struct {
 	Detailers   map[string]func(params []byte) (Detailer, error)
 	Torrenters  map[string]func(params []byte) (Torrenter, error)
 	Guessers    map[string]func(params []byte) (Guesser, error)

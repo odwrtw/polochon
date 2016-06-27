@@ -1,4 +1,4 @@
-package polochon
+package nfo
 
 import (
 	"bytes"
@@ -7,12 +7,13 @@ import (
 	"testing"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/odwrtw/polochon/lib"
 )
 
 var mockLogEntry = logrus.NewEntry(&logrus.Logger{Out: ioutil.Discard})
 
-func mockMovie(conf MovieConfig) *Movie {
-	m := NewMovie(conf)
+func mockMovie() *polochon.Movie {
+	m := polochon.NewMovie(polochon.MovieConfig{})
 	m.ImdbID = "tt2562232"
 	m.OriginalTitle = "Birdman"
 	m.Plot = "Awesome plot"
@@ -45,11 +46,11 @@ var movieNFOContent = []byte(`<movie>
   <year>2014</year>
 </movie>`)
 
-func TestMovieNFOWriter(t *testing.T) {
-	m := mockMovie(MovieConfig{})
+func TestMovieWriteNFO(t *testing.T) {
+	m := mockMovie()
 
 	var b bytes.Buffer
-	err := WriteNFO(&b, m)
+	err := Write(&b, m)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,11 +60,11 @@ func TestMovieNFOWriter(t *testing.T) {
 	}
 }
 
-func TestMovieNFOReader(t *testing.T) {
-	expected := mockMovie(MovieConfig{})
+func TestMovieReadNFO(t *testing.T) {
+	expected := mockMovie()
 
-	got := &Movie{}
-	if err := ReadNFO(bytes.NewBuffer(movieNFOContent), got); err != nil {
+	got := &polochon.Movie{}
+	if err := Read(bytes.NewBuffer(movieNFOContent), got); err != nil {
 		t.Fatal(err)
 	}
 

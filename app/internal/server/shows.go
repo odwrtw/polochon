@@ -10,17 +10,25 @@ import (
 	"github.com/odwrtw/polochon/lib/media_index"
 )
 
+// Show represents the show output of the server
+type Show struct {
+	*polochon.Show
+	Seasons []int `json:"seasons"`
+}
+
+// NewShow returns a new show to be JSON formated
+func NewShow(show *polochon.Show, indexed index.IndexedShow) *Show {
+	return &Show{
+		Show:    show,
+		Seasons: indexed.SeasonList(),
+	}
+}
+
 func (s *Server) showIds(w http.ResponseWriter, req *http.Request) {
 	s.log.Debug("listing shows")
 
-	ids, err := s.library.ShowIds()
-	if err != nil {
-		s.renderError(w, err)
-		return
-	}
-
 	ret := map[string]map[string][]string{}
-	for id, show := range ids {
+	for id, show := range s.library.ShowIDs() {
 		ret[id] = map[string][]string{}
 		for seasonNum, season := range show.Seasons {
 			s := fmt.Sprintf("%02d", seasonNum)
@@ -56,28 +64,9 @@ func (s *Server) getEpisode(w http.ResponseWriter, req *http.Request) *polochon.
 		*ptr = v
 	}
 
-	v, err := s.library.SearchShowEpisodeByImdbID(vars["id"], season, episode)
+	e, err := s.library.GetEpisode(vars["id"], season, episode)
 	if err != nil {
-		s.log.Error(err)
-		var status int
-		if err == index.ErrNotFound {
-			status = http.StatusNotFound
-		} else {
-			status = http.StatusInternalServerError
-		}
-		s.renderError(w, &Error{
-			Code:    status,
-			Message: "URL not found",
-		})
-		return nil
-	}
-
-	e, ok := v.(*polochon.ShowEpisode)
-	if !ok {
-		s.renderError(w, &Error{
-			Code:    http.StatusInternalServerError,
-			Message: "invalid type",
-		})
+		s.renderError(w, err)
 		return nil
 	}
 
@@ -87,23 +76,19 @@ func (s *Server) getEpisode(w http.ResponseWriter, req *http.Request) *polochon.
 func (s *Server) getShowDetails(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 
-	v, err := s.library.NewShowFromID(vars["id"])
+	show, err := s.library.GetShow(vars["id"])
 	if err != nil {
-		s.log.Error(err)
-		var status int
-		if err == index.ErrNotFound {
-			status = http.StatusNotFound
-		} else {
-			status = http.StatusInternalServerError
-		}
-		s.renderError(w, &Error{
-			Code:    status,
-			Message: "URL not found",
-		})
+		s.renderError(w, err)
 		return
 	}
 
-	s.renderOK(w, v)
+	indexedShow, err := s.library.GetIndexedShow(vars["id"])
+	if err != nil {
+		s.renderError(w, err)
+		return
+	}
+
+	s.renderOK(w, NewShow(show, indexedShow))
 }
 
 func (s *Server) getShowEpisodeIDDetails(w http.ResponseWriter, req *http.Request) {
@@ -122,10 +107,7 @@ func (s *Server) deleteEpisode(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := s.library.Delete(e, s.log); err != nil {
-		s.renderError(w, &Error{
-			Code:    http.StatusInternalServerError,
-			Message: "URL not found",
-		})
+		s.renderError(w, err)
 		return
 	}
 

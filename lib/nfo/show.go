@@ -1,22 +1,24 @@
-package polochon
+package nfo
 
 import (
 	"encoding/xml"
 	"time"
+
+	"github.com/odwrtw/polochon/lib"
 )
 
-// ShowNFO represents a show NFO in kodi
-type ShowNFO struct {
-	*Show
+// Show represents a show NFO
+type Show struct {
+	*polochon.Show
 }
 
-// NewShowNFO returns a ShowNFO from a Show
-func NewShowNFO(s *Show) *ShowNFO {
-	return &ShowNFO{Show: s}
+// NewShow returns a Show from a Show
+func NewShow(s *polochon.Show) *Show {
+	return &Show{Show: s}
 }
 
-// showNFODetails represents a show NFO in kodi
-type showNFODetails struct {
+// showFields represents the show fileds in the NFO file
+type showFields struct {
 	Title     string  `xml:"title"`
 	ShowTitle string  `xml:"showtitle"`
 	Rating    float32 `xml:"rating"`
@@ -29,10 +31,10 @@ type showNFODetails struct {
 }
 
 // MarshalXML implements the XML Marshaler interface
-func (s *ShowNFO) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+func (s *Show) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	start.Name = xml.Name{Space: "", Local: "tvshow"}
 
-	nfo := &showNFODetails{
+	nfo := &showFields{
 		Title:     s.Title,
 		ShowTitle: s.Title,
 		Rating:    s.Rating,
@@ -51,8 +53,8 @@ func (s *ShowNFO) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 }
 
 // UnmarshalXML implements the XML Unmarshaler interface
-func (s *ShowNFO) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	nfo := showNFODetails{}
+func (s *Show) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	nfo := showFields{}
 	if err := d.DecodeElement(&nfo, &start); err != nil {
 		return err
 	}

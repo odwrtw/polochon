@@ -1,21 +1,31 @@
 - role: guest
   allowed:
-    - MoviesListIDs
+    - GetMovies
+    - GetMovie
+    - GetShows
+    - GetShow
+    - GetSeason
+    - GetEpisode
   token:
-  - name: toto
-    value: wwiuiuwbjqwndjqubyuui
+  - name: guest_token_name
+    value: secure_guest_token
 - role: user
   include:
     - guest
+  allowed:
+    - DownloadMovie
+    - DownloadEpisode
+    - Wishlist
+    - AddTorrent
   token:
-  - name: plop
-    value: fupqkjlknkn
+  - name: user_token_name
+    value: secure_user_token
 - role: admin
   include:
     - user
   allowed:
-    - DeleteMovies
+    - DeleteMovie
     - DeleteEpisode
   token:
-  - name: skywalker
-    value: owoifupqkjlknkn
+  - name: admin_token_name
+    value: secure_admin_token

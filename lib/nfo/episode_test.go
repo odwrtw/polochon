@@ -1,13 +1,15 @@
-package polochon
+package nfo
 
 import (
 	"bytes"
 	"reflect"
 	"testing"
+
+	"github.com/odwrtw/polochon/lib"
 )
 
-func mockShowEpisode() *ShowEpisode {
-	s := NewShowEpisode(ShowConfig{})
+func mockEpisode() *polochon.ShowEpisode {
+	s := polochon.NewShowEpisode(polochon.ShowConfig{})
 	s.Title = "Lost in Space"
 	s.ShowTitle = "American Dad!"
 	s.Season = 9
@@ -41,11 +43,11 @@ var episodeNFOContent = []byte(`<episodedetails>
   <episodeimdbid></episodeimdbid>
 </episodedetails>`)
 
-func TestShowEpisodeStoreWriter(t *testing.T) {
-	s := mockShowEpisode()
+func TestEpisodeWriteNFO(t *testing.T) {
+	s := mockEpisode()
 
 	var b bytes.Buffer
-	err := WriteNFO(&b, s)
+	err := Write(&b, s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,10 +57,10 @@ func TestShowEpisodeStoreWriter(t *testing.T) {
 	}
 }
 
-func TestShowEpisodeReader(t *testing.T) {
-	expected := mockShowEpisode()
-	got := &ShowEpisode{}
-	if err := ReadNFO(bytes.NewBuffer(episodeNFOContent), got); err != nil {
+func TestEpisodeReadNFO(t *testing.T) {
+	expected := mockEpisode()
+	got := &polochon.ShowEpisode{}
+	if err := Read(bytes.NewBuffer(episodeNFOContent), got); err != nil {
 		t.Fatal(err)
 	}
 

@@ -1,6 +1,10 @@
 package server
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/odwrtw/polochon/lib/media_index"
+)
 
 // Error represents an http error
 type Error struct {
@@ -18,17 +22,26 @@ func (s *Server) renderOK(w http.ResponseWriter, i interface{}) {
 }
 
 // renderError renders the errors as JSON
-func (s *Server) renderError(w http.ResponseWriter, e error) {
+func (s *Server) renderError(w http.ResponseWriter, input error) {
 	var err *Error
 
-	custErr, ok := e.(*Error)
-	if !ok {
-		err = &Error{
-			Code:    http.StatusInternalServerError,
-			Message: e.Error(),
+	s.log.Error(input)
+
+	switch e := input.(type) {
+	case *Error:
+		err = e
+	default:
+		if e == index.ErrNotFound {
+			err = &Error{
+				Code:    http.StatusNotFound,
+				Message: "URL not found",
+			}
+		} else {
+			err = &Error{
+				Code:    http.StatusInternalServerError,
+				Message: "internal error",
+			}
 		}
-	} else {
-		err = custErr
 	}
 
 	s.render.JSON(w, err.Code, err)
