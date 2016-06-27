@@ -131,7 +131,7 @@ func TestDeleteMovie(t *testing.T) {
 	ids := lib.MovieIDs()
 	movieCount := len(ids)
 	if movieCount != 1 {
-		t.Fatalf("the library should contains %d movie instead of 1", movieCount)
+		t.Fatalf("the library should contains 1 movie instead of %d", movieCount)
 	}
 
 	// Delete the movie from the library
@@ -143,11 +143,23 @@ func TestDeleteMovie(t *testing.T) {
 	ids = lib.MovieIDs()
 	movieCount = len(ids)
 	if movieCount != 0 {
-		t.Fatalf("the library should contains %d movie instead of 0", movieCount)
+		t.Fatalf("the library should contains 0 movie instead of %d", movieCount)
 	}
 
 	// Ensure the movie folder has been deleted
 	if exists(lib.getMovieDir(m)) {
 		t.Fatal("the movie directory should have been deleted", err)
+	}
+
+	// Rebuild the index, it should remain empty
+	if err := lib.RebuildIndex(mockLogEntry); err != nil {
+		t.Fatalf("expected no error, got %q", err)
+	}
+
+	// Count the movies in the index
+	ids = lib.MovieIDs()
+	movieCount = len(ids)
+	if movieCount != 0 {
+		t.Fatalf("the library should contains 0 movie instead of %d", movieCount)
 	}
 }
