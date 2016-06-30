@@ -5,11 +5,11 @@ import (
 	"net/http"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
 	"github.com/meatballhat/negroni-logrus"
 	"github.com/odwrtw/polochon/app/internal/token"
 	"github.com/phyber/negroni-gzip/gzip"
+	"github.com/urfave/negroni"
 )
 
 // httpServer returns an http server
