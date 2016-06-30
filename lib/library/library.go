@@ -80,38 +80,14 @@ func (l *Library) HasShowEpisode(imdbID string, season, episode int) (bool, erro
 
 // Add video
 func (l *Library) Add(video polochon.Video, log *logrus.Entry) error {
-	ok, err := l.HasVideo(video)
-	if err != nil {
-		return err
-	}
 	switch v := video.(type) {
 	case *polochon.Movie:
-		if ok {
-			err := l.DeleteMovie(v, log)
-			if err != nil {
-				return err
-			}
-		}
-
-		if err := l.AddMovie(v, log); err != nil {
-			return err
-		}
+		return l.AddMovie(v, log)
 	case *polochon.ShowEpisode:
-		if ok {
-			err := l.DeleteShowEpisode(v, log)
-			if err != nil {
-				return err
-			}
-		}
-
-		if err := l.AddShowEpisode(v, log); err != nil {
-			return err
-		}
+		return l.AddShowEpisode(v, log)
 	default:
 		return ErrInvalidIndexVideoType
 	}
-
-	return l.addToIndex(video)
 }
 
 func (l *Library) getMovieDir(movie *polochon.Movie) string {
@@ -125,6 +101,24 @@ func (l *Library) getMovieDir(movie *polochon.Movie) string {
 func (l *Library) AddMovie(movie *polochon.Movie, log *logrus.Entry) error {
 	if movie.Path == "" {
 		return ErrMissingMovieFilePath
+	}
+
+	// Check if the movie is already in the library
+	ok, err := l.HasMovie(movie.ImdbID)
+	if err != nil {
+		return err
+	}
+	if ok {
+		// Get the old movie path from the index
+		oldMovie, err := l.GetMovie(movie.ImdbID)
+		if err != nil {
+			return err
+		}
+
+		// Delete it
+		if err := l.DeleteMovie(oldMovie, log); err != nil {
+			return err
+		}
 	}
 
 	storePath := l.getMovieDir(movie)
@@ -169,6 +163,11 @@ func (l *Library) AddMovie(movie *polochon.Movie, log *logrus.Entry) error {
 
 	// Write NFO into the file
 	if err := writeNFOFile(movie.NfoPath(), movie); err != nil {
+		return err
+	}
+
+	// At this point the video is stored
+	if err := l.movieIndex.Add(movie); err != nil {
 		return err
 	}
 
@@ -278,6 +277,22 @@ func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode, log *logrus.Entry) er
 		return ErrMissingShowEpisodeFilePath
 	}
 
+	ok, err := l.HasShowEpisode(ep.ShowImdbID, ep.Season, ep.Episode)
+	if err != nil {
+		return err
+	}
+	if ok {
+		// Get the old episode from the index
+		oldEpisode, err := l.GetEpisode(ep.ShowImdbID, ep.Season, ep.Episode)
+		if err != nil {
+			return err
+		}
+
+		if err := l.DeleteShowEpisode(oldEpisode, log); err != nil {
+			return err
+		}
+	}
+
 	// Add the show
 	if err := l.addShow(ep, log); err != nil {
 		return err
@@ -321,7 +336,7 @@ func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode, log *logrus.Entry) er
 		return err
 	}
 
-	return nil
+	return l.showIndex.Add(ep)
 }
 
 // Delete will delete the video
@@ -414,17 +429,6 @@ func (l *Library) DeleteShowEpisode(se *polochon.ShowEpisode, log *logrus.Entry)
 	}
 
 	return nil
-}
-
-func (l *Library) addToIndex(video polochon.Video) error {
-	switch v := video.(type) {
-	case *polochon.Movie:
-		return l.movieIndex.Add(v)
-	case *polochon.ShowEpisode:
-		return l.showIndex.Add(v)
-	default:
-		return ErrInvalidIndexVideoType
-	}
 }
 
 // ShowIDs returns the show ids, seasons and episodes
@@ -525,7 +529,7 @@ func (l *Library) buildMovieIndex(log *logrus.Entry) error {
 		}
 
 		// Add the movie to the index
-		l.addToIndex(movie)
+		l.movieIndex.Add(movie)
 
 		return nil
 	})
@@ -618,7 +622,7 @@ func (l *Library) scanEpisodes(imdbID, showRootPath string, log *logrus.Entry) e
 
 		episode.ShowImdbID = imdbID
 		episode.ShowConfig = l.showConfig
-		l.addToIndex(episode)
+		l.showIndex.Add(episode)
 
 		return nil
 	})
