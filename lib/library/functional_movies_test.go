@@ -99,6 +99,15 @@ func TestAddMovie(t *testing.T) {
 		t.Errorf("invalid ids, expected %+v got %+v", expectedIDs, gotIDs)
 	}
 
+	// Ensure the library has the movie
+	hasMovie, err := lib.HasVideo(m)
+	if err != nil {
+		t.Fatalf("expected no error, got %q", err)
+	}
+	if !hasMovie {
+		t.Fatal("the movie should be in the index")
+	}
+
 	// Get the movie from the lib
 	movieFromLib, err := lib.GetMovie(m.ImdbID)
 	if err != nil {

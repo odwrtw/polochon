@@ -150,6 +150,15 @@ func TestAddEpisode(t *testing.T) {
 		t.Errorf("invalid show ids, expected %+v got %+v", expectedIDs, gotIDs)
 	}
 
+	// Ensure the library has the show episode
+	hasEpisode, err := lib.HasVideo(episode)
+	if err != nil {
+		t.Fatalf("expected no error, got %q", err)
+	}
+	if !hasEpisode {
+		t.Fatal("the episode should be in the index")
+	}
+
 	// Get the indexed show
 	gotIndexedShow, err := lib.GetIndexedShow(episode.ShowImdbID)
 	if err != nil {
