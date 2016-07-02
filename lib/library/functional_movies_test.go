@@ -65,6 +65,17 @@ func TestAddMovie(t *testing.T) {
 		t.Errorf("invalid symlink, expected %q got %q", m.Path, gotNewPath)
 	}
 
+	// Get the same mock movie again
+	m, err = lib.mockMovie("movieTest.mp4")
+	if err != nil {
+		t.Fatalf("expected no error, got %q", err)
+	}
+
+	// Add the movie again, this should replace the old file
+	if err := lib.Add(m, mockLogEntry); err != nil {
+		t.Fatalf("failed to add the movie again: %q", err)
+	}
+
 	// Check the content of the downloaded files
 	for _, imgPath := range []string{
 		m.MovieFanartPath(),
@@ -88,6 +99,15 @@ func TestAddMovie(t *testing.T) {
 		t.Errorf("invalid ids, expected %+v got %+v", expectedIDs, gotIDs)
 	}
 
+	// Ensure the library has the movie
+	hasMovie, err := lib.HasVideo(m)
+	if err != nil {
+		t.Fatalf("expected no error, got %q", err)
+	}
+	if !hasMovie {
+		t.Fatal("the movie should be in the index")
+	}
+
 	// Get the movie from the lib
 	movieFromLib, err := lib.GetMovie(m.ImdbID)
 	if err != nil {
@@ -108,6 +128,7 @@ func TestAddMovie(t *testing.T) {
 	if !reflect.DeepEqual(gotIDs, expectedIDs) {
 		t.Errorf("invalid ids, expected %+v got %+v", expectedIDs, gotIDs)
 	}
+
 }
 
 func TestDeleteMovie(t *testing.T) {

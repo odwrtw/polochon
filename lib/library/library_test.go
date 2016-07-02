@@ -10,6 +10,14 @@ import (
 
 var mockLogEntry = logrus.NewEntry(&logrus.Logger{Out: ioutil.Discard})
 
+type mockInvalidType string
+
+func (m *mockInvalidType) GetDetails(log *logrus.Entry) error  { return nil }
+func (m *mockInvalidType) GetTorrents(log *logrus.Entry) error { return nil }
+func (m *mockInvalidType) GetSubtitle(log *logrus.Entry) error { return nil }
+func (m *mockInvalidType) SetFile(f *polochon.File)            {}
+func (m *mockInvalidType) GetFile() *polochon.File             { return &polochon.File{} }
+
 func TestStoreMovieNoPath(t *testing.T) {
 	library := New(polochon.FileConfig{}, polochon.MovieConfig{}, polochon.ShowConfig{}, Config{})
 	movie := &polochon.Movie{}
@@ -40,5 +48,27 @@ func TestGetMovieDir(t *testing.T) {
 	got = l.getMovieDir(m)
 	if got != expected {
 		t.Errorf("expected %q, got %q", expected, got)
+	}
+}
+
+func TestAddVideo(t *testing.T) {
+	var invalidType *mockInvalidType
+
+	lib := &Library{}
+	expected := ErrInvalidIndexVideoType
+	got := lib.Add(invalidType, mockLogEntry)
+	if got != expected {
+		t.Errorf("expected error %q, got %q", expected, got)
+	}
+}
+
+func TestHasVideo(t *testing.T) {
+	var invalidType *mockInvalidType
+
+	lib := &Library{}
+	expected := ErrInvalidIndexVideoType
+	_, got := lib.HasVideo(invalidType)
+	if got != expected {
+		t.Errorf("expected error %q, got %q", expected, got)
 	}
 }

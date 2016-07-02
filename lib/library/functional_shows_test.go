@@ -92,6 +92,18 @@ func TestAddEpisode(t *testing.T) {
 		t.Errorf("invalid symlink, expected %q got %q", episode.Path, gotNewPath)
 	}
 
+	// Get a new mock episode
+	episode, err = lib.mockEpisode("episodeTest.mp4")
+	if err != nil {
+		t.Fatalf("expected no error, got %q", err)
+	}
+	episode.Show = show
+
+	// Add the same episode again, this should replace the old one
+	if err := lib.Add(episode, mockLogEntry); err != nil {
+		t.Fatalf("failed to add the episode again: %q", err)
+	}
+
 	// Test the show content
 	testShow(t, episode, lib)
 
@@ -136,6 +148,15 @@ func TestAddEpisode(t *testing.T) {
 	gotIDs := lib.ShowIDs()
 	if !reflect.DeepEqual(expectedIDs, gotIDs) {
 		t.Errorf("invalid show ids, expected %+v got %+v", expectedIDs, gotIDs)
+	}
+
+	// Ensure the library has the show episode
+	hasEpisode, err := lib.HasVideo(episode)
+	if err != nil {
+		t.Fatalf("expected no error, got %q", err)
+	}
+	if !hasEpisode {
+		t.Fatal("the episode should be in the index")
 	}
 
 	// Get the indexed show
