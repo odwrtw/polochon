@@ -98,7 +98,7 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 			name:    "Wishlist",
 			path:    "/wishlist",
 			methods: "GET",
-			handler: s.deleteEpisode,
+			handler: s.wishlist,
 		},
 		{
 			name:    "AddTorrent",
