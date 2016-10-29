@@ -1,3 +1,8 @@
+logs:
+  # Log level available log levels: debug, info, warn, error, fatal, panic
+  level: debug
+  # Log to file, if no file is specified the logs will be printed to stdout
+  file: /var/log/polochon.log
 watcher:
   fsnotifier: fsnotify
   dir: /home/user/downloads

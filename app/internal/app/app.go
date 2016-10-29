@@ -45,15 +45,6 @@ type App struct {
 
 // NewApp create a new app from the given configuration path
 func NewApp(configPath, tokenManagerPath string) (*App, error) {
-	// Setup the logger
-	logger := logrus.New()
-	logger.Level = logrus.DebugLevel
-	logger.Out = os.Stderr
-	logger.Formatter = &logrus.TextFormatter{
-		ForceColors:   true,
-		FullTimestamp: true,
-	}
-
 	// Create the app
 	app := &App{
 		configPath:      configPath,
@@ -61,7 +52,6 @@ func NewApp(configPath, tokenManagerPath string) (*App, error) {
 		safeguard:       safeguard.New(),
 		done:            make(chan struct{}),
 		reload:          make(chan subapp.App),
-		logger:          logger,
 	}
 
 	// Init the app
@@ -74,13 +64,14 @@ func NewApp(configPath, tokenManagerPath string) (*App, error) {
 
 // init the app by reading the configuration files
 func (a *App) init() error {
-	log := logrus.NewEntry(a.logger).WithField("function", "app_init")
-	log.Debug("loading app configuration")
-
-	config, err := configuration.LoadConfigFile(a.configPath, log)
+	config, err := configuration.LoadConfigFile(a.configPath)
 	if err != nil {
 		return err
 	}
+	a.logger = config.Logger
+
+	log := logrus.NewEntry(a.logger).WithField("function", "app_init")
+	log.Debug("app configuration loaded")
 
 	library := library.New(config.File, config.Movie, config.Show, config.Library)
 
