@@ -5,7 +5,6 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
-	"github.com/odwrtw/polochon/lib/explorer"
 	"github.com/odwrtw/yts"
 )
 
@@ -39,7 +38,7 @@ func New() (polochon.Torrenter, error) {
 }
 
 // NewExplorer returns a new explorer
-func NewExplorer() (explorer.Explorer, error) {
+func NewExplorer() (polochon.Explorer, error) {
 	return &Yts{}, nil
 }
 
@@ -97,6 +96,7 @@ func (y *Yts) GetTorrents(i interface{}, log *logrus.Entry) error {
 		torrents = append(torrents, polochon.Torrent{
 			URL:     t.URL,
 			Quality: q,
+			Source:  moduleName,
 		})
 	}
 
