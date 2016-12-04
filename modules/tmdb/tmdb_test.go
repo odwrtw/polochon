@@ -190,6 +190,19 @@ func TestTmdbGetDetails(t *testing.T) {
 			BackdropPath:     "/7u3pxc0K1wx32IleAkLv78MKgrw.jpg",
 			Popularity:       3.1354422569274902,
 			PosterPath:       "/ZPMhHXEhYB33YoTZZNNmezth0V.jpg",
+			Genres: []struct {
+				ID   int
+				Name string
+			}{
+				{
+					ID:   1,
+					Name: "Action",
+				},
+				{
+					ID:   2,
+					Name: "Sci-Fi",
+				},
+			},
 		}, nil
 	}
 
@@ -212,6 +225,7 @@ func TestTmdbGetDetails(t *testing.T) {
 		TmdbID:        603,
 		Votes:         4230,
 		Year:          1999,
+		Genres:        []string{"Action", "Sci-Fi"},
 	}
 
 	if !reflect.DeepEqual(m, expected) {
