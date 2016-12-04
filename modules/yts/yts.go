@@ -94,9 +94,11 @@ func (y *Yts) GetTorrents(i interface{}, log *logrus.Entry) error {
 		}
 
 		torrents = append(torrents, polochon.Torrent{
-			URL:     t.URL,
-			Quality: q,
-			Source:  moduleName,
+			URL:      t.URL,
+			Quality:  q,
+			Source:   moduleName,
+			Seeders:  t.Seeds,
+			Leechers: t.Peers,
 		})
 	}
 
