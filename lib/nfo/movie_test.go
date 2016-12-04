@@ -27,6 +27,7 @@ func mockMovie() *polochon.Movie {
 	m.TmdbID = 194662
 	m.Votes = 747
 	m.Year = 2014
+	m.Genres = []string{"horror", "action"}
 	return m
 }
 
@@ -44,6 +45,8 @@ var movieNFOContent = []byte(`<movie>
   <tmdbid>194662</tmdbid>
   <votes>747</votes>
   <year>2014</year>
+  <genre>horror</genre>
+  <genre>action</genre>
 </movie>`)
 
 func TestMovieWriteNFO(t *testing.T) {
