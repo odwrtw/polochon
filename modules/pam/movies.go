@@ -26,6 +26,7 @@ func moviePapiToPolochon(papiMovie *papi.Movie, polochonMovie *polochon.Movie) {
 	polochonMovie.TmdbID = papiMovie.TmdbID
 	polochonMovie.Votes = papiMovie.Votes
 	polochonMovie.Year = papiMovie.Year
+	polochonMovie.Genres = papiMovie.Genres
 
 }
 

@@ -32,6 +32,7 @@ type Movie struct {
 	TmdbID        int       `json:"tmdb_id"`
 	Votes         int       `json:"votes"`
 	Year          int       `json:"year"`
+	Genres        []string  `json:"genres"`
 	Torrents      []Torrent `json:"torrents"`
 }
 

@@ -85,6 +85,7 @@ func (trakt *TraktTV) GetDetails(i interface{}, log *logrus.Entry) error {
 	movie.Year = tmovie.Year
 	movie.Thumb = tmovie.Images.Poster.Full
 	movie.Fanart = tmovie.Images.Fanart.Full
+	movie.Genres = tmovie.Genres
 
 	return nil
 }

@@ -215,6 +215,12 @@ func (t *TmDB) GetDetails(i interface{}, log *logrus.Entry) error {
 		year = date.Year()
 	}
 
+	// Get the movie genres
+	genres := []string{}
+	for _, g := range details.Genres {
+		genres = append(genres, g.Name)
+	}
+
 	// Update movie details
 	m.ImdbID = details.ImdbID
 	m.OriginalTitle = details.OriginalTitle
@@ -228,6 +234,7 @@ func (t *TmDB) GetDetails(i interface{}, log *logrus.Entry) error {
 	m.Title = details.Title
 	m.Votes = int(details.VoteCount)
 	m.Year = year
+	m.Genres = genres
 
 	return nil
 }

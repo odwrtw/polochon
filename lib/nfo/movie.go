@@ -18,19 +18,20 @@ func NewMovie(m *polochon.Movie) *Movie {
 
 // movieFields represents the fields in the NFO file
 type movieFields struct {
-	ImdbID        string  `xml:"id"`
-	OriginalTitle string  `xml:"originaltitle"`
-	Plot          string  `xml:"plot"`
-	Rating        float32 `xml:"rating"`
-	Runtime       int     `xml:"runtime"`
-	SortTitle     string  `xml:"sorttitle"`
-	Tagline       string  `xml:"tagline"`
-	Thumb         string  `xml:"thumb"`
-	Fanart        string  `xml:"customfanart"`
-	Title         string  `xml:"title"`
-	TmdbID        int     `xml:"tmdbid"`
-	Votes         int     `xml:"votes"`
-	Year          int     `xml:"year"`
+	ImdbID        string   `xml:"id"`
+	OriginalTitle string   `xml:"originaltitle"`
+	Plot          string   `xml:"plot"`
+	Rating        float32  `xml:"rating"`
+	Runtime       int      `xml:"runtime"`
+	SortTitle     string   `xml:"sorttitle"`
+	Tagline       string   `xml:"tagline"`
+	Thumb         string   `xml:"thumb"`
+	Fanart        string   `xml:"customfanart"`
+	Title         string   `xml:"title"`
+	TmdbID        int      `xml:"tmdbid"`
+	Votes         int      `xml:"votes"`
+	Year          int      `xml:"year"`
+	Genres        []string `xml:"genre"`
 }
 
 // MarshalXML implements the XML Marshaler interface
@@ -51,6 +52,7 @@ func (m *Movie) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 		TmdbID:        m.TmdbID,
 		Votes:         m.Votes,
 		Year:          m.Year,
+		Genres:        m.Genres,
 	}
 
 	return e.EncodeElement(nfo, start)
@@ -76,6 +78,7 @@ func (m *Movie) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	m.TmdbID = nfo.TmdbID
 	m.Votes = nfo.Votes
 	m.Year = nfo.Year
+	m.Genres = nfo.Genres
 
 	return nil
 }
