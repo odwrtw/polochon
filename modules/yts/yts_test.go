@@ -74,9 +74,9 @@ func TestYtsTorrents(t *testing.T) {
 
 	expected := polochon.NewMovie(polochon.MovieConfig{})
 	expected.Torrents = []polochon.Torrent{
-		{Quality: polochon.Quality480p, URL: "http://test.480p.magnet"},
-		{Quality: polochon.Quality720p, URL: "http://test.720p.magnet"},
-		{Quality: polochon.Quality1080p, URL: "http://test.1080p.magnet"},
+		{Source: "yts", Quality: polochon.Quality480p, URL: "http://test.480p.magnet"},
+		{Source: "yts", Quality: polochon.Quality720p, URL: "http://test.720p.magnet"},
+		{Source: "yts", Quality: polochon.Quality1080p, URL: "http://test.1080p.magnet"},
 	}
 
 	if !reflect.DeepEqual(m, expected) {

@@ -5,30 +5,29 @@ import (
 	"github.com/odwrtw/guessit"
 	"github.com/odwrtw/kickass"
 	"github.com/odwrtw/polochon/lib"
-	"github.com/odwrtw/polochon/lib/explorer"
 )
 
 // AvailableShowOptions implements the the explorer interface
-func (k *Kickass) AvailableShowOptions() []explorer.Option {
-	return []explorer.Option{}
+func (k *Kickass) AvailableShowOptions() []polochon.ExplorerOption {
+	return []polochon.ExplorerOption{}
 }
 
 // GetShowList implements the explorer interface
-func (k *Kickass) GetShowList(option explorer.Option, log *logrus.Entry) ([]*polochon.Show, error) {
+func (k *Kickass) GetShowList(option polochon.ExplorerOption, log *logrus.Entry) ([]*polochon.Show, error) {
 	return nil, polochon.ErrNotAvailable
 }
 
 // AvailableMovieOptions implements the the explorer interface
-func (k *Kickass) AvailableMovieOptions() []explorer.Option {
-	return []explorer.Option{explorer.BySeeds}
+func (k *Kickass) AvailableMovieOptions() []polochon.ExplorerOption {
+	return []polochon.ExplorerOption{polochon.ExploreBySeeds}
 }
 
-// GetMovieList implements the explorer interface
-func (k *Kickass) GetMovieList(option explorer.Option, log *logrus.Entry) ([]*polochon.Movie, error) {
+// GetMovieList implements the Explorer interface
+func (k *Kickass) GetMovieList(option polochon.ExplorerOption, log *logrus.Entry) ([]*polochon.Movie, error) {
 	log = log.WithField("explore_category", "movies")
 
 	// Only the seeders option is available for this module
-	if option != explorer.BySeeds {
+	if option != polochon.ExploreBySeeds {
 		return nil, polochon.ErrNotAvailable
 	}
 

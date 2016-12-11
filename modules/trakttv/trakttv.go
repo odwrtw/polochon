@@ -51,6 +51,13 @@ func New(p *Params) (*TraktTV, error) {
 	}, nil
 }
 
+// NewExplorer returns a new explorer
+func NewExplorer(p *Params) (polochon.Explorer, error) {
+	return &TraktTV{
+		client: trakttv.New(p.ClientID),
+	}, nil
+}
+
 // Name returns the module name
 func (trakt *TraktTV) Name() string {
 	return moduleName

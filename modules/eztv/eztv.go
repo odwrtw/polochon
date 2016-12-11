@@ -81,6 +81,7 @@ func (e *Eztv) getShowEpisodeDetails(s *polochon.ShowEpisode) error {
 		torrents = append(torrents, polochon.Torrent{
 			Quality: quality,
 			URL:     torrent.URL,
+			Source:  moduleName,
 		})
 	}
 

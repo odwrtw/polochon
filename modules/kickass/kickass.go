@@ -8,7 +8,6 @@ import (
 
 	"github.com/odwrtw/kickass"
 	"github.com/odwrtw/polochon/lib"
-	"github.com/odwrtw/polochon/lib/explorer"
 )
 
 // Module constants
@@ -67,7 +66,7 @@ func NewTorrenter(params *Params) (polochon.Torrenter, error) {
 }
 
 // NewExplorer returns a new explorer
-func NewExplorer(params *Params) (explorer.Explorer, error) {
+func NewExplorer(params *Params) (polochon.Explorer, error) {
 	return &Kickass{
 		client: kickass.New(),
 		Params: params,

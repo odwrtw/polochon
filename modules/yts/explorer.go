@@ -3,44 +3,43 @@ package yts
 import (
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
-	"github.com/odwrtw/polochon/lib/explorer"
 	"github.com/odwrtw/yts"
 )
 
 // AvailableShowOptions implements the the explorer interface
-func (y *Yts) AvailableShowOptions() []explorer.Option {
-	return []explorer.Option{}
+func (y *Yts) AvailableShowOptions() []polochon.ExplorerOption {
+	return []polochon.ExplorerOption{}
 }
 
 // GetShowList implements the explorer interface
-func (y *Yts) GetShowList(option explorer.Option, log *logrus.Entry) ([]*polochon.Show, error) {
+func (y *Yts) GetShowList(option polochon.ExplorerOption, log *logrus.Entry) ([]*polochon.Show, error) {
 	return nil, polochon.ErrNotAvailable
 }
 
 // AvailableMovieOptions implements the the explorer interface
-func (y *Yts) AvailableMovieOptions() []explorer.Option {
-	return []explorer.Option{
-		explorer.BySeeds,
-		explorer.ByPeers,
-		explorer.ByTitle,
-		explorer.ByYear,
-		explorer.ByRate,
-		explorer.ByDownloadCount,
-		explorer.ByLikeCount,
-		explorer.ByDateAdded,
+func (y *Yts) AvailableMovieOptions() []polochon.ExplorerOption {
+	return []polochon.ExplorerOption{
+		polochon.ExploreBySeeds,
+		polochon.ExploreByPeers,
+		polochon.ExploreByTitle,
+		polochon.ExploreByYear,
+		polochon.ExploreByRate,
+		polochon.ExploreByDownloadCount,
+		polochon.ExploreByLikeCount,
+		polochon.ExploreByDateAdded,
 	}
 }
 
-func translateMovieOptions(expOption explorer.Option) (string, error) {
-	translationMap := map[explorer.Option]string{
-		explorer.BySeeds:         yts.SortBySeeds,
-		explorer.ByPeers:         yts.SortByPeers,
-		explorer.ByTitle:         yts.SortByTitle,
-		explorer.ByYear:          yts.SortByYear,
-		explorer.ByRate:          yts.SortByRating,
-		explorer.ByDownloadCount: yts.SortByDownload,
-		explorer.ByLikeCount:     yts.SortByLike,
-		explorer.ByDateAdded:     yts.SortByDateAdded,
+func translateMovieOptions(expOption polochon.ExplorerOption) (string, error) {
+	translationMap := map[polochon.ExplorerOption]string{
+		polochon.ExploreBySeeds:         yts.SortBySeeds,
+		polochon.ExploreByPeers:         yts.SortByPeers,
+		polochon.ExploreByTitle:         yts.SortByTitle,
+		polochon.ExploreByYear:          yts.SortByYear,
+		polochon.ExploreByRate:          yts.SortByRating,
+		polochon.ExploreByDownloadCount: yts.SortByDownload,
+		polochon.ExploreByLikeCount:     yts.SortByLike,
+		polochon.ExploreByDateAdded:     yts.SortByDateAdded,
 	}
 	option, ok := translationMap[expOption]
 	if !ok {
@@ -51,7 +50,7 @@ func translateMovieOptions(expOption explorer.Option) (string, error) {
 }
 
 // GetMovieList implements the explorer interface
-func (y *Yts) GetMovieList(option explorer.Option, log *logrus.Entry) ([]*polochon.Movie, error) {
+func (y *Yts) GetMovieList(option polochon.ExplorerOption, log *logrus.Entry) ([]*polochon.Movie, error) {
 	log = log.WithField("explore_category", "movies")
 
 	opt, err := translateMovieOptions(option)
