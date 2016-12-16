@@ -6,6 +6,11 @@ import (
 	"github.com/odwrtw/yts"
 )
 
+// NewExplorer returns a new explorer
+func NewExplorer() (polochon.Explorer, error) {
+	return &Yts{}, nil
+}
+
 // AvailableShowOptions implements the the explorer interface
 func (y *Yts) AvailableShowOptions() []polochon.ExplorerOption {
 	return []polochon.ExplorerOption{}
