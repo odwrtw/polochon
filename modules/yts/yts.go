@@ -37,11 +37,6 @@ func New() (polochon.Torrenter, error) {
 	return &Yts{}, nil
 }
 
-// NewExplorer returns a new explorer
-func NewExplorer() (polochon.Explorer, error) {
-	return &Yts{}, nil
-}
-
 // Name implements the Module interface
 func (y *Yts) Name() string {
 	return moduleName

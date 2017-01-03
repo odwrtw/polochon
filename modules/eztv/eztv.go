@@ -20,7 +20,7 @@ const (
 	moduleName = "eztv"
 )
 
-// Register yts as a Torrenter
+// Register eztv as a Torrenter
 func init() {
 	polochon.RegisterTorrenter(moduleName, NewFromRawYaml)
 }
@@ -30,6 +30,11 @@ type Eztv struct{}
 
 // New is an helper to avoid passing bytes
 func New() (polochon.Torrenter, error) {
+	return &Eztv{}, nil
+}
+
+// NewExplorer is an helper to avoid passing bytes
+func NewExplorer() (polochon.Explorer, error) {
 	return &Eztv{}, nil
 }
 
