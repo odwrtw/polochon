@@ -113,13 +113,14 @@ func (s *Server) addTorrent(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
-		s.log.Warning("Error while adding a torrent via the API: %q", err)
+		s.log.Warningf("Error while adding a torrent via the API: %q", err)
 		s.renderError(w, &Error{
 			Code:    http.StatusBadRequest,
-			Message: "Unkown error",
+			Message: err.Error(),
 		})
 		return
 	}
+	s.renderOK(w, nil)
 }
 
 func (s *Server) tokenGetAllowed(w http.ResponseWriter, r *http.Request) {
