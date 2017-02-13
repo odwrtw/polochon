@@ -16,6 +16,7 @@
     - DownloadMovie
     - UpdateMovieSubtitles
     - DownloadEpisode
+    - UpdateEpisodeSubtitles
     - Wishlist
     - AddTorrent
   token:

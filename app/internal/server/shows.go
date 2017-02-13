@@ -114,6 +114,20 @@ func (s *Server) deleteEpisode(w http.ResponseWriter, req *http.Request) {
 	s.renderOK(w, nil)
 }
 
+func (s *Server) updateEpisodeSubtitles(w http.ResponseWriter, req *http.Request) {
+	e := s.getEpisode(w, req)
+	if e == nil {
+		return
+	}
+
+	if err := e.GetSubtitle(s.log); err != nil {
+		s.renderError(w, err)
+		return
+	}
+
+	s.renderOK(w, nil)
+}
+
 func (s *Server) serveShow(w http.ResponseWriter, r *http.Request) {
 	e := s.getEpisode(w, r)
 	if e == nil {

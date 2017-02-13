@@ -94,6 +94,12 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 			handler: s.deleteEpisode,
 		},
 		{
+			name:    "UpdateEpisodeSubtitles",
+			path:    "/shows/{id}/seasons/{season:[0-9]+}/episodes/{episode:[0-9]+}/subtitles",
+			methods: "POST",
+			handler: s.updateEpisodeSubtitles,
+		},
+		{
 			name:     "DownloadEpisode",
 			path:     "/shows/{id}/seasons/{season:[0-9]+}/episodes/{episode:[0-9]+}/download",
 			methods:  "GET",
