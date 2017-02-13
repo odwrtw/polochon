@@ -60,3 +60,17 @@ func (s *Server) deleteMovie(w http.ResponseWriter, req *http.Request) {
 
 	s.renderOK(w, nil)
 }
+
+func (s *Server) updateMovieSubtitles(w http.ResponseWriter, req *http.Request) {
+	m := s.getMovie(w, req)
+	if m == nil {
+		return
+	}
+
+	if err := m.GetSubtitle(s.log); err != nil {
+		s.renderError(w, err)
+		return
+	}
+
+	s.renderOK(w, nil)
+}

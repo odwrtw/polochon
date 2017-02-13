@@ -14,7 +14,9 @@
     - guest
   allowed:
     - DownloadMovie
+    - UpdateMovieSubtitles
     - DownloadEpisode
+    - UpdateEpisodeSubtitles
     - Wishlist
     - AddTorrent
   token:
