@@ -51,6 +51,12 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 			handler: s.deleteMovie,
 		},
 		{
+			name:    "UpdateMovieSubtitles",
+			path:    "/movies/{id}/subtitles",
+			methods: "POST",
+			handler: s.updateMovieSubtitles,
+		},
+		{
 			name:     "DownloadMovie",
 			path:     "/movies/{id}/download",
 			methods:  "GET",
