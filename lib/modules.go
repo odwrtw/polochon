@@ -1,6 +1,9 @@
 package polochon
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 // Registerd modules
 var registeredModules *modules
@@ -21,9 +24,8 @@ func init() {
 
 // Modules error
 var (
-	ErrNoModuleFound  = errors.New("modules: no module found")
-	ErrModuleNotFound = errors.New("modules: module not found")
-	ErrNotAvailable   = errors.New("modules: function not available")
+	ErrNoModuleFound = errors.New("modules: no module found")
+	ErrNotAvailable  = errors.New("modules: function not available")
 )
 
 // ModuleType holds modules type
@@ -64,7 +66,7 @@ type modules struct {
 func ConfigureDetailer(name string, params []byte) (Detailer, error) {
 	f, ok := registeredModules.Detailers[name]
 	if !ok {
-		return nil, ErrModuleNotFound
+		return nil, fmt.Errorf("modules: module '%s' not found", name)
 	}
 
 	// Configure the module
@@ -80,7 +82,7 @@ func ConfigureDetailer(name string, params []byte) (Detailer, error) {
 func ConfigureSubtitler(name string, params []byte) (Subtitler, error) {
 	f, ok := registeredModules.Subtitlers[name]
 	if !ok {
-		return nil, ErrModuleNotFound
+		return nil, fmt.Errorf("modules: module '%s' not found", name)
 	}
 
 	// Configure the module
@@ -96,7 +98,7 @@ func ConfigureSubtitler(name string, params []byte) (Subtitler, error) {
 func ConfigureWishlister(name string, params []byte) (Wishlister, error) {
 	f, ok := registeredModules.Wishlisters[name]
 	if !ok {
-		return nil, ErrModuleNotFound
+		return nil, fmt.Errorf("modules: module '%s' not found", name)
 	}
 
 	// Configure the module
@@ -112,7 +114,7 @@ func ConfigureWishlister(name string, params []byte) (Wishlister, error) {
 func ConfigureTorrenter(name string, params []byte) (Torrenter, error) {
 	f, ok := registeredModules.Torrenters[name]
 	if !ok {
-		return nil, ErrModuleNotFound
+		return nil, fmt.Errorf("modules: module '%s' not found", name)
 	}
 
 	// Configure the module
@@ -128,7 +130,7 @@ func ConfigureTorrenter(name string, params []byte) (Torrenter, error) {
 func ConfigureGuesser(name string, params []byte) (Guesser, error) {
 	f, ok := registeredModules.Guessers[name]
 	if !ok {
-		return nil, ErrModuleNotFound
+		return nil, fmt.Errorf("modules: module '%s' not found", name)
 	}
 
 	// Configure the module
@@ -144,7 +146,7 @@ func ConfigureGuesser(name string, params []byte) (Guesser, error) {
 func ConfigureFsNotifier(name string, params []byte) (FsNotifier, error) {
 	f, ok := registeredModules.FsNotifiers[name]
 	if !ok {
-		return nil, ErrModuleNotFound
+		return nil, fmt.Errorf("modules: module '%s' not found", name)
 	}
 
 	// Configure the module
@@ -160,7 +162,7 @@ func ConfigureFsNotifier(name string, params []byte) (FsNotifier, error) {
 func ConfigureNotifier(name string, params []byte) (Notifier, error) {
 	f, ok := registeredModules.Notifiers[name]
 	if !ok {
-		return nil, ErrModuleNotFound
+		return nil, fmt.Errorf("modules: module '%s' not found", name)
 	}
 
 	// Configure the module
@@ -176,7 +178,7 @@ func ConfigureNotifier(name string, params []byte) (Notifier, error) {
 func ConfigureDownloader(name string, params []byte) (Downloader, error) {
 	f, ok := registeredModules.Downloaders[name]
 	if !ok {
-		return nil, ErrModuleNotFound
+		return nil, fmt.Errorf("modules: module '%s' not found", name)
 	}
 
 	// Configure the module
@@ -192,7 +194,7 @@ func ConfigureDownloader(name string, params []byte) (Downloader, error) {
 func ConfigureCalendar(name string, params []byte) (Calendar, error) {
 	f, ok := registeredModules.Calendars[name]
 	if !ok {
-		return nil, ErrModuleNotFound
+		return nil, fmt.Errorf("modules: module '%s' not found", name)
 	}
 
 	// Configure the module
