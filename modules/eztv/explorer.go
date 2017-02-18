@@ -9,22 +9,22 @@ import (
 )
 
 // AvailableMovieOptions implements the Explorer interface
-func (e *Eztv) AvailableMovieOptions() []polochon.ExplorerOption {
-	return []polochon.ExplorerOption{}
+func (e *Eztv) AvailableMovieOptions() []string {
+	return []string{}
 }
 
 // AvailableShowOptions implements the Explorer interface
-func (e *Eztv) AvailableShowOptions() []polochon.ExplorerOption {
-	return []polochon.ExplorerOption{}
+func (e *Eztv) AvailableShowOptions() []string {
+	return []string{"rating"}
 }
 
 // GetMovieList implements the Explorer interface
-func (e *Eztv) GetMovieList(polochon.ExplorerOption, *logrus.Entry) ([]*polochon.Movie, error) {
+func (e *Eztv) GetMovieList(string, *logrus.Entry) ([]*polochon.Movie, error) {
 	return nil, polochon.ErrNotAvailable
 }
 
 // GetShowList implements the Explorer interface
-func (e *Eztv) GetShowList(polochon.ExplorerOption, *logrus.Entry) ([]*polochon.Show, error) {
+func (e *Eztv) GetShowList(string, *logrus.Entry) ([]*polochon.Show, error) {
 	// Get the page of the shows
 	showList, err := eztv.ListShows(1)
 	if err != nil {

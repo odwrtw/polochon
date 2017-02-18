@@ -7,7 +7,7 @@ import (
 )
 
 // GetMovieList implements the explorer interface
-func (trakt *TraktTV) GetMovieList(option polochon.ExplorerOption, log *logrus.Entry) ([]*polochon.Movie, error) {
+func (trakt *TraktTV) GetMovieList(option string, log *logrus.Entry) ([]*polochon.Movie, error) {
 	queryOption := trakttv.QueryOption{
 		ExtendedInfos: []trakttv.ExtendedInfo{
 			trakttv.ExtendedInfoMin,
@@ -39,24 +39,19 @@ func (trakt *TraktTV) GetMovieList(option polochon.ExplorerOption, log *logrus.E
 
 // GetShowList implements the Explorer interface
 // Not implemented
-func (trakt *TraktTV) GetShowList(option polochon.ExplorerOption, log *logrus.Entry) ([]*polochon.Show, error) {
+func (trakt *TraktTV) GetShowList(option string, log *logrus.Entry) ([]*polochon.Show, error) {
 	return nil, polochon.ErrNotAvailable
 }
 
 // AvailableMovieOptions implements the Explorer interface
-func (trakt *TraktTV) AvailableMovieOptions() []polochon.ExplorerOption {
-	return []polochon.ExplorerOption{
-		polochon.ExploreByTitle,
-		polochon.ExploreByYear,
-		polochon.ExploreByRate,
-		polochon.ExploreByDownloadCount,
-		polochon.ExploreByLikeCount,
-		polochon.ExploreByDateAdded,
+func (trakt *TraktTV) AvailableMovieOptions() []string {
+	return []string{
+		"popular",
 	}
 }
 
 // AvailableShowOptions implements the Explorer interface
 // Not implemented
-func (trakt *TraktTV) AvailableShowOptions() []polochon.ExplorerOption {
-	return []polochon.ExplorerOption{}
+func (trakt *TraktTV) AvailableShowOptions() []string {
+	return []string{}
 }
