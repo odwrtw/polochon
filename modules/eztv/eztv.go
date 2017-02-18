@@ -12,7 +12,7 @@ import (
 var (
 	ErrInvalidArgument    = errors.New("eztv: invalid argument")
 	ErrMissingShowImdbID  = errors.New("eztv: missing show imdb id")
-	ErrInvalidShowEpisode = errors.New("eztv: missing show episode or season")
+	ErrInvalidShowEpisode = errors.New("eztv: missing show episode number")
 )
 
 // Module constants
@@ -54,7 +54,7 @@ func (e *Eztv) getShowEpisodeDetails(s *polochon.ShowEpisode) error {
 		return ErrMissingShowImdbID
 	}
 
-	if s.Season == 0 || s.Episode == 0 {
+	if s.Episode == 0 {
 		return ErrInvalidShowEpisode
 	}
 
