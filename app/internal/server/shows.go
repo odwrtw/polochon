@@ -7,21 +7,25 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/odwrtw/polochon/lib"
-	"github.com/odwrtw/polochon/lib/media_index"
+	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
-// Show represents the show output of the server
-type Show struct {
-	*polochon.Show
-	Seasons []int `json:"seasons"`
-}
+// Format seasons to get a pretty marshal
+func formatSeasons(s index.IndexedShow) map[string][]string {
+	ret := map[string][]string{}
+	for seasonNum, season := range s.Seasons {
+		s := fmt.Sprintf("%02d", seasonNum)
+		for episode := range season.Episodes {
+			e := fmt.Sprintf("%02d", episode)
 
-// NewShow returns a new show to be JSON formated
-func NewShow(show *polochon.Show, indexed index.IndexedShow) *Show {
-	return &Show{
-		Show:    show,
-		Seasons: indexed.SeasonList(),
+			if _, ok := ret[s]; !ok {
+				ret[s] = []string{}
+			}
+
+			ret[s] = append(ret[s], e)
+		}
 	}
+	return ret
 }
 
 func (s *Server) showIds(w http.ResponseWriter, req *http.Request) {
@@ -29,19 +33,7 @@ func (s *Server) showIds(w http.ResponseWriter, req *http.Request) {
 
 	ret := map[string]map[string][]string{}
 	for id, show := range s.library.ShowIDs() {
-		ret[id] = map[string][]string{}
-		for seasonNum, season := range show.Seasons {
-			s := fmt.Sprintf("%02d", seasonNum)
-			for episode := range season.Episodes {
-				e := fmt.Sprintf("%02d", episode)
-
-				if _, ok := ret[id][s]; !ok {
-					ret[id][s] = []string{}
-				}
-
-				ret[id][s] = append(ret[id][s], e)
-			}
-		}
+		ret[id] = formatSeasons(show)
 	}
 
 	s.renderOK(w, ret)
@@ -88,7 +80,15 @@ func (s *Server) getShowDetails(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	s.renderOK(w, NewShow(show, indexedShow))
+	out := struct {
+		*polochon.Show
+		Seasons map[string][]string `json:"seasons"`
+	}{
+		show,
+		formatSeasons(indexedShow),
+	}
+
+	s.renderOK(w, out)
 }
 
 func (s *Server) getShowEpisodeIDDetails(w http.ResponseWriter, req *http.Request) {
