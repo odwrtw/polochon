@@ -7,7 +7,6 @@ import (
 	_ "github.com/odwrtw/polochon/modules/eztv"
 	_ "github.com/odwrtw/polochon/modules/fsnotify"
 	_ "github.com/odwrtw/polochon/modules/imdb"
-	_ "github.com/odwrtw/polochon/modules/kickass"
 	_ "github.com/odwrtw/polochon/modules/mock"
 	_ "github.com/odwrtw/polochon/modules/openguessit"
 	_ "github.com/odwrtw/polochon/modules/opensubtitles"

@@ -164,6 +164,10 @@ func (o *Organizer) organizeFile(filePath string, log *logrus.Entry) error {
 		errors.LogErrors(log, err)
 		return file.Ignore()
 	}
+	if video == nil {
+		errors.LogErrors(log, errors.New("invalid guess"))
+		return file.Ignore()
+	}
 
 	// Get video details
 	if err := video.GetDetails(log); err != nil {
