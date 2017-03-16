@@ -16,6 +16,7 @@ import (
 
 // ConfigFileRoot represents polochon's config file
 type ConfigFileRoot struct {
+	Logs          ConfigFileLogs           `yaml:"logs"`
 	Watcher       ConfigFileWatcher        `yaml:"watcher"`
 	Downloader    ConfigFileDownloader     `yaml:"downloader"`
 	HTTPServer    ConfigFileHTTPServer     `yaml:"http_server"`
@@ -56,6 +57,12 @@ type ConfigFileVideo struct {
 	ExcludeFileContaining     []string `yaml:"exclude_file_containing"`
 	VideoExtentions           []string `yaml:"allowed_file_extensions"`
 	AllowedExtentionsToDelete []string `yaml:"allowed_file_extensions_to_delete"`
+}
+
+// ConfigFileLogs represents the configuration for the logs of the app
+type ConfigFileLogs struct {
+	Level string `yaml:"level"`
+	File  string `yaml:"file"`
 }
 
 // ConfigFileWatcher represents the configuration for the file watcher in the configuration file
@@ -118,6 +125,7 @@ type ConfigFileHTTPServer struct {
 
 // Config represents the configuration for polochon
 type Config struct {
+	Logger        *logrus.Logger
 	Watcher       WatcherConfig
 	Downloader    DownloaderConfig
 	HTTPServer    HTTPServerConfig
@@ -181,8 +189,16 @@ func readConfig(r io.Reader) (*ConfigFileRoot, error) {
 	return cf, nil
 }
 
-func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
+func loadConfig(cf *ConfigFileRoot) (*Config, error) {
 	conf := &Config{}
+
+	// Setup the logger
+	logger, err := cf.loadLogger()
+	if err != nil {
+		return nil, err
+	}
+	conf.Logger = logger
+	log := logrus.NewEntry(logger)
 
 	conf.Watcher = WatcherConfig{
 		Dir: cf.Watcher.Dir,
@@ -267,6 +283,36 @@ func loadConfig(cf *ConfigFileRoot, log *logrus.Entry) (*Config, error) {
 	}
 
 	return conf, nil
+}
+
+func (c *ConfigFileRoot) loadLogger() (*logrus.Logger, error) {
+	// Create a new logger
+	logger := logrus.New()
+	logger.Formatter = &logrus.TextFormatter{
+		FullTimestamp: true,
+	}
+
+	// Get the log level
+	logLevel, err := logrus.ParseLevel(c.Logs.Level)
+	if err != nil {
+		return nil, err
+	}
+	logger.Level = logLevel
+
+	// Setup the output file
+	var logOut io.Writer
+	if c.Logs.File == "" {
+		logOut = os.Stderr
+	} else {
+		var err error
+		logOut, err = os.OpenFile(c.Logs.File, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0640)
+		if err != nil {
+			return nil, err
+		}
+	}
+	logger.Out = logOut
+
+	return logger, nil
 }
 
 func (c *ConfigFileRoot) loadWatcher(log *logrus.Entry) (polochon.FsNotifier, error) {
@@ -531,7 +577,7 @@ func (c *ConfigFileRoot) initMovie(log *logrus.Entry) (*polochon.MovieConfig, er
 }
 
 // LoadConfigFile reads a file from a path and returns a config
-func LoadConfigFile(path string, log *logrus.Entry) (*Config, error) {
+func LoadConfigFile(path string) (*Config, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -541,5 +587,5 @@ func LoadConfigFile(path string, log *logrus.Entry) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	return loadConfig(cf, log)
+	return loadConfig(cf)
 }
