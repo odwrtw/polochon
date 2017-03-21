@@ -12,58 +12,34 @@ func NewExplorer() (polochon.Explorer, error) {
 }
 
 // AvailableShowOptions implements the the explorer interface
-func (y *Yts) AvailableShowOptions() []polochon.ExplorerOption {
-	return []polochon.ExplorerOption{}
+func (y *Yts) AvailableShowOptions() []string {
+	return []string{}
 }
 
 // GetShowList implements the explorer interface
-func (y *Yts) GetShowList(option polochon.ExplorerOption, log *logrus.Entry) ([]*polochon.Show, error) {
+func (y *Yts) GetShowList(option string, log *logrus.Entry) ([]*polochon.Show, error) {
 	return nil, polochon.ErrNotAvailable
 }
 
 // AvailableMovieOptions implements the the explorer interface
-func (y *Yts) AvailableMovieOptions() []polochon.ExplorerOption {
-	return []polochon.ExplorerOption{
-		polochon.ExploreBySeeds,
-		polochon.ExploreByPeers,
-		polochon.ExploreByTitle,
-		polochon.ExploreByYear,
-		polochon.ExploreByRate,
-		polochon.ExploreByDownloadCount,
-		polochon.ExploreByLikeCount,
-		polochon.ExploreByDateAdded,
+func (y *Yts) AvailableMovieOptions() []string {
+	return []string{
+		yts.SortBySeeds,
+		yts.SortByPeers,
+		yts.SortByTitle,
+		yts.SortByYear,
+		yts.SortByRating,
+		yts.SortByDownload,
+		yts.SortByLike,
+		yts.SortByDateAdded,
 	}
-}
-
-func translateMovieOptions(expOption polochon.ExplorerOption) (string, error) {
-	translationMap := map[polochon.ExplorerOption]string{
-		polochon.ExploreBySeeds:         yts.SortBySeeds,
-		polochon.ExploreByPeers:         yts.SortByPeers,
-		polochon.ExploreByTitle:         yts.SortByTitle,
-		polochon.ExploreByYear:          yts.SortByYear,
-		polochon.ExploreByRate:          yts.SortByRating,
-		polochon.ExploreByDownloadCount: yts.SortByDownload,
-		polochon.ExploreByLikeCount:     yts.SortByLike,
-		polochon.ExploreByDateAdded:     yts.SortByDateAdded,
-	}
-	option, ok := translationMap[expOption]
-	if !ok {
-		return "", polochon.ErrNotAvailable
-	}
-
-	return option, nil
 }
 
 // GetMovieList implements the explorer interface
-func (y *Yts) GetMovieList(option polochon.ExplorerOption, log *logrus.Entry) ([]*polochon.Movie, error) {
+func (y *Yts) GetMovieList(option string, log *logrus.Entry) ([]*polochon.Movie, error) {
 	log = log.WithField("explore_category", "movies")
 
-	opt, err := translateMovieOptions(option)
-	if err != nil {
-		return nil, err
-	}
-
-	movieList, err := yts.GetList(1, 6, opt, yts.OrderDesc)
+	movieList, err := yts.GetList(1, 6, option, yts.OrderDesc)
 	if err != nil {
 		return nil, err
 	}
