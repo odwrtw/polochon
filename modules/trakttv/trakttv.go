@@ -65,11 +65,21 @@ func (trakt *TraktTV) Name() string {
 
 // GetDetails gets details for the polochon video object
 func (trakt *TraktTV) GetDetails(i interface{}, log *logrus.Entry) error {
-	movie, ok := i.(*polochon.Movie)
-	if !ok {
+	var err error
+	switch v := i.(type) {
+	case *polochon.Show:
+		err = trakt.getShowDetails(v, log)
+	case *polochon.Movie:
+		err = trakt.getMovieDetails(v, log)
+	default:
 		return ErrInvalidArgument
 	}
 
+	return err
+}
+
+// getMovieDetails gets details for the polochon movie object
+func (trakt *TraktTV) getMovieDetails(movie *polochon.Movie, log *logrus.Entry) error {
 	tmovie, err := trakt.client.SearchMovieByID(movie.ImdbID, trakttv.QueryOption{
 		ExtendedInfos: []trakttv.ExtendedInfo{
 			trakttv.ExtendedInfoFull,
@@ -93,6 +103,29 @@ func (trakt *TraktTV) GetDetails(i interface{}, log *logrus.Entry) error {
 	movie.Thumb = tmovie.Images.Poster.Full
 	movie.Fanart = tmovie.Images.Fanart.Full
 	movie.Genres = tmovie.Genres
+
+	return nil
+}
+
+// getShowDetails gets details for the polochon show object
+func (trakt *TraktTV) getShowDetails(show *polochon.Show, log *logrus.Entry) error {
+	tshow, err := trakt.client.SearchShowByID(show.ImdbID, trakttv.QueryOption{
+		ExtendedInfos: []trakttv.ExtendedInfo{
+			trakttv.ExtendedInfoFull,
+			trakttv.ExtendedInfoImages,
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	// Update show details
+	show.TvdbID = tshow.IDs.TvDB
+	show.Title = tshow.Title
+	show.Year = tshow.Year
+	show.Plot = tshow.Overview
+	show.FirstAired = &tshow.FirstAired
+	show.Rating = float32(tshow.Rating)
 
 	return nil
 }
