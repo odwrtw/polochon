@@ -14,7 +14,7 @@ func (trakt *TraktTV) GetMovieList(option string, log *logrus.Entry) ([]*polocho
 		},
 		Pagination: trakttv.Pagination{
 			Page:  1,
-			Limit: 20,
+			Limit: 40,
 		},
 	}
 	// TODO: Implement better explore options
