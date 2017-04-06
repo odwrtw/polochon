@@ -7,7 +7,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/meatballhat/negroni-logrus"
-	"github.com/odwrtw/polochon/app/internal/token"
+	"github.com/odwrtw/polochon/app/token"
 	"github.com/phyber/negroni-gzip/gzip"
 	"github.com/urfave/negroni"
 )

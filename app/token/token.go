@@ -1,11 +1,5 @@
 package token
 
-// func randToken() string {
-// 	b := make([]byte, 8)
-// 	rand.Read(b)
-// 	return fmt.Sprintf("%x", b)
-// }
-
 // Manager stores, and checks token
 type Manager struct {
 	Tokens      []*Token
