@@ -19,6 +19,8 @@ func init() {
 		Wishlisters: make(map[string]func(params []byte) (Wishlister, error)),
 		Downloaders: make(map[string]func(params []byte) (Downloader, error)),
 		Calendars:   make(map[string]func(params []byte) (Calendar, error)),
+		Searchers:   make(map[string]func(params []byte) (Searcher, error)),
+		Explorers:   make(map[string]func(params []byte) (Explorer, error)),
 	}
 }
 
@@ -47,6 +49,8 @@ const (
 	TypeWishlister            = "wishlister"
 	TypeDownloader            = "downloader"
 	TypeCalendar              = "calendar"
+	TypeExplorer              = "explorer"
+	TypeSearcher              = "searcher"
 )
 
 // modules holds the modules registered during the init process
@@ -60,13 +64,15 @@ type modules struct {
 	Wishlisters map[string]func(params []byte) (Wishlister, error)
 	Downloaders map[string]func(params []byte) (Downloader, error)
 	Calendars   map[string]func(params []byte) (Calendar, error)
+	Searchers   map[string]func(params []byte) (Searcher, error)
+	Explorers   map[string]func(params []byte) (Explorer, error)
 }
 
 // ConfigureDetailer configures a detailer
 func ConfigureDetailer(name string, params []byte) (Detailer, error) {
 	f, ok := registeredModules.Detailers[name]
 	if !ok {
-		return nil, fmt.Errorf("modules: module '%s' not found", name)
+		return nil, fmt.Errorf("modules: detailer module '%s' not found", name)
 	}
 
 	// Configure the module
@@ -82,7 +88,7 @@ func ConfigureDetailer(name string, params []byte) (Detailer, error) {
 func ConfigureSubtitler(name string, params []byte) (Subtitler, error) {
 	f, ok := registeredModules.Subtitlers[name]
 	if !ok {
-		return nil, fmt.Errorf("modules: module '%s' not found", name)
+		return nil, fmt.Errorf("modules: subtitler module '%s' not found", name)
 	}
 
 	// Configure the module
@@ -98,7 +104,7 @@ func ConfigureSubtitler(name string, params []byte) (Subtitler, error) {
 func ConfigureWishlister(name string, params []byte) (Wishlister, error) {
 	f, ok := registeredModules.Wishlisters[name]
 	if !ok {
-		return nil, fmt.Errorf("modules: module '%s' not found", name)
+		return nil, fmt.Errorf("modules: wishilsit module '%s' not found", name)
 	}
 
 	// Configure the module
@@ -114,7 +120,7 @@ func ConfigureWishlister(name string, params []byte) (Wishlister, error) {
 func ConfigureTorrenter(name string, params []byte) (Torrenter, error) {
 	f, ok := registeredModules.Torrenters[name]
 	if !ok {
-		return nil, fmt.Errorf("modules: module '%s' not found", name)
+		return nil, fmt.Errorf("modules: torrenter module '%s' not found", name)
 	}
 
 	// Configure the module
@@ -130,7 +136,7 @@ func ConfigureTorrenter(name string, params []byte) (Torrenter, error) {
 func ConfigureGuesser(name string, params []byte) (Guesser, error) {
 	f, ok := registeredModules.Guessers[name]
 	if !ok {
-		return nil, fmt.Errorf("modules: module '%s' not found", name)
+		return nil, fmt.Errorf("modules: guesser module '%s' not found", name)
 	}
 
 	// Configure the module
@@ -146,7 +152,7 @@ func ConfigureGuesser(name string, params []byte) (Guesser, error) {
 func ConfigureFsNotifier(name string, params []byte) (FsNotifier, error) {
 	f, ok := registeredModules.FsNotifiers[name]
 	if !ok {
-		return nil, fmt.Errorf("modules: module '%s' not found", name)
+		return nil, fmt.Errorf("modules: fsnotifier module '%s' not found", name)
 	}
 
 	// Configure the module
@@ -162,7 +168,7 @@ func ConfigureFsNotifier(name string, params []byte) (FsNotifier, error) {
 func ConfigureNotifier(name string, params []byte) (Notifier, error) {
 	f, ok := registeredModules.Notifiers[name]
 	if !ok {
-		return nil, fmt.Errorf("modules: module '%s' not found", name)
+		return nil, fmt.Errorf("modules: notifier module '%s' not found", name)
 	}
 
 	// Configure the module
@@ -178,7 +184,7 @@ func ConfigureNotifier(name string, params []byte) (Notifier, error) {
 func ConfigureDownloader(name string, params []byte) (Downloader, error) {
 	f, ok := registeredModules.Downloaders[name]
 	if !ok {
-		return nil, fmt.Errorf("modules: module '%s' not found", name)
+		return nil, fmt.Errorf("modules: downloader module '%s' not found", name)
 	}
 
 	// Configure the module
@@ -194,7 +200,39 @@ func ConfigureDownloader(name string, params []byte) (Downloader, error) {
 func ConfigureCalendar(name string, params []byte) (Calendar, error) {
 	f, ok := registeredModules.Calendars[name]
 	if !ok {
-		return nil, fmt.Errorf("modules: module '%s' not found", name)
+		return nil, fmt.Errorf("modules: calendar module '%s' not found", name)
+	}
+
+	// Configure the module
+	module, err := f(params)
+	if err != nil {
+		return nil, err
+	}
+
+	return module, nil
+}
+
+// ConfigureExplorer configures an explorer
+func ConfigureExplorer(name string, params []byte) (Explorer, error) {
+	f, ok := registeredModules.Explorers[name]
+	if !ok {
+		return nil, fmt.Errorf("modules: explorer module '%s' not found", name)
+	}
+
+	// Configure the module
+	module, err := f(params)
+	if err != nil {
+		return nil, err
+	}
+
+	return module, nil
+}
+
+// ConfigureSearcher configures a searcher
+func ConfigureSearcher(name string, params []byte) (Searcher, error) {
+	f, ok := registeredModules.Searchers[name]
+	if !ok {
+		return nil, fmt.Errorf("modules: searcher module '%s' not found", name)
 	}
 
 	// Configure the module

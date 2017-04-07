@@ -9,7 +9,7 @@ import (
 )
 
 // NewSearcher returns a new searcher
-func NewSearcher() (polochon.Searcher, error) {
+func NewSearcher(p []byte) (polochon.Searcher, error) {
 	return &Yts{}, nil
 }
 

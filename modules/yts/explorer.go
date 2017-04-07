@@ -7,7 +7,7 @@ import (
 )
 
 // NewExplorer returns a new explorer
-func NewExplorer() (polochon.Explorer, error) {
+func NewExplorer(p []byte) (polochon.Explorer, error) {
 	return &Yts{}, nil
 }
 

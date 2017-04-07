@@ -37,7 +37,7 @@ type DownloadableInfos struct {
 // RegisterDownloader helps register a new Downloader
 func RegisterDownloader(name string, f func(params []byte) (Downloader, error)) {
 	if _, ok := registeredModules.Downloaders[name]; ok {
-		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeDetailer))
+		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeDownloader))
 	}
 
 	// Register the module

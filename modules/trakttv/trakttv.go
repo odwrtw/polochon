@@ -21,7 +21,7 @@ var (
 
 // Register trakttv as a Detailer
 func init() {
-	polochon.RegisterDetailer(moduleName, NewFromRawYaml)
+	polochon.RegisterDetailer(moduleName, NewDetailer)
 }
 
 // Params represents the module params
@@ -34,8 +34,13 @@ type TraktTV struct {
 	client *trakttv.TraktTv
 }
 
+// NewDetailer creates a new TraktTV Detailer
+func NewDetailer(p []byte) (polochon.Detailer, error) {
+	return NewFromRawYaml(p)
+}
+
 // NewFromRawYaml creates a new TraktTV from YML config
-func NewFromRawYaml(p []byte) (polochon.Detailer, error) {
+func NewFromRawYaml(p []byte) (*TraktTV, error) {
 	params := &Params{}
 	if err := yaml.Unmarshal(p, params); err != nil {
 		return nil, err
@@ -46,13 +51,6 @@ func NewFromRawYaml(p []byte) (polochon.Detailer, error) {
 
 // New returns a new TraktTV
 func New(p *Params) (*TraktTV, error) {
-	return &TraktTV{
-		client: trakttv.New(p.ClientID),
-	}, nil
-}
-
-// NewExplorer returns a new explorer
-func NewExplorer(p *Params) (polochon.Explorer, error) {
 	return &TraktTV{
 		client: trakttv.New(p.ClientID),
 	}, nil

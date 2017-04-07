@@ -8,6 +8,16 @@ import (
 	polochon "github.com/odwrtw/polochon/lib"
 )
 
+// Register eztv as an Explorer
+func init() {
+	polochon.RegisterExplorer(moduleName, NewExplorer)
+}
+
+// NewExplorer is an helper to return a new Explorer
+func NewExplorer(p []byte) (polochon.Explorer, error) {
+	return New()
+}
+
 // AvailableMovieOptions implements the Explorer interface
 func (e *Eztv) AvailableMovieOptions() []string {
 	return []string{}

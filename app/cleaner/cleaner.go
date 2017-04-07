@@ -10,9 +10,9 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/errors"
-	"github.com/odwrtw/polochon/app/internal/configuration"
-	"github.com/odwrtw/polochon/app/internal/subapp"
+	"github.com/odwrtw/polochon/app/subapp"
 	"github.com/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib/configuration"
 )
 
 // AppName is the application name

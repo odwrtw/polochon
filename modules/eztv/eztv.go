@@ -29,12 +29,7 @@ func init() {
 type Eztv struct{}
 
 // New is an helper to avoid passing bytes
-func New() (polochon.Torrenter, error) {
-	return &Eztv{}, nil
-}
-
-// NewExplorer is an helper to avoid passing bytes
-func NewExplorer() (polochon.Explorer, error) {
+func New() (*Eztv, error) {
 	return &Eztv{}, nil
 }
 
