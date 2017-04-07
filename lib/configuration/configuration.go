@@ -84,6 +84,8 @@ type ConfigFileMovie struct {
 	TorrenterNames []string `yaml:"torrenters"`
 	DetailerNames  []string `yaml:"detailers"`
 	SubtitlerNames []string `yaml:"subtitlers"`
+	SearcherNames  []string `yaml:"searchers"`
+	ExplorerNames  []string `yaml:"explorers"`
 }
 
 // ConfigFileShow represents the configuration for file in the configuration file
@@ -92,6 +94,8 @@ type ConfigFileShow struct {
 	TorrenterNames []string `yaml:"torrenters"`
 	DetailerNames  []string `yaml:"detailers"`
 	SubtitlerNames []string `yaml:"subtitlers"`
+	SearcherNames  []string `yaml:"searchers"`
+	ExplorerNames  []string `yaml:"explorers"`
 	CalendarName   string   `yaml:"calendar"`
 }
 
@@ -241,14 +245,14 @@ func loadConfig(cf *ConfigFileRoot) (*Config, error) {
 	}
 	conf.Wishlist = *wishlistConf
 
-	showConf, err := cf.initShow(log)
+	showConf, err := cf.InitShow(log)
 	if err != nil {
 		return nil, err
 	}
 
 	conf.Show = *showConf
 
-	movieConf, err := cf.initMovie(log)
+	movieConf, err := cf.InitMovie(log)
 	if err != nil {
 		return nil, err
 	}
@@ -450,7 +454,8 @@ func (c *ConfigFileRoot) initNotifiers() ([]polochon.Notifier, error) {
 	return notifiers, nil
 }
 
-func (c *ConfigFileRoot) initShow(log *logrus.Entry) (*polochon.ShowConfig, error) {
+// InitShow inits the show's config
+func (c *ConfigFileRoot) InitShow(log *logrus.Entry) (*polochon.ShowConfig, error) {
 	// Get show detailer
 	if len(c.Show.DetailerNames) == 0 {
 		return nil, fmt.Errorf("config: missing show detailer names")
@@ -501,6 +506,32 @@ func (c *ConfigFileRoot) initShow(log *logrus.Entry) (*polochon.ShowConfig, erro
 		showConf.Subtitlers = append(showConf.Subtitlers, subtitler)
 	}
 
+	for _, explorerName := range c.Show.ExplorerNames {
+		moduleParams, err := c.moduleParams(explorerName)
+		if err != nil {
+			return nil, err
+		}
+
+		explorer, err := polochon.ConfigureExplorer(explorerName, moduleParams)
+		if err != nil {
+			return nil, err
+		}
+		showConf.Explorers = append(showConf.Explorers, explorer)
+	}
+
+	for _, searcherName := range c.Show.SearcherNames {
+		moduleParams, err := c.moduleParams(searcherName)
+		if err != nil {
+			return nil, err
+		}
+
+		searcher, err := polochon.ConfigureSearcher(searcherName, moduleParams)
+		if err != nil {
+			return nil, err
+		}
+		showConf.Searchers = append(showConf.Searchers, searcher)
+	}
+
 	// Init the show calendar fetcher
 	if c.Show.CalendarName != "" {
 		moduleParams, err := c.moduleParams(c.Show.CalendarName)
@@ -520,7 +551,8 @@ func (c *ConfigFileRoot) initShow(log *logrus.Entry) (*polochon.ShowConfig, erro
 	return showConf, nil
 }
 
-func (c *ConfigFileRoot) initMovie(log *logrus.Entry) (*polochon.MovieConfig, error) {
+// InitMovie inits the movie's config
+func (c *ConfigFileRoot) InitMovie(log *logrus.Entry) (*polochon.MovieConfig, error) {
 	// Get movie detailer
 	if len(c.Movie.DetailerNames) == 0 {
 		return nil, fmt.Errorf("config: missing movie detailer names")
@@ -571,6 +603,32 @@ func (c *ConfigFileRoot) initMovie(log *logrus.Entry) (*polochon.MovieConfig, er
 		}
 
 		movieConf.Subtitlers = append(movieConf.Subtitlers, subtitler)
+	}
+
+	for _, explorerName := range c.Movie.ExplorerNames {
+		moduleParams, err := c.moduleParams(explorerName)
+		if err != nil {
+			return nil, err
+		}
+
+		explorer, err := polochon.ConfigureExplorer(explorerName, moduleParams)
+		if err != nil {
+			return nil, err
+		}
+		movieConf.Explorers = append(movieConf.Explorers, explorer)
+	}
+
+	for _, searcherName := range c.Movie.SearcherNames {
+		moduleParams, err := c.moduleParams(searcherName)
+		if err != nil {
+			return nil, err
+		}
+
+		searcher, err := polochon.ConfigureSearcher(searcherName, moduleParams)
+		if err != nil {
+			return nil, err
+		}
+		movieConf.Searchers = append(movieConf.Searchers, searcher)
 	}
 
 	return movieConf, nil

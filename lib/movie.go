@@ -13,6 +13,8 @@ type MovieConfig struct {
 	Torrenters []Torrenter
 	Detailers  []Detailer
 	Subtitlers []Subtitler
+	Explorers  []Explorer
+	Searchers  []Searcher
 }
 
 // Movie represents a movie

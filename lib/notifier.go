@@ -15,7 +15,7 @@ type Notifier interface {
 // RegisterNotifier helps register a new notifier
 func RegisterNotifier(name string, f func(params []byte) (Notifier, error)) {
 	if _, ok := registeredModules.Notifiers[name]; ok {
-		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeDetailer))
+		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeNotifier))
 	}
 
 	// Register the module

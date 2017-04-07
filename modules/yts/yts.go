@@ -18,9 +18,13 @@ const (
 	moduleName = "yts"
 )
 
-// Register yts as a Torrenter
 func init() {
+	// Register yts as a Torrenter
 	polochon.RegisterTorrenter(moduleName, NewFromRawYaml)
+	// Register yts as an Explorer
+	polochon.RegisterExplorer(moduleName, NewExplorer)
+	// Register yts as a Searcher
+	polochon.RegisterSearcher(moduleName, NewSearcher)
 }
 
 // Yts is a source for movie torrents
@@ -33,7 +37,8 @@ func NewFromRawYaml(p []byte) (polochon.Torrenter, error) {
 }
 
 // New returns a new Yts
-func New() (polochon.Torrenter, error) {
+// func New() (polochon.Torrenter, error) {
+func New() (*Yts, error) {
 	return &Yts{}, nil
 }
 

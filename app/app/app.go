@@ -9,13 +9,13 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/errors"
 	"github.com/odwrtw/polochon/app/cleaner"
-	"github.com/odwrtw/polochon/app/configuration"
 	"github.com/odwrtw/polochon/app/downloader"
 	"github.com/odwrtw/polochon/app/organizer"
 	"github.com/odwrtw/polochon/app/safeguard"
 	"github.com/odwrtw/polochon/app/server"
 	"github.com/odwrtw/polochon/app/subapp"
 	"github.com/odwrtw/polochon/app/token"
+	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/library"
 )
 

@@ -14,6 +14,8 @@ type ShowConfig struct {
 	Detailers  []Detailer
 	Subtitlers []Subtitler
 	Torrenters []Torrenter
+	Explorers  []Explorer
+	Searchers  []Searcher
 }
 
 // ShowEpisode represents a tvshow episode
