@@ -99,6 +99,7 @@ func (trakt *TraktTV) getMovieDetails(movie *polochon.Movie, log *logrus.Entry) 
 	movie.Tagline = tmovie.Tagline
 	movie.Votes = tmovie.Votes
 	movie.Rating = float32(tmovie.Rating)
+	movie.Runtime = tmovie.Runtime
 	movie.Year = tmovie.Year
 	movie.Genres = tmovie.Genres
 
