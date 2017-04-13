@@ -20,7 +20,7 @@ const (
 
 // Register tvdb as a Detailer
 func init() {
-	polochon.RegisterDetailer(moduleName, NewFromRawYaml)
+	polochon.RegisterDetailer(moduleName, NewDetailer)
 }
 
 // API constants
@@ -49,7 +49,7 @@ type Params struct {
 }
 
 // New is an helper to avoid passing bytes
-func New(p *Params) (polochon.Detailer, error) {
+func New(p *Params) (*TmDB, error) {
 	if p.ApiKey == "" {
 		return nil, ErrMissingArgument
 	}
@@ -59,9 +59,14 @@ func New(p *Params) (polochon.Detailer, error) {
 	}, nil
 }
 
+// NewDetailer creates a new polochon Detailer
+func NewDetailer(p []byte) (polochon.Detailer, error) {
+	return NewFromRawYaml(p)
+}
+
 // NewFromRawYaml unmarshals the bytes as yaml as params and call the New
 // function
-func NewFromRawYaml(p []byte) (polochon.Detailer, error) {
+func NewFromRawYaml(p []byte) (*TmDB, error) {
 	params := &Params{}
 	if err := yaml.Unmarshal(p, params); err != nil {
 		return nil, err
@@ -199,8 +204,20 @@ func (t *TmDB) GetDetails(i interface{}, log *logrus.Entry) error {
 		return ErrFailedToGetDetails
 	}
 
+	// Fetch the full movie details and fill the polochon.Movie object
+	err := t.getMovieDetails(m)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// getMovieDetails will get the movie details and fill the polochon.Movie with
+// the result
+func (t *TmDB) getMovieDetails(movie *polochon.Movie) error {
 	// Search on tmdb
-	details, err := tmdbGetMovieInfo(t.client, m.TmdbID, map[string]string{})
+	details, err := tmdbGetMovieInfo(t.client, movie.TmdbID, map[string]string{})
 	if err != nil {
 		return err
 	}
@@ -222,19 +239,19 @@ func (t *TmDB) GetDetails(i interface{}, log *logrus.Entry) error {
 	}
 
 	// Update movie details
-	m.ImdbID = details.ImdbID
-	m.OriginalTitle = details.OriginalTitle
-	m.Plot = details.Overview
-	m.Rating = details.VoteAverage
-	m.Runtime = int(details.Runtime)
-	m.SortTitle = details.Title
-	m.Tagline = details.Tagline
-	m.Thumb = TmDBimageBaseURL + details.PosterPath
-	m.Fanart = TmDBimageBaseURL + details.BackdropPath
-	m.Title = details.Title
-	m.Votes = int(details.VoteCount)
-	m.Year = year
-	m.Genres = genres
+	movie.ImdbID = details.ImdbID
+	movie.OriginalTitle = details.OriginalTitle
+	movie.Plot = details.Overview
+	movie.Rating = details.VoteAverage
+	movie.Runtime = int(details.Runtime)
+	movie.SortTitle = details.Title
+	movie.Tagline = details.Tagline
+	movie.Thumb = TmDBimageBaseURL + details.PosterPath
+	movie.Fanart = TmDBimageBaseURL + details.BackdropPath
+	movie.Title = details.Title
+	movie.Votes = int(details.VoteCount)
+	movie.Year = year
+	movie.Genres = genres
 
 	return nil
 }
