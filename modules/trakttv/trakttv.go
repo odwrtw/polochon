@@ -19,6 +19,8 @@ const (
 var (
 	// ErrInvalidArgument returned when an invalid object is passed to GetDetails
 	ErrInvalidArgument = errors.New("trakttv: invalid argument")
+	// ErrNotFound returned when a search returns no results
+	ErrNotFound = errors.New("trakttv: not found")
 )
 
 // Register trakttv as a Detailer
