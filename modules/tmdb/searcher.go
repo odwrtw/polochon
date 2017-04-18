@@ -17,7 +17,7 @@ func NewSearcher(p []byte) (polochon.Searcher, error) {
 
 // SearchMovie implements the polochon Searcher interface
 func (t *TmDB) SearchMovie(key string, log *logrus.Entry) ([]*polochon.Movie, error) {
-	// Add year option if given
+	// We don't want porn (yet)
 	options := map[string]string{
 		"include_adult": "false",
 	}
