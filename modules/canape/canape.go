@@ -2,7 +2,7 @@ package canape
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
 	"net/http"
 
 	"gopkg.in/yaml.v2"
@@ -21,21 +21,30 @@ func init() {
 	polochon.RegisterWishlister(moduleName, NewFromRawYaml)
 }
 
-// UserConfig represents the configurations to get a user wishlist
-type UserConfig struct {
+// UserWishlist represents the configurations to get a user wishlist
+type UserWishlist struct {
 	URL   string `yaml:"url"`
 	Token string `yaml:"token"`
 }
 
-type response struct {
-	Movies []string  `json:"movies"`
-	Shows  []tvShows `json:"tv_shows"`
+type movieResponse struct {
+	Status string  `json:"status"`
+	Movies []movie `json:"data"`
 }
 
-type tvShows struct {
+type showResponse struct {
+	Status string   `json:"status"`
+	Shows  []tvShow `json:"data"`
+}
+
+type tvShow struct {
 	ImdbID  string `json:"imdb_id"`
-	Season  int    `json:"season"`
-	Episode int    `json:"episode"`
+	Season  int    `json:"tracked_season"`
+	Episode int    `json:"tracked_episode"`
+}
+
+type movie struct {
+	ImdbID string `json:"imdb_id"`
 }
 
 // Wishlist holds the canape wishlists
@@ -45,7 +54,7 @@ type Wishlist struct {
 
 // Params represents the module params
 type Params struct {
-	Configs []UserConfig `yaml:"wishlists"`
+	Wishlists []UserWishlist `yaml:"wishlists"`
 }
 
 // NewFromRawYaml unmarshals the bytes as yaml as params and call the New
@@ -64,25 +73,59 @@ func New(params *Params) (polochon.Wishlister, error) {
 	return &Wishlist{Params: params}, nil
 }
 
-// Get all the users wishlists
-func (w *Wishlist) getUsersWishlists() (*polochon.Wishlist, error) {
+// GetMovieWishlist gets the movies wishlist
+func (w *Wishlist) GetMovieWishlist(log *logrus.Entry) ([]*polochon.WishedMovie, error) {
+	wl, err := w.getMovieWishlists()
+	if err != nil {
+		return nil, err
+	}
+
+	return wl.Movies, nil
+}
+
+// GetShowWishlist gets the show wishlist
+func (w *Wishlist) GetShowWishlist(log *logrus.Entry) ([]*polochon.WishedShow, error) {
+	wl, err := w.getShowWishlists()
+	if err != nil {
+		return nil, err
+	}
+
+	return wl.Shows, nil
+}
+
+// Get all the users movie wishlists
+func (w *Wishlist) getMovieWishlists() (*polochon.Wishlist, error) {
 	wl := &polochon.Wishlist{}
 
-	for _, conf := range w.Configs {
-		resp, err := w.getUserWishlists(conf.URL, conf.Token)
+	for _, userWishlist := range w.Wishlists {
+		movies, err := userWishlist.getMovieWishlist()
 		if err != nil {
 			return nil, err
 		}
 
 		// Add the movies
-		for _, imdbID := range resp.Movies {
-			if err := wl.AddMovie(&polochon.WishedMovie{ImdbID: imdbID}); err != nil {
+		for _, movie := range movies {
+			if err := wl.AddMovie(&polochon.WishedMovie{ImdbID: movie.ImdbID}); err != nil {
 				return nil, err
 			}
 		}
+	}
+
+	return wl, nil
+}
+
+// Get all the users show wishlists
+func (w *Wishlist) getShowWishlists() (*polochon.Wishlist, error) {
+	wl := &polochon.Wishlist{}
+
+	for _, userWishlist := range w.Wishlists {
+		showList, err := userWishlist.getShowWishlist()
+		if err != nil {
+			return nil, err
+		}
 
 		// Add the shows
-		for _, s := range resp.Shows {
+		for _, s := range showList {
 			err := wl.AddShow(&polochon.WishedShow{
 				ImdbID:  s.ImdbID,
 				Season:  s.Season,
@@ -97,55 +140,49 @@ func (w *Wishlist) getUsersWishlists() (*polochon.Wishlist, error) {
 	return wl, nil
 }
 
-// get a user wishlist
-func (w *Wishlist) getUserWishlists(url, token string) (*response, error) {
-	// Create a new request
-	req, err := http.NewRequest("GET", url, nil)
+// Get a user's show wishlist
+func (w *UserWishlist) getShowWishlist() ([]tvShow, error) {
+	wishlist := &showResponse{}
+	err := w.request("wishlist/shows", wishlist)
 	if err != nil {
 		return nil, err
+	}
+	return wishlist.Shows, nil
+}
+
+// Get a user's movie wishlist
+func (w *UserWishlist) getMovieWishlist() ([]movie, error) {
+	wishlist := &movieResponse{}
+	err := w.request("wishlist/movies", wishlist)
+	if err != nil {
+		return nil, err
+	}
+	return wishlist.Movies, nil
+
+}
+
+func (w *UserWishlist) request(URL string, response interface{}) error {
+	// Create a new request
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s", w.URL, URL), nil)
+	if err != nil {
+		return err
 	}
 
 	// Add the auth headers
-	req.Header.Add("X-Auth-Token", token)
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", w.Token))
+	req.Header.Add("Content-type", "application/json")
 
 	// Get the page
-	client := &http.Client{}
+	client := http.DefaultClient
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("canape: invalid http code %q", resp.Status)
 	}
 
-	response := &response{}
-	err = json.Unmarshal(body, response)
-	if err != nil {
-		return nil, err
-	}
-
-	return response, nil
-}
-
-// GetMovieWishlist gets the movies wishlist
-func (w *Wishlist) GetMovieWishlist(log *logrus.Entry) ([]*polochon.WishedMovie, error) {
-	wl, err := w.getUsersWishlists()
-	if err != nil {
-		return nil, err
-	}
-
-	return wl.Movies, nil
-}
-
-// GetShowWishlist gets the show wishlist
-func (w *Wishlist) GetShowWishlist(log *logrus.Entry) ([]*polochon.WishedShow, error) {
-	wl, err := w.getUsersWishlists()
-	if err != nil {
-		return nil, err
-	}
-
-	return wl.Shows, nil
+	return json.NewDecoder(resp.Body).Decode(response)
 }
