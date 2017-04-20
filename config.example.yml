@@ -74,7 +74,7 @@ modules_params:
     lang: fr_FR
   - name: canape
     wishlists:
-    - url: https://canapeapp.com/users/bob/wishlist.json
+    - url: https://canapeapp.com
       token: 5O32q4D6jlqj492374923749234Kso4aZtarEsAfaJs=
   - name: tmdb
     apikey: my@w3$0m3@pIk3y
