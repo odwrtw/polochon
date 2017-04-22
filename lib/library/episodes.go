@@ -114,13 +114,7 @@ func (l *Library) DeleteShowEpisode(se *polochon.ShowEpisode, log *logrus.Entry)
 	}
 	if ok {
 		// Delete the whole season
-		seasonDir := l.getSeasonDir(se)
-		if err := os.RemoveAll(seasonDir); err != nil {
-			return err
-		}
-		// Remove the season from the index
-		show := &polochon.Show{ImdbID: se.ShowImdbID}
-		if err := l.showIndex.RemoveSeason(show, se.Season, log); err != nil {
+		if err := l.DeleteSeason(se.ShowImdbID, se.Season, log); err != nil {
 			return err
 		}
 	}
@@ -132,13 +126,7 @@ func (l *Library) DeleteShowEpisode(se *polochon.ShowEpisode, log *logrus.Entry)
 	}
 	if ok {
 		// Delete the whole Show
-		showDir := l.getShowDir(se)
-		if err := os.RemoveAll(showDir); err != nil {
-			return err
-		}
-		// Remove the show from the index
-		show := &polochon.Show{ImdbID: se.ShowImdbID}
-		if err := l.showIndex.RemoveShow(show, log); err != nil {
+		if err := l.DeleteShow(se.ShowImdbID, log); err != nil {
 			return err
 		}
 	}

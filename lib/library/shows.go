@@ -31,6 +31,22 @@ func (l *Library) GetShow(id string) (*polochon.Show, error) {
 	return s, nil
 }
 
+// DeleteShow deletes the whole show
+func (l *Library) DeleteShow(id string, log *logrus.Entry) error {
+	path, err := l.showIndex.ShowPath(id)
+	if err != nil {
+		return err
+	}
+
+	if err := os.RemoveAll(path); err != nil {
+		return err
+	}
+
+	// Remove the show from the index
+	show := &polochon.Show{ImdbID: id}
+	return l.showIndex.RemoveShow(show, log)
+}
+
 // GetIndexedShow returns an indexed Show from its id
 func (l *Library) GetIndexedShow(id string) (index.IndexedShow, error) {
 	s, err := l.showIndex.IndexedShow(id)
