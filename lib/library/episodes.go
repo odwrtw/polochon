@@ -119,18 +119,6 @@ func (l *Library) DeleteShowEpisode(se *polochon.ShowEpisode, log *logrus.Entry)
 		}
 	}
 
-	// Show is empty, delete the whole show from the index
-	ok, err = l.showIndex.IsShowEmpty(se.ShowImdbID)
-	if err != nil {
-		return err
-	}
-	if ok {
-		// Delete the whole Show
-		if err := l.DeleteShow(se.ShowImdbID, log); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 

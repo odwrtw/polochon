@@ -48,7 +48,23 @@ func (l *Library) DeleteSeason(id string, season int, log *logrus.Entry) error {
 
 	// Remove the season from the index
 	show := &polochon.Show{ImdbID: id}
-	return l.showIndex.RemoveSeason(show, season, log)
+	if err := l.showIndex.RemoveSeason(show, season, log); err != nil {
+		return err
+	}
+
+	// Check if the show is empty
+	ok, err := l.showIndex.IsShowEmpty(id)
+	if err != nil {
+		return err
+	}
+	if ok {
+		// Delete the whole Show
+		if err := l.DeleteShow(id, log); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (l *Library) getSeasonDir(ep *polochon.ShowEpisode) string {
