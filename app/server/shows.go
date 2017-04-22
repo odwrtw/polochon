@@ -91,6 +91,17 @@ func (s *Server) getShowDetails(w http.ResponseWriter, req *http.Request) {
 	s.renderOK(w, out)
 }
 
+func (s *Server) deleteShow(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+
+	if err := s.library.DeleteShow(vars["id"], s.log); err != nil {
+		s.renderError(w, err)
+		return
+	}
+
+	s.renderOK(w, nil)
+}
+
 func (s *Server) getShowEpisodeIDDetails(w http.ResponseWriter, req *http.Request) {
 	e := s.getEpisode(w, req)
 	if e == nil {
