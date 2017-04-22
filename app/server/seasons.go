@@ -47,3 +47,20 @@ func (s *Server) getSeasonDetails(w http.ResponseWriter, req *http.Request) {
 
 	s.renderOK(w, NewSeason(season, indexedSeason))
 }
+
+func (s *Server) deleteSeason(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+
+	seasonNum, err := strconv.Atoi(vars["season"])
+	if err != nil {
+		s.renderError(w, fmt.Errorf("invalid season"))
+		return
+	}
+
+	if err := s.library.DeleteSeason(vars["id"], seasonNum, s.log); err != nil {
+		s.renderError(w, err)
+		return
+	}
+
+	s.renderOK(w, nil)
+}
