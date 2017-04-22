@@ -28,6 +28,7 @@
   allowed:
     - DeleteMovie
     - DeleteEpisode
+    - DeleteSeason
   token:
   - name: admin_token_name
     value: secure_admin_token

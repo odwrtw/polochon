@@ -82,6 +82,12 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 			handler: s.getSeasonDetails,
 		},
 		{
+			name:    "DeleteSeason",
+			path:    "/shows/{id}/seasons/{season:[0-9]+}",
+			methods: "DELETE",
+			handler: s.deleteSeason,
+		},
+		{
 			name:    "GetEpisode",
 			path:    "/shows/{id}/seasons/{season:[0-9]+}/episodes/{episode:[0-9]+}",
 			methods: "GET",
