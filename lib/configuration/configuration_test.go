@@ -52,6 +52,9 @@ video:
   - .txt
   - .jpg
   - .jpeg
+  subtitle_languages:
+  - en_US
+  - fr_FR
 modules_params:
   - name: pushover
     user: 9327a472s3947234792
@@ -111,6 +114,7 @@ var configStructExample = &ConfigFileRoot{
 		AllowedExtentionsToDelete: []string{".srt", ".nfo", ".txt", ".jpg", ".jpeg"},
 		NotifierNames:             []string{"pushover"},
 		GuesserName:               "openguessit",
+		SubtitleLanguages:         []polochon.Language{polochon.EN, polochon.FR},
 	},
 	ModulesParams: []map[string]interface{}{
 		{

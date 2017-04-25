@@ -67,7 +67,7 @@ func (s *Server) updateMovieSubtitles(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	if err := m.GetSubtitle(s.log); err != nil {
+	if err := m.GetSubtitles(s.config.SubtitleLanguages, s.log); err != nil {
 		s.renderError(w, err)
 		return
 	}

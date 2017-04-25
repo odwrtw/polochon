@@ -196,8 +196,12 @@ func (osp *osProxy) checkSubtitles(i interface{}, subs osdb.Subtitles, log *logr
 }
 
 // GetShowSubtitle will get a show subtitle
-func (osp *osProxy) GetShowSubtitle(s *polochon.ShowEpisode, log *logrus.Entry) (polochon.Subtitle, error) {
-	sub, err := osp.searchSubtitles(*s, s.File.Path, log)
+func (osp *osProxy) GetShowSubtitle(s *polochon.ShowEpisode, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
+	opensubtitlesLang, ok := langTranslate[lang]
+	if !ok {
+		return nil, ErrInvalidArgument
+	}
+	sub, err := osp.searchSubtitles(*s, opensubtitlesLang, s.File.Path, log)
 	if err != nil {
 		return nil, err
 	}
@@ -205,8 +209,12 @@ func (osp *osProxy) GetShowSubtitle(s *polochon.ShowEpisode, log *logrus.Entry) 
 }
 
 // GetMovieSubtitle will get a movie subtitle
-func (osp *osProxy) GetMovieSubtitle(m *polochon.Movie, log *logrus.Entry) (polochon.Subtitle, error) {
-	sub, err := osp.searchSubtitles(*m, m.File.Path, log)
+func (osp *osProxy) GetMovieSubtitle(m *polochon.Movie, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
+	opensubtitlesLang, ok := langTranslate[lang]
+	if !ok {
+		return nil, ErrInvalidArgument
+	}
+	sub, err := osp.searchSubtitles(*m, opensubtitlesLang, m.File.Path, log)
 	if err != nil {
 		return nil, err
 	}
@@ -214,9 +222,9 @@ func (osp *osProxy) GetMovieSubtitle(m *polochon.Movie, log *logrus.Entry) (polo
 }
 
 // searchSubtitles will search via hash, then filename, then info and return the best subtitle
-func (osp *osProxy) searchSubtitles(v interface{}, filePath string, log *logrus.Entry) (*openSubtitle, error) {
+func (osp *osProxy) searchSubtitles(v interface{}, lang string, filePath string, log *logrus.Entry) (*openSubtitle, error) {
 	// Look for subtitles with the hash
-	sub, err := osp.checkConnAndExec(osp.searchSubtitlesByHash, v, filePath, log)
+	sub, err := osp.checkConnAndExec(osp.searchSubtitlesByHash, v, lang, filePath, log)
 	if err != nil {
 		log.Warnf("Got error looking for subtitle by hash : %q", err)
 	}
@@ -229,7 +237,7 @@ func (osp *osProxy) searchSubtitles(v interface{}, filePath string, log *logrus.
 	log.Debug("Nothing in the result, need to check again with filename")
 
 	// Look for subtitles with the filename
-	sub, err = osp.checkConnAndExec(osp.searchSubtitlesByFilename, v, filePath, log)
+	sub, err = osp.checkConnAndExec(osp.searchSubtitlesByFilename, v, lang, filePath, log)
 	if err != nil {
 		log.Warnf("Got error looking for subtitle by filename : %q", err)
 	}
@@ -242,7 +250,7 @@ func (osp *osProxy) searchSubtitles(v interface{}, filePath string, log *logrus.
 	log.Debug("Still no good, need to check again with imdbID")
 
 	// Look for subtitles with the title and episode and season or by imdbID
-	sub, err = osp.checkConnAndExec(osp.searchSubtitlesByInfos, v, filePath, log)
+	sub, err = osp.checkConnAndExec(osp.searchSubtitlesByInfos, v, lang, filePath, log)
 	if err != nil {
 		log.Warnf("Got error looking for subtitle by infos : %q", err)
 	}
@@ -255,13 +263,13 @@ func (osp *osProxy) searchSubtitles(v interface{}, filePath string, log *logrus.
 }
 
 // checkConnAndExec will check the connexion, execute the function and check the subtitles returned
-func (osp *osProxy) checkConnAndExec(f func(v interface{}, filePath string) (osdb.Subtitles, error), v interface{}, filePath string, log *logrus.Entry) (*osdb.Subtitle, error) {
+func (osp *osProxy) checkConnAndExec(f func(v interface{}, lang string, filePath string) (osdb.Subtitles, error), v interface{}, lang string, filePath string, log *logrus.Entry) (*osdb.Subtitle, error) {
 	// Check the opensubtitle client
 	err := osp.getOpenSubtitleClient()
 	if err != nil {
 		return nil, err
 	}
-	res, err := f(v, filePath)
+	res, err := f(v, lang, filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -274,9 +282,9 @@ func (osp *osProxy) checkConnAndExec(f func(v interface{}, filePath string) (osd
 }
 
 // searchSubtitlesByHash will make a hash of the file, and check for corresponding subtitles
-func (osp *osProxy) searchSubtitlesByHash(v interface{}, filePath string) (osdb.Subtitles, error) {
+func (osp *osProxy) searchSubtitlesByHash(v interface{}, lang string, filePath string) (osdb.Subtitles, error) {
 	// Set the languages
-	languages := []string{osp.language}
+	languages := []string{lang}
 	// Hash movie file, and search...
 	res, err := fileSearchSubtitles(osp.client, filePath, languages)
 	if err != nil {
@@ -286,11 +294,11 @@ func (osp *osProxy) searchSubtitlesByHash(v interface{}, filePath string) (osdb.
 }
 
 // searchSubtitlesByFilename will search for subtitles corresponding to the name of the file
-func (osp *osProxy) searchSubtitlesByFilename(v interface{}, filePath string) (osdb.Subtitles, error) {
+func (osp *osProxy) searchSubtitlesByFilename(v interface{}, lang string, filePath string) (osdb.Subtitles, error) {
 	var innerParams = []map[string]string{
 		{
 			"query":         path.Base(filePath),
-			"sublanguageid": osp.language,
+			"sublanguageid": lang,
 		},
 	}
 
@@ -307,12 +315,13 @@ func (osp *osProxy) searchSubtitlesByFilename(v interface{}, filePath string) (o
 }
 
 // searchSubtitlesByInfos will take the info of the video (imdbId / title / ...) to get subtitles
-func (osp *osProxy) searchSubtitlesByInfos(m interface{}, filePath string) (osdb.Subtitles, error) {
+func (osp *osProxy) searchSubtitlesByInfos(m interface{}, lang string, filePath string) (osdb.Subtitles, error) {
 
 	innerParams, err := osp.openSubtitleParams(m)
 	if err != nil {
 		return nil, err
 	}
+	innerParams[0]["sublanguageid"] = lang
 
 	params := []interface{}{
 		osp.client.Token,
@@ -342,8 +351,7 @@ func (osp *osProxy) openSubtitleParams(i interface{}) ([]map[string]string, erro
 func (osp *osProxy) openSubtitleMovieParams(m polochon.Movie) []map[string]string {
 	return []map[string]string{
 		{
-			"sublanguageid": osp.language,
-			"imdbid":        strings.Replace(m.ImdbID, "tt", "", -1),
+			"imdbid": strings.Replace(m.ImdbID, "tt", "", -1),
 		},
 	}
 }
@@ -352,10 +360,9 @@ func (osp *osProxy) openSubtitleMovieParams(m polochon.Movie) []map[string]strin
 func (osp *osProxy) openSubtitleShowEpisodeParams(s polochon.ShowEpisode) []map[string]string {
 	return []map[string]string{
 		{
-			"query":         s.ShowTitle,
-			"season":        strconv.Itoa(s.Season),
-			"episode":       strconv.Itoa(s.Episode),
-			"sublanguageid": osp.language,
+			"query":   s.ShowTitle,
+			"season":  strconv.Itoa(s.Season),
+			"episode": strconv.Itoa(s.Episode),
 		},
 	}
 }

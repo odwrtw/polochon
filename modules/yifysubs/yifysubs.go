@@ -2,6 +2,7 @@ package yifysubs
 
 import (
 	"errors"
+	"fmt"
 
 	"gopkg.in/yaml.v2"
 
@@ -11,9 +12,7 @@ import (
 )
 
 // YifySubs holds the YifySubs module
-type YifySubs struct {
-	lang string
-}
+type YifySubs struct{}
 
 // Module constants
 const (
@@ -28,7 +27,6 @@ var langTranslate = map[polochon.Language]string{
 // Errors
 var (
 	ErrInvalidSubtitleLang = errors.New("yifysub: invalid subtitle language")
-	ErrMissingSubtitleLang = errors.New("yifysub: missing subtitle language")
 	ErrMissingImdbID       = errors.New("yifysub: missing imdb id")
 )
 
@@ -38,9 +36,7 @@ func init() {
 }
 
 // Params represents the module params
-type Params struct {
-	Lang string `yaml:"lang"`
-}
+type Params struct{}
 
 // NewFromRawYaml unmarshals the bytes as yaml as params and call the New
 // function
@@ -55,19 +51,8 @@ func NewFromRawYaml(p []byte) (polochon.Subtitler, error) {
 
 // New module
 func New(params *Params) (polochon.Subtitler, error) {
-	if params.Lang == "" {
-		return nil, ErrMissingSubtitleLang
-	}
 
-	language := polochon.Language(params.Lang)
-	subLang, ok := langTranslate[language]
-	if !ok {
-		return nil, ErrInvalidSubtitleLang
-	}
-
-	return &YifySubs{
-		lang: subLang,
-	}, nil
+	return &YifySubs{}, nil
 }
 
 // Name implements the Module interface
@@ -81,7 +66,7 @@ var getSubtitles = func(imdbID string) (map[string][]yifysubs.Subtitle, error) {
 }
 
 // GetMovieSubtitle will get a movie subtitle
-func (y *YifySubs) GetMovieSubtitle(m *polochon.Movie, log *logrus.Entry) (polochon.Subtitle, error) {
+func (y *YifySubs) GetMovieSubtitle(m *polochon.Movie, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
 	if m.ImdbID == "" {
 		return nil, ErrMissingImdbID
 	}
@@ -92,8 +77,14 @@ func (y *YifySubs) GetMovieSubtitle(m *polochon.Movie, log *logrus.Entry) (poloc
 		return nil, err
 	}
 
+	subLang, ok := langTranslate[lang]
+	if !ok {
+		fmt.Println(lang)
+		return nil, ErrInvalidSubtitleLang
+	}
+
 	// Only keep the configured lang
-	subsByLang, ok := subs[y.lang]
+	subsByLang, ok := subs[subLang]
 	if !ok {
 		return nil, polochon.ErrNoSubtitleFound
 	}
@@ -119,7 +110,7 @@ func (y *YifySubs) GetMovieSubtitle(m *polochon.Movie, log *logrus.Entry) (poloc
 }
 
 // GetShowSubtitle implements the Subtitler interface but will not be used here
-func (y *YifySubs) GetShowSubtitle(s *polochon.ShowEpisode, log *logrus.Entry) (polochon.Subtitle, error) {
+func (y *YifySubs) GetShowSubtitle(s *polochon.ShowEpisode, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
 	// Return nil values
-	return nil, nil
+	return nil, polochon.ErrNoSubtitleFound
 }

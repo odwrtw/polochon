@@ -14,9 +14,11 @@ type mockInvalidType string
 
 func (m *mockInvalidType) GetDetails(log *logrus.Entry) error  { return nil }
 func (m *mockInvalidType) GetTorrents(log *logrus.Entry) error { return nil }
-func (m *mockInvalidType) GetSubtitle(log *logrus.Entry) error { return nil }
 func (m *mockInvalidType) SetFile(f *polochon.File)            {}
 func (m *mockInvalidType) GetFile() *polochon.File             { return &polochon.File{} }
+func (m *mockInvalidType) GetSubtitles(languages []polochon.Language, log *logrus.Entry) error {
+	return nil
+}
 
 func TestStoreMovieNoPath(t *testing.T) {
 	library := New(polochon.FileConfig{}, polochon.MovieConfig{}, polochon.ShowConfig{}, Config{})

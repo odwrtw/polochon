@@ -2,6 +2,7 @@ package polochon
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -120,8 +121,8 @@ func (f *File) NfoPath() string {
 }
 
 // SubtitlePath is an helper to get the subtitle path from the  filename
-func (f *File) SubtitlePath() string {
-	return f.PathWithoutExt() + ".srt"
+func (f *File) SubtitlePath(lang Language) string {
+	return fmt.Sprintf("%s.%s.srt", f.PathWithoutExt(), lang.ShortForm())
 }
 
 // IgnorePath is an helper to get the ignore file path
