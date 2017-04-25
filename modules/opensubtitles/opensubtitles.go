@@ -84,8 +84,12 @@ type Params struct {
 
 // IsValid checks if the given params are valid
 func (p *Params) IsValid() bool {
-	if p.User == "" || p.Password == "" || p.Lang == "" {
+	if p.User == "" || p.Password == "" {
 		return false
+	}
+	// Set english as the default language
+	if p.Lang == "" {
+		p.Lang = string(polochon.EN)
 	}
 	return true
 }

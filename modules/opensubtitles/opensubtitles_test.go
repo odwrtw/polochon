@@ -122,12 +122,6 @@ func TestInvalidNew(t *testing.T) {
 			"user: userTest",
 			"password: passTest",
 		},
-		// No language
-		ErrMissingArgument: {
-			"lang: ",
-			"user: userTest",
-			"password: passTest",
-		},
 	} {
 		params := []byte(strings.Join(paramsStr, "\n"))
 		_, err := NewFromRawYaml(params)
@@ -149,6 +143,25 @@ func TestSuccessfulNew(t *testing.T) {
 	}
 	expected := &osProxy{
 		language: "fre",
+		user:     "userTest",
+		password: "passTest",
+	}
+	if !reflect.DeepEqual(got, expected) {
+		t.Errorf("Failed to get movie details\nGot: %+v\nExpected: %+v", got, expected)
+	}
+}
+
+func TestSuccessfulDefaultLang(t *testing.T) {
+	params := []byte(strings.Join([]string{
+		"user: userTest",
+		"password: passTest",
+	}, "\n"))
+	got, err := NewFromRawYaml(params)
+	if err != nil {
+		log.Fatalf("Got error in New: %q", err)
+	}
+	expected := &osProxy{
+		language: "eng",
 		user:     "userTest",
 		password: "passTest",
 	}

@@ -121,7 +121,7 @@ func (s *ShowEpisode) GetTorrents(log *logrus.Entry) error {
 func (s *ShowEpisode) GetSubtitles(languages []Language, log *logrus.Entry) error {
 	c := errors.NewCollector()
 
-	var subtitles map[Language]Subtitle
+	subtitles := map[Language]Subtitle{}
 	// We're going to ask subtitles in each language for each subtitles
 	for _, lang := range languages {
 		subtitlerLog := log.WithField("lang", lang)
