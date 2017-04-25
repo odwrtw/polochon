@@ -64,8 +64,6 @@ modules_params:
   - name: pushover
     key: sdf7as8f8ds7f9sf
     recipient: 9327a472s3947234792
-  - name: addicted
-    lang: fr_FR
   - name: opensubtitles
     user: opensubtitle@canapeapp.com
     lang: en_US
@@ -73,8 +71,6 @@ modules_params:
   - name: imdb
     user_ids:
     - ur78342023
-  - name: yifysubs
-    lang: fr_FR
   - name: canape
     wishlists:
     - url: https://canapeapp.com
