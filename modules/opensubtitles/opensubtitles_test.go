@@ -253,7 +253,7 @@ func TestSearchSubtitles(t *testing.T) {
 			fakeMovie,
 			fakeShowEpisode,
 		} {
-			sub, err := fakeProxy.searchSubtitles(video, "fakePath", fakeLoggerEntry)
+			sub, err := fakeProxy.searchSubtitles(video, "fakePath", polochon.FR, fakeLoggerEntry)
 			if err != situation.expectedErr {
 				log.Fatalf("Got error in searchMovieSubtitles: %q, wanted : %q", err, situation.expectedErr)
 			}

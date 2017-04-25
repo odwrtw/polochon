@@ -52,11 +52,12 @@ func (c *ConfigFileRoot) moduleParams(moduleName string) ([]byte, error) {
 
 // ConfigFileVideo represents the configuration for the video in the configuration file
 type ConfigFileVideo struct {
-	GuesserName               string   `yaml:"guesser"`
-	NotifierNames             []string `yaml:"notifiers"`
-	ExcludeFileContaining     []string `yaml:"exclude_file_containing"`
-	VideoExtentions           []string `yaml:"allowed_file_extensions"`
-	AllowedExtentionsToDelete []string `yaml:"allowed_file_extensions_to_delete"`
+	GuesserName               string              `yaml:"guesser"`
+	NotifierNames             []string            `yaml:"notifiers"`
+	ExcludeFileContaining     []string            `yaml:"exclude_file_containing"`
+	VideoExtentions           []string            `yaml:"allowed_file_extensions"`
+	AllowedExtentionsToDelete []string            `yaml:"allowed_file_extensions_to_delete"`
+	SubtitleLanguages         []polochon.Language `yaml:"subtitle_languages"`
 }
 
 // ConfigFileLogs represents the configuration for the logs of the app
@@ -129,17 +130,18 @@ type ConfigFileHTTPServer struct {
 
 // Config represents the configuration for polochon
 type Config struct {
-	Logger        *logrus.Logger
-	Watcher       WatcherConfig
-	Downloader    DownloaderConfig
-	HTTPServer    HTTPServerConfig
-	ModulesParams []map[string]interface{}
-	Wishlist      polochon.WishlistConfig
-	Movie         polochon.MovieConfig
-	Show          polochon.ShowConfig
-	File          polochon.FileConfig
-	Library       library.Config
-	Notifiers     []polochon.Notifier
+	Logger            *logrus.Logger
+	Watcher           WatcherConfig
+	Downloader        DownloaderConfig
+	HTTPServer        HTTPServerConfig
+	ModulesParams     []map[string]interface{}
+	Wishlist          polochon.WishlistConfig
+	Movie             polochon.MovieConfig
+	Show              polochon.ShowConfig
+	File              polochon.FileConfig
+	Library           library.Config
+	Notifiers         []polochon.Notifier
+	SubtitleLanguages []polochon.Language
 }
 
 // WatcherConfig represents the configuration for the detailers
@@ -285,6 +287,8 @@ func loadConfig(cf *ConfigFileRoot) (*Config, error) {
 		MovieDir: realMoviesPath,
 		ShowDir:  realShowsPath,
 	}
+
+	conf.SubtitleLanguages = cf.Video.SubtitleLanguages
 
 	return conf, nil
 }

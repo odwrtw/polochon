@@ -51,6 +51,9 @@ video:
   - .txt
   - .jpg
   - .jpeg
+  subtitle_languages:
+  - fr_FR
+  - en_US
 modules_params:
   - name: transmission
     url: http://mytransmission.com/transmission/rpc

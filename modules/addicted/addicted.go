@@ -27,7 +27,6 @@ const (
 type Params struct {
 	User     string `yaml:"user"`
 	Password string `yaml:"password"`
-	Lang     string `yaml:"lang"`
 }
 
 // Register a new Subtitler
@@ -61,20 +60,11 @@ func New(params *Params) (polochon.Subtitler, error) {
 		return nil, err
 	}
 
-	language := polochon.Language(params.Lang)
-
-	// if language not available in addicted
-	addictedLang, ok := langTranslate[language]
-	if !ok {
-		return nil, fmt.Errorf("addicted: language %q no supported", language)
-	}
-
-	return &addictedProxy{client: *client, language: addictedLang}, nil
+	return &addictedProxy{client: *client}, nil
 }
 
 type addictedProxy struct {
-	client   addicted.Client
-	language string
+	client addicted.Client
 }
 
 // Name implements the Module interface
@@ -82,9 +72,15 @@ func (a *addictedProxy) Name() string {
 	return moduleName
 }
 
-func (a *addictedProxy) GetShowSubtitle(reqEpisode *polochon.ShowEpisode, log *logrus.Entry) (polochon.Subtitle, error) {
+func (a *addictedProxy) GetShowSubtitle(reqEpisode *polochon.ShowEpisode, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
 	// TODO: add year
 	// TODO: handle release
+
+	// if language not available in addicted
+	addictedLang, ok := langTranslate[lang]
+	if !ok {
+		return nil, fmt.Errorf("addicted: language %q no supported", lang)
+	}
 
 	shows, err := a.client.GetTvShows()
 	if err != nil {
@@ -105,7 +101,7 @@ func (a *addictedProxy) GetShowSubtitle(reqEpisode *polochon.ShowEpisode, log *l
 		return nil, err
 	}
 
-	filteredSubs := subtitles.FilterByLang(a.language)
+	filteredSubs := subtitles.FilterByLang(addictedLang)
 	if len(filteredSubs) == 0 {
 		return nil, polochon.ErrNoSubtitleFound
 	}
@@ -133,6 +129,6 @@ func (a *addictedProxy) GetShowSubtitle(reqEpisode *polochon.ShowEpisode, log *l
 	return subtitle, err
 }
 
-func (a *addictedProxy) GetMovieSubtitle(b *polochon.Movie, log *logrus.Entry) (polochon.Subtitle, error) {
+func (a *addictedProxy) GetMovieSubtitle(b *polochon.Movie, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
 	return nil, polochon.ErrNoSubtitleFound
 }

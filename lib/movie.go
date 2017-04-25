@@ -114,35 +114,46 @@ func (m *Movie) GetTorrents(log *logrus.Entry) error {
 	return nil
 }
 
-// GetSubtitle implements the subtitle interface
+// GetSubtitles implements the subtitle interface
 // If there is an error, it will be of type *errors.Collector
-func (m *Movie) GetSubtitle(log *logrus.Entry) error {
+func (m *Movie) GetSubtitles(languages []Language, log *logrus.Entry) error {
 	c := errors.NewCollector()
 
-	var subtitle Subtitle
-	for _, subtitler := range m.Subtitlers {
-		var err error
-		subtitlerLog := log.WithField("subtitler", subtitler.Name())
-		subtitle, err = subtitler.GetMovieSubtitle(m, subtitlerLog)
-		if err == nil {
-			break
-		}
+	subtitles := map[Language]Subtitle{}
+	// We're going to ask subtitles in each language for each subtitles
+	for _, lang := range languages {
+		subtitlerLog := log.WithField("lang", lang)
+		// Ask all the subtitlers
+		for _, subtitler := range m.Subtitlers {
+			subtitlerLog = subtitlerLog.WithField("subtitler", subtitler.Name())
+			subtitle, err := subtitler.GetMovieSubtitle(m, lang, subtitlerLog)
+			if err == nil {
+				// If there was no errors, add the subtitle to the map of
+				// subtitles
+				subtitles[lang] = subtitle
+				break
+			}
 
-		c.Push(errors.Wrap(err).Ctx("Subtitler", subtitler.Name()))
+			c.Push(errors.Wrap(err).Ctx("Subtitler", subtitler.Name()))
+		}
 	}
 
-	if subtitle != nil {
-		file, err := os.Create(m.File.SubtitlePath())
-		if err != nil {
-			c.Push(errors.Wrap(err).Fatal())
-			return c
-		}
-		defer file.Close()
-		defer subtitle.Close()
+	// If we found some subtitles, create the files and download the subtitle
+	if len(subtitles) != 0 {
+		for lang, subtitle := range subtitles {
+			file, err := os.Create(m.SubtitlePath(lang))
+			if err != nil {
+				c.Push(errors.Wrap(err).Fatal())
+				return c
 
-		if _, err := io.Copy(file, subtitle); err != nil {
-			c.Push(errors.Wrap(err).Fatal())
-			return c
+			}
+			defer file.Close()
+			defer subtitle.Close()
+
+			if _, err := io.Copy(file, subtitle); err != nil {
+				c.Push(errors.Wrap(err).Fatal())
+				return c
+			}
 		}
 	}
 

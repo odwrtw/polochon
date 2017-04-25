@@ -51,7 +51,7 @@ func (q *Quality) IsAllowed() bool {
 type Video interface {
 	GetDetails(*logrus.Entry) error
 	GetTorrents(*logrus.Entry) error
-	GetSubtitle(*logrus.Entry) error
+	GetSubtitles([]Language, *logrus.Entry) error
 	SetFile(f *File)
 	GetFile() *File
 }

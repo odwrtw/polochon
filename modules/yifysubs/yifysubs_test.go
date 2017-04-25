@@ -46,29 +46,10 @@ func TestNew(t *testing.T) {
 		log.Fatalf("Got error in New: %q", err)
 	}
 
-	expected := &YifySubs{
-		lang: "french",
-	}
+	expected := &YifySubs{}
 
 	if !reflect.DeepEqual(got, expected) {
 		t.Errorf("failed to create new YifySubs\nGot: %+v\nExpected: %+v", got, expected)
-	}
-}
-
-func TestNewError(t *testing.T) {
-	for expectedError, params := range map[error][]byte{
-		ErrMissingSubtitleLang: {},
-		ErrInvalidSubtitleLang: []byte("lang: yo"),
-	} {
-		_, err := NewFromRawYaml(params)
-		if err == nil {
-			log.Fatal("expected an error, got none")
-		}
-
-		if err != expectedError {
-			log.Fatalf("expected an %q, got %q", expectedError, err)
-		}
-
 	}
 }
 
@@ -81,13 +62,13 @@ func TestName(t *testing.T) {
 
 func TestGetShowSubtitle(t *testing.T) {
 	y := &YifySubs{}
-	r, err := y.GetShowSubtitle(&polochon.ShowEpisode{}, fakeLogEntry)
+	r, err := y.GetShowSubtitle(&polochon.ShowEpisode{}, polochon.EN, fakeLogEntry)
 	if r != nil {
 		log.Fatalf("expected no result, got %+v", r)
 	}
 
-	if err != nil {
-		log.Fatalf("expected no error, got %q", err)
+	if err != polochon.ErrNoSubtitleFound {
+		log.Fatalf("expected error %q, got %q", polochon.ErrNoSubtitleFound, err)
 	}
 }
 
@@ -96,9 +77,9 @@ func TestGetMovieSubtitle(t *testing.T) {
 		return fakeSubs, nil
 	}
 	m := &polochon.Movie{ImdbID: "tt9347238"}
-	y := &YifySubs{lang: "french"}
+	y := &YifySubs{}
 
-	sub, err := y.GetMovieSubtitle(m, fakeLogEntry)
+	sub, err := y.GetMovieSubtitle(m, polochon.FR, fakeLogEntry)
 	if err != nil {
 		log.Fatalf("expected no error, got %q", err)
 	}
@@ -119,9 +100,9 @@ func TestGetMovieSubtitleNotFound(t *testing.T) {
 		return fakeSubs, nil
 	}
 	m := &polochon.Movie{ImdbID: "tt9347238"}
-	y := &YifySubs{lang: "test"}
+	y := &YifySubs{}
 
-	_, err := y.GetMovieSubtitle(m, fakeLogEntry)
+	_, err := y.GetMovieSubtitle(m, polochon.EN, fakeLogEntry)
 	if err == nil {
 		log.Fatal("expected an error, got none")
 	}
@@ -136,9 +117,9 @@ func TestGetMovieSubtitleNoID(t *testing.T) {
 		return fakeSubs, nil
 	}
 	m := &polochon.Movie{}
-	y := &YifySubs{lang: "french"}
+	y := &YifySubs{}
 
-	_, err := y.GetMovieSubtitle(m, fakeLogEntry)
+	_, err := y.GetMovieSubtitle(m, polochon.FR, fakeLogEntry)
 	if err == nil {
 		log.Fatal("expected an error, got none")
 	}
