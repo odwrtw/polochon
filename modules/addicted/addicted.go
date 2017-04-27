@@ -72,7 +72,7 @@ func (a *addictedProxy) Name() string {
 	return moduleName
 }
 
-func (a *addictedProxy) GetShowSubtitle(reqEpisode *polochon.ShowEpisode, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
+func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
 	// TODO: add year
 	// TODO: handle release
 
@@ -129,6 +129,12 @@ func (a *addictedProxy) GetShowSubtitle(reqEpisode *polochon.ShowEpisode, lang p
 	return subtitle, err
 }
 
-func (a *addictedProxy) GetMovieSubtitle(b *polochon.Movie, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
-	return nil, polochon.ErrNoSubtitleFound
+// GetSubtitle implements the Subtitler interface
+func (a *addictedProxy) GetSubtitle(i interface{}, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
+	switch v := i.(type) {
+	case *polochon.ShowEpisode:
+		return a.getShowSubtitle(v, lang, log)
+	default:
+		return nil, fmt.Errorf("addicted: invalid argument")
+	}
 }

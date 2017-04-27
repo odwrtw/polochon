@@ -14,13 +14,18 @@ var ErrNoSubtitleFound = errors.New("No subtitle found")
 // Subtitler all subtitler must implement it
 type Subtitler interface {
 	Module
-	GetShowSubtitle(*ShowEpisode, Language, *logrus.Entry) (Subtitle, error)
-	GetMovieSubtitle(*Movie, Language, *logrus.Entry) (Subtitle, error)
+	GetSubtitle(interface{}, Language, *logrus.Entry) (Subtitle, error)
 }
 
 // Subtitle represents a subtitle
 type Subtitle interface {
 	io.ReadCloser
+}
+
+// Subtitlable represents a ressource which can be subtitled
+type Subtitlable interface {
+	SubtitlePath(Language) string
+	GetSubtitlers() []Subtitler
 }
 
 // RegisterSubtitler helps register a new Subtitler

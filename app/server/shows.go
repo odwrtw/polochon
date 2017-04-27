@@ -131,7 +131,7 @@ func (s *Server) updateEpisodeSubtitles(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	if err := e.GetSubtitles(s.config.SubtitleLanguages, s.log); err != nil {
+	if err := s.library.AddSubtitles(e, s.config.SubtitleLanguages, s.log); err != nil {
 		s.renderError(w, err)
 		return
 	}

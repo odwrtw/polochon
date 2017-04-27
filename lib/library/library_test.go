@@ -16,8 +16,9 @@ func (m *mockInvalidType) GetDetails(log *logrus.Entry) error  { return nil }
 func (m *mockInvalidType) GetTorrents(log *logrus.Entry) error { return nil }
 func (m *mockInvalidType) SetFile(f *polochon.File)            {}
 func (m *mockInvalidType) GetFile() *polochon.File             { return &polochon.File{} }
-func (m *mockInvalidType) GetSubtitles(languages []polochon.Language, log *logrus.Entry) error {
-	return nil
+func (m *mockInvalidType) GetSubtitlers() []polochon.Subtitler { return nil }
+func (m *mockInvalidType) SubtitlePath(lang polochon.Language) string {
+	return "path_" + string(lang)
 }
 
 func TestStoreMovieNoPath(t *testing.T) {
