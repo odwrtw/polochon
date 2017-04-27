@@ -1,10 +1,5 @@
 package polochon
 
-import (
-	"github.com/Sirupsen/logrus"
-	"github.com/odwrtw/errors"
-)
-
 // ShowConfig represents the configuration for a show and its show episodes
 type ShowConfig struct {
 	Calendar   Calendar
@@ -75,24 +70,4 @@ func (s *ShowEpisode) GetFile() *File {
 // SetFile implements the video interface
 func (s *ShowEpisode) SetFile(f *File) {
 	s.File = *f
-}
-
-// GetTorrents helps getting the torrent files for a movie
-// If there is an error, it will be of type *errors.Collector
-func (s *ShowEpisode) GetTorrents(log *logrus.Entry) error {
-	c := errors.NewCollector()
-
-	for _, t := range s.Torrenters {
-		torrenterLog := log.WithField("torrenter", t.Name())
-		err := t.GetTorrents(s, torrenterLog)
-		if err == nil {
-			break
-		}
-		c.Push(errors.Wrap(err).Ctx("Torrenter", t.Name()))
-	}
-
-	if c.HasErrors() {
-		return c
-	}
-	return nil
 }

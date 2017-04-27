@@ -149,7 +149,7 @@ func (d *Downloader) downloadMissingMovies(wl *polochon.Wishlist, log *logrus.En
 
 		log = log.WithField("title", m.Title)
 
-		if err := m.GetTorrents(log); err != nil && err != polochon.ErrMovieTorrentNotFound {
+		if err := polochon.GetTorrents(m, log); err != nil && err != polochon.ErrMovieTorrentNotFound {
 			errors.LogErrors(log, err)
 			if errors.IsFatal(err) {
 				continue
@@ -233,7 +233,7 @@ func (d *Downloader) downloadMissingShows(wl *polochon.Wishlist, log *logrus.Ent
 				"episode":      e.Episode,
 			})
 
-			if err := e.GetTorrents(log); err != nil && err != polochon.ErrShowEpisodeTorrentNotFound {
+			if err := polochon.GetTorrents(e, log); err != nil && err != polochon.ErrShowEpisodeTorrentNotFound {
 				errors.LogErrors(log, err)
 				if errors.IsFatal(err) {
 					continue

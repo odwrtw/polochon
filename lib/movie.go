@@ -1,10 +1,5 @@
 package polochon
 
-import (
-	"github.com/Sirupsen/logrus"
-	"github.com/odwrtw/errors"
-)
-
 // MovieConfig represents the configuration for a movie
 type MovieConfig struct {
 	Torrenters []Torrenter
@@ -73,24 +68,4 @@ func (m *Movie) SetFile(f *File) {
 // GetFile implements the video interface
 func (m *Movie) GetFile() *File {
 	return &m.File
-}
-
-// GetTorrents helps getting the torrent files for a movie
-// If there is an error, it will be of type *errors.Collector
-func (m *Movie) GetTorrents(log *logrus.Entry) error {
-	c := errors.NewCollector()
-
-	for _, t := range m.Torrenters {
-		torrenterLog := log.WithField("torrenter", t.Name())
-		err := t.GetTorrents(m, torrenterLog)
-		if err == nil {
-			break
-		}
-		c.Push(errors.Wrap(err).Ctx("Torrenter", t.Name()))
-	}
-
-	if c.HasErrors() {
-		return c
-	}
-	return nil
 }

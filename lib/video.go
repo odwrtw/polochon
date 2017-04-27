@@ -2,8 +2,6 @@ package polochon
 
 import (
 	"fmt"
-
-	"github.com/Sirupsen/logrus"
 )
 
 // Quality represents the qualities of a video
@@ -51,7 +49,7 @@ func (q *Quality) IsAllowed() bool {
 type Video interface {
 	Subtitlable
 	Detailable
-	GetTorrents(*logrus.Entry) error
+	Torrentable
 	SetFile(f *File)
 	GetFile() *File
 }
