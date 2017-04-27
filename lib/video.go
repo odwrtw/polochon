@@ -50,7 +50,7 @@ func (q *Quality) IsAllowed() bool {
 // Video represents a generic video type
 type Video interface {
 	Subtitlable
-	GetDetails(*logrus.Entry) error
+	Detailable
 	GetTorrents(*logrus.Entry) error
 	SetFile(f *File)
 	GetFile() *File

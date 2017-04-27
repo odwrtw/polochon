@@ -140,7 +140,7 @@ func (d *Downloader) downloadMissingMovies(wl *polochon.Wishlist, log *logrus.En
 		m.ImdbID = wantedMovie.ImdbID
 		log = log.WithField("imdb_id", m.ImdbID)
 
-		if err := m.GetDetails(log); err != nil {
+		if err := polochon.GetDetails(m, log); err != nil {
 			errors.LogErrors(log, err)
 			if errors.IsFatal(err) {
 				continue
@@ -188,7 +188,7 @@ func (d *Downloader) downloadMissingShows(wl *polochon.Wishlist, log *logrus.Ent
 		s.ImdbID = wishedShow.ImdbID
 		log = log.WithField("imdb_id", s.ImdbID)
 
-		if err := s.GetDetails(log); err != nil {
+		if err := polochon.GetDetails(s, log); err != nil {
 			errors.LogErrors(log, err)
 			if errors.IsFatal(err) {
 				continue

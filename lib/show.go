@@ -31,35 +31,9 @@ func NewShow(showConf ShowConfig) *Show {
 	}
 }
 
-// GetDetails helps getting infos for a show
-// If there is an error, it will be of type *errors.Collector
-func (s *Show) GetDetails(log *logrus.Entry) error {
-	c := errors.NewCollector()
-
-	if len(s.Detailers) == 0 {
-		c.Push(errors.Wrap("No detailer available").Fatal())
-		return c
-	}
-
-	var done bool
-	for _, d := range s.Detailers {
-		detailerLog := log.WithField("detailer", d.Name())
-		err := d.GetDetails(s, detailerLog)
-		if err == nil {
-			done = true
-			break
-		}
-		c.Push(errors.Wrap(err).Ctx("Detailer", d.Name()))
-	}
-	if !done {
-		c.Push(errors.Wrap("All detailers failed").Fatal())
-	}
-
-	if c.HasErrors() {
-		return c
-	}
-
-	return nil
+// GetDetailers implements the Detailable interface
+func (s *Show) GetDetailers() []Detailer {
+	return s.Detailers
 }
 
 // GetCalendar gets the calendar for the show

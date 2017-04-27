@@ -85,7 +85,11 @@ func (l *Library) buildMovieIndex(log *logrus.Entry) error {
 		}
 
 		// Add the movie to the index
-		l.movieIndex.Add(movie)
+		err = l.movieIndex.Add(movie)
+		if err != nil {
+			log.Errorf("library: failed to add movie to the Library: %q", err)
+			return nil
+		}
 
 		return nil
 	})
@@ -178,7 +182,11 @@ func (l *Library) scanEpisodes(imdbID, showRootPath string, log *logrus.Entry) e
 
 		episode.ShowImdbID = imdbID
 		episode.ShowConfig = l.showConfig
-		l.showIndex.Add(episode)
+		err = l.showIndex.Add(episode)
+		if err != nil {
+			log.Errorf("library: failed to add movie to the Library: %q", err)
+			return nil
+		}
 
 		return nil
 	})

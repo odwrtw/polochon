@@ -170,7 +170,7 @@ func (o *Organizer) organizeFile(filePath string, log *logrus.Entry) error {
 	}
 
 	// Get video details
-	if err := video.GetDetails(log); err != nil {
+	if err := polochon.GetDetails(video, log); err != nil {
 		errors.LogErrors(log, err)
 		if errors.IsFatal(err) {
 			return file.Ignore()
