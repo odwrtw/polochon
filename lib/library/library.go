@@ -1,6 +1,9 @@
 package library
 
 import (
+	"io"
+	"os"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/errors"
 	"github.com/odwrtw/polochon/lib"
@@ -78,4 +81,53 @@ func (l *Library) Delete(video polochon.Video, log *logrus.Entry) error {
 	default:
 		return ErrInvalidIndexVideoType
 	}
+}
+
+// AddSubtitles gets and downloads subtitles of different languages
+func (l *Library) AddSubtitles(video polochon.Subtitlable, languages []polochon.Language, log *logrus.Entry) error {
+	c := errors.NewCollector()
+
+	// We're going to ask subtitles in each language for each subtitles
+	for _, lang := range languages {
+		subtitlerLog := log.WithField("lang", lang)
+		// Ask all the subtitlers
+		for _, subtitler := range video.GetSubtitlers() {
+			subtitlerLog = subtitlerLog.WithField("subtitler", subtitler.Name())
+			subtitle, err := subtitler.GetSubtitle(video, lang, subtitlerLog)
+			if err != nil {
+				// If there was no errors, add the subtitle to the map of
+				// subtitles
+				c.Push(errors.Wrap(err).Ctx("Subtitler", subtitler.Name()))
+				continue
+			}
+
+			err = l.DownloadSubtitle(subtitle, video, lang)
+			if err != nil {
+				c.Push(errors.Wrap(err).Ctx("Subtitler", subtitler.Name()))
+				continue
+			}
+			break
+		}
+	}
+
+	if c.HasErrors() {
+		return c
+	}
+	return nil
+}
+
+// DownloadSubtitle will download the subtitle
+func (l *Library) DownloadSubtitle(subtitle io.ReadCloser, v polochon.Subtitlable, lang polochon.Language) error {
+	file, err := os.Create(v.SubtitlePath(lang))
+	if err != nil {
+		return err
+
+	}
+	defer file.Close()
+	defer subtitle.Close()
+
+	if _, err := io.Copy(file, subtitle); err != nil {
+		return err
+	}
+	return nil
 }

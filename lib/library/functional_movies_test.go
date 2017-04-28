@@ -24,7 +24,7 @@ func (m *mockLibrary) mockMovie(name string) (*polochon.Movie, error) {
 	movie.Thumb = m.httpServer.URL
 	movie.Path = filepath.Join(m.tmpDir, "downloads", name)
 
-	if err := movie.GetDetails(mockLogEntry); err != nil {
+	if err := polochon.GetDetails(movie, mockLogEntry); err != nil {
 		return nil, err
 	}
 

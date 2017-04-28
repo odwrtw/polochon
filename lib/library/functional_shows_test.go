@@ -24,7 +24,7 @@ func (m *mockLibrary) mockEpisode(name string) (*polochon.ShowEpisode, error) {
 	e.Path = filepath.Join(m.tmpDir, "downloads", name)
 	e.Thumb = m.httpServer.URL
 
-	if err := e.GetDetails(mockLogEntry); err != nil {
+	if err := polochon.GetDetails(e, mockLogEntry); err != nil {
 		return nil, err
 	}
 
@@ -39,7 +39,7 @@ func (m *mockLibrary) mockShow() (*polochon.Show, error) {
 	s.Fanart = m.httpServer.URL
 	s.Poster = m.httpServer.URL
 
-	if err := s.GetDetails(mockLogEntry); err != nil {
+	if err := polochon.GetDetails(s, mockLogEntry); err != nil {
 		return nil, err
 	}
 

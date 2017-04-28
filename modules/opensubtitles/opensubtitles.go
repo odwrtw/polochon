@@ -199,8 +199,8 @@ func (osp *osProxy) checkSubtitles(i interface{}, subs osdb.Subtitles, log *logr
 	return osp.getBestSubtitle(goodSubs), nil
 }
 
-// GetShowSubtitle will get a show subtitle
-func (osp *osProxy) GetShowSubtitle(s *polochon.ShowEpisode, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
+// getShowSubtitle will get a show subtitle
+func (osp *osProxy) getShowSubtitle(s *polochon.ShowEpisode, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
 	opensubtitlesLang, ok := langTranslate[lang]
 	if !ok {
 		return nil, ErrInvalidArgument
@@ -212,8 +212,8 @@ func (osp *osProxy) GetShowSubtitle(s *polochon.ShowEpisode, lang polochon.Langu
 	return sub, nil
 }
 
-// GetMovieSubtitle will get a movie subtitle
-func (osp *osProxy) GetMovieSubtitle(m *polochon.Movie, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
+// getMovieSubtitle will get a movie subtitle
+func (osp *osProxy) getMovieSubtitle(m *polochon.Movie, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
 	opensubtitlesLang, ok := langTranslate[lang]
 	if !ok {
 		return nil, ErrInvalidArgument
@@ -424,4 +424,15 @@ func (osp *osProxy) getGoodShowEpisodeSubtitles(s polochon.ShowEpisode, subs osd
 		log.Debugf("Got %d subtitles", len(goodSubs))
 	}
 	return goodSubs
+}
+
+func (osp *osProxy) GetSubtitle(i interface{}, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
+	switch v := i.(type) {
+	case *polochon.ShowEpisode:
+		return osp.getShowSubtitle(v, lang, log)
+	case *polochon.Movie:
+		return osp.getMovieSubtitle(v, lang, log)
+	default:
+		return nil, fmt.Errorf("opensub: invalid argument")
+	}
 }

@@ -170,7 +170,7 @@ func (o *Organizer) organizeFile(filePath string, log *logrus.Entry) error {
 	}
 
 	// Get video details
-	if err := video.GetDetails(log); err != nil {
+	if err := polochon.GetDetails(video, log); err != nil {
 		errors.LogErrors(log, err)
 		if errors.IsFatal(err) {
 			return file.Ignore()
@@ -183,8 +183,8 @@ func (o *Organizer) organizeFile(filePath string, log *logrus.Entry) error {
 		return file.Ignore()
 	}
 
-	// Get subtitle
-	if err := video.GetSubtitles(o.config.SubtitleLanguages, log); err != nil {
+	// Get subtitles
+	if err := o.library.AddSubtitles(video, o.config.SubtitleLanguages, log); err != nil {
 		errors.LogErrors(log, err)
 	}
 

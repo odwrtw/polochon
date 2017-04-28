@@ -114,3 +114,12 @@ func (y *YifySubs) GetShowSubtitle(s *polochon.ShowEpisode, lang polochon.Langua
 	// Return nil values
 	return nil, polochon.ErrNoSubtitleFound
 }
+
+func (y *YifySubs) GetSubtitle(i interface{}, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
+	switch v := i.(type) {
+	case *polochon.Movie:
+		return y.GetMovieSubtitle(v, lang, log)
+	default:
+		return nil, fmt.Errorf("opensub: invalid argument")
+	}
+}
