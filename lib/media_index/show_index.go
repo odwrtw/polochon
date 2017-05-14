@@ -1,6 +1,7 @@
 package index
 
 import (
+	"fmt"
 	"path/filepath"
 	"sync"
 
@@ -13,35 +14,36 @@ type ShowIndex struct {
 	// Mutex to protect reads / writes made concurrently by the http server
 	sync.RWMutex
 	// shows represents the index of the show
-	shows map[string]IndexedShow
+	shows map[string]*Show
 }
 
-// IndexedSeason represents an indexed season
-type IndexedSeason struct {
-	Path     string
-	Episodes map[int]string
-}
-
-// EpisodeList returns the episodes numbers of the indexed season
-func (si *IndexedSeason) EpisodeList() []int {
-	return extractAndSortIntMapKeys(si.Episodes)
-}
-
-// IndexedShow represents an indexed show
-type IndexedShow struct {
+// Show represents an indexed show
+type Show struct {
 	Path    string
-	Seasons map[int]IndexedSeason
+	Seasons map[int]*Season
+}
+
+// Season represents an indexed season
+type Season struct {
+	Path     string           `json:"-"`
+	Episodes map[int]*Episode `json:"episodes"`
+}
+
+// Episode represents an indexed episode
+type Episode struct {
+	Path      string              `json:"-"`
+	Subtitles []polochon.Language `json:"subtitles"`
 }
 
 // SeasonList returns the season numbers of the indexed show
-func (si *IndexedShow) SeasonList() []int {
+func (si *Show) SeasonList() []int {
 	return extractAndSortIndexedSeasonsMapKeys(si.Seasons)
 }
 
 // NewShowIndex returns a new show index
 func NewShowIndex() *ShowIndex {
 	return &ShowIndex{
-		shows: map[string]IndexedShow{},
+		shows: map[string]*Show{},
 	}
 }
 
@@ -49,11 +51,11 @@ func NewShowIndex() *ShowIndex {
 func (si *ShowIndex) Clear() {
 	si.Lock()
 	defer si.Unlock()
-	si.shows = map[string]IndexedShow{}
+	si.shows = map[string]*Show{}
 }
 
-// IDs returns the show ids
-func (si *ShowIndex) IDs() map[string]IndexedShow {
+// Index returns the showIndex
+func (si *ShowIndex) Index() map[string]*Show {
 	si.RLock()
 	defer si.RUnlock()
 	return si.shows
@@ -88,7 +90,7 @@ func (si *ShowIndex) HasSeason(imdbID string, season int) (bool, error) {
 // HasEpisode searches for a show episode by id, season and episode and returns true
 // if this episode is indexed
 func (si *ShowIndex) HasEpisode(imdbID string, season, episode int) (bool, error) {
-	_, err := si.EpisodePath(imdbID, season, episode)
+	_, err := si.Episode(imdbID, season, episode)
 	switch err {
 	case nil:
 		return true, nil
@@ -99,42 +101,57 @@ func (si *ShowIndex) HasEpisode(imdbID string, season, episode int) (bool, error
 	}
 }
 
-// EpisodePath returns the episode path from the index
-func (si *ShowIndex) EpisodePath(imdbID string, sNum, eNum int) (string, error) {
+// HasEpisodeSubtitle searches for a show episode by id, season and episode and
+// returns true if this episode has a subtitle indexed
+func (si *ShowIndex) HasEpisodeSubtitle(imdbID string, season, episode int, lang polochon.Language) (bool, error) {
+	e, err := si.Episode(imdbID, season, episode)
+	if err != nil {
+		return false, err
+	}
+	for _, l := range e.Subtitles {
+		if l == lang {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// Episode returns the episode path from the index
+func (si *ShowIndex) Episode(imdbID string, sNum, eNum int) (*Episode, error) {
 	si.RLock()
 	defer si.RUnlock()
 
 	show, ok := si.shows[imdbID]
 	if !ok {
-		return "", ErrNotFound
+		return nil, ErrNotFound
 	}
 
 	season, ok := show.Seasons[sNum]
 	if !ok {
-		return "", ErrNotFound
+		return nil, ErrNotFound
 	}
 
-	filePath, ok := season.Episodes[eNum]
+	episode, ok := season.Episodes[eNum]
 	if !ok {
-		return "", ErrNotFound
+		return nil, ErrNotFound
 	}
 
-	return filePath, nil
+	return episode, nil
 }
 
 // IndexedSeason returns the indexed season from the index
-func (si *ShowIndex) IndexedSeason(imdbID string, sNum int) (IndexedSeason, error) {
+func (si *ShowIndex) IndexedSeason(imdbID string, sNum int) (*Season, error) {
 	si.RLock()
 	defer si.RUnlock()
 
 	show, ok := si.shows[imdbID]
 	if !ok {
-		return IndexedSeason{}, ErrNotFound
+		return nil, ErrNotFound
 	}
 
 	season, ok := show.Seasons[sNum]
 	if !ok {
-		return IndexedSeason{}, ErrNotFound
+		return nil, ErrNotFound
 	}
 
 	return season, nil
@@ -151,13 +168,13 @@ func (si *ShowIndex) SeasonPath(imdbID string, sNum int) (string, error) {
 }
 
 // IndexedShow returns the indexed show from the index
-func (si *ShowIndex) IndexedShow(imdbID string) (IndexedShow, error) {
+func (si *ShowIndex) IndexedShow(imdbID string) (*Show, error) {
 	si.RLock()
 	defer si.RUnlock()
 
 	show, ok := si.shows[imdbID]
 	if !ok {
-		return IndexedShow{}, ErrNotFound
+		return nil, ErrNotFound
 	}
 
 	return show, nil
@@ -189,12 +206,16 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 		defer si.Unlock()
 
 		// Add a whole new show
-		si.shows[episode.ShowImdbID] = IndexedShow{
+		si.shows[episode.ShowImdbID] = &Show{
 			Path: showPath,
-			Seasons: map[int]IndexedSeason{
+			Seasons: map[int]*Season{
 				episode.Season: {
-					Path:     seasonPath,
-					Episodes: map[int]string{episode.Episode: episode.Path},
+					Path: seasonPath,
+					Episodes: map[int]*Episode{
+						episode.Episode: &Episode{
+							Path: episode.Path,
+						},
+					},
 				},
 			},
 		}
@@ -211,15 +232,21 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 		defer si.Unlock()
 
 		// Add a whole new season
-		si.shows[episode.ShowImdbID].Seasons[episode.Season] = IndexedSeason{
-			Path:     seasonPath,
-			Episodes: map[int]string{episode.Episode: episode.Path},
+		si.shows[episode.ShowImdbID].Seasons[episode.Season] = &Season{
+			Path: seasonPath,
+			Episodes: map[int]*Episode{
+				episode.Episode: &Episode{
+					Path: episode.Path,
+				},
+			},
 		}
 		return nil
 	}
 
 	// The show and the season are already indexed
-	si.shows[episode.ShowImdbID].Seasons[episode.Season].Episodes[episode.Episode] = episode.Path
+	si.shows[episode.ShowImdbID].Seasons[episode.Season].Episodes[episode.Episode] = &Episode{
+		Path: episode.Path,
+	}
 
 	return nil
 }
@@ -229,6 +256,10 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 func (si *ShowIndex) IsShowEmpty(imdbID string) (bool, error) {
 	si.RLock()
 	defer si.RUnlock()
+
+	if _, ok := si.shows[imdbID]; !ok {
+		return true, nil
+	}
 
 	// Check if there is something in the show index
 	if len(si.shows[imdbID].Seasons) != 0 {
@@ -286,7 +317,7 @@ func (si *ShowIndex) RemoveEpisode(episode *polochon.ShowEpisode, log *logrus.En
 	eNum := episode.Episode
 
 	// Check if the episode is in the index
-	if _, err := si.EpisodePath(id, sNum, eNum); err != nil {
+	if _, err := si.Episode(id, sNum, eNum); err != nil {
 		return err
 	}
 
@@ -295,5 +326,27 @@ func (si *ShowIndex) RemoveEpisode(episode *polochon.ShowEpisode, log *logrus.En
 	defer si.Unlock()
 	delete(si.shows[id].Seasons[sNum].Episodes, eNum)
 
+	return nil
+}
+
+// AddSubtitle adds a movie subtitle to an index
+func (si *ShowIndex) AddSubtitle(episode *polochon.ShowEpisode, lang polochon.Language) error {
+	// Check that we have the show
+	has, err := si.HasEpisode(episode.ShowImdbID, episode.Season, episode.Episode)
+	if err != nil {
+		return err
+	}
+	if !has {
+		return fmt.Errorf("failed to add subtitle : show %s S%02dE%02d not indexed", episode.ShowImdbID, episode.Season, episode.Episode)
+	}
+
+	si.Lock()
+	defer si.Unlock()
+
+	// Append the subtitle to the index
+	si.shows[episode.ShowImdbID].Seasons[episode.Season].Episodes[episode.Episode].Subtitles = append(
+		si.shows[episode.ShowImdbID].Seasons[episode.Season].Episodes[episode.Episode].Subtitles,
+		lang,
+	)
 	return nil
 }

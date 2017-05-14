@@ -11,10 +11,10 @@ import (
 )
 
 // GetIndexedSeason returns a ShowSeason from its id
-func (l *Library) GetIndexedSeason(id string, season int) (index.IndexedSeason, error) {
+func (l *Library) GetIndexedSeason(id string, season int) (*index.Season, error) {
 	s, err := l.showIndex.IndexedSeason(id, season)
 	if err != nil {
-		return index.IndexedSeason{}, err
+		return nil, err
 	}
 
 	return s, nil

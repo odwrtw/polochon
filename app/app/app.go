@@ -73,7 +73,7 @@ func (a *App) init() error {
 	log := logrus.NewEntry(a.logger).WithField("function", "app_init")
 	log.Debug("app configuration loaded")
 
-	library := library.New(config.File, config.Movie, config.Show, config.Library)
+	library := library.New(config)
 
 	// Build the library index
 	if err := library.RebuildIndex(log); err != nil {

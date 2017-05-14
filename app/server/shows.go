@@ -11,18 +11,18 @@ import (
 )
 
 // Format seasons to get a pretty marshal
-func formatSeasons(s index.IndexedShow) map[string][]string {
-	ret := map[string][]string{}
-	for seasonNum, season := range s.Seasons {
+func formatSeasons(show *index.Show) map[string]map[string]*index.Episode {
+	ret := map[string]map[string]*index.Episode{}
+	for seasonNum, season := range show.Seasons {
 		s := fmt.Sprintf("%02d", seasonNum)
-		for episode := range season.Episodes {
-			e := fmt.Sprintf("%02d", episode)
+		for episodeNb, episode := range season.Episodes {
+			e := fmt.Sprintf("%02d", episodeNb)
 
 			if _, ok := ret[s]; !ok {
-				ret[s] = []string{}
+				ret[s] = map[string]*index.Episode{}
 			}
 
-			ret[s] = append(ret[s], e)
+			ret[s][e] = episode
 		}
 	}
 	return ret
@@ -31,7 +31,7 @@ func formatSeasons(s index.IndexedShow) map[string][]string {
 func (s *Server) showIds(w http.ResponseWriter, req *http.Request) {
 	s.log.Debug("listing shows")
 
-	ret := map[string]map[string][]string{}
+	ret := map[string]map[string]map[string]*index.Episode{}
 	for id, show := range s.library.ShowIDs() {
 		ret[id] = formatSeasons(show)
 	}
@@ -82,7 +82,7 @@ func (s *Server) getShowDetails(w http.ResponseWriter, req *http.Request) {
 
 	out := struct {
 		*polochon.Show
-		Seasons map[string][]string `json:"seasons"`
+		Seasons map[string]map[string]*index.Episode `json:"seasons"`
 	}{
 		show,
 		formatSeasons(indexedShow),
@@ -108,7 +108,21 @@ func (s *Server) getShowEpisodeIDDetails(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	s.renderOK(w, e)
+	idxEpisode, err := s.library.GetIndexedEpisode(e.ShowImdbID, e.Season, e.Episode)
+	if err != nil {
+		s.renderError(w, err)
+		return
+	}
+
+	episode := struct {
+		*polochon.ShowEpisode
+		Subtitles []polochon.Language `json:"subtitles"`
+	}{
+		ShowEpisode: e,
+		Subtitles:   idxEpisode.Subtitles,
+	}
+
+	s.renderOK(w, episode)
 }
 
 func (s *Server) deleteEpisode(w http.ResponseWriter, req *http.Request) {
@@ -125,25 +139,11 @@ func (s *Server) deleteEpisode(w http.ResponseWriter, req *http.Request) {
 	s.renderOK(w, nil)
 }
 
-func (s *Server) updateEpisodeSubtitles(w http.ResponseWriter, req *http.Request) {
+func (s *Server) serveEpisode(w http.ResponseWriter, req *http.Request) {
 	e := s.getEpisode(w, req)
 	if e == nil {
 		return
 	}
 
-	if err := s.library.AddSubtitles(e, s.config.SubtitleLanguages, s.log); err != nil {
-		s.renderError(w, err)
-		return
-	}
-
-	s.renderOK(w, nil)
-}
-
-func (s *Server) serveShow(w http.ResponseWriter, r *http.Request) {
-	e := s.getEpisode(w, r)
-	if e == nil {
-		return
-	}
-
-	s.serveFile(w, r, e.GetFile())
+	s.serveFile(w, req, e.GetFile())
 }

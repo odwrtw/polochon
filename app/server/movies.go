@@ -12,6 +12,11 @@ func (s *Server) movieIds(w http.ResponseWriter, req *http.Request) {
 	s.renderOK(w, s.library.MovieIDs())
 }
 
+func (s *Server) movieIndex(w http.ResponseWriter, req *http.Request) {
+	s.log.Debug("listing movie index")
+	s.renderOK(w, s.library.MovieIndex())
+}
+
 // TODO: handle this in a middleware
 func (s *Server) getMovie(w http.ResponseWriter, req *http.Request) *polochon.Movie {
 	vars := mux.Vars(req)
@@ -35,7 +40,21 @@ func (s *Server) getMovieDetails(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	s.renderOK(w, m)
+	idxMovie, err := s.library.GetIndexedMovie(m.ImdbID)
+	if err != nil {
+		s.renderError(w, err)
+		return
+	}
+
+	movie := struct {
+		*polochon.Movie
+		Subtitles []polochon.Language `json:"subtitles"`
+	}{
+		Movie:     m,
+		Subtitles: idxMovie.Subtitles,
+	}
+
+	s.renderOK(w, movie)
 }
 
 func (s *Server) serveMovie(w http.ResponseWriter, req *http.Request) {
@@ -54,20 +73,6 @@ func (s *Server) deleteMovie(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := s.library.Delete(m, s.log); err != nil {
-		s.renderError(w, err)
-		return
-	}
-
-	s.renderOK(w, nil)
-}
-
-func (s *Server) updateMovieSubtitles(w http.ResponseWriter, req *http.Request) {
-	m := s.getMovie(w, req)
-	if m == nil {
-		return
-	}
-
-	if err := s.library.AddSubtitles(m, s.config.SubtitleLanguages, s.log); err != nil {
 		s.renderError(w, err)
 		return
 	}

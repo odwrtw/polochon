@@ -13,22 +13,32 @@ var mockLogEntry = logrus.NewEntry(&logrus.Logger{Out: ioutil.Discard})
 
 func mockShowIndex() *ShowIndex {
 	return &ShowIndex{
-		shows: map[string]IndexedShow{
+		shows: map[string]*Show{
 			// Game Of Thrones
 			"tt0944947": {
 				Path: "/home/shows/Game Of Thrones",
-				Seasons: map[int]IndexedSeason{
+				Seasons: map[int]*Season{
 					2: {
 						Path: "/home/shows/Game Of Thrones/Season 2",
-						Episodes: map[int]string{
-							2: "/home/shows/Game Of Thrones/Season 2/s02e02.mp4",
+						Episodes: map[int]*Episode{
+							2: &Episode{
+								Path: "/home/shows/Game Of Thrones/Season 2/s02e02.mp4",
+								Subtitles: []polochon.Language{
+									polochon.FR,
+									polochon.EN,
+								},
+							},
 						},
 					},
 					1: {
 						Path: "/home/shows/Game Of Thrones/Season 1",
-						Episodes: map[int]string{
-							2: "/home/shows/Game Of Thrones/Season 1/s01e02.mp4",
-							1: "/home/shows/Game Of Thrones/Season 1/s01e01.mp4",
+						Episodes: map[int]*Episode{
+							2: &Episode{
+								Path: "/home/shows/Game Of Thrones/Season 1/s01e02.mp4",
+							},
+							1: &Episode{
+								Path: "/home/shows/Game Of Thrones/Season 1/s01e01.mp4",
+							},
 						},
 					},
 				},
@@ -36,11 +46,13 @@ func mockShowIndex() *ShowIndex {
 			// The Walking Dead
 			"tt1520211": {
 				Path: "/home/shows/The Walking Dead",
-				Seasons: map[int]IndexedSeason{
+				Seasons: map[int]*Season{
 					2: {
 						Path: "/home/shows/The Walking Dead/Season 2",
-						Episodes: map[int]string{
-							1: "/home/shows/The Walking Dead/Season 2/s02e01.mp4",
+						Episodes: map[int]*Episode{
+							1: &Episode{
+								Path: "/home/shows/The Walking Dead/Season 2/s02e01.mp4",
+							},
 						},
 					},
 				},
@@ -48,11 +60,13 @@ func mockShowIndex() *ShowIndex {
 			// Vickings
 			"tt2306299": {
 				Path: "/home/shows/Vikings",
-				Seasons: map[int]IndexedSeason{
+				Seasons: map[int]*Season{
 					9: {
 						Path: "/home/shows/Vikings/Season 9",
-						Episodes: map[int]string{
-							18: "/home/shows/Vikings/Season 9/s09e18.mp4",
+						Episodes: map[int]*Episode{
+							18: &Episode{
+								Path: "/home/shows/Vikings/Season 9/s09e18.mp4",
+							},
 						},
 					},
 				},
@@ -62,7 +76,7 @@ func mockShowIndex() *ShowIndex {
 			// Family Guy
 			"tt0182576": {
 				Path: "/home/shows/Family Guy",
-				Seasons: map[int]IndexedSeason{
+				Seasons: map[int]*Season{
 					2: {},
 				},
 			},
@@ -350,7 +364,7 @@ func TestShowIndexAdd(t *testing.T) {
 
 func TestEmptyShowIndex(t *testing.T) {
 	idx := NewShowIndex()
-	expected := map[string]IndexedShow{}
+	expected := map[string]*Show{}
 	idx.Clear()
 
 	if !reflect.DeepEqual(idx.shows, expected) {
@@ -362,7 +376,7 @@ func TestShowIDs(t *testing.T) {
 	idx := NewShowIndex()
 	expected := idx.shows
 
-	got := idx.IDs()
+	got := idx.Index()
 	if !reflect.DeepEqual(got, expected) {
 		t.Errorf("expected %+v , got %+v", expected, got)
 	}
@@ -383,17 +397,90 @@ func TestSeasonList(t *testing.T) {
 	}
 }
 
-func TestEpisodeList(t *testing.T) {
+func TestShowIndexHasEpisodeSubtitle(t *testing.T) {
 	idx := mockShowIndex()
 
-	indexedSeason, err := idx.IndexedSeason("tt0944947", 1)
-	if err != nil {
-		t.Fatalf("expected no error, got %q", err)
-	}
+	for _, mock := range []struct {
+		imdbID      string
+		season      int
+		episode     int
+		lang        polochon.Language
+		expected    bool
+		expectedErr error
+	}{
+		{"tt0944947", 2, 2, polochon.EN, true, nil},
+		{"tt0944947", 2, 2, polochon.FR, true, nil},
+		{"tt0944947", 1, 3, polochon.FR, false, ErrNotFound},
+		{"tt1520211", 1, 3, polochon.FR, false, ErrNotFound},
+		{"tt1520211", 2, 1, polochon.FR, false, nil},
+		{"tt11111", 2, 1, polochon.FR, false, ErrNotFound},
+	} {
+		got, err := idx.HasEpisodeSubtitle(mock.imdbID, mock.season, mock.episode, mock.lang)
+		if err != mock.expectedErr {
+			t.Fatalf("expected error %q, got %q", mock.expectedErr, err)
+		}
 
-	expected := []int{1, 2}
-	got := indexedSeason.EpisodeList()
-	if !reflect.DeepEqual(got, expected) {
-		t.Errorf("expected %+v , got %+v", expected, got)
+		if mock.expected != got {
+			t.Errorf("expected %t, got %t for %s s%d e%d", mock.expected, got, mock.imdbID, mock.season, mock.episode)
+		}
+	}
+}
+
+func TestShowIndexAddSubtitle(t *testing.T) {
+	for _, mock := range []struct {
+		expectedShowPath   string
+		expectedSeasonPath string
+		episodePath        string
+		episode            *polochon.ShowEpisode
+	}{
+		{
+			// New show, nothing is in the index yet
+			expectedShowPath:   "/home/shows/How I Met Your Mother",
+			expectedSeasonPath: "/home/shows/How I Met Your Mother/Season 1",
+			episodePath:        "/home/shows/How I Met Your Mother/Season 1/s01e01.mp4",
+			episode: &polochon.ShowEpisode{
+				ShowImdbID: "tt0460649",
+				Season:     1,
+				Episode:    1,
+			},
+		},
+		{
+			// New season, the show is already in the index
+			expectedShowPath:   "/home/shows/Game Of Thrones",
+			expectedSeasonPath: "/home/shows/Game Of Thrones/Season 3",
+			episodePath:        "/home/shows/Game Of Thrones/Season 3/s03e01.mp4",
+			episode: &polochon.ShowEpisode{
+				ShowImdbID: "tt0944947", // Game Of Thrones
+				Season:     3,
+				Episode:    1,
+			},
+		},
+	} {
+		idx := mockShowIndex()
+		mock.episode.Path = mock.episodePath
+
+		// Add subtitle to the index
+		if err := idx.AddSubtitle(mock.episode, polochon.FR); err == nil {
+			t.Fatalf("should get an error while adding show subtitle in the index: %q", err)
+		}
+
+		// Add episode it to the index
+		if err := idx.Add(mock.episode); err != nil {
+			t.Fatalf("error while adding show in the index: %q", err)
+		}
+
+		// Add subtitle to the index
+		if err := idx.AddSubtitle(mock.episode, polochon.FR); err != nil {
+			t.Fatalf("got an error while adding show subtitle in the index: %q", err)
+		}
+
+		// Check
+		hasEpisodeSub, err := idx.HasEpisodeSubtitle(mock.episode.ShowImdbID, mock.episode.Season, mock.episode.Episode, polochon.FR)
+		if err != nil {
+			t.Fatalf("expected no error, got %q", err)
+		}
+		if !hasEpisodeSub {
+			t.Fatal("the index should have the episode's subtitle")
+		}
 	}
 }

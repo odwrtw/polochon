@@ -3,7 +3,7 @@ package index
 import "sort"
 
 // tool to extract the string keys of the map
-func extractAndSortStringMapKeys(input map[string]string) []string {
+func extractAndSortStringMapKeys(input map[string]*Movie) []string {
 	// Prepare the return slice
 	ret := make([]string, len(input))
 
@@ -20,12 +20,12 @@ func extractAndSortStringMapKeys(input map[string]string) []string {
 }
 
 // tool to extract the int keys of the map
-func extractAndSortIntMapKeys(input map[int]string) []int {
+func extractAndSortIntMapKeys(input map[int]*Episode) []int {
 	// Prepare the return slice
 	ret := make([]int, len(input))
 
 	i := 0
-	for k := range input {
+	for k, _ := range input {
 		ret[i] = k
 		i++
 	}
@@ -37,7 +37,7 @@ func extractAndSortIntMapKeys(input map[int]string) []int {
 }
 
 // tool to extract the indexed seasons keys of the map
-func extractAndSortIndexedSeasonsMapKeys(input map[int]IndexedSeason) []int {
+func extractAndSortIndexedSeasonsMapKeys(input map[int]*Season) []int {
 	// Prepare the return slice
 	ret := make([]int, len(input))
 

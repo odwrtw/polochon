@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib/configuration"
 	_ "github.com/odwrtw/polochon/modules/mock"
 )
 
@@ -39,6 +40,12 @@ func newMockLibrary() (*mockLibrary, error) {
 		return nil, err
 	}
 
+	// Get the mock subtitler
+	subtitler, err := polochon.ConfigureSubtitler("mock", nil)
+	if err != nil {
+		return nil, err
+	}
+
 	// Create a temp dir
 	tmpDir, err := ioutil.TempDir("", "polochon-library")
 	if err != nil {
@@ -46,7 +53,7 @@ func newMockLibrary() (*mockLibrary, error) {
 	}
 
 	// Create the library configuration
-	config := Config{
+	config := configuration.LibraryConfig{
 		MovieDir: filepath.Join(tmpDir, "movies"),
 		ShowDir:  filepath.Join(tmpDir, "shows"),
 	}
@@ -69,20 +76,29 @@ func newMockLibrary() (*mockLibrary, error) {
 
 	// MovieConfig with the mock detailer
 	movieConfig := polochon.MovieConfig{
-		Detailers: []polochon.Detailer{detailer},
+		Detailers:  []polochon.Detailer{detailer},
+		Subtitlers: []polochon.Subtitler{subtitler},
 	}
 
 	// ShowConfig with the mock detailer
 	showConfig := polochon.ShowConfig{
-		Detailers: []polochon.Detailer{detailer},
+		Detailers:  []polochon.Detailer{detailer},
+		Subtitlers: []polochon.Subtitler{subtitler},
 	}
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "mockContent")
 	}))
 
+	c := &configuration.Config{
+		Show:    showConfig,
+		Movie:   movieConfig,
+		File:    fileConfig,
+		Library: config,
+	}
+
 	return &mockLibrary{
-		Library:    New(fileConfig, movieConfig, showConfig, config),
+		Library:    New(c),
 		tmpDir:     tmpDir,
 		httpServer: ts,
 	}, nil

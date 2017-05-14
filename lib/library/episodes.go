@@ -8,6 +8,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	polochon "github.com/odwrtw/polochon/lib"
+	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
 // HasShowEpisode returns true if the show is in the store
@@ -124,11 +125,21 @@ func (l *Library) DeleteShowEpisode(se *polochon.ShowEpisode, log *logrus.Entry)
 
 // GetEpisode returns an episode if present in the index
 func (l *Library) GetEpisode(imdbID string, season, episode int) (*polochon.ShowEpisode, error) {
-	path, err := l.showIndex.EpisodePath(imdbID, season, episode)
+	e, err := l.showIndex.Episode(imdbID, season, episode)
 	if err != nil {
 		return nil, err
 	}
-	return l.newEpisodeFromPath(path)
+	return l.newEpisodeFromPath(e.Path)
+}
+
+// GetIndexedEpisode returns an index Episode
+func (l *Library) GetIndexedEpisode(imdbID string, season, episode int) (*index.Episode, error) {
+	e, err := l.showIndex.Episode(imdbID, season, episode)
+	if err != nil {
+		return nil, err
+	}
+
+	return e, nil
 }
 
 // NewShowEpisodeFromPath returns a new ShowEpisode from its path

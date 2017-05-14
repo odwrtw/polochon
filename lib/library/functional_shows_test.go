@@ -1,6 +1,7 @@
 package library
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -77,6 +78,31 @@ func TestAddEpisode(t *testing.T) {
 		t.Fatalf("failed to add the episode: %q", err)
 	}
 
+	// Add subtitles for the movie
+	if err := lib.AddSubtitles(episode, []polochon.Language{polochon.FR, polochon.EN}, mockLogEntry); err != nil {
+		t.Fatalf("failed to add subtitles for the episode: %q", err)
+	}
+
+	// Check the content of the downloaded subtitles files
+	for _, lang := range []polochon.Language{
+		polochon.FR,
+		polochon.EN,
+	} {
+		has := lib.HasSubtitle(episode, lang)
+		if !has {
+			t.Fatal("should have subtitle")
+		}
+		content, err := ioutil.ReadFile(episode.SubtitlePath(lang))
+		if err != nil {
+			t.Fatalf("failed to read the episode's subtitle : %q", err)
+		}
+
+		// The mock content comes from the httptest server
+		if string(content) != fmt.Sprintf("subtitle in %s", lang) {
+			t.Error("invalid subtitle content")
+		}
+	}
+
 	// Check the new file location
 	expectedPath := filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1/episodeTest.mp4")
 	if episode.Path != expectedPath {
@@ -124,23 +150,25 @@ func TestAddEpisode(t *testing.T) {
 	}
 
 	// Expected indexed season
-	expectedIndexedSeason := index.IndexedSeason{
+	expectedIndexedSeason := &index.Season{
 		Path: filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1"),
-		Episodes: map[int]string{
-			1: filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1/episodeTest.mp4"),
+		Episodes: map[int]*index.Episode{
+			1: &index.Episode{
+				Path: filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1/episodeTest.mp4"),
+			},
 		},
 	}
 
 	// Expected indexed show
-	expectedIndexedShow := index.IndexedShow{
+	expectedIndexedShow := &index.Show{
 		Path: filepath.Join(lib.tmpDir, "shows/Show tt12345"),
-		Seasons: map[int]index.IndexedSeason{
+		Seasons: map[int]*index.Season{
 			1: expectedIndexedSeason,
 		},
 	}
 
 	// Expected IDs
-	expectedIDs := map[string]index.IndexedShow{
+	expectedIDs := map[string]*index.Show{
 		"tt12345": expectedIndexedShow,
 	}
 
@@ -278,7 +306,7 @@ func TestDeleteEpisode(t *testing.T) {
 
 	// Ensure the index if valid
 	gotIDs := lib.ShowIDs()
-	expectedIDs := map[string]index.IndexedShow{}
+	expectedIDs := map[string]*index.Show{}
 
 	if !reflect.DeepEqual(expectedIDs, gotIDs) {
 		t.Errorf("invalid show ids, expected %+v got %+v", expectedIDs, gotIDs)

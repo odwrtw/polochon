@@ -7,6 +7,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/errors"
 	"github.com/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/media_index"
 )
 
@@ -27,23 +28,25 @@ type Config struct {
 
 // Library represents a collection of videos
 type Library struct {
-	Config
-	movieIndex  *index.MovieIndex
-	showIndex   *index.ShowIndex
-	showConfig  polochon.ShowConfig
-	movieConfig polochon.MovieConfig
-	fileConfig  polochon.FileConfig
+	configuration.LibraryConfig
+	movieIndex        *index.MovieIndex
+	showIndex         *index.ShowIndex
+	showConfig        polochon.ShowConfig
+	movieConfig       polochon.MovieConfig
+	fileConfig        polochon.FileConfig
+	SubtitleLanguages []polochon.Language
 }
 
 // New returns a list of videos
-func New(fileConfig polochon.FileConfig, movieConfig polochon.MovieConfig, showConfig polochon.ShowConfig, vsConfig Config) *Library {
+func New(config *configuration.Config) *Library {
 	return &Library{
-		movieIndex:  index.NewMovieIndex(),
-		showIndex:   index.NewShowIndex(),
-		showConfig:  showConfig,
-		movieConfig: movieConfig,
-		fileConfig:  fileConfig,
-		Config:      vsConfig,
+		movieIndex:        index.NewMovieIndex(),
+		showIndex:         index.NewShowIndex(),
+		showConfig:        config.Show,
+		movieConfig:       config.Movie,
+		fileConfig:        config.File,
+		SubtitleLanguages: config.SubtitleLanguages,
+		LibraryConfig:     config.Library,
 	}
 }
 
@@ -106,6 +109,11 @@ func (l *Library) AddSubtitles(video polochon.Subtitlable, languages []polochon.
 				c.Push(errors.Wrap(err).Ctx("Subtitler", subtitler.Name()))
 				continue
 			}
+			err = l.AddSubtitleIndex(video, lang)
+			if err != nil {
+				c.Push(errors.Wrap(err).Ctx("Subtitler", subtitler.Name()))
+				continue
+			}
 			break
 		}
 	}
@@ -130,4 +138,16 @@ func (l *Library) DownloadSubtitle(subtitle io.ReadCloser, v polochon.Subtitlabl
 		return err
 	}
 	return nil
+}
+
+// AddSubtitleIndex will add a subtitle in the index
+func (l *Library) AddSubtitleIndex(video polochon.Subtitlable, lang polochon.Language) error {
+	switch v := video.(type) {
+	case *polochon.Movie:
+		return l.movieIndex.AddSubtitle(v, lang)
+	case *polochon.ShowEpisode:
+		return l.showIndex.AddSubtitle(v, lang)
+	default:
+		return ErrInvalidIndexVideoType
+	}
 }
