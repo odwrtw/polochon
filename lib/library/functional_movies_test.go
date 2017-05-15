@@ -1,6 +1,7 @@
 package library
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -89,6 +90,31 @@ func TestAddMovie(t *testing.T) {
 		// The mock content comes from the httptest server
 		if string(content) != "mockContent" {
 			t.Error("invalid image content")
+		}
+	}
+
+	// Add subtitles for the movie
+	if err := lib.AddSubtitles(m, []polochon.Language{polochon.FR, polochon.EN}, mockLogEntry); err != nil {
+		t.Fatalf("failed to add subtitles for the movie: %q", err)
+	}
+
+	// Check the content of the downloaded subtitles files
+	for _, lang := range []polochon.Language{
+		polochon.FR,
+		polochon.EN,
+	} {
+		has := lib.HasSubtitle(m, lang)
+		if !has {
+			t.Fatal("should have subtitle")
+		}
+		content, err := ioutil.ReadFile(m.SubtitlePath(lang))
+		if err != nil {
+			t.Fatalf("failed to read the movie's subtitle : %q", err)
+		}
+
+		// The mock content comes from the httptest server
+		if string(content) != fmt.Sprintf("subtitle in %s", lang) {
+			t.Error("invalid subtitle content")
 		}
 	}
 

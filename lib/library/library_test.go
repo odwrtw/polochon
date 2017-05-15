@@ -6,6 +6,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib/configuration"
 )
 
 var mockLogEntry = logrus.NewEntry(&logrus.Logger{Out: ioutil.Discard})
@@ -23,7 +24,7 @@ func (m *mockInvalidType) SubtitlePath(lang polochon.Language) string {
 }
 
 func TestStoreMovieNoPath(t *testing.T) {
-	library := New(polochon.FileConfig{}, polochon.MovieConfig{}, polochon.ShowConfig{}, Config{})
+	library := New(&configuration.Config{})
 	movie := &polochon.Movie{}
 
 	if err := library.Add(movie, mockLogEntry); err != ErrMissingMovieFilePath {
@@ -33,7 +34,7 @@ func TestStoreMovieNoPath(t *testing.T) {
 
 func TestGetMovieDir(t *testing.T) {
 	l := &Library{
-		Config: Config{
+		LibraryConfig: configuration.LibraryConfig{
 			MovieDir: "/",
 		},
 	}

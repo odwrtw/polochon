@@ -13,14 +13,14 @@ import (
 // Season represents the season output of the server
 type Season struct {
 	*polochon.ShowSeason
-	Episodes []int `json:"episodes"`
+	Episodes map[int]*index.Episode `json:"episodes"`
 }
 
 // NewSeason returns a new season to be JSON formated
-func NewSeason(season *polochon.ShowSeason, indexed index.IndexedSeason) *Season {
+func NewSeason(season *polochon.ShowSeason, indexed *index.Season) *Season {
 	return &Season{
 		ShowSeason: season,
-		Episodes:   indexed.EpisodeList(),
+		Episodes:   indexed.Episodes,
 	}
 }
 

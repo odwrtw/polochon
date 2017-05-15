@@ -8,11 +8,17 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	polochon "github.com/odwrtw/polochon/lib"
+	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
 // MovieIDs returns the movie ids
 func (l *Library) MovieIDs() []string {
 	return l.movieIndex.IDs()
+}
+
+// MovieIndex returns the movie ids
+func (l *Library) MovieIndex() map[string]*index.Movie {
+	return l.movieIndex.Index()
 }
 
 // HasMovie returns true if the movie is in the store
@@ -55,13 +61,13 @@ func (l *Library) AddMovie(movie *polochon.Movie, log *logrus.Entry) error {
 
 	// If the movie already in the right dir there is nothing to do
 	if path.Dir(movie.Path) == storePath {
-		log.Debug("Movie already in the destination folder")
+		log.Debug("movie already in the destination folder")
 		return nil
 	}
 
 	// Remove movie dir if it exisits
 	if ok := exists(storePath); ok {
-		log.Debug("Movie folder exists, remove it")
+		log.Debug("movie folder exists, remove it")
 		if err := os.RemoveAll(storePath); err != nil {
 			return err
 		}
@@ -88,7 +94,7 @@ func (l *Library) AddMovie(movie *polochon.Movie, log *logrus.Entry) error {
 
 	// Create a symlink between the new and the old location
 	if err := os.Symlink(movie.Path, oldPath); err != nil {
-		log.Warnf("Error while making symlink between %s and %s : %+v", oldPath, movie.Path, err)
+		log.Warnf("error while making symlink between %s and %s : %+v", oldPath, movie.Path, err)
 	}
 
 	// Write NFO into the file
@@ -129,18 +135,18 @@ func (l *Library) AddMovie(movie *polochon.Movie, log *logrus.Entry) error {
 
 // GetMovie returns the video by its imdb ID
 func (l *Library) GetMovie(imdbID string) (*polochon.Movie, error) {
-	path, err := l.movieIndex.MoviePath(imdbID)
+	movieIndex, err := l.movieIndex.Movie(imdbID)
 	if err != nil {
 		return nil, err
 	}
-	return l.newMovieFromPath(path)
+	return l.newMovieFromPath(movieIndex.Path)
 }
 
 // DeleteMovie will delete the movie
 func (l *Library) DeleteMovie(m *polochon.Movie, log *logrus.Entry) error {
 	// Delete the movie
 	d := filepath.Dir(m.Path)
-	log.Infof("Removing Movie %s", d)
+	log.Infof("removing movie %s", d)
 
 	if err := os.RemoveAll(d); err != nil {
 		return err
@@ -159,6 +165,16 @@ func (l *Library) newMovieFromPath(path string) (*polochon.Movie, error) {
 	m := polochon.NewMovieFromFile(l.movieConfig, *file)
 
 	if err := readNFOFile(file.NfoPath(), m); err != nil {
+		return nil, err
+	}
+
+	return m, nil
+}
+
+// GetIndexedMovie returns a Movie index from its id
+func (l *Library) GetIndexedMovie(id string) (*index.Movie, error) {
+	m, err := l.movieIndex.Movie(id)
+	if err != nil {
 		return nil, err
 	}
 

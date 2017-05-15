@@ -36,7 +36,7 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 			name:    "GetMovies",
 			path:    "/movies",
 			methods: "GET",
-			handler: s.movieIds,
+			handler: s.movieIndex,
 		},
 		{
 			name:    "GetMovie",
@@ -61,6 +61,13 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 			path:     "/movies/{id}/download",
 			methods:  "GET",
 			handler:  s.serveMovie,
+			excluded: !s.config.HTTPServer.ServeFiles,
+		},
+		{
+			name:     "DownloadMovieSubtitle",
+			path:     "/movies/{id}/subtitles/{lang}/download",
+			methods:  "GET",
+			handler:  s.serveMovieSubtitle,
 			excluded: !s.config.HTTPServer.ServeFiles,
 		},
 		{
@@ -115,7 +122,14 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 			name:     "DownloadEpisode",
 			path:     "/shows/{id}/seasons/{season:[0-9]+}/episodes/{episode:[0-9]+}/download",
 			methods:  "GET",
-			handler:  s.serveShow,
+			handler:  s.serveEpisode,
+			excluded: !s.config.HTTPServer.ServeFiles,
+		},
+		{
+			name:     "DownloadEpisodeSubtitle",
+			path:     "/shows/{id}/seasons/{season:[0-9]+}/episodes/{episode:[0-9]+}/subtitles/{lang}/download",
+			methods:  "GET",
+			handler:  s.serveEpisodeSubtitle,
 			excluded: !s.config.HTTPServer.ServeFiles,
 		},
 		{

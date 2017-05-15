@@ -11,8 +11,8 @@ import (
 )
 
 // ShowIDs returns the show ids, seasons and episodes
-func (l *Library) ShowIDs() map[string]index.IndexedShow {
-	return l.showIndex.IDs()
+func (l *Library) ShowIDs() map[string]*index.Show {
+	return l.showIndex.Index()
 }
 
 // GetShow returns a Show from its id
@@ -48,10 +48,10 @@ func (l *Library) DeleteShow(id string, log *logrus.Entry) error {
 }
 
 // GetIndexedShow returns an indexed Show from its id
-func (l *Library) GetIndexedShow(id string) (index.IndexedShow, error) {
+func (l *Library) GetIndexedShow(id string) (*index.Show, error) {
 	s, err := l.showIndex.IndexedShow(id)
 	if err != nil {
-		return index.IndexedShow{}, err
+		return nil, err
 	}
 
 	return s, nil

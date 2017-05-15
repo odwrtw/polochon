@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	polochon "github.com/odwrtw/polochon/lib"
 )
 
 // RebuildIndex rebuilds both the movie and show index
@@ -51,9 +52,10 @@ func (l *Library) RebuildIndex(log *logrus.Entry) error {
 func (l *Library) buildMovieIndex(log *logrus.Entry) error {
 	start := time.Now()
 	err := filepath.Walk(l.MovieDir, func(filePath string, file os.FileInfo, err error) error {
+		walkLog := log.WithField("path", filePath)
 		// Check err
 		if err != nil {
-			log.Errorf("library: failed to walk %q", err)
+			walkLog.Errorf("library: failed to walk %q", err)
 			return nil
 		}
 
@@ -80,15 +82,26 @@ func (l *Library) buildMovieIndex(log *logrus.Entry) error {
 		// Read the movie informations
 		movie, err := l.newMovieFromPath(moviePath)
 		if err != nil {
-			log.Errorf("library: failed to read movie NFO: %q", err)
+			walkLog.Errorf("library: failed to read movie NFO: %q", err)
 			return nil
 		}
 
 		// Add the movie to the index
 		err = l.movieIndex.Add(movie)
 		if err != nil {
-			log.Errorf("library: failed to add movie to the Library: %q", err)
+			walkLog.Errorf("library: failed to add movie to the Library: %q", err)
 			return nil
+		}
+
+		// Check for subtitles in the same folder
+		for _, subLang := range l.SubtitleLanguages {
+			if !l.HasSubtitle(movie, subLang) {
+				continue
+			}
+			if err = l.movieIndex.AddSubtitle(movie, subLang); err != nil {
+				walkLog.Warnf("library: failed to add subtitles %s : %q", subLang, err)
+				continue
+			}
 		}
 
 		return nil
@@ -99,6 +112,15 @@ func (l *Library) buildMovieIndex(log *logrus.Entry) error {
 	return err
 }
 
+// HasSubtitle returns true if the subtitle exists on the disk
+func (l *Library) HasSubtitle(v polochon.Video, lang polochon.Language) bool {
+	if _, err := os.Stat(v.SubtitlePath(lang)); err == nil {
+		// There is no such file
+		return true
+	}
+	return false
+}
+
 func (l *Library) buildShowIndex(log *logrus.Entry) error {
 	start := time.Now()
 
@@ -106,6 +128,7 @@ func (l *Library) buildShowIndex(log *logrus.Entry) error {
 	var rootWalked bool
 	// Get only the parent folders
 	err := filepath.Walk(l.ShowDir, func(filePath string, file os.FileInfo, err error) error {
+		walkLog := log.WithField("path", filePath)
 		// Only check directories
 		if !file.IsDir() {
 			return nil
@@ -121,12 +144,12 @@ func (l *Library) buildShowIndex(log *logrus.Entry) error {
 		nfoPath := l.showNFOPath(filePath)
 		show, err := l.newShowFromPath(nfoPath)
 		if err != nil {
-			log.Errorf("library: failed to read tv show NFO: %q", err)
+			walkLog.Errorf("library: failed to read tv show NFO: %q", err)
 			return nil
 		}
 
 		// Scan the path for the episodes
-		err = l.scanEpisodes(show.ImdbID, filePath, log)
+		err = l.scanEpisodes(show.ImdbID, filePath, walkLog)
 		if err != nil {
 			return err
 		}
@@ -147,9 +170,10 @@ func (l *Library) buildShowIndex(log *logrus.Entry) error {
 func (l *Library) scanEpisodes(imdbID, showRootPath string, log *logrus.Entry) error {
 	// Walk the files of a show
 	err := filepath.Walk(showRootPath, func(filePath string, file os.FileInfo, err error) error {
+		walkLog := log.WithField("path", filePath)
 		// Check err
 		if err != nil {
-			log.Errorf("library: failed to walk %q", err)
+			walkLog.Errorf("library: failed to walk %q", err)
 			return nil
 		}
 
@@ -176,7 +200,7 @@ func (l *Library) scanEpisodes(imdbID, showRootPath string, log *logrus.Entry) e
 		// Read the nfo file
 		episode, err := l.newEpisodeFromPath(epPath)
 		if err != nil {
-			log.Errorf("library: failed to read episode NFO: %q", err)
+			walkLog.Errorf("library: failed to read episode NFO: %q", err)
 			return nil
 		}
 
@@ -184,8 +208,19 @@ func (l *Library) scanEpisodes(imdbID, showRootPath string, log *logrus.Entry) e
 		episode.ShowConfig = l.showConfig
 		err = l.showIndex.Add(episode)
 		if err != nil {
-			log.Errorf("library: failed to add movie to the Library: %q", err)
+			walkLog.Errorf("library: failed to add movie to the Library: %q", err)
 			return nil
+		}
+
+		// Check for subtitles in the same folder
+		for _, subLang := range l.SubtitleLanguages {
+			if !l.HasSubtitle(episode, subLang) {
+				continue
+			}
+			if err = l.showIndex.AddSubtitle(episode, subLang); err != nil {
+				walkLog.Warnf("library: failed to add subtitles %s : %q", subLang, err)
+				continue
+			}
 		}
 
 		return nil

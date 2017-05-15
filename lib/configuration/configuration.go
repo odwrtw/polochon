@@ -10,7 +10,6 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
-	"github.com/odwrtw/polochon/lib/library"
 	"gopkg.in/yaml.v2"
 )
 
@@ -139,9 +138,15 @@ type Config struct {
 	Movie             polochon.MovieConfig
 	Show              polochon.ShowConfig
 	File              polochon.FileConfig
-	Library           library.Config
+	Library           LibraryConfig
 	Notifiers         []polochon.Notifier
 	SubtitleLanguages []polochon.Language
+}
+
+// LibraryConfig represents configuration for the library
+type LibraryConfig struct {
+	MovieDir string
+	ShowDir  string
 }
 
 // WatcherConfig represents the configuration for the detailers
@@ -283,7 +288,7 @@ func loadConfig(cf *ConfigFileRoot) (*Config, error) {
 		return nil, err
 	}
 
-	conf.Library = library.Config{
+	conf.Library = LibraryConfig{
 		MovieDir: realMoviesPath,
 		ShowDir:  realShowsPath,
 	}

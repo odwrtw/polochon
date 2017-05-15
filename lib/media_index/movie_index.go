@@ -1,6 +1,7 @@
 package index
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/Sirupsen/logrus"
@@ -11,14 +12,20 @@ import (
 type MovieIndex struct {
 	// Mutex to protect reads / writes made concurrently by the http server
 	sync.RWMutex
-	// ids keep the imdb ids and their associated paths
-	ids map[string]string
+	// ids keep the imdb ids and their associated infos
+	ids map[string]*Movie
+}
+
+// Movie represents a Movie in the index
+type Movie struct {
+	Path      string              `json:"-"`
+	Subtitles []polochon.Language `json:"subtitles"`
 }
 
 // NewMovieIndex returns a new movie index
 func NewMovieIndex() *MovieIndex {
 	return &MovieIndex{
-		ids: map[string]string{},
+		ids: map[string]*Movie{},
 	}
 }
 
@@ -27,21 +34,21 @@ func (mi *MovieIndex) Clear() {
 	mi.Lock()
 	defer mi.Unlock()
 
-	mi.ids = map[string]string{}
+	mi.ids = map[string]*Movie{}
 }
 
-// MoviePath returns the movie path from its ID
-func (mi *MovieIndex) MoviePath(imdbID string) (string, error) {
+// Movie returns the movie index from its ID
+func (mi *MovieIndex) Movie(imdbID string) (*Movie, error) {
 	mi.RLock()
 	defer mi.RUnlock()
 
 	// Check if the id is in the index and get the filePath
-	filePath, ok := mi.ids[imdbID]
+	movie, ok := mi.ids[imdbID]
 	if !ok {
-		return "", ErrNotFound
+		return nil, ErrNotFound
 	}
 
-	return filePath, nil
+	return movie, nil
 }
 
 // Add adds a movie to an index
@@ -49,14 +56,38 @@ func (mi *MovieIndex) Add(movie *polochon.Movie) error {
 	mi.Lock()
 	defer mi.Unlock()
 
-	mi.ids[movie.ImdbID] = movie.Path
+	mi.ids[movie.ImdbID] = &Movie{
+		Path: movie.Path,
+	}
 
+	return nil
+}
+
+// AddSubtitle adds a movie subtitle to an index
+func (mi *MovieIndex) AddSubtitle(movie *polochon.Movie, lang polochon.Language) error {
+	// Check that we have the movie
+	has, err := mi.Has(movie.ImdbID)
+	if err != nil {
+		return err
+	}
+	if !has {
+		return fmt.Errorf("failed to add subtitle : movie %s not indexed", movie.ImdbID)
+	}
+
+	mi.Lock()
+	defer mi.Unlock()
+
+	// Append the subtitle to the index
+	mi.ids[movie.ImdbID].Subtitles = append(
+		mi.ids[movie.ImdbID].Subtitles,
+		lang,
+	)
 	return nil
 }
 
 // Remove will delete the movie from the index
 func (mi *MovieIndex) Remove(m *polochon.Movie, log *logrus.Entry) error {
-	if _, err := mi.MoviePath(m.ImdbID); err != nil {
+	if _, err := mi.Movie(m.ImdbID); err != nil {
 		return err
 	}
 
@@ -75,13 +106,21 @@ func (mi *MovieIndex) IDs() []string {
 	return extractAndSortStringMapKeys(mi.ids)
 }
 
+// Index returns the movie index to be rendered
+func (mi *MovieIndex) Index() map[string]*Movie {
+	mi.RLock()
+	defer mi.RUnlock()
+
+	return mi.ids
+}
+
 // Has searches the movie index for an ImdbID and returns true if the movie is
 // indexed
 func (mi *MovieIndex) Has(imdbID string) (bool, error) {
 	mi.RLock()
 	defer mi.RUnlock()
 
-	_, err := mi.MoviePath(imdbID)
+	_, err := mi.Movie(imdbID)
 	switch err {
 	case nil:
 		return true, nil
@@ -90,4 +129,24 @@ func (mi *MovieIndex) Has(imdbID string) (bool, error) {
 	default:
 		return false, err
 	}
+}
+
+// HasSubtitle searches the movie index for a subtitle in language lang and
+// ImdbID and returns true if the subtitle is present
+func (mi *MovieIndex) HasSubtitle(imdbID string, lang polochon.Language) (bool, error) {
+	movie, err := mi.Movie(imdbID)
+	if err != nil {
+		if err == ErrNotFound {
+			err = nil
+		}
+		return false, err
+	}
+
+	for _, l := range movie.Subtitles {
+		if lang == l {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
