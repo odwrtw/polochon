@@ -27,11 +27,16 @@ type Downloadable interface {
 
 // DownloadableInfos represent infos about a Downloadable object
 type DownloadableInfos struct {
-	Ratio           float32
-	IsFinished      bool
-	FilePaths       []string
-	Name            string
-	AdditionalInfos map[string]interface{}
+	Ratio           float32                `json:"ratio"`
+	IsFinished      bool                   `json:"is_finished"`
+	FilePaths       []string               `json:"file_paths"`
+	Name            string                 `json:"name"`
+	DownloadRate    int                    `json:"download_rate"`
+	UploadRate      int                    `json:"upload_rate"`
+	TotalSize       int                    `json:"total_size"`
+	DownloadedSize  int                    `json:"downloaded_size"`
+	PercentDone     float32                `json:"percent_done"`
+	AdditionalInfos map[string]interface{} `json:"additional_infos"`
 }
 
 // RegisterDownloader helps register a new Downloader

@@ -171,10 +171,15 @@ func (t Torrent) Infos() *polochon.DownloadableInfos {
 	}
 
 	i := polochon.DownloadableInfos{
-		Ratio:      float32(t.T.UploadRatio),
-		IsFinished: isFinished,
-		FilePaths:  filePaths,
-		Name:       t.T.Name,
+		DownloadRate:   t.T.RateDownload,
+		DownloadedSize: t.T.DownloadedEver,
+		FilePaths:      filePaths,
+		IsFinished:     isFinished,
+		Name:           t.T.Name,
+		PercentDone:    float32(t.T.PercentDone) * 100,
+		Ratio:          float32(t.T.UploadRatio),
+		TotalSize:      t.T.SizeWhenDone,
+		UploadRate:     t.T.RateUpload,
 		AdditionalInfos: map[string]interface{}{
 			"id": t.T.ID,
 		},
