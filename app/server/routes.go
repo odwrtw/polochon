@@ -144,6 +144,12 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 			methods: "POST",
 			handler: s.addTorrent,
 		},
+		{
+			name:    "ListTorrents",
+			path:    "/torrents",
+			methods: "GET",
+			handler: s.getTorrents,
+		},
 	} {
 		if route.excluded {
 			continue

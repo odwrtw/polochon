@@ -14,11 +14,14 @@
     - guest
   allowed:
     - DownloadMovie
+    - DownloadMovieSubtitle
     - UpdateMovieSubtitles
     - DownloadEpisode
+    - DownloadEpisodeSubtitle
     - UpdateEpisodeSubtitles
     - Wishlist
     - AddTorrent
+    - ListTorrents
   token:
   - name: user_token_name
     value: secure_user_token
