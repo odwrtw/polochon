@@ -14,8 +14,10 @@
     - guest
   allowed:
     - DownloadMovie
+    - DownloadMovieSubtitle
     - UpdateMovieSubtitles
     - DownloadEpisode
+    - DownloadEpisodeSubtitle
     - UpdateEpisodeSubtitles
     - Wishlist
     - AddTorrent
