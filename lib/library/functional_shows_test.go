@@ -78,16 +78,18 @@ func TestAddEpisode(t *testing.T) {
 		t.Fatalf("failed to add the episode: %q", err)
 	}
 
-	// Add subtitles for the movie
-	if err := lib.AddSubtitles(episode, []polochon.Language{polochon.FR, polochon.EN}, mockLogEntry); err != nil {
+	wantedSubs := []polochon.Language{polochon.FR, polochon.EN}
+	// Add subtitles for the episode
+	subs, err := lib.AddSubtitles(episode, wantedSubs, mockLogEntry)
+	if err != nil {
 		t.Fatalf("failed to add subtitles for the episode: %q", err)
+	}
+	if !reflect.DeepEqual(subs, wantedSubs) {
+		t.Errorf("invalid subs, expected %+v got %+v", subs, wantedSubs)
 	}
 
 	// Check the content of the downloaded subtitles files
-	for _, lang := range []polochon.Language{
-		polochon.FR,
-		polochon.EN,
-	} {
+	for _, lang := range wantedSubs {
 		has := lib.HasSubtitle(episode, lang)
 		if !has {
 			t.Fatal("should have subtitle")
@@ -101,6 +103,15 @@ func TestAddEpisode(t *testing.T) {
 		if string(content) != fmt.Sprintf("subtitle in %s", lang) {
 			t.Error("invalid subtitle content")
 		}
+	}
+
+	// Add subtitles for the episode once more
+	subs, err = lib.AddSubtitles(episode, wantedSubs, mockLogEntry)
+	if err != nil {
+		t.Fatalf("failed to add subtitles for the episode: %q", err)
+	}
+	if !reflect.DeepEqual(subs, wantedSubs) {
+		t.Errorf("invalid subs, expected %+v got %+v", subs, wantedSubs)
 	}
 
 	// Check the new file location

@@ -20,12 +20,13 @@ func (s *Server) updateMovieSubtitles(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	if err := s.library.AddSubtitles(m, s.config.SubtitleLanguages, s.log); err != nil {
+	subs, err := s.library.AddSubtitles(m, s.config.SubtitleLanguages, s.log)
+	if err != nil {
 		s.renderError(w, err)
 		return
 	}
 
-	s.renderOK(w, nil)
+	s.renderOK(w, subs)
 }
 
 func (s *Server) updateEpisodeSubtitles(w http.ResponseWriter, req *http.Request) {
@@ -34,12 +35,13 @@ func (s *Server) updateEpisodeSubtitles(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	if err := s.library.AddSubtitles(e, s.config.SubtitleLanguages, s.log); err != nil {
+	subs, err := s.library.AddSubtitles(e, s.config.SubtitleLanguages, s.log)
+	if err != nil {
 		s.renderError(w, err)
 		return
 	}
 
-	s.renderOK(w, nil)
+	s.renderOK(w, subs)
 }
 
 func (s *Server) serveMovieSubtitle(w http.ResponseWriter, req *http.Request) {

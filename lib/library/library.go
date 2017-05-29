@@ -87,8 +87,9 @@ func (l *Library) Delete(video polochon.Video, log *logrus.Entry) error {
 }
 
 // AddSubtitles gets and downloads subtitles of different languages
-func (l *Library) AddSubtitles(video polochon.Subtitlable, languages []polochon.Language, log *logrus.Entry) error {
+func (l *Library) AddSubtitles(video polochon.Subtitlable, languages []polochon.Language, log *logrus.Entry) ([]polochon.Language, error) {
 	c := errors.NewCollector()
+	addedSubtitles := []polochon.Language{}
 
 	// We're going to ask subtitles in each language for each subtitles
 	for _, lang := range languages {
@@ -114,14 +115,15 @@ func (l *Library) AddSubtitles(video polochon.Subtitlable, languages []polochon.
 				c.Push(errors.Wrap(err).Ctx("Subtitler", subtitler.Name()))
 				continue
 			}
+			addedSubtitles = append(addedSubtitles, lang)
 			break
 		}
 	}
 
 	if c.HasErrors() {
-		return c
+		return addedSubtitles, c
 	}
-	return nil
+	return addedSubtitles, nil
 }
 
 // DownloadSubtitle will download the subtitle
@@ -144,8 +146,22 @@ func (l *Library) DownloadSubtitle(subtitle io.ReadCloser, v polochon.Subtitlabl
 func (l *Library) AddSubtitleIndex(video polochon.Subtitlable, lang polochon.Language) error {
 	switch v := video.(type) {
 	case *polochon.Movie:
+		ok, err := l.movieIndex.HasSubtitle(v.ImdbID, lang)
+		if err != nil {
+			return err
+		}
+		if ok {
+			return nil
+		}
 		return l.movieIndex.AddSubtitle(v, lang)
 	case *polochon.ShowEpisode:
+		ok, err := l.showIndex.HasEpisodeSubtitle(v.ShowImdbID, v.Season, v.Episode, lang)
+		if err != nil {
+			return err
+		}
+		if ok {
+			return nil
+		}
 		return l.showIndex.AddSubtitle(v, lang)
 	default:
 		return ErrInvalidIndexVideoType

@@ -184,7 +184,7 @@ func (o *Organizer) organizeFile(filePath string, log *logrus.Entry) error {
 	}
 
 	// Get subtitles
-	if err := o.library.AddSubtitles(video, o.config.SubtitleLanguages, log); err != nil {
+	if _, err = o.library.AddSubtitles(video, o.config.SubtitleLanguages, log); err != nil {
 		errors.LogErrors(log, err)
 	}
 
