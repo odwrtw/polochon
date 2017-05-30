@@ -3,6 +3,7 @@ package transmission
 import (
 	"crypto/tls"
 	"fmt"
+	"log"
 	"net/http"
 
 	"gopkg.in/yaml.v2"
@@ -139,12 +140,16 @@ func (c *Client) List() ([]polochon.Downloadable, error) {
 func (c *Client) Remove(d polochon.Downloadable) error {
 	// Get infos from the torrent
 	tInfos := d.Infos()
+	if tInfos == nil {
+		return fmt.Errorf("transmission: got nil Infos")
+	}
 
 	// Get the torrentID needed to delete the torrent
 	torrentID, ok := tInfos.AdditionalInfos["id"].(int)
 	if !ok {
-		return fmt.Errorf("Problem when getting torrentID in Remove")
+		return fmt.Errorf("transmission: problem when getting torrentID in Remove")
 	}
+	log.Println("Removing ID ", torrentID)
 
 	// Delete the torrent and the data
 	return c.tClient.RemoveTorrents([]*transmission.Torrent{{ID: torrentID}}, false)
@@ -157,6 +162,9 @@ type Torrent struct {
 
 // Infos prints the Torrent status
 func (t Torrent) Infos() *polochon.DownloadableInfos {
+	if t.T == nil {
+		return nil
+	}
 	isFinished := false
 
 	// Check that the torrent is finished
@@ -166,8 +174,10 @@ func (t Torrent) Infos() *polochon.DownloadableInfos {
 
 	// Add the filePaths
 	var filePaths []string
-	for _, f := range *t.T.Files {
-		filePaths = append(filePaths, f.Name)
+	if t.T.Files != nil {
+		for _, f := range *t.T.Files {
+			filePaths = append(filePaths, f.Name)
+		}
 	}
 
 	i := polochon.DownloadableInfos{
