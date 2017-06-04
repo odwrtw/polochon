@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
 	polochonError "github.com/odwrtw/errors"
+	"github.com/sirupsen/logrus"
 )
 
 // Torrenter error

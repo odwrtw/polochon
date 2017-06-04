@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
+	"github.com/sirupsen/logrus"
 )
 
 // MovieIndex is an index for the movies

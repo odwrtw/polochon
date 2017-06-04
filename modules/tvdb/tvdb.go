@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/arbovm/levenshtein"
 	"github.com/garfunkel/go-tvdb"
 	"github.com/odwrtw/polochon/lib"
+	"github.com/sirupsen/logrus"
 )
 
 // Register tvdb as a Detailer

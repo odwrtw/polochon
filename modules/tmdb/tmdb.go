@@ -7,10 +7,10 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/arbovm/levenshtein"
 	"github.com/odwrtw/polochon/lib"
 	"github.com/ryanbradynd05/go-tmdb"
+	"github.com/sirupsen/logrus"
 )
 
 // Module constants

@@ -6,9 +6,9 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/yifysubs"
+	"github.com/sirupsen/logrus"
 )
 
 // YifySubs holds the YifySubs module

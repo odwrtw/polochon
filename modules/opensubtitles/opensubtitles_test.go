@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
 	"github.com/oz/osdb"
+	"github.com/sirupsen/logrus"
 )
 
 var fakeLogger = &logrus.Logger{Out: ioutil.Discard}

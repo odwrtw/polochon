@@ -3,7 +3,7 @@ package subapp
 import (
 	"sync"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // Base represents the base of a sub app

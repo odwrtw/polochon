@@ -3,9 +3,9 @@ package eztv
 import (
 	"strconv"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/eztv"
 	polochon "github.com/odwrtw/polochon/lib"
+	"github.com/sirupsen/logrus"
 )
 
 // Register eztv as an Explorer

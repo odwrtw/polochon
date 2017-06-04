@@ -1,6 +1,6 @@
 package subapp
 
-import "github.com/Sirupsen/logrus"
+import "github.com/sirupsen/logrus"
 
 // Status represents the status of the app
 type Status int

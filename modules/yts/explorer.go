@@ -1,9 +1,9 @@
 package yts
 
 import (
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/yts"
+	"github.com/sirupsen/logrus"
 )
 
 // NewExplorer returns a new explorer

@@ -4,11 +4,11 @@ import (
 	"io"
 	"os"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/errors"
 	"github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/media_index"
+	"github.com/sirupsen/logrus"
 )
 
 // Custom errors

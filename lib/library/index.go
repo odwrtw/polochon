@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	polochon "github.com/odwrtw/polochon/lib"
+	"github.com/sirupsen/logrus"
 )
 
 // RebuildIndex rebuilds both the movie and show index

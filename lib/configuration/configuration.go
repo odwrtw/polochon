@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 

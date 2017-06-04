@@ -3,7 +3,7 @@ package polochon
 import (
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // Notifier is an interface to notify when a video is added

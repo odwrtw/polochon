@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/errors"
+	"github.com/sirupsen/logrus"
 )
 
 const (

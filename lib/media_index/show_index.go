@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
+	"github.com/sirupsen/logrus"
 )
 
 // ShowIndex is an index for the shows

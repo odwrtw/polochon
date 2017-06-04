@@ -6,9 +6,9 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/gregdel/pushover"
 	"github.com/odwrtw/polochon/lib"
+	"github.com/sirupsen/logrus"
 )
 
 // Pushover errors

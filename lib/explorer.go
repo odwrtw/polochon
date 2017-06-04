@@ -3,7 +3,7 @@ package polochon
 import (
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // Explorer is the interface explore new videos from different sources

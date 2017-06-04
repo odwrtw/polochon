@@ -4,10 +4,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/errors"
 	polochon "github.com/odwrtw/polochon/lib"
 	index "github.com/odwrtw/polochon/lib/media_index"
+	"github.com/sirupsen/logrus"
 )
 
 // ShowIDs returns the show ids, seasons and episodes

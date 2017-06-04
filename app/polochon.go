@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/app/app"
+	"github.com/sirupsen/logrus"
 )
 
 var (

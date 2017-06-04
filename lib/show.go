@@ -3,8 +3,8 @@ package polochon
 import (
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/errors"
+	"github.com/sirupsen/logrus"
 )
 
 // Show represents a tv show

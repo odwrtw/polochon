@@ -6,7 +6,6 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/errors"
 	"github.com/odwrtw/polochon/app/cleaner"
 	"github.com/odwrtw/polochon/app/downloader"
@@ -17,6 +16,7 @@ import (
 	"github.com/odwrtw/polochon/app/token"
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/library"
+	"github.com/sirupsen/logrus"
 )
 
 // App represents the polochon app

@@ -3,8 +3,8 @@ package polochon
 import (
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/errors"
+	"github.com/sirupsen/logrus"
 )
 
 // Detailer is the interface to get details on a video or a show

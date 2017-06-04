@@ -3,9 +3,9 @@ package yts
 import (
 	"errors"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/yts"
+	"github.com/sirupsen/logrus"
 )
 
 // Yts errors

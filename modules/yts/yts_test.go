@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/yts"
+	"github.com/sirupsen/logrus"
 )
 
 var fakeLogEntry = logrus.NewEntry(logrus.New())

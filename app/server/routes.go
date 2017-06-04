@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/meatballhat/negroni-logrus"
 	"github.com/odwrtw/polochon/app/token"
 	"github.com/phyber/negroni-gzip/gzip"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 )
 

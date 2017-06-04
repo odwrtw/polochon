@@ -10,9 +10,9 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
 	"github.com/oz/osdb"
+	"github.com/sirupsen/logrus"
 )
 
 // Struct of a subtitle containing an osdbSubtitle, a connexion if any, and a
