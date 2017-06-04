@@ -4,9 +4,9 @@ package pam
 import (
 	"errors"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/papi"
 	"github.com/odwrtw/polochon/lib"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 

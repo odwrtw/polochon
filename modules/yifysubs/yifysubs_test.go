@@ -6,9 +6,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/yifysubs"
+	"github.com/sirupsen/logrus"
 )
 
 var fakeLogger = logrus.New()

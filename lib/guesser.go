@@ -3,7 +3,7 @@ package polochon
 import (
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // Guesser is an interface which allows to get inforamtions to create a video

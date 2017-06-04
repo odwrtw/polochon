@@ -6,10 +6,10 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/fanarttv"
 	"github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/trakttv"
+	"github.com/sirupsen/logrus"
 )
 
 const (

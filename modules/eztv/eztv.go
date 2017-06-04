@@ -3,9 +3,9 @@ package eztv
 import (
 	"errors"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/eztv"
 	"github.com/odwrtw/polochon/lib"
+	"github.com/sirupsen/logrus"
 )
 
 // Eztv errors

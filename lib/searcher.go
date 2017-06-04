@@ -3,7 +3,7 @@ package polochon
 import (
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // Searcher is the interface to search shows or movies from different sources

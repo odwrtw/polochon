@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Sirupsen/logrus"
 	polochon "github.com/odwrtw/polochon/lib"
 	index "github.com/odwrtw/polochon/lib/media_index"
+	"github.com/sirupsen/logrus"
 )
 
 // GetIndexedSeason returns a ShowSeason from its id

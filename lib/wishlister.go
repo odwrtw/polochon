@@ -3,7 +3,7 @@ package polochon
 import (
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // Wishlister is an interface which defines the behavior of the wishlister

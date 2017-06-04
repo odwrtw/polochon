@@ -4,9 +4,9 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
+	"github.com/sirupsen/logrus"
 )
 
 var mockLogEntry = logrus.NewEntry(&logrus.Logger{Out: ioutil.Discard})

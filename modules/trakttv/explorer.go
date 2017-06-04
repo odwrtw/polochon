@@ -1,9 +1,9 @@
 package trakttv
 
 import (
-	"github.com/Sirupsen/logrus"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/trakttv"
+	"github.com/sirupsen/logrus"
 )
 
 // Register trakttv as an Explorer

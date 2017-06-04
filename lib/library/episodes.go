@@ -6,9 +6,9 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/Sirupsen/logrus"
 	polochon "github.com/odwrtw/polochon/lib"
 	index "github.com/odwrtw/polochon/lib/media_index"
+	"github.com/sirupsen/logrus"
 )
 
 // HasShowEpisode returns true if the show is in the store

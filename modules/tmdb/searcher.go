@@ -1,8 +1,8 @@
 package tmdb
 
 import (
-	"github.com/Sirupsen/logrus"
 	polochon "github.com/odwrtw/polochon/lib"
+	"github.com/sirupsen/logrus"
 )
 
 // Register tmdb as a Searcher

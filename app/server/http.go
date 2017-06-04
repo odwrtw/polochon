@@ -7,13 +7,13 @@ import (
 
 	"gopkg.in/unrolled/render.v1"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/braintree/manners"
 	"github.com/odwrtw/polochon/app/subapp"
 	"github.com/odwrtw/polochon/app/token"
 	"github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/library"
+	"github.com/sirupsen/logrus"
 )
 
 // AppName is the application name

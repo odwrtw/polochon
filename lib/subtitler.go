@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // ErrNoSubtitleFound trigger when no subtitle found
