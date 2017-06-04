@@ -101,28 +101,31 @@ func (l *Library) AddSubtitles(video polochon.Subtitlable, languages []polochon.
 			if err != nil {
 				// If there was no errors, add the subtitle to the map of
 				// subtitles
-				c.Push(errors.Wrap(err).Ctx("Subtitler", subtitler.Name()))
+				c.Push(errors.Wrap(err).Ctx("Subtitler", subtitler.Name()).Ctx("lang", lang))
 				continue
 			}
 
 			err = l.DownloadSubtitle(subtitle, video, lang)
 			if err != nil {
-				c.Push(errors.Wrap(err).Ctx("Subtitler", subtitler.Name()))
+				c.Push(errors.Wrap(err).Ctx("Subtitler", subtitler.Name()).Ctx("lang", lang))
 				continue
 			}
 			err = l.AddSubtitleIndex(video, lang)
 			if err != nil {
-				c.Push(errors.Wrap(err).Ctx("Subtitler", subtitler.Name()))
+				c.Push(errors.Wrap(err).Ctx("Subtitler", subtitler.Name()).Ctx("lang", lang))
 				continue
 			}
 			addedSubtitles = append(addedSubtitles, lang)
 			break
 		}
 	}
-
 	if c.HasErrors() {
-		return addedSubtitles, c
+		if c.IsFatal() {
+			return nil, c
+		}
+		log.Warnf("Got non fatal errors while getting subtitles: %s", c)
 	}
+
 	return addedSubtitles, nil
 }
 
