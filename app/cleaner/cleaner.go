@@ -176,7 +176,7 @@ func (c *Cleaner) clean(d polochon.Downloadable, log *logrus.Entry) error {
 				log.WithFields(logrus.Fields{
 					"extension":     ext,
 					"file_to_clean": filePath,
-				}).Debug("protected extention")
+				}).Debug("protected extension")
 				continue
 			} else {
 				log.Debugf("file %q is a sym link, delete it", filePath)
