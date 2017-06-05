@@ -20,7 +20,7 @@ type Downloader interface {
 	List() ([]Downloadable, error)
 }
 
-// Downloadable is an interface for anything to be downlaoded
+// Downloadable is an interface for anything to be downloaded
 type Downloadable interface {
 	Infos() *DownloadableInfos
 }

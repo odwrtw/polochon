@@ -25,7 +25,7 @@ func extractAndSortIntMapKeys(input map[int]*Episode) []int {
 	ret := make([]int, len(input))
 
 	i := 0
-	for k, _ := range input {
+	for k := range input {
 		ret[i] = k
 		i++
 	}

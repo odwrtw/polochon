@@ -115,6 +115,7 @@ func (y *YifySubs) GetShowSubtitle(s *polochon.ShowEpisode, lang polochon.Langua
 	return nil, polochon.ErrNoSubtitleFound
 }
 
+// GetSubtitle implements the Subtitler interface
 func (y *YifySubs) GetSubtitle(i interface{}, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
 	switch v := i.(type) {
 	case *polochon.Movie:

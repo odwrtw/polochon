@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// Registerd modules
+// Registered modules
 var registeredModules *modules
 
 func init() {

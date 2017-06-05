@@ -212,7 +212,7 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 				episode.Season: {
 					Path: seasonPath,
 					Episodes: map[int]*Episode{
-						episode.Episode: &Episode{
+						episode.Episode: {
 							Path: episode.Path,
 						},
 					},
@@ -235,7 +235,7 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 		si.shows[episode.ShowImdbID].Seasons[episode.Season] = &Season{
 			Path: seasonPath,
 			Episodes: map[int]*Episode{
-				episode.Episode: &Episode{
+				episode.Episode: {
 					Path: episode.Path,
 				},
 			},
