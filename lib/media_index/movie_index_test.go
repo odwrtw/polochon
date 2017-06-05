@@ -12,14 +12,14 @@ import (
 func mockMovieIndex() *MovieIndex {
 	return &MovieIndex{
 		ids: map[string]*Movie{
-			"tt56789": &Movie{
+			"tt56789": {
 				Path: "/home/test/movie/movie.mp4",
 				Subtitles: []polochon.Language{
 					polochon.FR,
 					polochon.EN,
 				},
 			},
-			"tt12345": &Movie{
+			"tt12345": {
 				Path: "/home/test/movieBis/movieBis.mp4",
 			},
 		},
@@ -121,14 +121,14 @@ func TestMovieIndexIDs(t *testing.T) {
 func TestMovieIndex(t *testing.T) {
 	idx := mockMovieIndex()
 	expected := map[string]*Movie{
-		"tt56789": &Movie{
+		"tt56789": {
 			Path: "/home/test/movie/movie.mp4",
 			Subtitles: []polochon.Language{
 				polochon.FR,
 				polochon.EN,
 			},
 		},
-		"tt12345": &Movie{
+		"tt12345": {
 			Path: "/home/test/movieBis/movieBis.mp4",
 		},
 	}

@@ -21,7 +21,7 @@ func mockShowIndex() *ShowIndex {
 					2: {
 						Path: "/home/shows/Game Of Thrones/Season 2",
 						Episodes: map[int]*Episode{
-							2: &Episode{
+							2: {
 								Path: "/home/shows/Game Of Thrones/Season 2/s02e02.mp4",
 								Subtitles: []polochon.Language{
 									polochon.FR,
@@ -33,10 +33,10 @@ func mockShowIndex() *ShowIndex {
 					1: {
 						Path: "/home/shows/Game Of Thrones/Season 1",
 						Episodes: map[int]*Episode{
-							2: &Episode{
+							2: {
 								Path: "/home/shows/Game Of Thrones/Season 1/s01e02.mp4",
 							},
-							1: &Episode{
+							1: {
 								Path: "/home/shows/Game Of Thrones/Season 1/s01e01.mp4",
 							},
 						},
@@ -50,7 +50,7 @@ func mockShowIndex() *ShowIndex {
 					2: {
 						Path: "/home/shows/The Walking Dead/Season 2",
 						Episodes: map[int]*Episode{
-							1: &Episode{
+							1: {
 								Path: "/home/shows/The Walking Dead/Season 2/s02e01.mp4",
 							},
 						},
@@ -64,7 +64,7 @@ func mockShowIndex() *ShowIndex {
 					9: {
 						Path: "/home/shows/Vikings/Season 9",
 						Episodes: map[int]*Episode{
-							18: &Episode{
+							18: {
 								Path: "/home/shows/Vikings/Season 9/s09e18.mp4",
 							},
 						},
