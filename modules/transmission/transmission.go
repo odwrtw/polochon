@@ -3,7 +3,6 @@ package transmission
 import (
 	"crypto/tls"
 	"fmt"
-	"log"
 	"net/http"
 
 	"gopkg.in/yaml.v2"
@@ -149,7 +148,6 @@ func (c *Client) Remove(d polochon.Downloadable) error {
 	if !ok {
 		return fmt.Errorf("transmission: problem when getting torrentID in Remove")
 	}
-	log.Println("Removing ID ", torrentID)
 
 	// Delete the torrent and the data
 	return c.tClient.RemoveTorrents([]*transmission.Torrent{{ID: torrentID}}, false)
