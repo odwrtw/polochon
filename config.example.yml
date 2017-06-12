@@ -77,11 +77,17 @@ modules_params:
       token: 5O32q4D6jlqj492374923749234Kso4aZtarEsAfaJs=
   - name: tmdb
     apikey: my@w3$0m3@pIk3y
+  - name: thepiratebay
+    show_users:
+    - EtHD
+    movie_users:
+    - YIFY
 show:
   calendar: tvdb
   dir: /home/user/tvshows
   torrenters:
     - eztv
+    - thepiratebay
   detailers:
     - tvdb
   subtitlers:
@@ -90,6 +96,7 @@ movie:
   dir: /home/user/movies
   torrenters:
     - yts
+    - thepiratebay
   detailers:
     - tmdb
   subtitlers:
