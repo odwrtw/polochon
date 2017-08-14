@@ -2,6 +2,7 @@ package polochon
 
 // Torrent represents a torrent file
 type Torrent struct {
+	Name       string  `json:"name"`
 	Quality    Quality `json:"quality"`
 	URL        string  `json:"url"`
 	Seeders    int     `json:"seeders"`

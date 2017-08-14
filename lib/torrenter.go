@@ -19,6 +19,7 @@ var (
 type Torrenter interface {
 	Module
 	GetTorrents(interface{}, *logrus.Entry) error
+	SearchTorrents(string) ([]*Torrent, error)
 }
 
 // Torrentable represents a ressource which can be torrented
