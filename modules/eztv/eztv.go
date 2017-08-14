@@ -104,3 +104,9 @@ func (e *Eztv) GetTorrents(i interface{}, log *logrus.Entry) error {
 		return ErrInvalidArgument
 	}
 }
+
+// SearchTorrents implements the Torrenter interface
+func (e *Eztv) SearchTorrents(s string) ([]*polochon.Torrent, error) {
+	// Not yet implemented
+	return nil, nil
+}

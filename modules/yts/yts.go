@@ -106,3 +106,37 @@ func (y *Yts) GetTorrents(i interface{}, log *logrus.Entry) error {
 
 	return nil
 }
+
+// SearchTorrents implements the Torrenter interface
+func (y *Yts) SearchTorrents(s string) ([]*polochon.Torrent, error) {
+	torrents := []*polochon.Torrent{}
+
+	movies, err := yts.Search(s)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, m := range movies {
+		if m.Torrents == nil {
+			continue
+		}
+
+		for _, t := range m.Torrents {
+			q := polochon.Quality(t.Quality)
+			if !q.IsAllowed() {
+				continue
+			}
+
+			torrents = append(torrents, &polochon.Torrent{
+				Name:     m.Title,
+				Quality:  q,
+				URL:      t.URL,
+				Seeders:  t.Seeds,
+				Leechers: t.Peers,
+				Source:   moduleName,
+			})
+		}
+	}
+
+	return torrents, nil
+}
