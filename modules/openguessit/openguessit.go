@@ -74,10 +74,13 @@ func (og *OpenGuessit) Guess(file polochon.File, movieConf polochon.MovieConfig,
 			Year:        guess.Year,
 		}, nil
 	case "episode":
+		show := polochon.NewShow(showConf)
+		show.Year = guess.Year
+		show.Title = guess.Title
 		return &polochon.ShowEpisode{
 			ShowConfig: showConf,
+			Show:       show,
 			File:       file,
-			Title:      guess.Title,
 			ShowTitle:  guess.Title,
 			Episode:    guess.Episode,
 			Season:     guess.Season,
