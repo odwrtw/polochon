@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"net/http/pprof"
 
 	"github.com/gorilla/mux"
 	"github.com/meatballhat/negroni-logrus"
@@ -155,6 +156,60 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 			path:    "/torrents/{torrentID:[0-9]+}",
 			methods: "DELETE",
 			handler: s.removeTorrent,
+		},
+		{
+			name:    "PprofIndex",
+			path:    "/debug/pprof/",
+			methods: "GET",
+			handler: pprof.Index,
+		},
+		{
+			name:    "PprofBlock",
+			path:    "/debug/pprof/block",
+			methods: "GET",
+			handler: pprof.Index,
+		},
+		{
+			name:    "PprofGoroutine",
+			path:    "/debug/pprof/goroutine",
+			methods: "GET",
+			handler: pprof.Index,
+		},
+		{
+			name:    "PprofHeap",
+			path:    "/debug/pprof/heap",
+			methods: "GET",
+			handler: pprof.Index,
+		},
+		{
+			name:    "PprofMutex",
+			path:    "/debug/pprof/mutex",
+			methods: "GET",
+			handler: pprof.Index,
+		},
+		{
+			name:    "PprofCmdline",
+			path:    "/debug/pprof/cmdline",
+			methods: "GET",
+			handler: pprof.Cmdline,
+		},
+		{
+			name:    "PprofProfile",
+			path:    "/debug/pprof/profile",
+			methods: "GET",
+			handler: pprof.Profile,
+		},
+		{
+			name:    "PprofSymbol",
+			path:    "/debug/pprof/symbol",
+			methods: "GET",
+			handler: pprof.Symbol,
+		},
+		{
+			name:    "PprofTrace",
+			path:    "/debug/pprof/trace",
+			methods: "GET",
+			handler: pprof.Trace,
 		},
 	} {
 		if route.excluded {

@@ -34,6 +34,15 @@
     - DeleteEpisode
     - DeleteSeason
     - DeleteShow
+    - PprofIndex
+    - PprofBlock
+    - PprofGoroutine
+    - PprofHeap
+    - PprofMutex
+    - PprofCmdline
+    - PprofProfile
+    - PprofSymbol
+    - PprofTrace
   token:
   - name: admin_token_name
     value: secure_admin_token
