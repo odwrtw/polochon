@@ -1,13 +1,13 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"path/filepath"
 
 	"gopkg.in/unrolled/render.v1"
 
-	"github.com/braintree/manners"
 	"github.com/odwrtw/polochon/app/subapp"
 	"github.com/odwrtw/polochon/app/token"
 	"github.com/odwrtw/polochon/lib"
@@ -26,7 +26,7 @@ type Server struct {
 	config         *configuration.Config
 	library        *library.Library
 	tokenManager   *token.Manager
-	gracefulServer *manners.GracefulServer
+	gracefulServer *http.Server
 	log            *logrus.Entry
 	render         *render.Render
 }
@@ -49,18 +49,17 @@ func (s *Server) Run(log *logrus.Entry) error {
 	// Init the app
 	s.InitStart(log)
 
-	s.gracefulServer = manners.NewWithServer(s.httpServer(s.log))
-	return s.gracefulServer.ListenAndServe()
+	s.gracefulServer = s.httpServer(s.log)
+	err := s.gracefulServer.ListenAndServe()
+	if err != nil && err != http.ErrServerClosed {
+		return err
+	}
+	return nil
 }
 
 // Stop stops the http server
 func (s *Server) Stop(log *logrus.Entry) {
-	s.gracefulServer.Close()
-}
-
-// BlockingStop stops the http server and waits for it to be done
-func (s *Server) BlockingStop(log *logrus.Entry) {
-	s.gracefulServer.BlockingClose()
+	s.gracefulServer.Shutdown(context.Background())
 }
 
 func (s *Server) wishlist(w http.ResponseWriter, req *http.Request) {
