@@ -152,11 +152,7 @@ func (l *Library) DeleteMovie(m *polochon.Movie, log *logrus.Entry) error {
 		return err
 	}
 	// Remove the movie from the index
-	if err := l.movieIndex.Remove(m, log); err != nil {
-		return err
-	}
-
-	return nil
+	return l.movieIndex.Remove(m, log)
 }
 
 // NewMovieFromPath returns a new Movie from its path

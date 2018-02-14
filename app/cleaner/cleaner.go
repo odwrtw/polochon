@@ -275,11 +275,7 @@ func (c *Cleaner) cleanDirectory(torrent *polochon.DownloadableInfos, log *logru
 	log.Debug("everything is ready to delete the dir")
 
 	// Delete the directory
-	if err = c.deleteDirectory(directoryToClean, log); err != nil {
-		return err
-	}
-
-	return nil
+	return c.deleteDirectory(directoryToClean, log)
 }
 
 // IsEmpty checks if a directory is empty

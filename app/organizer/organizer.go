@@ -45,11 +45,7 @@ func (o *Organizer) Run(log *logrus.Entry) error {
 	defer log.Debug("organizer stopped")
 
 	// Start the file system notifier
-	if err := o.startFsNotifier(log); err != nil {
-		return err
-	}
-
-	return nil
+	return o.startFsNotifier(log)
 }
 
 // startFsNotifier starts the FsNotifier
@@ -206,11 +202,7 @@ func (o *Organizer) organizeFolder(folderPath string, log *logrus.Entry) error {
 		}
 
 		// Organize the file
-		if err := o.organizeFile(filePath, log); err != nil {
-			return err
-		}
-
-		return nil
+		return o.organizeFile(filePath, log)
 	})
 	if err != nil {
 		return err
