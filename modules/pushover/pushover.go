@@ -3,10 +3,14 @@ package pushover
 import (
 	"errors"
 	"fmt"
+	"image/jpeg"
+	"io"
+	"net/http"
 
 	"gopkg.in/yaml.v2"
 
 	"github.com/gregdel/pushover"
+	"github.com/nfnt/resize"
 	"github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 )
@@ -94,6 +98,34 @@ func (p *Pushover) notifyMovie(movie *polochon.Movie) error {
 		Message:  movie.Title,
 		URL:      fmt.Sprintf("imdb:///title/%s/", movie.ImdbID),
 		URLTitle: "Open on imdb",
+	}
+
+	if movie.Thumb != "" {
+		resp, err := http.Get(movie.Thumb)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		img, err := jpeg.Decode(resp.Body)
+		if err != nil {
+			return err
+		}
+
+		thumb := resize.Resize(150, 0, img, resize.Lanczos3)
+
+		pr, pw := io.Pipe()
+		go func() {
+			if err := jpeg.Encode(pw, thumb, nil); err != nil {
+				pw.CloseWithError(err)
+				return
+			}
+			pw.Close()
+		}()
+
+		if err := message.AddAttachment(pr); err != nil {
+			return err
+		}
 	}
 
 	_, err := p.app.SendMessage(message, p.recipient)
