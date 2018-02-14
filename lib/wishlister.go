@@ -70,11 +70,7 @@ func (w *Wishlist) Fetch() error {
 	}
 
 	// Shows wishlists
-	if err := w.fetchShows(); err != nil {
-		return err
-	}
-
-	return nil
+	return w.fetchShows()
 }
 
 func (w *Wishlist) fetchMovies() error {

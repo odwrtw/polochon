@@ -57,11 +57,7 @@ func (fs *FsNotify) Watch(watchPath string, ctx polochon.FsNotifierCtx, log *log
 	go fs.eventHandler(ctx, log)
 
 	// Watch the path
-	if err := fs.watcher.Add(watchPath); err != nil {
-		return err
-	}
-
-	return nil
+	return fs.watcher.Add(watchPath)
 }
 
 func (fs *FsNotify) eventHandler(ctx polochon.FsNotifierCtx, log *logrus.Entry) {
