@@ -1,19 +1,16 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # vim: set noexpandtab tabstop=4 shiftwidth=4 softtabstop=4 :
 
-set -o errexit
-set -o pipefail
+set -e
 
-readonly SCRIPT_NAME=$(basename "$0")
-readonly TAG_DATE=$(date -u "+%Y-%m-%d %H:%M:%S UTC")
-readonly GIT_TAG=latest
-readonly GITHUB_PROJECT=https://${GITHUB_TOKEN}@github.com/odwrtw/polochon
-readonly RELEASE_DESC="Generated from TravisCI build ${TRAVIS_BUILD_NUMBER} (${TAG_DATE})"
+TAG_DATE=$(date -u "+%Y-%m-%d %H:%M:%S UTC")
+GIT_TAG=latest
+GITHUB_PROJECT=https://${GITHUB_TOKEN}@github.com/odwrtw/polochon
+RELEASE_DESC="Generated from TravisCI build $TRAVIS_BUILD_NUMBER ($TAG_DATE)"
 
 log() {
-	# shellcheck disable=SC1117,2145
-	echo -e "\e[36m-->\e[39m \e[35m$@\e[39m"
-	logger -p user.notice -t "$SCRIPT_NAME" "$@"
+	# shellcheck disable=SC1117
+	printf "\e[36m-->\e[39m \e[35m%s\e[39m\n" "$@"
 }
 
 tag() {
@@ -52,7 +49,7 @@ release() {
 		--name "$GIT_TAG" \
 		--description "$RELEASE_DESC"
 
-	for bin in build/*; do
+	for bin in builds/polochon_*; do
 		log "Pushing $bin to release $GIT_TAG..."
 		github-release upload \
 			--tag  "$GIT_TAG" \
