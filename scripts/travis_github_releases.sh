@@ -50,10 +50,11 @@ release() {
 		--description "$RELEASE_DESC"
 
 	for bin in builds/polochon_*; do
-		log "Pushing $bin to release $GIT_TAG..."
+		name=$(basename "$bin")
+		log "Pushing $name to release $GIT_TAG..."
 		github-release upload \
 			--tag  "$GIT_TAG" \
-			--name "$bin" \
+			--name "$name" \
 			--file "$bin"
 	done
 }
