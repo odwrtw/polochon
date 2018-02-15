@@ -1,9 +1,8 @@
-package yifysubs
+package yifysubtitles
 
 import (
 	"io/ioutil"
 	"log"
-	"reflect"
 	"testing"
 
 	"github.com/odwrtw/polochon/lib"
@@ -14,25 +13,21 @@ import (
 var fakeLogger = logrus.New()
 var fakeLogEntry = logrus.NewEntry(fakeLogger)
 
-var fakeSubs = map[string][]yifysubs.Subtitle{
-	"french": {
-		{
-			ID:     58673,
-			Rating: -1,
-			URL:    "http://www.yifysubtitles.com/subtitle-api/aloha-yify-58673.zip",
-		},
-		{
-			ID:     58809,
-			Rating: 2,
-			URL:    "http://www.yifysubtitles.com/subtitle-api/aloha-yify-58809.zip",
-		},
+var fakeSubs = []*yifysubs.Subtitle{
+	{
+		Rating: -1,
+		URL:    "http://www.yifysubtitles.com/subtitles/aloha-yify-58673",
+		Lang:   "French",
 	},
-	"greek": {
-		{
-			ID:     59747,
-			Rating: -3,
-			URL:    "http://www.yifysubtitles.com/subtitle-api/aloha-yify-59747.zip",
-		},
+	{
+		Rating: 2,
+		URL:    "http://www.yifysubtitles.com/subtitles/aloha-yify-58809",
+		Lang:   "French",
+	},
+	{
+		Rating: -3,
+		URL:    "http://www.yifysubtitles.com/subtitles/aloha-yify-59747",
+		Lang:   "Greek",
 	},
 }
 
@@ -46,10 +41,8 @@ func TestNew(t *testing.T) {
 		log.Fatalf("Got error in New: %q", err)
 	}
 
-	expected := &YifySubs{}
-
-	if !reflect.DeepEqual(got, expected) {
-		t.Errorf("failed to create new YifySubs\nGot: %+v\nExpected: %+v", got, expected)
+	if got == nil {
+		t.Errorf("failed to create new YifySubs\nGot: nil subtitler")
 	}
 }
 
@@ -72,12 +65,21 @@ func TestGetShowSubtitle(t *testing.T) {
 	}
 }
 
+// fakeSearcher implements the Searcher interface
+type fakeSearcher struct{}
+
+// Search returns the fake subtitles
+func (f fakeSearcher) SearchByLang(imdbID, lang string) ([]*yifysubs.Subtitle, error) {
+	return yifysubs.FilterByLang(fakeSubs, lang), nil
+}
+
+var fakeClient fakeSearcher
+
 func TestGetMovieSubtitle(t *testing.T) {
-	getSubtitles = func(imdbID string) (map[string][]yifysubs.Subtitle, error) {
-		return fakeSubs, nil
-	}
 	m := &polochon.Movie{ImdbID: "tt9347238"}
-	y := &YifySubs{}
+	y := &YifySubs{
+		Client: fakeClient,
+	}
 
 	sub, err := y.GetMovieSubtitle(m, polochon.FR, fakeLogEntry)
 	if err != nil {
@@ -89,18 +91,17 @@ func TestGetMovieSubtitle(t *testing.T) {
 		log.Fatal("the sub is not a yifysubs.Subtitle")
 	}
 
-	expectedID := 58809
-	if s.ID != expectedID {
-		log.Fatalf("expected the sub with the ID %d, insted got %d", expectedID, s.ID)
+	expectedURL := "http://www.yifysubtitles.com/subtitles/aloha-yify-58809"
+	if s.URL != expectedURL {
+		log.Fatalf("expected the sub with the URL %s, insted got %s", expectedURL, s.URL)
 	}
 }
 
 func TestGetMovieSubtitleNotFound(t *testing.T) {
-	getSubtitles = func(imdbID string) (map[string][]yifysubs.Subtitle, error) {
-		return fakeSubs, nil
-	}
 	m := &polochon.Movie{ImdbID: "tt9347238"}
-	y := &YifySubs{}
+	y := &YifySubs{
+		Client: fakeClient,
+	}
 
 	_, err := y.GetMovieSubtitle(m, polochon.EN, fakeLogEntry)
 	if err == nil {
@@ -113,9 +114,6 @@ func TestGetMovieSubtitleNotFound(t *testing.T) {
 }
 
 func TestGetMovieSubtitleNoID(t *testing.T) {
-	getSubtitles = func(imdbID string) (map[string][]yifysubs.Subtitle, error) {
-		return fakeSubs, nil
-	}
 	m := &polochon.Movie{}
 	y := &YifySubs{}
 
