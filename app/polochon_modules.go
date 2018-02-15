@@ -15,6 +15,6 @@ import (
 	_ "github.com/odwrtw/polochon/modules/tpb"
 	_ "github.com/odwrtw/polochon/modules/transmission"
 	_ "github.com/odwrtw/polochon/modules/tvdb"
-	_ "github.com/odwrtw/polochon/modules/yifysubs"
+	_ "github.com/odwrtw/polochon/modules/yifysubtitles"
 	_ "github.com/odwrtw/polochon/modules/yts"
 )

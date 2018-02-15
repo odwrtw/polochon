@@ -1,4 +1,4 @@
-package yifysubs
+package yifysubtitles
 
 import (
 	"errors"
@@ -12,7 +12,9 @@ import (
 )
 
 // YifySubs holds the YifySubs module
-type YifySubs struct{}
+type YifySubs struct {
+	Client Searcher
+}
 
 // Module constants
 const (
@@ -20,9 +22,16 @@ const (
 )
 
 var langTranslate = map[polochon.Language]string{
-	polochon.EN: "english",
-	polochon.FR: "french",
+	polochon.EN: "English",
+	polochon.FR: "French",
 }
+
+// Searcher is an interface to search subtitles
+type Searcher interface {
+	SearchByLang(imdbID, lang string) ([]*yifysubs.Subtitle, error)
+}
+
+const endpoint = "https://yifysubtitles.com"
 
 // Errors
 var (
@@ -51,18 +60,14 @@ func NewFromRawYaml(p []byte) (polochon.Subtitler, error) {
 
 // New module
 func New(params *Params) (polochon.Subtitler, error) {
-
-	return &YifySubs{}, nil
+	return &YifySubs{
+		Client: yifysubs.New(endpoint),
+	}, nil
 }
 
 // Name implements the Module interface
 func (y *YifySubs) Name() string {
 	return moduleName
-}
-
-// Function to be overwritten during the tests
-var getSubtitles = func(imdbID string) (map[string][]yifysubs.Subtitle, error) {
-	return yifysubs.GetSubtitles(imdbID)
 }
 
 // GetMovieSubtitle will get a movie subtitle
@@ -71,42 +76,29 @@ func (y *YifySubs) GetMovieSubtitle(m *polochon.Movie, lang polochon.Language, l
 		return nil, ErrMissingImdbID
 	}
 
-	// Get the subs for this movie
-	subs, err := getSubtitles(m.ImdbID)
-	if err != nil {
-		return nil, err
-	}
-
 	subLang, ok := langTranslate[lang]
 	if !ok {
 		fmt.Println(lang)
 		return nil, ErrInvalidSubtitleLang
 	}
 
-	// Only keep the configured lang
-	subsByLang, ok := subs[subLang]
-	if !ok {
+	// Get the subs for this movie
+	subs, err := y.Client.SearchByLang(m.ImdbID, subLang)
+	switch err {
+	case nil:
+		//continue
+	case yifysubs.ErrNoSubtitleFound:
 		return nil, polochon.ErrNoSubtitleFound
-	}
-
-	// Search for the best rated sub
-	var bestRating int
-	var bestSub *yifysubs.Subtitle
-	for _, s := range subsByLang {
-		if s.Rating < bestRating {
-			continue
-		}
-
-		bestRating = s.Rating
-		bestSub = &s
+	default:
+		return nil, err
 	}
 
 	// No sub found ?
-	if bestSub == nil {
+	if len(subs) == 0 {
 		return nil, polochon.ErrNoSubtitleFound
 	}
 
-	return bestSub, nil
+	return subs[0], nil
 }
 
 // GetShowSubtitle implements the Subtitler interface but will not be used here
