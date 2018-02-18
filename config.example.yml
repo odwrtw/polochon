@@ -39,6 +39,7 @@ video:
   guesser: openguessit
   notifiers:
   - pushover
+  - webhook
   exclude_file_containing:
   - sample
   allowed_file_extensions:
@@ -82,6 +83,10 @@ modules_params:
     - EtHD
     movie_users:
     - YIFY
+  - name: webhook
+    hooks:
+    - url: http://urlhook/new_movie
+      method: POST
 show:
   calendar: tvdb
   dir: /home/user/tvshows
