@@ -75,7 +75,7 @@ func (s *Server) wishlist(w http.ResponseWriter, req *http.Request) {
 
 func (s *Server) serveFile(w http.ResponseWriter, r *http.Request, file *polochon.File) {
 	// Set the header so that when downloading, the real filename will be given
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filepath.Base(file.Path)))
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filepath.Base(file.Path)))
 	http.ServeFile(w, r, file.Path)
 }
 
