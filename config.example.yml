@@ -1,103 +1,119 @@
+# Logs
 logs:
   # Log level available log levels: debug, info, warn, error, fatal, panic
   level: debug
   # Log to file, if no file is specified the logs will be printed to stdout
   file: /var/log/polochon.log
+
+# Watcher is used to organize the downloaded files directly when added to
+# the directory. This is the download directory. Only fsnotify is supported.
 watcher:
   fsnotifier: fsnotify
-  dir: /home/user/downloads
+  dir: /home/user/downloads/done
+
+# The downloader will download missing files from your library periodically
+# at a fixed interval. It talks to a torrent server.
 downloader:
   enabled: false
+  # How frequently do you want to run the downloader. The supported values
+  # are golang durations: https://golang.org/pkg/time/#ParseDuration
   timer: 4h
+  # Which client would you like to use to download torrents. Only
+  # transmission is supported.
   client: transmission
-  download_dir: /home/user/downloads
+  # The cleaner will run periodically to cleanup the torrents from the
+  # torrent list of the client and remove all the useless files left behind.
   cleaner:
     enabled: true
-    timer: 35s
+    timer: 30s
+    # You can remove a torrent from the client list only when a specific
+    # ratio is reached. Setting this value to 0 will remove the torrent as
+    # soon as the torrent is downloaded.
     ratio: 0
-    trash_dir: /home/user/trash-dir
+
+# The HTTP server exposes an API to polochon
 http_server:
+  enable: true
   port: 8080
   host: localhost
-  enable: true
+  # This allows polochon to serve your library over HTTP
   serve_files: true
-  basic_auth: true
+  # Basic auth config, if you want it
+  basic_auth: false
   basic_auth_user: toto
   basic_auth_password: tata
+
+# Wishlists are the way to add new videos to your library automatically.
 wishlist:
+  # Supported wishlisters:
+  # imdb: using a public URL
+  # canape: using a canapeapp.com to add things to the wishlist
+  # Both of theses modules should be configured in the module section.
   wishlisters:
   - imdb
   - canape
+  # Order of qualities for the show you would like to download.
   show_default_qualities:
   - 720p
   - 480p
   - 1080p
+  # Same things for the movies.
   movie_default_qualities:
   - 1080p
   - 720p
+
+# Video files configuration
 video:
+  # A guesser is used to guess the name and type of the video file.
+  # Only openguessit is available and requires not further configuration.
   guesser: openguessit
+  # Notification methods when a file is added to the library.
+  # Available notifiers:
+  # pushover: notifiy using the pushover API, requires configuration
+  # webhook: notifiy using a custom HTTP hook, requires configuration
   notifiers:
   - pushover
   - webhook
+  # Do not consider the files containing theses strings as valid video files.
   exclude_file_containing:
   - sample
+  # Extensions considered to be video files.
   allowed_file_extensions:
   - .avi
   - .mkv
   - .mp4
+  # While cleaning diretories some files are considered garbage based on their extentions.
   allowed_file_extensions_to_delete:
   - .srt
   - .nfo
   - .txt
   - .jpg
   - .jpeg
+  # Prefered subtitle languages to download.
   subtitle_languages:
   - fr_FR
   - en_US
-modules_params:
-  - name: transmission
-    url: http://mytransmission.com/transmission/rpc
-    check_ssl: false
-    basic_auth: true
-    user: myUser
-    password: myPassword
-  - name: pushover
-    key: sdf7as8f8ds7f9sf
-    recipient: 9327a472s3947234792
-  - name: opensubtitles
-    user: opensubtitle@canapeapp.com
-    lang: en_US
-    password: my@w3$0m3p@$$w0rD
-  - name: imdb
-    user_ids:
-    - ur78342023
-  - name: canape
-    wishlists:
-    - url: https://canapeapp.com
-      token: 5O32q4D6jlqj492374923749234Kso4aZtarEsAfaJs=
-  - name: tmdb
-    apikey: my@w3$0m3@pIk3y
-  - name: thepiratebay
-    show_users:
-    - EtHD
-    movie_users:
-    - YIFY
-  - name: webhook
-    hooks:
-    - url: http://urlhook/new_movie
-      method: POST
+
+# Show configuration
 show:
+  # The calendar is used to check if and which episodes are available to
+  # download based on their release date. This is used in conjonction of the
+  # wishlist to know what to download.
   calendar: tvdb
+  # Directory to store the tv shows.
   dir: /home/user/tvshows
+  # Torrenters are the source for the episode torrents.
   torrenters:
     - eztv
     - thepiratebay
+  # The detailer is where the informations for an episode are fetched.
   detailers:
     - tvdb
+  # Where to download the subtitles.
   subtitlers:
     - addicted
 movie:
+  # Where the movies are stored.
   dir: /home/user/movies
   torrenters:
     - yts
@@ -107,3 +123,50 @@ movie:
   subtitlers:
     - yifysubs
     - opensubtitles
+
+modules_params:
+    # Required for the transmission client, if the downloader is enabled.
+  - name: transmission
+    url: http://mytransmission.com/transmission/rpc
+    check_ssl: false
+    basic_auth: true
+    user: myUser
+    password: myPassword
+    # Required if pushover is used to notify new movies
+  - name: pushover
+    key: sdf7as8f8ds7f9sf
+    recipient: 9327a472s3947234792
+    # Opensubtitles is used to download the subtitles for movies and episodes.
+    # The username and password are mandatory.
+  - name: opensubtitles
+    user: opensubtitle@canapeapp.com
+    lang: en_US
+    password: my@w3$0m3p@$$w0rD
+    # Imdb is used to get the wishlist from a *public* list for a user id, you
+    # can specify multiple user ids to tracks multiple lists.
+  - name: imdb
+    user_ids:
+    - ur78342023
+    # canape is used to gather the wishlist of users, the url and token are
+    # mandatory. You can add multiple user configuration.
+  - name: canape
+    wishlists:
+    - url: https://canapeapp.com
+      token: 5O32q4D6jlqj492374923749234Kso4aZtarEsAfaJs=
+    # tmdb is used as a movie detailer and requires an API key.
+  - name: tmdb
+    apikey: my@w3$0m3@pIk3y
+    # thepiratebay is a source of torrent for both movies and episodes. It will
+    # only download files from trusted users, you can specify those users for
+    # each video type.
+  - name: thepiratebay
+    show_users:
+    - EtHD
+    movie_users:
+    - YIFY
+    # Webhook configuration to send a request to an external service once a
+    # video is added to the library.
+  - name: webhook
+    hooks:
+    - url: http://urlhook/new_movie
+      method: POST

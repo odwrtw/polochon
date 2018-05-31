@@ -15,7 +15,6 @@ watcher:
   dir: /home/user/downloads
 downloader:
   timer: 30s
-  download_dir: /home/user/downloads
   client: transmission
 http_server:
   port: 8080
@@ -91,7 +90,6 @@ var configStructExample = &ConfigFileRoot{
 	},
 	Downloader: ConfigFileDownloader{
 		Timer:          time.Second * 30,
-		DownloadDir:    "/home/user/downloads",
 		DownloaderName: "transmission",
 	},
 	HTTPServer: ConfigFileHTTPServer{

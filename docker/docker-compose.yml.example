@@ -1,5 +1,5 @@
 polochon:
-  build: .
+  image: odwrtw/polochon
   container_name: polochon
   restart: always
   environment:
@@ -10,4 +10,4 @@ polochon:
   volumes:
   - /home/user/polochon:/home/polochon
   ports:
-      - 127.0.0.1:8080:8080
+  - 127.0.0.1:8080:8080

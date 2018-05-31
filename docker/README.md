@@ -2,7 +2,7 @@
 
 ```
 cp docker-compose.yml.example docker-compose.yml
-docker-compose buld
+docker-compose up -d
 ```
 
 ## Environment variables

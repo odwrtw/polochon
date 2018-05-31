@@ -184,7 +184,7 @@ func (c *Cleaner) clean(d polochon.Downloadable, log *logrus.Entry) error {
 		}
 
 		// If it's a symlink, delete the file as it has already been organized
-		err := c.deleteFile(file.Path, log)
+		err := c.remove(file.Path, log)
 		if err != nil {
 			log.Warnf("got error while removing file %q", err)
 			continue
@@ -201,28 +201,9 @@ func (c *Cleaner) clean(d polochon.Downloadable, log *logrus.Entry) error {
 	return nil
 }
 
-func (c *Cleaner) deleteFile(filePath string, log *logrus.Entry) error {
-	// Delete the file
-	deletePath := filepath.Join(c.config.Downloader.Cleaner.TrashDir, path.Base(filePath))
-
-	log.WithFields(logrus.Fields{
-		"old_path": filePath,
-		"new_path": deletePath,
-	}).Debug("deleting file")
-
-	return os.Rename(filePath, deletePath)
-}
-
-func (c *Cleaner) deleteDirectory(directoryPath string, log *logrus.Entry) error {
-	// Delete the directory
-	deletePath := filepath.Join(c.config.Downloader.Cleaner.TrashDir, path.Base(directoryPath))
-
-	log.WithFields(logrus.Fields{
-		"old_path": directoryPath,
-		"new_path": deletePath,
-	}).Debug("deleting folder")
-
-	return os.Rename(directoryPath, deletePath)
+func (c *Cleaner) remove(filePath string, log *logrus.Entry) error {
+	log.WithField("path", filePath).Debug("deleting item")
+	return os.Remove(filePath)
 }
 
 func (c *Cleaner) cleanDirectory(torrent *polochon.DownloadableInfos, log *logrus.Entry) error {
@@ -241,13 +222,13 @@ func (c *Cleaner) cleanDirectory(torrent *polochon.DownloadableInfos, log *logru
 	// Ensure the path is clean
 	directoryPath = filepath.Clean(directoryPath)
 	// We don't want to clean the DownloadDir
-	if directoryPath == c.config.Downloader.DownloadDir {
+	if directoryPath == c.config.Watcher.Dir {
 		log.Debug("in the watching folder, no need to clean")
 		return nil
 	}
 
 	// Get relative path of the directory to clean
-	relDir, err := filepath.Rel(c.config.Downloader.DownloadDir, directoryPath)
+	relDir, err := filepath.Rel(c.config.Watcher.Dir, directoryPath)
 	if err != nil {
 		return err
 	}
@@ -259,7 +240,7 @@ func (c *Cleaner) cleanDirectory(torrent *polochon.DownloadableInfos, log *logru
 	}
 
 	// Get the full path
-	directoryToClean := filepath.Join(c.config.Downloader.DownloadDir, relDir)
+	directoryToClean := filepath.Join(c.config.Watcher.Dir, relDir)
 	log.Debug("try to clean and delete")
 
 	ok, err := IsEmpty(directoryToClean)
@@ -275,7 +256,7 @@ func (c *Cleaner) cleanDirectory(torrent *polochon.DownloadableInfos, log *logru
 	log.Debug("everything is ready to delete the dir")
 
 	// Delete the directory
-	return c.deleteDirectory(directoryToClean, log)
+	return c.remove(directoryToClean, log)
 }
 
 // IsEmpty checks if a directory is empty
