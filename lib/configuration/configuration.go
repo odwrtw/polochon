@@ -103,17 +103,15 @@ type ConfigFileShow struct {
 type ConfigFileDownloader struct {
 	Enabled        bool              `yaml:"enabled"`
 	Timer          time.Duration     `yaml:"timer"`
-	DownloadDir    string            `yaml:"download_dir"`
 	DownloaderName string            `yaml:"client"`
 	Cleaner        ConfigFileCleaner `yaml:"cleaner"`
 }
 
 // ConfigFileCleaner represents the configuration for the downloader in the configuration file
 type ConfigFileCleaner struct {
-	Enabled  bool          `yaml:"enabled"`
-	Timer    time.Duration `yaml:"timer"`
-	TrashDir string        `yaml:"trash_dir"`
-	Ratio    float32       `yaml:"ratio"`
+	Enabled bool          `yaml:"enabled"`
+	Timer   time.Duration `yaml:"timer"`
+	Ratio   float32       `yaml:"ratio"`
 }
 
 // ConfigFileHTTPServer represents the configuration for the HTTP Server in the configuration file
@@ -157,19 +155,17 @@ type WatcherConfig struct {
 
 // DownloaderConfig represents the configuration for the downloader
 type DownloaderConfig struct {
-	Enabled     bool
-	Timer       time.Duration
-	DownloadDir string
-	Client      polochon.Downloader
-	Cleaner     CleanerConfig
+	Enabled bool
+	Timer   time.Duration
+	Client  polochon.Downloader
+	Cleaner CleanerConfig
 }
 
 // CleanerConfig represents the configuration for the cleaner in the configuration file
 type CleanerConfig struct {
-	Enabled  bool
-	Timer    time.Duration
-	TrashDir string
-	Ratio    float32
+	Enabled bool
+	Timer   time.Duration
+	Ratio   float32
 }
 
 // HTTPServerConfig represents the configuration for the HTTP Server
@@ -406,9 +402,8 @@ func (c *ConfigFileRoot) initWishlist(log *logrus.Entry) (*polochon.WishlistConf
 
 func (c *ConfigFileRoot) initDownloader(log *logrus.Entry) (*DownloaderConfig, error) {
 	downloaderConf := &DownloaderConfig{
-		DownloadDir: c.Downloader.DownloadDir,
-		Timer:       c.Downloader.Timer,
-		Enabled:     c.Downloader.Enabled,
+		Timer:   c.Downloader.Timer,
+		Enabled: c.Downloader.Enabled,
 	}
 
 	if c.Downloader.DownloaderName != "" && c.Downloader.Enabled {
@@ -435,10 +430,9 @@ func (c *ConfigFileRoot) initDownloader(log *logrus.Entry) (*DownloaderConfig, e
 
 func (c *ConfigFileRoot) initCleaner(log *logrus.Entry) (*CleanerConfig, error) {
 	cleanerConf := &CleanerConfig{
-		Timer:    c.Downloader.Cleaner.Timer,
-		Enabled:  c.Downloader.Cleaner.Enabled,
-		Ratio:    c.Downloader.Cleaner.Ratio,
-		TrashDir: c.Downloader.Cleaner.TrashDir,
+		Timer:   c.Downloader.Cleaner.Timer,
+		Enabled: c.Downloader.Cleaner.Enabled,
+		Ratio:   c.Downloader.Cleaner.Ratio,
 	}
 
 	return cleanerConf, nil

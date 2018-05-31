@@ -7,25 +7,39 @@
 
 ## How to use
 
-Copy config.yml.example and customize it as you wish
+There are two configuration files required for this application to work properly:
+* The main configuration file is heavily commented to explain each configuration option.
+* The token configuration file is here to give a fine grain control over the rights of the HTTP server.
+
+To get started, simply copy those files and customise them as needed.
+
+```
+cp config.example.yml config.yml
+cp token.exemple.yml token.yml
+```
 
 ### Build and launch
 
 #### From GitHub release
 
-```
-$ curl -L https://github.com/odwrtw/polochon/releases/download/latest/polochon_$(go env GOOS)_$(go env GOARCH) -o polochon
-$ chmod +x polochon
-$ ./polochon -configPath=/home/user/config.yml
+```sh
+curl -L https://github.com/odwrtw/polochon/releases/download/latest/polochon_$(go env GOOS)_$(go env GOARCH) -o polochon
+chmod +x polochon
+./polochon -configPath=/home/user/config.yml -tokenPath=/home/user/token.yml
 ```
 
 #### From source
 
-```
-$ make build
-$ builds/polochon_$(go env GOOS)_$(go env GOARCH) -configPath=/home/user/config.yml
+```sh
+make build
 ```
 
-## Modules
+#### From a docker image
 
-Polochon was built around modules. They add extensibility and allows us to keep external services out of the main code base. They provide notifications, subtitles and much more. For modules documentation, check this [page](./modules/README.md).
+The docker images is built on the docker hub and can be downloaded using the following command:
+
+```sh
+docker pull odwrtw/polochon
+```
+
+A `docker-compose` file example is available [here](./docker/docker-compose.yml.example) and the readme for this file [here](./docker/README.md).

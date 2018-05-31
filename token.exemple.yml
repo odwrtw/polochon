@@ -7,9 +7,12 @@
     - GetSeason
     - GetEpisode
   token:
+    # You can chose any name for your token
   - name: guest_token_name
+    # You can also chose the value for the token
     value: secure_guest_token
 - role: user
+  # Roles can be nested
   include:
     - guest
   allowed:
