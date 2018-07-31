@@ -55,7 +55,7 @@ func New(p *Params) (*TmDB, error) {
 	}
 
 	return &TmDB{
-		client: tmdb.Init(p.ApiKey),
+		client: tmdb.Init(tmdb.Config{ApiKey: p.ApiKey}),
 	}, nil
 }
 
