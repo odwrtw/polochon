@@ -1,9 +1,9 @@
-FROM debian:jessie
+FROM debian:9.5
 
 ENV RELEASE_URL=https://github.com/odwrtw/polochon/releases/download/latest/polochon_linux_amd64
 
 RUN apt-get update && \
-    apt-get install -y ca-certificates sudo && \
+    apt-get install -y ca-certificates && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     adduser polochon
 
@@ -17,4 +17,4 @@ EXPOSE 8080
 WORKDIR /home/polochon
 
 ADD run.sh /root/run.sh
-CMD /root/run.sh
+CMD exec /root/run.sh

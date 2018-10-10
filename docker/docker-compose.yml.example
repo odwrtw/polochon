@@ -3,8 +3,8 @@ polochon:
   container_name: polochon
   restart: always
   environment:
-  - UID=1000
-  - GID=1000
+  - POLOCHON_UID=1000
+  - POLOCHON_GID=1000
   - POLOCHON_CONFIG=polochon/config.yml
   - POLOCHON_TOKEN=polochon/token.yml
   volumes:
