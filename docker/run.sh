@@ -1,9 +1,8 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 # Create the polochon user if needed
-[[ "${UID:-""}" =~ ^[0-9]+$ ]] && usermod -u $UID polochon
-[[ "${GID:-""}" =~ ^[0-9]+$ ]] && groupmod -g $GID polochon
+[ "$POLOCHON_UID" ] && usermod -u "$POLOCHON_UID" polochon
+[ "$POLOCHON_GID" ] && groupmod -g "$POLOCHON_GID" polochon
 
 # Run polochon app as the polochon user
-exec sudo -u polochon \
-    /usr/bin/polochon -configPath $POLOCHON_CONFIG -tokenPath $POLOCHON_TOKEN
+exec su -c "/usr/bin/polochon -configPath $POLOCHON_CONFIG -tokenPath $POLOCHON_TOKEN" - polochon
