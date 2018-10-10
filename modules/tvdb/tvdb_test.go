@@ -47,7 +47,7 @@ func TestTvdbUpdateShow(t *testing.T) {
 		Seasons: map[uint64][]*tvdb.Episode{
 			0x1: {
 				{
-					ID: 0x5c71d,
+					ID:                    0x5c71d,
 					CombinedEpisodeNumber: "8.0",
 					CombinedSeason:        0x4,
 					DvdEpisodeNumber:      "8.0",
