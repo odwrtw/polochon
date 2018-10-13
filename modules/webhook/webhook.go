@@ -116,6 +116,9 @@ func (w *WebHook) notify(hook *Hook, video polochon.Video, videoType string) err
 		Data: video,
 	})
 	req, err := http.NewRequest("POST", URL.String(), b)
+	if err != nil {
+		return err
+	}
 
 	req.Header.Set("Content-Type", "application/json")
 	// Send request

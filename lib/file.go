@@ -30,14 +30,14 @@ type File struct {
 	Path       string `xml:"-" json:"-"`
 }
 
-// NewFile returs a new file from a path
+// NewFile returns a new file from a path
 func NewFile(path string) *File {
 	return &File{
 		Path: path,
 	}
 }
 
-// NewFileWithConfig returs a new file from a path
+// NewFileWithConfig returns a new file from a path
 func NewFileWithConfig(path string, conf FileConfig) *File {
 	return &File{
 		FileConfig: conf,

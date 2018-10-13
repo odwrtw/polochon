@@ -204,11 +204,8 @@ func (o *Organizer) organizeFolder(folderPath string, log *logrus.Entry) error {
 		// Organize the file
 		return o.organizeFile(filePath, log)
 	})
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }
 
 // Notify sends video to the notifiers
