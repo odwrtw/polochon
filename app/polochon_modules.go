@@ -3,6 +3,7 @@ package main
 import (
 	// Modules
 	_ "github.com/odwrtw/polochon/modules/addicted"
+	_ "github.com/odwrtw/polochon/modules/aria2"
 	_ "github.com/odwrtw/polochon/modules/canape"
 	_ "github.com/odwrtw/polochon/modules/eztv"
 	_ "github.com/odwrtw/polochon/modules/fsnotify"
