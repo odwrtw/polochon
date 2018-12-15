@@ -18,8 +18,8 @@ downloader:
   # How frequently do you want to run the downloader. The supported values
   # are golang durations: https://golang.org/pkg/time/#ParseDuration
   timer: 4h
-  # Which client would you like to use to download torrents. Only
-  # transmission is supported.
+  # Which client would you like to use to download torrents. Transmission and
+  # aria2 are supported.
   client: transmission
   # The cleaner will run periodically to cleanup the torrents from the
   # torrent list of the client and remove all the useless files left behind.
@@ -132,6 +132,10 @@ modules_params:
     basic_auth: true
     user: myUser
     password: myPassword
+    # Required for the aria2 client, if the downloader is enabled.
+  - name: aria2
+    url: http://myaria2.com:6800/jsonrpc
+    secret: Riu5aedieghuSei2uucheeth0ahr8e
     # Required if pushover is used to notify new movies
   - name: pushover
     key: sdf7as8f8ds7f9sf
