@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/arbovm/levenshtein"
-	"github.com/odwrtw/polochon/lib"
-	"github.com/ryanbradynd05/go-tmdb"
+	polochon "github.com/odwrtw/polochon/lib"
+	tmdb "github.com/ryanbradynd05/go-tmdb"
 	"github.com/sirupsen/logrus"
 )
 
@@ -45,17 +45,17 @@ type TmDB struct {
 
 // Params represents the module params
 type Params struct {
-	ApiKey string `yaml:"apikey"`
+	APIKey string `yaml:"apikey"`
 }
 
 // New is an helper to avoid passing bytes
 func New(p *Params) (*TmDB, error) {
-	if p.ApiKey == "" {
+	if p.APIKey == "" {
 		return nil, ErrMissingArgument
 	}
 
 	return &TmDB{
-		client: tmdb.Init(tmdb.Config{ApiKey: p.ApiKey}),
+		client: tmdb.Init(tmdb.Config{APIKey: p.APIKey}),
 	}, nil
 }
 
