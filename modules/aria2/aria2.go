@@ -3,6 +3,7 @@ package aria2
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/gregdel/argo/rpc"
 	polochon "github.com/odwrtw/polochon/lib"
@@ -117,17 +118,20 @@ func (c *Client) Remove(d polochon.Downloadable) error {
 		return fmt.Errorf("aria2: got nil downloadable")
 	}
 
-	id, ok := infos.AdditionalInfos["id"].(string)
-	if !ok {
+	if infos.ID == "" {
 		return fmt.Errorf("aria2: no id to remove the download")
 	}
 
-	_, err := c.protocol.Remove(id)
+	_, err := c.protocol.Remove(infos.ID)
 	if err != nil {
-		return err
+		if strings.Contains(err.Error(), "Active Download not found") {
+			// This downloadable is not active
+		} else {
+			return err
+		}
 	}
 
-	_, err = c.protocol.RemoveDownloadResult(id)
+	_, err = c.protocol.PurgeDownloadResult()
 	return err
 }
 
@@ -143,7 +147,10 @@ func NewTorrentStatus(si rpc.StatusInfo) *TorrentStatus {
 
 // Infos implement the downloadable interface
 func (ts *TorrentStatus) Infos() *polochon.DownloadableInfos {
-	i := polochon.DownloadableInfos{}
+	i := polochon.DownloadableInfos{
+		ID:   ts.StatusInfo.Gid,
+		Name: ts.StatusInfo.BitTorrent.Info.Name,
+	}
 
 	// Add the filePaths
 	i.FilePaths = []string{}
@@ -151,13 +158,17 @@ func (ts *TorrentStatus) Infos() *polochon.DownloadableInfos {
 		i.FilePaths = append(i.FilePaths, f.Path)
 	}
 
-	uploaded := 0
+	// Set the path as the default name
+	if i.Name == "" && len(i.FilePaths) > 0 {
+		i.Name = i.FilePaths[0]
+	}
+
 	for i, s := range map[*int]string{
 		&i.DownloadRate:   ts.StatusInfo.DownloadSpeed,
 		&i.UploadRate:     ts.StatusInfo.UploadSpeed,
 		&i.DownloadedSize: ts.StatusInfo.CompletedLength,
+		&i.UploadedSize:   ts.StatusInfo.UploadLength,
 		&i.TotalSize:      ts.StatusInfo.TotalLength,
-		&uploaded:         ts.StatusInfo.UploadLength,
 	} {
 		var err error
 		*i, err = strconv.Atoi(s)
@@ -173,18 +184,8 @@ func (ts *TorrentStatus) Infos() *polochon.DownloadableInfos {
 		i.PercentDone = float32(i.DownloadedSize) * 100 / float32(i.TotalSize)
 	}
 
-	if uploaded != 0 {
-		i.Ratio = float32(uploaded) / float32(i.TotalSize)
-	}
-
-	i.Name = ts.StatusInfo.BitTorrent.Info.Name
-	// Set the path as the default name
-	if i.Name == "" && len(i.FilePaths) > 0 {
-		i.Name = i.FilePaths[0]
-	}
-
-	i.AdditionalInfos = map[string]interface{}{
-		"id": ts.StatusInfo.Gid,
+	if i.UploadedSize != 0 {
+		i.Ratio = float32(i.UploadedSize) / float32(i.TotalSize)
 	}
 
 	return &i

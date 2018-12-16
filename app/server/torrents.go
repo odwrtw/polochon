@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 	polochon "github.com/odwrtw/polochon/lib"
@@ -99,14 +98,7 @@ func (s *Server) removeTorrent(w http.ResponseWriter, r *http.Request) {
 
 	// Get the torrent ID from the URL
 	vars := mux.Vars(r)
-	torrentID, err := strconv.Atoi(vars["torrentID"])
-	if err != nil {
-		s.renderError(w, &Error{
-			Code:    http.StatusBadRequest,
-			Message: "Invalid torrentID",
-		})
-		return
-	}
+	torrentID := vars["id"]
 
 	// List all the ongoing torrents
 	list, err := s.config.Downloader.Client.List()
@@ -128,12 +120,8 @@ func (s *Server) removeTorrent(w http.ResponseWriter, r *http.Request) {
 			s.log.Warn("got nil Infos while getting torrent infos")
 			continue
 		}
-		id, ok := torrentInfos.AdditionalInfos["id"].(int)
-		if !ok {
-			s.log.Warn("got invalid ID in torrent Infos")
-			continue
-		}
-		if id == torrentID {
+
+		if torrentInfos.ID == torrentID {
 			torrent = &t
 			break
 		}
