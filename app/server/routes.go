@@ -6,7 +6,7 @@ import (
 	"net/http/pprof"
 
 	"github.com/gorilla/mux"
-	"github.com/meatballhat/negroni-logrus"
+	negronilogrus "github.com/meatballhat/negroni-logrus"
 	"github.com/odwrtw/polochon/app/token"
 	"github.com/phyber/negroni-gzip/gzip"
 	"github.com/sirupsen/logrus"
@@ -153,7 +153,7 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 		},
 		{
 			name:    "RemoveTorrent",
-			path:    "/torrents/{torrentID:[0-9]+}",
+			path:    "/torrents/{id}",
 			methods: "DELETE",
 			handler: s.removeTorrent,
 		},

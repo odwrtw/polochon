@@ -4,10 +4,11 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"strconv"
 
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/transmission"
 	"github.com/sirupsen/logrus"
 )
@@ -144,9 +145,13 @@ func (c *Client) Remove(d polochon.Downloadable) error {
 	}
 
 	// Get the torrentID needed to delete the torrent
-	torrentID, ok := tInfos.AdditionalInfos["id"].(int)
-	if !ok {
+	if tInfos.ID == "" {
 		return fmt.Errorf("transmission: problem when getting torrentID in Remove")
+	}
+
+	torrentID, err := strconv.Atoi(tInfos.ID)
+	if err != nil {
+		return fmt.Errorf("transmission: the id is not a int")
 	}
 
 	// Delete the torrent and the data
@@ -179,8 +184,10 @@ func (t Torrent) Infos() *polochon.DownloadableInfos {
 	}
 
 	i := polochon.DownloadableInfos{
+		ID:             strconv.Itoa(t.T.ID),
 		DownloadRate:   t.T.RateDownload,
 		DownloadedSize: t.T.DownloadedEver,
+		UploadedSize:   t.T.UploadedEver,
 		FilePaths:      filePaths,
 		IsFinished:     isFinished,
 		Name:           t.T.Name,
@@ -188,9 +195,6 @@ func (t Torrent) Infos() *polochon.DownloadableInfos {
 		Ratio:          float32(t.T.UploadRatio),
 		TotalSize:      t.T.SizeWhenDone,
 		UploadRate:     t.T.RateUpload,
-		AdditionalInfos: map[string]interface{}{
-			"id": t.T.ID,
-		},
 	}
 
 	return &i

@@ -27,6 +27,7 @@ type Downloadable interface {
 
 // DownloadableInfos represent infos about a Downloadable object
 type DownloadableInfos struct {
+	ID              string                 `json:"id"`
 	Ratio           float32                `json:"ratio"`
 	IsFinished      bool                   `json:"is_finished"`
 	FilePaths       []string               `json:"file_paths"`
@@ -35,6 +36,7 @@ type DownloadableInfos struct {
 	UploadRate      int                    `json:"upload_rate"`
 	TotalSize       int                    `json:"total_size"`
 	DownloadedSize  int                    `json:"downloaded_size"`
+	UploadedSize    int                    `json:"uploaded_size"`
 	PercentDone     float32                `json:"percent_done"`
 	AdditionalInfos map[string]interface{} `json:"additional_infos"`
 }
