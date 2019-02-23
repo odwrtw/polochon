@@ -86,15 +86,21 @@ func newMockLibrary() (*mockLibrary, error) {
 		Subtitlers: []polochon.Subtitler{subtitler},
 	}
 
+	// downloaderConfig is enabled
+	downloaderConfig := configuration.DownloaderConfig{
+		Enabled: true,
+	}
+
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "mockContent")
 	}))
 
 	c := &configuration.Config{
-		Show:    showConfig,
-		Movie:   movieConfig,
-		File:    fileConfig,
-		Library: config,
+		Show:       showConfig,
+		Movie:      movieConfig,
+		File:       fileConfig,
+		Library:    config,
+		Downloader: downloaderConfig,
 	}
 
 	return &mockLibrary{
