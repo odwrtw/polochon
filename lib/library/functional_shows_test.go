@@ -176,6 +176,7 @@ func TestAddEpisode(t *testing.T) {
 		Seasons: map[int]*index.Season{
 			1: expectedIndexedSeason,
 		},
+		Title: "Show tt12345",
 	}
 
 	// Expected IDs
@@ -215,7 +216,7 @@ func TestAddEpisode(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(expectedIndexedSeason, gotIndexedSeason) {
-		t.Errorf("invalid show ids, expected %+v got %+v", expectedIndexedSeason, gotIndexedSeason)
+		t.Errorf("invalid season, expected %+v got %+v", expectedIndexedSeason, gotIndexedSeason)
 	}
 
 	// Rebuild the index, the episode should be found and added to the index

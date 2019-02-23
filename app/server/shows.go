@@ -31,9 +31,16 @@ func formatSeasons(show *index.Show) map[string]map[string]*index.Episode {
 func (s *Server) showIds(w http.ResponseWriter, req *http.Request) {
 	s.log.Debug("listing shows")
 
-	ret := map[string]map[string]map[string]*index.Episode{}
+	type formatedShow struct {
+		Title   string                               `json:"title"`
+		Seasons map[string]map[string]*index.Episode `json:"seasons"`
+	}
+	ret := map[string]formatedShow{}
 	for id, show := range s.library.ShowIDs() {
-		ret[id] = formatSeasons(show)
+		ret[id] = formatedShow{
+			show.Title,
+			formatSeasons(show),
+		}
 	}
 
 	s.renderOK(w, ret)
