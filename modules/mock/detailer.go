@@ -79,6 +79,7 @@ func (mock *Mock) getMovieDetails(m *polochon.Movie) {
 	m.Tagline = "What the fuck is a tagline"
 	m.Votes = 1000
 	m.Year = 2000
+	m.Genres = []string{"Fucked up"}
 }
 
 func (mock *Mock) getShowEpisodeDetails(s *polochon.ShowEpisode) {
