@@ -21,6 +21,7 @@ type ShowIndex struct {
 type Show struct {
 	Path    string
 	Seasons map[int]*Season
+	Title   string
 }
 
 // Season represents an indexed season
@@ -218,6 +219,7 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 					},
 				},
 			},
+			Title: episode.ShowTitle,
 		}
 		return nil
 	}

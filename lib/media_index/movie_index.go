@@ -20,6 +20,7 @@ type MovieIndex struct {
 type Movie struct {
 	Path      string              `json:"-"`
 	Subtitles []polochon.Language `json:"subtitles"`
+	Title     string              `json:"title"`
 }
 
 // NewMovieIndex returns a new movie index
@@ -57,7 +58,8 @@ func (mi *MovieIndex) Add(movie *polochon.Movie) error {
 	defer mi.Unlock()
 
 	mi.ids[movie.ImdbID] = &Movie{
-		Path: movie.Path,
+		Path:  movie.Path,
+		Title: movie.Title,
 	}
 
 	return nil
