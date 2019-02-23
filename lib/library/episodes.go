@@ -72,8 +72,11 @@ func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode, log *logrus.Entry) er
 	ep.Path = newPath
 
 	// Create a symlink between the new and the old location
-	if err := os.Symlink(ep.Path, oldPath); err != nil {
-		log.Warnf("Error while making symlink between %s and %s : %+v", oldPath, ep.Path, err)
+	// Only if the downloader is enabled
+	if l.downloaderConfig.Enabled {
+		if err := os.Symlink(ep.Path, oldPath); err != nil {
+			log.Warnf("Error while making symlink between %s and %s : %+v", oldPath, ep.Path, err)
+		}
 	}
 
 	// Create show NFO if necessary

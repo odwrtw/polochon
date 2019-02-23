@@ -34,6 +34,7 @@ type Library struct {
 	showConfig        polochon.ShowConfig
 	movieConfig       polochon.MovieConfig
 	fileConfig        polochon.FileConfig
+	downloaderConfig  configuration.DownloaderConfig
 	SubtitleLanguages []polochon.Language
 }
 
@@ -45,6 +46,7 @@ func New(config *configuration.Config) *Library {
 		showConfig:        config.Show,
 		movieConfig:       config.Movie,
 		fileConfig:        config.File,
+		downloaderConfig:  config.Downloader,
 		SubtitleLanguages: config.SubtitleLanguages,
 		LibraryConfig:     config.Library,
 	}

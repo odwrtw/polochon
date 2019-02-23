@@ -93,8 +93,11 @@ func (l *Library) AddMovie(movie *polochon.Movie, log *logrus.Entry) error {
 	movie.Path = newPath
 
 	// Create a symlink between the new and the old location
-	if err := os.Symlink(movie.Path, oldPath); err != nil {
-		log.Warnf("error while making symlink between %s and %s : %+v", oldPath, movie.Path, err)
+	// Only if the downloader is enabled
+	if l.downloaderConfig.Enabled {
+		if err := os.Symlink(movie.Path, oldPath); err != nil {
+			log.Warnf("error while making symlink between %s and %s : %+v", oldPath, movie.Path, err)
+		}
 	}
 
 	// Write NFO into the file
