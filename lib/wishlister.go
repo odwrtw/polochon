@@ -9,6 +9,7 @@ import (
 // Wishlister is an interface which defines the behavior of the wishlister
 // modules
 type Wishlister interface {
+	Module
 	GetMovieWishlist(*logrus.Entry) ([]*WishedMovie, error)
 	GetShowWishlist(*logrus.Entry) ([]*WishedShow, error)
 }

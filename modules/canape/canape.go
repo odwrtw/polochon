@@ -73,6 +73,11 @@ func New(params *Params) (polochon.Wishlister, error) {
 	return &Wishlist{Params: params}, nil
 }
 
+// Name implements the Module interface
+func (w *Wishlist) Name() string {
+	return moduleName
+}
+
 // GetMovieWishlist gets the movies wishlist
 func (w *Wishlist) GetMovieWishlist(log *logrus.Entry) ([]*polochon.WishedMovie, error) {
 	wl, err := w.getMovieWishlists()
