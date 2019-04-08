@@ -141,6 +141,15 @@ type Config struct {
 	SubtitleLanguages []polochon.Language
 }
 
+// ModuleFetcher is an interface which allows to get torrenters and detailers ...
+type ModuleFetcher interface {
+	GetDetailers() []polochon.Detailer
+	GetTorrenters() []polochon.Torrenter
+	GetSearchers() []polochon.Searcher
+	GetExplorers() []polochon.Explorer
+	GetSubtitlers() []polochon.Subtitler
+}
+
 // LibraryConfig represents configuration for the library
 type LibraryConfig struct {
 	MovieDir string
