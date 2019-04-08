@@ -31,11 +31,6 @@ func NewShow(showConf ShowConfig) *Show {
 	}
 }
 
-// GetDetailers implements the Detailable interface
-func (s *Show) GetDetailers() []Detailer {
-	return s.Detailers
-}
-
 // GetCalendar gets the calendar for the show
 // If there is an error, it will be of type *errors.Error
 func (s *Show) GetCalendar(log *logrus.Entry) (*ShowCalendar, *errors.Error) {

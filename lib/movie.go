@@ -46,18 +46,28 @@ func NewMovieFromFile(movieConfig MovieConfig, file File) *Movie {
 }
 
 // GetTorrenters implements the Torrentable interface
-func (m *Movie) GetTorrenters() []Torrenter {
+func (m *MovieConfig) GetTorrenters() []Torrenter {
 	return m.Torrenters
 }
 
 // GetSubtitlers implements the Subtitlable interface
-func (m *Movie) GetSubtitlers() []Subtitler {
+func (m *MovieConfig) GetSubtitlers() []Subtitler {
 	return m.Subtitlers
 }
 
 // GetDetailers implements the Detailable interface
-func (m *Movie) GetDetailers() []Detailer {
+func (m *MovieConfig) GetDetailers() []Detailer {
 	return m.Detailers
+}
+
+// GetExplorers implements the Explorer interface
+func (m *MovieConfig) GetExplorers() []Explorer {
+	return m.Explorers
+}
+
+// GetSearchers implements the Searcher interface
+func (m *MovieConfig) GetSearchers() []Searcher {
+	return m.Searchers
 }
 
 // SetFile implements the video interface

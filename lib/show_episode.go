@@ -48,18 +48,28 @@ func NewShowEpisodeFromFile(showConf ShowConfig, file File) *ShowEpisode {
 }
 
 // GetTorrenters implements the Torrentable interface
-func (s *ShowEpisode) GetTorrenters() []Torrenter {
+func (s *ShowConfig) GetTorrenters() []Torrenter {
 	return s.Torrenters
 }
 
 // GetDetailers implements the Detailable interface
-func (s *ShowEpisode) GetDetailers() []Detailer {
+func (s *ShowConfig) GetDetailers() []Detailer {
 	return s.Detailers
 }
 
 // GetSubtitlers implements the Subtitlable interface
-func (s *ShowEpisode) GetSubtitlers() []Subtitler {
+func (s *ShowConfig) GetSubtitlers() []Subtitler {
 	return s.Subtitlers
+}
+
+// GetExplorers implements the Explorer interface
+func (s *ShowConfig) GetExplorers() []Explorer {
+	return s.Explorers
+}
+
+// GetSearchers implements the Searcher interface
+func (s *ShowConfig) GetSearchers() []Searcher {
+	return s.Searchers
 }
 
 // GetFile implements the video interface
