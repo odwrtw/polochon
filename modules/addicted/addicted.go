@@ -72,6 +72,11 @@ func (a *addictedProxy) Name() string {
 	return moduleName
 }
 
+// Status implements the Module interface
+func (a *addictedProxy) Status() (polochon.ModuleStatus, error) {
+	return polochon.StatusNotImplemented, nil
+}
+
 func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
 	// TODO: add year
 	// TODO: handle release

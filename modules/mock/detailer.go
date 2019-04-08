@@ -35,6 +35,11 @@ func (mock *Mock) Name() string {
 	return moduleName
 }
 
+// Status implements the Module interface
+func (mock *Mock) Status() (polochon.ModuleStatus, error) {
+	return polochon.StatusOK, nil
+}
+
 // GetDetails implements the Detailer interface
 func (mock *Mock) GetDetails(i interface{}, log *logrus.Entry) (err error) {
 	switch v := i.(type) {

@@ -67,6 +67,11 @@ func (t *TPB) Name() string {
 	return moduleName
 }
 
+// Status implements the Module interface
+func (t *TPB) Status() (polochon.ModuleStatus, error) {
+	return polochon.StatusNotImplemented, nil
+}
+
 // Searcher represents an interface to search torrent
 type Searcher interface {
 	key() string

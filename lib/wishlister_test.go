@@ -58,6 +58,10 @@ func (fw *FakeWishlister) Name() string {
 	return "fake"
 }
 
+func (fw *FakeWishlister) Status() (ModuleStatus, error) {
+	return StatusOK, nil
+}
+
 func (fw *FakeWishlister) GetMovieWishlist(log *logrus.Entry) ([]*WishedMovie, error) {
 	return fakeWishedMovies, nil
 }

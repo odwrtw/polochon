@@ -70,6 +70,11 @@ func (y *YifySubs) Name() string {
 	return moduleName
 }
 
+// Status implements the Module interface
+func (y *YifySubs) Status() (polochon.ModuleStatus, error) {
+	return polochon.StatusNotImplemented, nil
+}
+
 // GetMovieSubtitle will get a movie subtitle
 func (y *YifySubs) GetMovieSubtitle(m *polochon.Movie, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
 	if m.ImdbID == "" {

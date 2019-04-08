@@ -69,6 +69,11 @@ func (c *Client) Name() string {
 	return moduleName
 }
 
+// Status implements the Module interface
+func (c *Client) Status() (polochon.ModuleStatus, error) {
+	return polochon.StatusNotImplemented, nil
+}
+
 // Download implements the downloader interface
 func (c *Client) Download(URI string, log *logrus.Entry) error {
 	_, err := c.protocol.AddURI(URI)

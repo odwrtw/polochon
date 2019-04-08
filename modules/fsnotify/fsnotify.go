@@ -32,6 +32,11 @@ func (fs *FsNotify) Name() string {
 	return moduleName
 }
 
+// Status implements the Module interface
+func (fs *FsNotify) Status() (polochon.ModuleStatus, error) {
+	return polochon.StatusNotImplemented, nil
+}
+
 // NewFsNotify returns a new FsNotify
 func NewFsNotify(p []byte) (polochon.FsNotifier, error) {
 	return &FsNotify{}, nil

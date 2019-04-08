@@ -79,6 +79,11 @@ func (p *Pushover) Name() string {
 	return moduleName
 }
 
+// Status implements the Module interface
+func (p *Pushover) Status() (polochon.ModuleStatus, error) {
+	return polochon.StatusNotImplemented, nil
+}
+
 // Notify sends a notification to the recipient
 func (p *Pushover) Notify(i interface{}, log *logrus.Entry) error {
 	switch v := i.(type) {
