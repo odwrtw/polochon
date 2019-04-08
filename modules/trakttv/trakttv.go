@@ -68,6 +68,11 @@ func (trakt *TraktTV) Name() string {
 	return moduleName
 }
 
+// Status implements the Module interface
+func (trakt *TraktTV) Status() (polochon.ModuleStatus, error) {
+	return polochon.StatusNotImplemented, nil
+}
+
 // GetDetails gets details for the polochon video object
 func (trakt *TraktTV) GetDetails(i interface{}, log *logrus.Entry) error {
 	var err error

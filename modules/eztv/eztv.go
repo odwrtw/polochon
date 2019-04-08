@@ -95,6 +95,11 @@ func (e *Eztv) Name() string {
 	return moduleName
 }
 
+// Status implements the Module interface
+func (e *Eztv) Status() (polochon.ModuleStatus, error) {
+	return polochon.StatusNotImplemented, nil
+}
+
 // GetTorrents implements the Torrenter interface
 func (e *Eztv) GetTorrents(i interface{}, log *logrus.Entry) error {
 	switch v := i.(type) {

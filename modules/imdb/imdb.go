@@ -51,6 +51,11 @@ func (w *Wishlist) Name() string {
 	return moduleName
 }
 
+// Status implements the Module interface
+func (w *Wishlist) Status() (polochon.ModuleStatus, error) {
+	return polochon.StatusNotImplemented, nil
+}
+
 // wrapper function to be overwritten during the tests
 var getMoviesFromImdb = func(userID string) (*[]string, error) {
 	return imdbwatchlist.GetMovies(userID)

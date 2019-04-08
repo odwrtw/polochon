@@ -78,6 +78,11 @@ func (w *Wishlist) Name() string {
 	return moduleName
 }
 
+// Status implements the Module interface
+func (w *Wishlist) Status() (polochon.ModuleStatus, error) {
+	return polochon.StatusNotImplemented, nil
+}
+
 // GetMovieWishlist gets the movies wishlist
 func (w *Wishlist) GetMovieWishlist(log *logrus.Entry) ([]*polochon.WishedMovie, error) {
 	wl, err := w.getMovieWishlists()

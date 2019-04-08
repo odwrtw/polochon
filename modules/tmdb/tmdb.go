@@ -175,6 +175,11 @@ func (t *TmDB) Name() string {
 	return moduleName
 }
 
+// Status implements the Module interface
+func (t *TmDB) Status() (polochon.ModuleStatus, error) {
+	return polochon.StatusNotImplemented, nil
+}
+
 // GetDetails implements the Detailer interface
 func (t *TmDB) GetDetails(i interface{}, log *logrus.Entry) error {
 	m, ok := i.(*polochon.Movie)

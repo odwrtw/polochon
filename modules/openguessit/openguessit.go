@@ -55,6 +55,11 @@ func (og *OpenGuessit) Name() string {
 	return moduleName
 }
 
+// Status implements the Module interface
+func (og *OpenGuessit) Status() (polochon.ModuleStatus, error) {
+	return polochon.StatusNotImplemented, nil
+}
+
 // Guess implements the Guesser interface
 func (og *OpenGuessit) Guess(file polochon.File, movieConf polochon.MovieConfig, showConf polochon.ShowConfig, log *logrus.Entry) (polochon.Video, error) {
 	guess, err := og.GuessitClient.Guess(filepath.Base(file.Path))

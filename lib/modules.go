@@ -33,9 +33,13 @@ var (
 // ModuleType holds modules type
 type ModuleType string
 
+// ModuleStatus holds modules status
+type ModuleStatus string
+
 // Module type, all modules must implement it
 type Module interface {
 	Name() string
+	Status() (ModuleStatus, error)
 }
 
 // Available modules types
@@ -51,6 +55,13 @@ const (
 	TypeCalendar              = "calendar"
 	TypeExplorer              = "explorer"
 	TypeSearcher              = "searcher"
+)
+
+// Available modules statuses
+const (
+	StatusOK             ModuleStatus = "ok"
+	StatusNotImplemented              = "not_implemented"
+	StatusFail                        = "fail"
 )
 
 // modules holds the modules registered during the init process

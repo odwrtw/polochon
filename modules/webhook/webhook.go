@@ -74,6 +74,11 @@ func (w *WebHook) Name() string {
 	return moduleName
 }
 
+// Status implements the Module interface
+func (w *WebHook) Status() (polochon.ModuleStatus, error) {
+	return polochon.StatusNotImplemented, nil
+}
+
 // Notify sends a notification to the recipient
 func (w *WebHook) Notify(i interface{}, log *logrus.Entry) error {
 	var videoType string

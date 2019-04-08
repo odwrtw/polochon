@@ -139,6 +139,11 @@ func (osp *osProxy) Name() string {
 	return moduleName
 }
 
+// Status implements the Module interface
+func (osp *osProxy) Status() (polochon.ModuleStatus, error) {
+	return polochon.StatusNotImplemented, nil
+}
+
 // Function to get a new client
 var newOsdbClient = func() (*osdb.Client, error) {
 	return osdb.NewClient()

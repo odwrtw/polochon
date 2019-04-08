@@ -90,6 +90,11 @@ func (p *Pam) Name() string {
 	return moduleName
 }
 
+// Status implements the Module interface
+func (p *Pam) Status() (polochon.ModuleStatus, error) {
+	return polochon.StatusNotImplemented, nil
+}
+
 // GetDetails implements the Detailer interface
 func (p *Pam) GetDetails(i interface{}, log *logrus.Entry) error {
 	switch resource := i.(type) {
