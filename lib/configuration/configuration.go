@@ -257,19 +257,15 @@ func loadConfig(cf *ConfigFileRoot) (*Config, error) {
 	}
 	conf.Wishlist = *wishlistConf
 
-	showConf, err := cf.InitShow(log)
+	err = conf.InitShow(cf)
 	if err != nil {
 		return nil, err
 	}
 
-	conf.Show = *showConf
-
-	movieConf, err := cf.InitMovie(log)
+	err = conf.InitMovie(cf)
 	if err != nil {
 		return nil, err
 	}
-
-	conf.Movie = *movieConf
 
 	guesser, err := cf.initFile(log)
 	if err != nil {
@@ -352,6 +348,7 @@ func (c *ConfigFileRoot) loadWatcher(log *logrus.Entry) (polochon.FsNotifier, er
 
 	return fsNotifier, nil
 }
+
 func (c *ConfigFileRoot) initFile(log *logrus.Entry) (polochon.Guesser, error) {
 	// Get video guesser
 	if c.Video.GuesserName == "" {
@@ -467,183 +464,187 @@ func (c *ConfigFileRoot) initNotifiers() ([]polochon.Notifier, error) {
 }
 
 // InitShow inits the show's config
-func (c *ConfigFileRoot) InitShow(log *logrus.Entry) (*polochon.ShowConfig, error) {
+func (c *Config) InitShow(cf *ConfigFileRoot) error {
 	// Get show detailer
-	if len(c.Show.DetailerNames) == 0 {
-		return nil, fmt.Errorf("config: missing show detailer names")
+	if len(cf.Show.DetailerNames) == 0 {
+		return fmt.Errorf("config: missing show detailer names")
 	}
-	showConf := &polochon.ShowConfig{}
-	for _, detailerName := range c.Show.DetailerNames {
-		moduleParams, err := c.moduleParams(detailerName)
+	showConf := polochon.ShowConfig{}
+	for _, detailerName := range cf.Show.DetailerNames {
+		moduleParams, err := cf.moduleParams(detailerName)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		detailer, err := polochon.ConfigureDetailer(detailerName, moduleParams)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		showConf.Detailers = append(showConf.Detailers, detailer)
 	}
 
 	// Get show torrenter
-	if len(c.Show.TorrenterNames) == 0 {
-		return nil, fmt.Errorf("config: missing movie torrenter names")
+	if len(cf.Show.TorrenterNames) == 0 {
+		return fmt.Errorf("config: missing movie torrenter names")
 	}
 
-	for _, torrenterName := range c.Show.TorrenterNames {
-		moduleParams, err := c.moduleParams(torrenterName)
+	for _, torrenterName := range cf.Show.TorrenterNames {
+		moduleParams, err := cf.moduleParams(torrenterName)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		torrenter, err := polochon.ConfigureTorrenter(torrenterName, moduleParams)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		showConf.Torrenters = append(showConf.Torrenters, torrenter)
 	}
 
-	for _, subtitlerName := range c.Show.SubtitlerNames {
-		moduleParams, err := c.moduleParams(subtitlerName)
+	for _, subtitlerName := range cf.Show.SubtitlerNames {
+		moduleParams, err := cf.moduleParams(subtitlerName)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		subtitler, err := polochon.ConfigureSubtitler(subtitlerName, moduleParams)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		showConf.Subtitlers = append(showConf.Subtitlers, subtitler)
 	}
 
-	for _, explorerName := range c.Show.ExplorerNames {
-		moduleParams, err := c.moduleParams(explorerName)
+	for _, explorerName := range cf.Show.ExplorerNames {
+		moduleParams, err := cf.moduleParams(explorerName)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		explorer, err := polochon.ConfigureExplorer(explorerName, moduleParams)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		showConf.Explorers = append(showConf.Explorers, explorer)
 	}
 
-	for _, searcherName := range c.Show.SearcherNames {
-		moduleParams, err := c.moduleParams(searcherName)
+	for _, searcherName := range cf.Show.SearcherNames {
+		moduleParams, err := cf.moduleParams(searcherName)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		searcher, err := polochon.ConfigureSearcher(searcherName, moduleParams)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		showConf.Searchers = append(showConf.Searchers, searcher)
 	}
 
 	// Init the show calendar fetcher
-	if c.Show.CalendarName != "" {
-		moduleParams, err := c.moduleParams(c.Show.CalendarName)
+	if cf.Show.CalendarName != "" {
+		moduleParams, err := cf.moduleParams(cf.Show.CalendarName)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		// Configure
-		calendar, err := polochon.ConfigureCalendar(c.Show.CalendarName, moduleParams)
+		calendar, err := polochon.ConfigureCalendar(cf.Show.CalendarName, moduleParams)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		showConf.Calendar = calendar
 	}
 
-	return showConf, nil
+	c.Show = showConf
+
+	return nil
 }
 
 // InitMovie inits the movie's config
-func (c *ConfigFileRoot) InitMovie(log *logrus.Entry) (*polochon.MovieConfig, error) {
+func (c *Config) InitMovie(cf *ConfigFileRoot) error {
 	// Get movie detailer
-	if len(c.Movie.DetailerNames) == 0 {
-		return nil, fmt.Errorf("config: missing movie detailer names")
+	if len(cf.Movie.DetailerNames) == 0 {
+		return fmt.Errorf("config: missing movie detailer names")
 	}
 
-	movieConf := &polochon.MovieConfig{}
+	movieConf := polochon.MovieConfig{}
 
-	for _, detailerName := range c.Movie.DetailerNames {
-		moduleParams, err := c.moduleParams(detailerName)
+	for _, detailerName := range cf.Movie.DetailerNames {
+		moduleParams, err := cf.moduleParams(detailerName)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		detailer, err := polochon.ConfigureDetailer(detailerName, moduleParams)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		movieConf.Detailers = append(movieConf.Detailers, detailer)
 	}
 
 	// Get movie torrenter
-	if len(c.Movie.TorrenterNames) == 0 {
-		return nil, fmt.Errorf("config: missing movie torrenter names")
+	if len(cf.Movie.TorrenterNames) == 0 {
+		return fmt.Errorf("config: missing movie torrenter names")
 	}
 
-	for _, torrenterName := range c.Movie.TorrenterNames {
-		moduleParams, err := c.moduleParams(torrenterName)
+	for _, torrenterName := range cf.Movie.TorrenterNames {
+		moduleParams, err := cf.moduleParams(torrenterName)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		torrenter, err := polochon.ConfigureTorrenter(torrenterName, moduleParams)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		movieConf.Torrenters = append(movieConf.Torrenters, torrenter)
 	}
 
-	for _, subtitlerName := range c.Movie.SubtitlerNames {
-		moduleParams, err := c.moduleParams(subtitlerName)
+	for _, subtitlerName := range cf.Movie.SubtitlerNames {
+		moduleParams, err := cf.moduleParams(subtitlerName)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		subtitler, err := polochon.ConfigureSubtitler(subtitlerName, moduleParams)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		movieConf.Subtitlers = append(movieConf.Subtitlers, subtitler)
 	}
 
-	for _, explorerName := range c.Movie.ExplorerNames {
-		moduleParams, err := c.moduleParams(explorerName)
+	for _, explorerName := range cf.Movie.ExplorerNames {
+		moduleParams, err := cf.moduleParams(explorerName)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		explorer, err := polochon.ConfigureExplorer(explorerName, moduleParams)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		movieConf.Explorers = append(movieConf.Explorers, explorer)
 	}
 
-	for _, searcherName := range c.Movie.SearcherNames {
-		moduleParams, err := c.moduleParams(searcherName)
+	for _, searcherName := range cf.Movie.SearcherNames {
+		moduleParams, err := cf.moduleParams(searcherName)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		searcher, err := polochon.ConfigureSearcher(searcherName, moduleParams)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		movieConf.Searchers = append(movieConf.Searchers, searcher)
 	}
 
-	return movieConf, nil
+	c.Movie = movieConf
+
+	return nil
 }
 
 // LoadConfigFile reads a file from a path and returns a config
