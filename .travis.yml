@@ -1,14 +1,14 @@
 language: go
 go:
-  - 1.11.1
+  - 1.12.4
 sudo: false
+install: true
 before_install:
   - go get github.com/axw/gocov/gocov
   - go get github.com/mattn/goveralls
   - go get golang.org/x/tools/cmd/cover
   - go get github.com/modocache/gover
   - go get github.com/mitchellh/gox
-  - go get -v ./...
 script:
   - if [ "${TRAVIS_PULL_REQUEST}" == "false" -a "${TRAVIS_BRANCH}" == "master" ]; then make distclean all crossbuild goveralls; else make distclean all goveralls; fi
 after_success:
@@ -18,6 +18,7 @@ branches:
     - master
 env:
   global:
+  - GO111MODULE: "on"
   - GITHUB_REPO: polochon
   - GITHUB_USER: odwrtw
   - secure: S3vVgMxeEsgvULvy+v8PKjRKvEhr9d8mR2MH+8zVME9Og3s/ywYxOnirY7JC5Zsl1kWYXcNw2+kJ1JujiRQH+HD7qh5GbB0B5lntio5tWY248AZdJ5k7t5YQSa0WS1o8+zZFvzH5nP5EXDNMItNRqiFGwAnv/G1DoOIt9wAP/G4He3PP6qnS47AfpeMdBMlfWJMNV5T+kQcEHOmaqF6WOxcr+NccVzGEafg7c6aeL/dMtgi4w9MWkUgbDFbsNvmFVb5uZqQyt6nA+Y4mXi9fRJ7YeIT6B7VdA8NoEjoJCh/6E0MSiIFMlMsAKup6C7QIKCm4Bw9WPmeuGy7W7UF2OCZN4GOTPj5K4CbF+XZx92aSiSQkOKruhMLait7RbMdzMRLtEZKfkaRqa710TxzH6msdgWsF5oGpsiHoA3qE4oO3v8xiLVLbSgNXrLjBhlXYELClYho+ZCtlWk49GiqRTAjdwoSWxVQztptgMNj7bZYuMHMXPV2LFjh7s8rvqIupPxFk8eVfm7gCc0KFWou6xXsJly583IqUW/MbShTJ5YiqNlEutLsKv6+4MG1WzlBoyXu6aL4ipV8SwbCedmvmnr/XjiEjTBw0IHpiklvoLyJ1zLusSTevQYqpHscO5f2rHpon+kIPkUYKr8jCt3JXW8bFUcj4H1vGBFh/YtlZiGs=
