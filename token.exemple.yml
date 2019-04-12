@@ -6,6 +6,7 @@
     - GetShow
     - GetSeason
     - GetEpisode
+    - GetModulesStatus
   token:
     # You can chose any name for your token
   - name: guest_token_name

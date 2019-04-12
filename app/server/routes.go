@@ -158,6 +158,12 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 			handler: s.removeTorrent,
 		},
 		{
+			name:    "GetModulesStatus",
+			path:    "/modules/status",
+			methods: "GET",
+			handler: s.getModulesStatus,
+		},
+		{
 			name:    "PprofIndex",
 			path:    "/debug/pprof/",
 			methods: "GET",
