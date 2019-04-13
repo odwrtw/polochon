@@ -141,7 +141,31 @@ func (osp *osProxy) Name() string {
 
 // Status implements the Module interface
 func (osp *osProxy) Status() (polochon.ModuleStatus, error) {
-	return polochon.StatusNotImplemented, nil
+	// Create a new client if needed
+	if osp.client == nil {
+		client, err := newOsdbClient()
+		if err != nil {
+			return polochon.StatusFail, err
+		}
+		osp.client = client
+	}
+
+	innerParams := []map[string]string{
+		{
+			"imdbid": "0133093",
+		},
+	}
+
+	params := []interface{}{
+		osp.client.Token,
+		innerParams,
+	}
+
+	_, err := searchOsdbSubtitles(osp.client, params)
+	if err != nil {
+		return polochon.StatusFail, err
+	}
+	return polochon.StatusOK, nil
 }
 
 // Function to get a new client
