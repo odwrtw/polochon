@@ -97,7 +97,20 @@ func (e *Eztv) Name() string {
 
 // Status implements the Module interface
 func (e *Eztv) Status() (polochon.ModuleStatus, error) {
-	return polochon.StatusNotImplemented, nil
+	status := polochon.StatusOK
+
+	// Get the page of the shows
+	showList, err := eztv.ListShows(1)
+	if err != nil {
+		status = polochon.StatusFail
+	}
+
+	// Check if there is any results
+	if len(showList) == 0 {
+		return polochon.StatusFail, polochon.ErrShowEpisodeTorrentNotFound
+	}
+
+	return status, err
 }
 
 // GetTorrents implements the Torrenter interface
