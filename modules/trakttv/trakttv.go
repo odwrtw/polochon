@@ -70,7 +70,14 @@ func (trakt *TraktTV) Name() string {
 
 // Status implements the Module interface
 func (trakt *TraktTV) Status() (polochon.ModuleStatus, error) {
-	return polochon.StatusNotImplemented, nil
+	status := polochon.StatusOK
+
+	// Search for The Matrix on trakttv via imdbID
+	_, err := trakt.client.SearchMovieByID("tt0133093", trakttv.QueryOption{})
+	if err != nil {
+		status = polochon.StatusFail
+	}
+	return status, err
 }
 
 // GetDetails gets details for the polochon video object
