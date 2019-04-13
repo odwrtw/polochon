@@ -72,7 +72,14 @@ func (y *YifySubs) Name() string {
 
 // Status implements the Module interface
 func (y *YifySubs) Status() (polochon.ModuleStatus, error) {
-	return polochon.StatusNotImplemented, nil
+	results, err := y.Client.SearchByLang("tt0133093", "English")
+	if err != nil {
+		return polochon.StatusFail, err
+	}
+	if len(results) == 0 {
+		return polochon.StatusFail, fmt.Errorf("failed to find subtitles")
+	}
+	return polochon.StatusOK, nil
 }
 
 // GetMovieSubtitle will get a movie subtitle
@@ -83,7 +90,6 @@ func (y *YifySubs) GetMovieSubtitle(m *polochon.Movie, lang polochon.Language, l
 
 	subLang, ok := langTranslate[lang]
 	if !ok {
-		fmt.Println(lang)
 		return nil, ErrInvalidSubtitleLang
 	}
 
