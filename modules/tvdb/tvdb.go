@@ -45,8 +45,7 @@ var (
 )
 
 // TvDB implents the Detailer interface
-type TvDB struct {
-}
+type TvDB struct{}
 
 // NewDetailerFromRawYaml unmarshals the bytes as yaml as params and call the
 // New function
@@ -300,7 +299,13 @@ func (t *TvDB) Name() string {
 
 // Status implements the Module interface
 func (t *TvDB) Status() (polochon.ModuleStatus, error) {
-	return polochon.StatusNotImplemented, nil
+	// Search for The Matrix on trakttv via imdbID
+	_, err := tvdbGetShowByImdbID("tt2085059")
+	if err != nil {
+		return polochon.StatusFail, err
+	}
+
+	return polochon.StatusOK, nil
 }
 
 // GetDetails implements the Detailer interface
