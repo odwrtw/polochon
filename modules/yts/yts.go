@@ -49,7 +49,13 @@ func (y *Yts) Name() string {
 
 // Status implements the Module interface
 func (y *Yts) Status() (polochon.ModuleStatus, error) {
-	return polochon.StatusNotImplemented, nil
+	status := polochon.StatusOK
+	err := yts.Status()
+	if err != nil {
+		status = polochon.StatusFail
+	}
+
+	return status, err
 }
 
 // Ensure that the given interface is an Movie
