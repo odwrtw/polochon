@@ -177,7 +177,18 @@ func (t *TmDB) Name() string {
 
 // Status implements the Module interface
 func (t *TmDB) Status() (polochon.ModuleStatus, error) {
-	return polochon.StatusNotImplemented, nil
+	// Search for The Matrix on tmdb via imdbID
+	results, err := tmdbSearchByImdbID(t.client, "tt0133093", "imdb_id", map[string]string{})
+	if err != nil {
+		return polochon.StatusFail, err
+	}
+
+	// Check if there is any results
+	if len(results.MovieResults) == 0 {
+		return polochon.StatusFail, ErrNoMovieFound
+	}
+
+	return polochon.StatusOK, nil
 }
 
 // GetDetails implements the Detailer interface
