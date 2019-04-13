@@ -74,7 +74,15 @@ func (a *addictedProxy) Name() string {
 
 // Status implements the Module interface
 func (a *addictedProxy) Status() (polochon.ModuleStatus, error) {
-	return polochon.StatusNotImplemented, nil
+	_, err := a.getShowSubtitle(&polochon.ShowEpisode{
+		ShowTitle: "Black Mirror",
+		Season:    1,
+		Episode:   1,
+	}, polochon.EN, logrus.NewEntry(logrus.New()))
+	if err != nil {
+		return polochon.StatusFail, err
+	}
+	return polochon.StatusOK, nil
 }
 
 func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
@@ -114,7 +122,7 @@ func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang p
 	sort.Sort(addicted.ByDownloads(filteredSubs))
 
 	if reqEpisode.ReleaseGroup == "" {
-		log.Info("No release group specified get the most downloaded subtitle")
+		// No release group specified get the most downloaded subtitle
 		return &filteredSubs[0], err
 	}
 
