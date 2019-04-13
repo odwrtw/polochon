@@ -69,7 +69,16 @@ func (t *TPB) Name() string {
 
 // Status implements the Module interface
 func (t *TPB) Status() (polochon.ModuleStatus, error) {
-	return polochon.StatusNotImplemented, nil
+	torrents, err := t.SearchTorrents("black-mirror")
+	if err != nil {
+		return polochon.StatusFail, err
+	}
+
+	if len(torrents) == 0 {
+		return polochon.StatusFail, nil
+	}
+
+	return polochon.StatusOK, nil
 }
 
 // Searcher represents an interface to search torrent
