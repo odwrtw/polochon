@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/odwrtw/guessit"
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 )
 
@@ -41,7 +41,7 @@ type OpenGuessit struct {
 // New returns an new openguessit
 func New() (polochon.Guesser, error) {
 	return &OpenGuessit{
-		GuessitClient: guessit.New("http://guessit.quimbo.fr/guess/"),
+		GuessitClient: guessit.New("http://guessit.quimbo.fr/guess"),
 	}, nil
 }
 
@@ -62,7 +62,8 @@ func (og *OpenGuessit) Status() (polochon.ModuleStatus, error) {
 
 // Guess implements the Guesser interface
 func (og *OpenGuessit) Guess(file polochon.File, movieConf polochon.MovieConfig, showConf polochon.ShowConfig, log *logrus.Entry) (polochon.Video, error) {
-	guess, err := og.GuessitClient.Guess(filepath.Base(file.Path))
+	filename := filepath.Base(file.Path)
+	guess, err := og.GuessitClient.Guess(filename)
 	if err != nil {
 		return nil, err
 	}
