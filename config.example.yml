@@ -157,6 +157,11 @@ modules_params:
     wishlists:
     - url: https://canapeapp.com
       token: 5O32q4D6jlqj492374923749234Kso4aZtarEsAfaJs=
+    # tvdb is used as a show detailer and calendar. It requires API credentials.
+  - name: tvdb
+    api_key: my_api_key
+    user_id: my_user_id
+    username: my_username
     # tmdb is used as a movie detailer and requires an API key.
   - name: tmdb
     apikey: my@w3$0m3@pIk3y
