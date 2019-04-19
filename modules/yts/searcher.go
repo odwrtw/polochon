@@ -3,7 +3,7 @@ package yts
 import (
 	"fmt"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/yts"
 	"github.com/sirupsen/logrus"
 )
@@ -52,5 +52,5 @@ func (y *Yts) SearchMovie(key string, log *logrus.Entry) ([]*polochon.Movie, err
 
 // SearchShow implements polochon Searcher interface
 func (y *Yts) SearchShow(key string, log *logrus.Entry) ([]*polochon.Show, error) {
-	return nil, fmt.Errorf("Not implemented")
+	return nil, fmt.Errorf("yts: not implemented")
 }

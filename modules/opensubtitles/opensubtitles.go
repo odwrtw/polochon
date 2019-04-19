@@ -10,7 +10,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/oz/osdb"
 	"github.com/sirupsen/logrus"
 )
@@ -61,7 +61,7 @@ func (o *openSubtitle) Read(b []byte) (int, error) {
 			return 0, err
 		}
 		if len(files) == 0 {
-			return 0, fmt.Errorf("No file match this subtitle ID")
+			return 0, fmt.Errorf("opensubtitles: no file match this subtitle ID")
 		}
 
 		// Save to disk.
@@ -223,7 +223,7 @@ func (osp *osProxy) checkSubtitles(i interface{}, subs osdb.Subtitles, log *logr
 	case polochon.Movie:
 		goodSubs = osp.getGoodMovieSubtitles(v, subs, log)
 	default:
-		return nil, fmt.Errorf("Error while checking subtitles, invalid type %t", v)
+		return nil, fmt.Errorf("opensubtitles: error while checking subtitles, invalid type %t", v)
 	}
 	return osp.getBestSubtitle(goodSubs), nil
 }
@@ -376,7 +376,7 @@ func (osp *osProxy) openSubtitleParams(i interface{}) ([]map[string]string, erro
 	case polochon.Movie:
 		return osp.openSubtitleMovieParams(v), nil
 	default:
-		return []map[string]string{}, fmt.Errorf("Not a showEpisode, not a movie, something's fucked up")
+		return []map[string]string{}, fmt.Errorf("opensubtitles: not a showEpisode, not a movie, something's fucked up")
 	}
 }
 

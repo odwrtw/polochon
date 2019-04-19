@@ -129,6 +129,11 @@ func (l *Library) buildShowIndex(log *logrus.Entry) error {
 	// Get only the parent folders
 	err := filepath.Walk(l.ShowDir, func(filePath string, file os.FileInfo, err error) error {
 		walkLog := log.WithField("path", filePath)
+		if err != nil {
+			walkLog.Errorf("library: failed to access path: %q", filePath)
+			return err
+		}
+
 		// Only check directories
 		if !file.IsDir() {
 			return nil

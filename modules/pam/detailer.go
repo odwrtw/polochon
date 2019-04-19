@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/odwrtw/papi"
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
@@ -50,7 +50,7 @@ func NewFromRawYaml(p []byte) (*Pam, error) {
 
 // NewDetailerFromRawYaml returns a new detailer from raw yaml config
 func NewDetailerFromRawYaml(p []byte) (polochon.Detailer, error) {
-	return NewDetailerFromRawYaml(p)
+	return NewFromRawYaml(p)
 }
 
 // New returns a new pam

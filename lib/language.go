@@ -6,7 +6,7 @@ type Language string
 // Based on unix loacle
 const (
 	EN Language = "en_US"
-	FR          = "fr_FR"
+	FR Language = "fr_FR"
 )
 
 // LangInfo represents differents infos of a Lang

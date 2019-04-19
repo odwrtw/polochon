@@ -10,9 +10,9 @@ type Quality string
 // Possible qualities
 const (
 	Quality480p  Quality = "480p"
-	Quality720p          = "720p"
-	Quality1080p         = "1080p"
-	Quality3D            = "3D"
+	Quality720p  Quality = "720p"
+	Quality1080p Quality = "1080p"
+	Quality3D    Quality = "3D"
 )
 
 // StringToQuality returns a Quality from a string

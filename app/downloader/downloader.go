@@ -5,7 +5,7 @@ import (
 
 	"github.com/odwrtw/errors"
 	"github.com/odwrtw/polochon/app/subapp"
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/library"
 	"github.com/sirupsen/logrus"
@@ -83,10 +83,11 @@ func (d *Downloader) Run(log *logrus.Entry) error {
 }
 
 func (d *Downloader) ticker(log *logrus.Entry) {
-	tick := time.Tick(d.config.Downloader.Timer)
+	ticker := time.NewTicker(d.config.Downloader.Timer)
+	defer ticker.Stop()
 	for {
 		select {
-		case <-tick:
+		case <-ticker.C:
 			log.Debug("downloader timer triggered")
 			d.event <- struct{}{}
 		case <-d.Done:

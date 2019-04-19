@@ -276,7 +276,7 @@ func (t *TvDB) getShowImages(s *polochon.Show, show *tvdb.Series) error {
 			images = append(images, &i)
 		}
 
-		if images == nil || len(images) == 0 {
+		if len(images) == 0 {
 			return ErrShowImageNotFound
 		}
 

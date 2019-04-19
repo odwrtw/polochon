@@ -10,7 +10,7 @@ import (
 
 	"github.com/odwrtw/errors"
 	"github.com/odwrtw/polochon/app/subapp"
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/sirupsen/logrus"
 )
@@ -80,10 +80,11 @@ func (c *Cleaner) Run(log *logrus.Entry) error {
 }
 
 func (c *Cleaner) ticker(log *logrus.Entry) {
-	tick := time.Tick(c.config.Downloader.Cleaner.Timer)
+	ticker := time.NewTicker(c.config.Downloader.Cleaner.Timer)
+	defer ticker.Stop()
 	for {
 		select {
-		case <-tick:
+		case <-ticker.C:
 			log.Debug("cleaner timer triggered")
 			c.event <- struct{}{}
 		case <-c.Done:

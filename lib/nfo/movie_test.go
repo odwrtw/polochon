@@ -2,15 +2,11 @@ package nfo
 
 import (
 	"bytes"
-	"io/ioutil"
 	"reflect"
 	"testing"
 
-	"github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
+	polochon "github.com/odwrtw/polochon/lib"
 )
-
-var mockLogEntry = logrus.NewEntry(&logrus.Logger{Out: ioutil.Discard})
 
 func mockMovie() *polochon.Movie {
 	m := polochon.NewMovie(polochon.MovieConfig{})

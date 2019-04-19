@@ -4,13 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 )
-
-func (s *Server) movieIds(w http.ResponseWriter, req *http.Request) {
-	s.log.Debug("listing movies by ids")
-	s.renderOK(w, s.library.MovieIDs())
-}
 
 func (s *Server) movieIndex(w http.ResponseWriter, req *http.Request) {
 	s.log.Debug("listing movie index")

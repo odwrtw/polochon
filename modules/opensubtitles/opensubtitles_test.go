@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/oz/osdb"
 	"github.com/sirupsen/logrus"
 )
@@ -21,9 +21,6 @@ var fakeClient = &osdb.Client{Token: "pwet"}
 // fake functions for tests
 var fakeNewOsdbClient = func() (*osdb.Client, error) {
 	return fakeClient, nil
-}
-var fakeNewOsdbClientError = func() (*osdb.Client, error) {
-	return nil, errFake
 }
 var fakeCheckOsdbClient = func(c *osdb.Client) error {
 	return nil
@@ -266,7 +263,7 @@ func TestSearchSubtitles(t *testing.T) {
 			fakeMovie,
 			fakeShowEpisode,
 		} {
-			sub, err := fakeProxy.searchSubtitles(video, "fakePath", polochon.FR, fakeLoggerEntry)
+			sub, err := fakeProxy.searchSubtitles(video, "fakePath", string(polochon.FR), fakeLoggerEntry)
 			if err != situation.expectedErr {
 				log.Fatalf("Got error in searchMovieSubtitles: %q, wanted : %q", err, situation.expectedErr)
 			}
