@@ -58,6 +58,10 @@ func (fw *FakeWishlister) Name() string {
 	return "fake"
 }
 
+func (fw *FakeWishlister) Init([]byte) error {
+	return nil
+}
+
 func (fw *FakeWishlister) Status() (ModuleStatus, error) {
 	return StatusOK, nil
 }

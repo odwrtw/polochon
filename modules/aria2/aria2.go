@@ -11,15 +11,18 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// Make sure that the module is a downloader
+var _ polochon.Downloader = (*Client)(nil)
+
+// Register a new Downloader
+func init() {
+	polochon.RegisterModule(&Client{})
+}
+
 // Module constants
 const (
 	moduleName = "aria2"
 )
-
-// Register a new Downloader
-func init() {
-	polochon.RegisterDownloader(moduleName, NewFromRawYaml)
-}
 
 // Params represents the module params
 type Params struct {
@@ -30,38 +33,43 @@ type Params struct {
 // Client holds the connection with transmission
 type Client struct {
 	*Params
-	protocol rpc.Protocol
+	protocol   rpc.Protocol
+	configured bool
 }
 
-// NewFromRawYaml unmarshals the bytes as yaml as params and call the New
-// function
-func NewFromRawYaml(p []byte) (polochon.Downloader, error) {
-	params := &Params{}
-	if err := yaml.Unmarshal(p, params); err != nil {
-		return nil, err
+// Init implements the module interface
+func (c *Client) Init(p []byte) error {
+	if c.configured {
+		return nil
 	}
 
-	return New(params)
+	params := &Params{}
+	if err := yaml.Unmarshal(p, params); err != nil {
+		return err
+	}
+
+	return c.InitWithParams(params)
 }
 
-// New module
-func New(params *Params) (polochon.Downloader, error) {
+// InitWithParams helps init the module with the given params
+func (c *Client) InitWithParams(params *Params) error {
 	if params.URL == "" {
-		return nil, fmt.Errorf("aria2: missing URL")
+		return fmt.Errorf("aria2: missing URL")
 	}
 
 	if params.Secret == "" {
-		return nil, fmt.Errorf("aria2: missing rpc secret")
+		return fmt.Errorf("aria2: missing rpc secret")
 	}
 
-	client := &Client{}
 	var err error
-	client.protocol, err = rpc.New(params.URL, params.Secret)
+	c.protocol, err = rpc.New(params.URL, params.Secret)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return client, nil
+	c.configured = true
+
+	return nil
 }
 
 // Name implements the Module interface

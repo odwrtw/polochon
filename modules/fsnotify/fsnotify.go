@@ -4,10 +4,18 @@ import (
 	"os"
 	"time"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/fsnotify.v1"
 )
+
+// Make sure that the module is a subtitler
+var _ polochon.FsNotifier = (*FsNotify)(nil)
+
+// Register fsnotify as a FsNotifier
+func init() {
+	polochon.RegisterModule(&FsNotify{})
+}
 
 const (
 	// Module name
@@ -16,11 +24,6 @@ const (
 	// DELAY represents the time to wait before sending an event
 	DELAY time.Duration = 100 * time.Millisecond
 )
-
-// Register fsnotify as a FsNotifier
-func init() {
-	polochon.RegisterFsNotifier(moduleName, NewFsNotify)
-}
 
 // FsNotify is a fsNotifier watching a directory
 type FsNotify struct {
@@ -37,9 +40,9 @@ func (fs *FsNotify) Status() (polochon.ModuleStatus, error) {
 	return polochon.StatusNotImplemented, nil
 }
 
-// NewFsNotify returns a new FsNotify
-func NewFsNotify(p []byte) (polochon.FsNotifier, error) {
-	return &FsNotify{}, nil
+// Init implements the Module interface
+func (fs *FsNotify) Init([]byte) error {
+	return nil
 }
 
 // Watch implements the modules fsNotifier interface

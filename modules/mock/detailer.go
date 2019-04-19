@@ -1,44 +1,11 @@
 package mock
 
 import (
-	"errors"
 	"fmt"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 )
-
-// Module constants
-const (
-	moduleName = "mock"
-)
-
-var (
-	// ErrInvalidArgument is returned if the type is invalid
-	ErrInvalidArgument = errors.New("mock: invalid argument type")
-)
-
-func init() {
-	polochon.RegisterDetailer(moduleName, NewDetailer)
-}
-
-// Mock is a mock Detailer for test purposes
-type Mock struct{}
-
-// NewDetailer is an helper to avoid passing bytes
-func NewDetailer(p []byte) (polochon.Detailer, error) {
-	return &Mock{}, nil
-}
-
-// Name implements the Module interface
-func (mock *Mock) Name() string {
-	return moduleName
-}
-
-// Status implements the Module interface
-func (mock *Mock) Status() (polochon.ModuleStatus, error) {
-	return polochon.StatusOK, nil
-}
 
 // GetDetails implements the Detailer interface
 func (mock *Mock) GetDetails(i interface{}, log *logrus.Entry) (err error) {

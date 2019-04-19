@@ -4,9 +4,21 @@ import (
 	"errors"
 
 	"github.com/odwrtw/eztv"
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 )
+
+// Make sure that the module is a torrenter, an explorer and a searcher
+var (
+	_ polochon.Torrenter = (*Eztv)(nil)
+	_ polochon.Explorer  = (*Eztv)(nil)
+	_ polochon.Searcher  = (*Eztv)(nil)
+)
+
+// Register eztv as a Torrenter
+func init() {
+	polochon.RegisterModule(&Eztv{})
+}
 
 // Eztv errors
 var (
@@ -20,22 +32,12 @@ const (
 	moduleName = "eztv"
 )
 
-// Register eztv as a Torrenter
-func init() {
-	polochon.RegisterTorrenter(moduleName, NewFromRawYaml)
-}
-
 // Eztv is a source for show episode torrents
 type Eztv struct{}
 
-// New is an helper to avoid passing bytes
-func New() (*Eztv, error) {
-	return &Eztv{}, nil
-}
-
-// NewFromRawYaml returns a new Eztv
-func NewFromRawYaml(p []byte) (polochon.Torrenter, error) {
-	return New()
+// Init implements the Module interface
+func (e *Eztv) Init(p []byte) error {
+	return nil
 }
 
 // Function to be overwritten during the tests

@@ -13,6 +13,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Make sure that the module is a torrenter
+var _ polochon.Torrenter = (*TPB)(nil)
+
+func init() {
+	polochon.RegisterModule(&TPB{})
+}
+
 // Module constants
 const (
 	moduleName = "thepiratebay"
@@ -22,11 +29,6 @@ const (
 var (
 	ErrInvalidArgument = errors.New("tpb: invalid argument")
 )
-
-// Register tpb as a Torrenter
-func init() {
-	polochon.RegisterTorrenter(moduleName, NewTorrenter)
-}
 
 // Params represents the module params
 type Params struct {
@@ -39,27 +41,32 @@ type TPB struct {
 	Client     *tpb.Client
 	MovieUsers []string
 	ShowUsers  []string
+	configured bool
 }
 
 const endpoint = "https://thepiratebay.org"
 
-// New is an helper to avoid passing bytes
-func New(p *Params) (*TPB, error) {
-	return &TPB{
-		Client:     tpb.New(endpoint),
-		MovieUsers: p.MovieUsers,
-		ShowUsers:  p.ShowUsers,
-	}, nil
-}
-
-// NewTorrenter returns a new Torrenter
-func NewTorrenter(b []byte) (polochon.Torrenter, error) {
-	params := &Params{}
-	if err := yaml.Unmarshal(b, params); err != nil {
-		return nil, err
+// Init implements the module interface
+func (t *TPB) Init(p []byte) error {
+	if t.configured {
+		return nil
 	}
 
-	return New(params)
+	params := &Params{}
+	if err := yaml.Unmarshal(p, params); err != nil {
+		return err
+	}
+
+	return t.InitWithParams(params)
+}
+
+// InitWithParams configures the module
+func (t *TPB) InitWithParams(params *Params) error {
+	t.Client = tpb.New(endpoint)
+	t.MovieUsers = params.MovieUsers
+	t.ShowUsers = params.ShowUsers
+	t.configured = true
+	return nil
 }
 
 // Name implements the Module interface

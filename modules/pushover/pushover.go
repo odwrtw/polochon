@@ -11,9 +11,17 @@ import (
 
 	"github.com/gregdel/pushover"
 	"github.com/nfnt/resize"
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 )
+
+// Make sure that the module is a notifier
+var _ polochon.Notifier = (*Pushover)(nil)
+
+// Register a new notifier
+func init() {
+	polochon.RegisterModule(&Pushover{})
+}
 
 // Pushover errors
 var (
@@ -25,11 +33,6 @@ var (
 const (
 	moduleName = "pushover"
 )
-
-// Register a new notifier
-func init() {
-	polochon.RegisterNotifier(moduleName, NewFromRawYaml)
-}
 
 // Params represents the module params
 type Params struct {
@@ -47,31 +50,36 @@ func (p *Params) IsValid() bool {
 
 // Pushover stores the notification configs
 type Pushover struct {
-	app       *pushover.Pushover
-	recipient *pushover.Recipient
+	app        *pushover.Pushover
+	recipient  *pushover.Recipient
+	configured bool
 }
 
-// NewFromRawYaml unmarshals the bytes as yaml as params and call the New
-// function
-func NewFromRawYaml(p []byte) (polochon.Notifier, error) {
+// Init implements the module interface
+func (p *Pushover) Init(data []byte) error {
+	if p.configured {
+		return nil
+	}
+
 	params := &Params{}
-	if err := yaml.Unmarshal(p, params); err != nil {
-		return nil, err
+	if err := yaml.Unmarshal(data, params); err != nil {
+		return err
 	}
 
-	return New(params)
+	return p.InitWithParams(params)
 }
 
-// New returns a new Pushover
-func New(params *Params) (polochon.Notifier, error) {
+// InitWithParams configures the module
+func (p *Pushover) InitWithParams(params *Params) error {
 	if !params.IsValid() {
-		return nil, ErrMissingArgument
+		return ErrMissingArgument
 	}
 
-	return &Pushover{
-		app:       pushover.New(params.Key),
-		recipient: pushover.NewRecipient(params.Recipient),
-	}, nil
+	p.app = pushover.New(params.Key)
+	p.recipient = pushover.NewRecipient(params.Recipient)
+	p.configured = true
+
+	return nil
 }
 
 // Name implements the Module interface

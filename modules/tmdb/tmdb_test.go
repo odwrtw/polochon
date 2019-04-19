@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/ryanbradynd05/go-tmdb"
 	"github.com/sirupsen/logrus"
 )
@@ -24,13 +24,10 @@ func TestTmdbInvalidMovieArgument(t *testing.T) {
 }
 
 func TestTmdbMissingArgument(t *testing.T) {
-	p := &Params{}
-	noKeyTmdb, err := New(p)
+	tm := &TmDB{}
+	err := tm.Init(nil)
 	if err != ErrMissingArgument {
 		log.Fatalf("Got %q, expected %q", err, ErrMissingArgument)
-	}
-	if noKeyTmdb != nil {
-		log.Fatalf("Got a non nil TmDB")
 	}
 }
 

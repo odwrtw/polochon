@@ -5,16 +5,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Register tmdb as a Searcher
-func init() {
-	polochon.RegisterSearcher(moduleName, NewSearcher)
-}
-
-// NewSearcher creates a new Tmdb Searcher
-func NewSearcher(p []byte) (polochon.Searcher, error) {
-	return NewFromRawYaml(p)
-}
-
 // SearchMovie implements the polochon Searcher interface
 func (t *TmDB) SearchMovie(key string, log *logrus.Entry) ([]*polochon.Movie, error) {
 	// We don't want porn (yet)

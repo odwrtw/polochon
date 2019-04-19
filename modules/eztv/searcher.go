@@ -9,16 +9,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Register eztv as a Searcher
-func init() {
-	polochon.RegisterSearcher(moduleName, NewSearcher)
-}
-
-// NewSearcher returns a new searcher
-func NewSearcher(p []byte) (polochon.Searcher, error) {
-	return &Eztv{}, nil
-}
-
 // SearchShow implements polochon Searcher interface
 func (e *Eztv) SearchShow(key string, log *logrus.Entry) ([]*polochon.Show, error) {
 	showList, err := eztv.SearchShow(key)

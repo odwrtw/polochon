@@ -2,7 +2,6 @@ package polochon
 
 import (
 	"errors"
-	"fmt"
 	"io"
 
 	"github.com/sirupsen/logrus"
@@ -26,14 +25,4 @@ type Subtitle interface {
 type Subtitlable interface {
 	SubtitlePath(Language) string
 	GetSubtitlers() []Subtitler
-}
-
-// RegisterSubtitler helps register a new Subtitler
-func RegisterSubtitler(name string, f func(params []byte) (Subtitler, error)) {
-	if _, ok := registeredModules.Subtitlers[name]; ok {
-		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeSubtitler))
-	}
-
-	// Register the module
-	registeredModules.Subtitlers[name] = f
 }

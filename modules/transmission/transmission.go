@@ -13,15 +13,17 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Make sure that the module is a downloader
+var _ polochon.Downloader = (*Client)(nil)
+
+func init() {
+	polochon.RegisterModule(&Client{})
+}
+
 // Module constants
 const (
 	moduleName = "transmission"
 )
-
-// Register a new Downloader
-func init() {
-	polochon.RegisterDownloader(moduleName, NewFromRawYaml)
-}
 
 // Params represents the module params
 type Params struct {
@@ -35,34 +37,39 @@ type Params struct {
 // Client holds the connection with transmission
 type Client struct {
 	*Params
-	tClient *transmission.Client
+	tClient    *transmission.Client
+	configured bool
 }
 
-// NewFromRawYaml unmarshals the bytes as yaml as params and call the New
-// function
-func NewFromRawYaml(p []byte) (polochon.Downloader, error) {
-	params := &Params{}
-	if err := yaml.Unmarshal(p, params); err != nil {
-		return nil, err
+// Init implements the module interface
+func (c *Client) Init(p []byte) error {
+	if c.configured {
+		return nil
 	}
 
-	return New(params)
+	params := &Params{}
+	if err := yaml.Unmarshal(p, params); err != nil {
+		return err
+	}
+
+	return c.InitWithParams(params)
 }
 
-// New module
-func New(params *Params) (polochon.Downloader, error) {
-	client := &Client{Params: params}
-
-	if err := client.checkConfig(); err != nil {
-		return nil, err
+// InitWithParams configures the module
+func (c *Client) InitWithParams(params *Params) error {
+	c.Params = params
+	if err := c.checkConfig(); err != nil {
+		return err
 	}
 
 	// Set the transmission client according to the conf
-	if err := client.setTransmissionClient(); err != nil {
-		return nil, err
+	if err := c.setTransmissionClient(); err != nil {
+		return err
 	}
 
-	return client, nil
+	c.configured = true
+
+	return nil
 }
 
 func (c *Client) checkConfig() error {

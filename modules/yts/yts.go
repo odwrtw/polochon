@@ -3,10 +3,21 @@ package yts
 import (
 	"errors"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/yts"
 	"github.com/sirupsen/logrus"
 )
+
+// Make sure that the module is a torrenter, an explorer and a searcher
+var (
+	_ polochon.Torrenter = (*Yts)(nil)
+	_ polochon.Explorer  = (*Yts)(nil)
+	_ polochon.Searcher  = (*Yts)(nil)
+)
+
+func init() {
+	polochon.RegisterModule(&Yts{})
+}
 
 // Yts errors
 var (
@@ -18,28 +29,12 @@ const (
 	moduleName = "yts"
 )
 
-func init() {
-	// Register yts as a Torrenter
-	polochon.RegisterTorrenter(moduleName, NewFromRawYaml)
-	// Register yts as an Explorer
-	polochon.RegisterExplorer(moduleName, NewExplorer)
-	// Register yts as a Searcher
-	polochon.RegisterSearcher(moduleName, NewSearcher)
-}
-
 // Yts is a source for movie torrents
 type Yts struct{}
 
-// NewFromRawYaml unmarshals the bytes as yaml as params and call the New
-// function
-func NewFromRawYaml(p []byte) (polochon.Torrenter, error) {
-	return New()
-}
-
-// New returns a new Yts
-// func New() (polochon.Torrenter, error) {
-func New() (*Yts, error) {
-	return &Yts{}, nil
+// Init implements the module interface
+func (y *Yts) Init(p []byte) error {
+	return nil
 }
 
 // Name implements the Module interface

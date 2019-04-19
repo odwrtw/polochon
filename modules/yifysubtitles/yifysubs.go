@@ -4,16 +4,22 @@ import (
 	"errors"
 	"fmt"
 
-	"gopkg.in/yaml.v2"
-
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/yifysubs"
 	"github.com/sirupsen/logrus"
 )
 
+// Make sure that the module is a subtitler
+var _ polochon.Subtitler = (*YifySubs)(nil)
+
+func init() {
+	polochon.RegisterModule(&YifySubs{})
+}
+
 // YifySubs holds the YifySubs module
 type YifySubs struct {
-	Client Searcher
+	Client     Searcher
+	configured bool
 }
 
 // Module constants
@@ -39,30 +45,15 @@ var (
 	ErrMissingImdbID       = errors.New("yifysub: missing imdb id")
 )
 
-// Register a new Subtitler
-func init() {
-	polochon.RegisterSubtitler(moduleName, NewFromRawYaml)
-}
-
-// Params represents the module params
-type Params struct{}
-
-// NewFromRawYaml unmarshals the bytes as yaml as params and call the New
-// function
-func NewFromRawYaml(p []byte) (polochon.Subtitler, error) {
-	params := &Params{}
-	if err := yaml.Unmarshal(p, params); err != nil {
-		return nil, err
+// Init implements the module interface
+func (y *YifySubs) Init(p []byte) error {
+	if y.configured {
+		return nil
 	}
 
-	return New(params)
-}
-
-// New module
-func New(params *Params) (polochon.Subtitler, error) {
-	return &YifySubs{
-		Client: yifysubs.New(endpoint),
-	}, nil
+	y.Client = yifysubs.New(endpoint)
+	y.configured = true
+	return nil
 }
 
 // Name implements the Module interface

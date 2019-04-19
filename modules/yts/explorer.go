@@ -1,15 +1,10 @@
 package yts
 
 import (
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/yts"
 	"github.com/sirupsen/logrus"
 )
-
-// NewExplorer returns a new explorer
-func NewExplorer(p []byte) (polochon.Explorer, error) {
-	return &Yts{}, nil
-}
 
 // AvailableShowOptions implements the the explorer interface
 func (y *Yts) AvailableShowOptions() []string {

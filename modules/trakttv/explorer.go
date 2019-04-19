@@ -6,16 +6,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Register trakttv as an Explorer
-func init() {
-	polochon.RegisterExplorer(moduleName, NewExplorer)
-}
-
-// NewExplorer creates a new TraktTV Explorer
-func NewExplorer(p []byte) (polochon.Explorer, error) {
-	return NewFromRawYaml(p)
-}
-
 // GetMovieList implements the explorer interface
 func (trakt *TraktTV) GetMovieList(option string, log *logrus.Entry) ([]*polochon.Movie, error) {
 	queryOption := trakttv.QueryOption{

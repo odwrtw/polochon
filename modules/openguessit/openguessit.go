@@ -11,16 +11,24 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Video types
-const (
-	MovieType   = "movie"
-	ShowType    = "episode"
-	UnknownType = "unknown"
-)
+// Make sure that the module is a guesser
+var _ polochon.Guesser = (*OpenGuessit)(nil)
+
+// Register openguessit as a Guesser
+func init() {
+	polochon.RegisterModule(&OpenGuessit{
+		GuessitClient: guessit.New("http://guessit.quimbo.fr/guess"),
+	})
+}
 
 // Module constants
 const (
 	moduleName = "openguessit"
+
+	// Video types
+	MovieType   = "movie"
+	ShowType    = "episode"
+	UnknownType = "unknown"
 )
 
 // Errors
@@ -28,26 +36,14 @@ var (
 	ErrShowNameUnknown = errors.New("show title unknown")
 )
 
-// Register openguessit as a Guesser
-func init() {
-	polochon.RegisterGuesser(moduleName, NewFromRawYaml)
-}
-
 // OpenGuessit is a mix of opensubtitle and guessit
 type OpenGuessit struct {
 	GuessitClient *guessit.Client
 }
 
-// New returns an new openguessit
-func New() (polochon.Guesser, error) {
-	return &OpenGuessit{
-		GuessitClient: guessit.New("http://guessit.quimbo.fr/guess"),
-	}, nil
-}
-
-// NewFromRawYaml returns an new openguessit
-func NewFromRawYaml(p []byte) (polochon.Guesser, error) {
-	return New()
+// Init implements the module interface
+func (og *OpenGuessit) Init(p []byte) error {
+	return nil
 }
 
 // Name implements the Module interface

@@ -15,12 +15,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Struct of a subtitle containing an osdbSubtitle, a connexion if any, and a
-// link to the osdb.Client
-type openSubtitle struct {
-	os     *osdb.Subtitle
-	conn   io.ReadCloser
-	client *osdb.Client
+// Make sure that the module is a subtitler
+var _ polochon.Subtitler = (*osProxy)(nil)
+
+func init() {
+	polochon.RegisterModule(&osProxy{})
 }
 
 // Module constants
@@ -38,42 +37,6 @@ var (
 	ErrInvalidArgument = errors.New("opensubtitles: invalid argument")
 	ErrMissingArgument = errors.New("opensubtitles: missing argument")
 )
-
-// Register a new Subtitler
-func init() {
-	polochon.RegisterSubtitler(moduleName, NewFromRawYaml)
-}
-
-// Close the subtitle connexion
-func (o *openSubtitle) Close() error {
-	if o.conn != nil {
-		return o.conn.Close()
-	}
-	return nil
-}
-
-// Read the subtitle
-func (o *openSubtitle) Read(b []byte) (int, error) {
-	// Download
-	if o.conn == nil {
-		files, err := o.client.DownloadSubtitles([]osdb.Subtitle{*o.os})
-		if err != nil {
-			return 0, err
-		}
-		if len(files) == 0 {
-			return 0, fmt.Errorf("opensubtitles: no file match this subtitle ID")
-		}
-
-		// Save to disk.
-		r, err := files[0].Reader()
-		if err != nil {
-			return 0, err
-		}
-		o.conn = r
-	}
-
-	return o.conn.Read(b)
-}
 
 // Params represents the module params
 type Params struct {
@@ -94,44 +57,47 @@ func (p *Params) IsValid() bool {
 	return true
 }
 
-// NewFromRawYaml unmarshals the bytes as yaml as params and call the New
-// function
-func NewFromRawYaml(p []byte) (polochon.Subtitler, error) {
-	params := &Params{}
-	if err := yaml.Unmarshal(p, params); err != nil {
-		return nil, err
-	}
-
-	return New(params)
+type osProxy struct {
+	client     *osdb.Client
+	language   string
+	user       string
+	password   string
+	configured bool
 }
 
-// New module
-func New(params *Params) (polochon.Subtitler, error) {
+// Init implements the module interface
+func (osp *osProxy) Init(p []byte) error {
+	if osp.configured {
+		return nil
+	}
+
+	params := &Params{}
+	if err := yaml.Unmarshal(p, params); err != nil {
+		return err
+	}
+
+	return osp.InitWithParams(params)
+}
+
+// InitWithParams configures the module
+func (osp *osProxy) InitWithParams(params *Params) error {
 	if !params.IsValid() {
-		return nil, ErrMissingArgument
+		return ErrMissingArgument
 	}
 
 	language := polochon.Language(params.Lang)
 	opensubtitlesLang, ok := langTranslate[language]
 	if !ok {
-		return nil, ErrInvalidArgument
+		return ErrInvalidArgument
 	}
 
 	// Create the OpenSubtitles proxy
-	osp := &osProxy{
-		language: opensubtitlesLang,
-		user:     params.User,
-		password: params.Password,
-	}
+	osp.language = opensubtitlesLang
+	osp.user = params.User
+	osp.password = params.Password
+	osp.configured = true
 
-	return osp, nil
-}
-
-type osProxy struct {
-	client   *osdb.Client
-	language string
-	user     string
-	password string
+	return nil
 }
 
 // Name implements the Module interface
@@ -464,4 +430,43 @@ func (osp *osProxy) GetSubtitle(i interface{}, lang polochon.Language, log *logr
 	default:
 		return nil, fmt.Errorf("opensub: invalid argument")
 	}
+}
+
+// Struct of a subtitle containing an osdbSubtitle, a connexion if any, and a
+// link to the osdb.Client
+type openSubtitle struct {
+	os     *osdb.Subtitle
+	conn   io.ReadCloser
+	client *osdb.Client
+}
+
+// Close the subtitle connexion
+func (o *openSubtitle) Close() error {
+	if o.conn != nil {
+		return o.conn.Close()
+	}
+	return nil
+}
+
+// Read the subtitle
+func (o *openSubtitle) Read(b []byte) (int, error) {
+	// Download
+	if o.conn == nil {
+		files, err := o.client.DownloadSubtitles([]osdb.Subtitle{*o.os})
+		if err != nil {
+			return 0, err
+		}
+		if len(files) == 0 {
+			return 0, fmt.Errorf("opensubtitles: no file match this subtitle ID")
+		}
+
+		// Save to disk.
+		r, err := files[0].Reader()
+		if err != nil {
+			return 0, err
+		}
+		o.conn = r
+	}
+
+	return o.conn.Read(b)
 }

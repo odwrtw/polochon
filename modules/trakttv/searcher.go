@@ -6,16 +6,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Register trakttv as a Searcher
-func init() {
-	polochon.RegisterSearcher(moduleName, NewSearcher)
-}
-
-// NewSearcher creates a new TraktTV Searcher
-func NewSearcher(p []byte) (polochon.Searcher, error) {
-	return NewFromRawYaml(p)
-}
-
 // SearchMovie implements the polochon Searcher interface
 func (trakt *TraktTV) SearchMovie(key string, log *logrus.Entry) ([]*polochon.Movie, error) {
 	searchQuery := trakttv.SearchQuery{

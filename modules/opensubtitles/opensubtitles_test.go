@@ -121,7 +121,9 @@ func TestInvalidNew(t *testing.T) {
 		},
 	} {
 		params := []byte(strings.Join(paramsStr, "\n"))
-		_, err := NewFromRawYaml(params)
+
+		s := &osProxy{}
+		err := s.Init(params)
 		if err != expected {
 			log.Fatalf("Got %q, expected %q with params %s", err, expected, params)
 		}
@@ -134,17 +136,21 @@ func TestSuccessfulNew(t *testing.T) {
 		"user: userTest",
 		"password: passTest",
 	}, "\n"))
-	got, err := NewFromRawYaml(params)
+
+	s := &osProxy{}
+	err := s.Init(params)
 	if err != nil {
 		log.Fatalf("Got error in New: %q", err)
 	}
+
 	expected := &osProxy{
-		language: "fre",
-		user:     "userTest",
-		password: "passTest",
+		language:   "fre",
+		user:       "userTest",
+		password:   "passTest",
+		configured: true,
 	}
-	if !reflect.DeepEqual(got, expected) {
-		t.Errorf("Failed to get movie details\nGot: %+v\nExpected: %+v", got, expected)
+	if !reflect.DeepEqual(s, expected) {
+		t.Errorf("Failed to get movie details\nGot: %+v\nExpected: %+v", s, expected)
 	}
 }
 
@@ -153,17 +159,20 @@ func TestSuccessfulDefaultLang(t *testing.T) {
 		"user: userTest",
 		"password: passTest",
 	}, "\n"))
-	got, err := NewFromRawYaml(params)
+
+	s := &osProxy{}
+	err := s.Init(params)
 	if err != nil {
 		log.Fatalf("Got error in New: %q", err)
 	}
 	expected := &osProxy{
-		language: "eng",
-		user:     "userTest",
-		password: "passTest",
+		language:   "eng",
+		user:       "userTest",
+		password:   "passTest",
+		configured: true,
 	}
-	if !reflect.DeepEqual(got, expected) {
-		t.Errorf("Failed to get movie details\nGot: %+v\nExpected: %+v", got, expected)
+	if !reflect.DeepEqual(s, expected) {
+		t.Errorf("Failed to get movie details\nGot: %+v\nExpected: %+v", s, expected)
 	}
 }
 

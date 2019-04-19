@@ -5,18 +5,9 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 )
-
-func init() {
-	polochon.RegisterSubtitler(moduleName, NewSubtitler)
-}
-
-// NewSubtitler is an helper to avoid passing bytes
-func NewSubtitler(p []byte) (polochon.Subtitler, error) {
-	return &Mock{}, nil
-}
 
 // GetSubtitle implements the Detailer interface
 func (mock *Mock) GetSubtitle(v interface{}, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {

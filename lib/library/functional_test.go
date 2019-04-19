@@ -36,16 +36,18 @@ func (m *mockLibrary) cleanup() {
 
 func newMockLibrary() (*mockLibrary, error) {
 	// Get the mock detailer
-	detailer, err := polochon.ConfigureDetailer("mock", nil)
+	detailerModule, err := polochon.GetModule("mock", polochon.TypeDetailer)
 	if err != nil {
 		return nil, err
 	}
+	detailer := detailerModule.(polochon.Detailer)
 
 	// Get the mock subtitler
-	subtitler, err := polochon.ConfigureSubtitler("mock", nil)
+	subtitlerModule, err := polochon.GetModule("mock", polochon.TypeSubtitler)
 	if err != nil {
 		return nil, err
 	}
+	subtitler := subtitlerModule.(polochon.Subtitler)
 
 	// Create a temp dir
 	tmpDir, err := ioutil.TempDir("", "polochon-library")

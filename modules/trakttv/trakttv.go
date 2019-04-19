@@ -2,15 +2,25 @@ package trakttv
 
 import (
 	"errors"
-	"strconv"
 
 	"gopkg.in/yaml.v2"
 
 	"github.com/odwrtw/fanarttv"
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/trakttv"
-	"github.com/sirupsen/logrus"
 )
+
+// Make sure that the module is a detailer, an explorer and a searcher
+var (
+	_ polochon.Detailer = (*TraktTV)(nil)
+	_ polochon.Explorer = (*TraktTV)(nil)
+	_ polochon.Searcher = (*TraktTV)(nil)
+)
+
+// Register trakttv as a Detailer
+func init() {
+	polochon.RegisterModule(&TraktTV{})
+}
 
 const (
 	moduleName = "trakttv"
@@ -23,11 +33,6 @@ var (
 	ErrNotFound = errors.New("trakttv: not found")
 )
 
-// Register trakttv as a Detailer
-func init() {
-	polochon.RegisterDetailer(moduleName, NewDetailer)
-}
-
 // Params represents the module params
 type Params struct {
 	ClientID       string `yaml:"client_id"`
@@ -38,29 +43,29 @@ type Params struct {
 type TraktTV struct {
 	client       *trakttv.TraktTv
 	fanartClient *fanarttv.Client
+	configured   bool
 }
 
-// NewDetailer creates a new TraktTV Detailer
-func NewDetailer(p []byte) (polochon.Detailer, error) {
-	return NewFromRawYaml(p)
-}
-
-// NewFromRawYaml creates a new TraktTV from YML config
-func NewFromRawYaml(p []byte) (*TraktTV, error) {
-	params := &Params{}
-	if err := yaml.Unmarshal(p, params); err != nil {
-		return nil, err
+// Init implements the module interface
+func (trakt *TraktTV) Init(p []byte) error {
+	if trakt.configured {
+		return nil
 	}
 
-	return New(params)
+	params := &Params{}
+	if err := yaml.Unmarshal(p, params); err != nil {
+		return err
+	}
+
+	return trakt.InitWithParams(params)
 }
 
-// New returns a new TraktTV
-func New(p *Params) (*TraktTV, error) {
-	return &TraktTV{
-		client:       trakttv.New(p.ClientID),
-		fanartClient: fanarttv.New(p.FanartTvAPIKey),
-	}, nil
+// InitWithParams configures the module
+func (trakt *TraktTV) InitWithParams(params *Params) error {
+	trakt.client = trakttv.New(params.ClientID)
+	trakt.fanartClient = fanarttv.New(params.FanartTvAPIKey)
+	trakt.configured = true
+	return nil
 }
 
 // Name returns the module name
@@ -78,101 +83,4 @@ func (trakt *TraktTV) Status() (polochon.ModuleStatus, error) {
 		status = polochon.StatusFail
 	}
 	return status, err
-}
-
-// GetDetails gets details for the polochon video object
-func (trakt *TraktTV) GetDetails(i interface{}, log *logrus.Entry) error {
-	var err error
-	switch v := i.(type) {
-	case *polochon.Show:
-		err = trakt.getShowDetails(v, log)
-	case *polochon.Movie:
-		err = trakt.getMovieDetails(v, log)
-	default:
-		return ErrInvalidArgument
-	}
-
-	return err
-}
-
-// getMovieDetails gets details for the polochon movie object
-func (trakt *TraktTV) getMovieDetails(movie *polochon.Movie, log *logrus.Entry) error {
-	tmovie, err := trakt.client.SearchMovieByID(movie.ImdbID, trakttv.QueryOption{
-		ExtendedInfos: []trakttv.ExtendedInfo{trakttv.ExtendedInfoFull},
-	})
-	if err != nil {
-		return err
-	}
-
-	// Update movie details
-	movie.TmdbID = tmovie.IDs.TmDB
-	movie.OriginalTitle = tmovie.Title
-	movie.SortTitle = tmovie.Title
-	movie.Title = tmovie.Title
-	movie.Plot = tmovie.Overview
-	movie.Tagline = tmovie.Tagline
-	movie.Votes = tmovie.Votes
-	movie.Rating = float32(tmovie.Rating)
-	movie.Runtime = tmovie.Runtime
-	movie.Year = tmovie.Year
-	movie.Genres = tmovie.Genres
-
-	// Search for images
-	res, err := trakt.fanartClient.GetMovieImages(movie.ImdbID)
-	if err != nil {
-		return err
-	}
-
-	thumb := fanarttv.Best(res.Posters)
-	if thumb != nil {
-		movie.Thumb = thumb.URL
-	}
-
-	fanart := fanarttv.Best(res.Backgrounds)
-	if fanart != nil {
-		movie.Fanart = fanart.URL
-	}
-
-	return nil
-}
-
-// getShowDetails gets details for the polochon show object
-func (trakt *TraktTV) getShowDetails(show *polochon.Show, log *logrus.Entry) error {
-	tshow, err := trakt.client.SearchShowByID(show.ImdbID, trakttv.QueryOption{
-		ExtendedInfos: []trakttv.ExtendedInfo{trakttv.ExtendedInfoFull},
-	})
-	if err != nil {
-		return err
-	}
-
-	// Update show details
-	show.TvdbID = tshow.IDs.TvDB
-	show.Title = tshow.Title
-	show.Year = tshow.Year
-	show.Plot = tshow.Overview
-	show.FirstAired = &tshow.FirstAired
-	show.Rating = float32(tshow.Rating)
-
-	// Search for images
-	res, err := trakt.fanartClient.GetShowImages(strconv.Itoa(tshow.IDs.TvDB))
-	if err != nil {
-		return err
-	}
-
-	fanart := fanarttv.Best(res.Backgrounds)
-	if fanart != nil {
-		show.Fanart = fanart.URL
-	}
-
-	poster := fanarttv.Best(res.Posters)
-	if poster != nil {
-		show.Poster = poster.URL
-	}
-
-	banner := fanarttv.Best(res.Banners)
-	if banner != nil {
-		show.Banner = banner.URL
-	}
-
-	return nil
 }
