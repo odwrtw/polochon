@@ -2,7 +2,6 @@ package polochon
 
 import (
 	"errors"
-	"fmt"
 
 	polochonError "github.com/odwrtw/errors"
 	"github.com/sirupsen/logrus"
@@ -25,16 +24,6 @@ type Torrenter interface {
 // Torrentable represents a ressource which can be torrented
 type Torrentable interface {
 	GetTorrenters() []Torrenter
-}
-
-// RegisterTorrenter helps register a new torrenter
-func RegisterTorrenter(name string, f func(params []byte) (Torrenter, error)) {
-	if _, ok := registeredModules.Torrenters[name]; ok {
-		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeTorrenter))
-	}
-
-	// Register the module
-	registeredModules.Torrenters[name] = f
 }
 
 // GetTorrents helps getting the torrent files for a movie

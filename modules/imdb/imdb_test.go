@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 )
 
@@ -23,9 +23,12 @@ var testData = map[string]map[string][]string{
 }
 
 // Fake wishlist with defined users
-var testWishlist, _ = New(&Params{
-	UserIDs: []string{"bob", "joe", "robert"},
-})
+var testWishlist = &Wishlist{
+	Params: &Params{
+		UserIDs: []string{"bob", "joe", "robert"},
+	},
+	configured: true,
+}
 
 func TestMoviesWishlist(t *testing.T) {
 	getMoviesFromImdb = func(userID string) (*[]string, error) {

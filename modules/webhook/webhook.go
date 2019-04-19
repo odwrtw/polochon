@@ -10,9 +10,16 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 )
+
+// Make sure that the module is a notifier
+var _ polochon.Notifier = (*WebHook)(nil)
+
+func init() {
+	polochon.RegisterModule(&WebHook{})
+}
 
 // WebHook errors
 var (
@@ -24,11 +31,6 @@ var (
 const (
 	moduleName = "webhook"
 )
-
-// Register a new notifier
-func init() {
-	polochon.RegisterNotifier(moduleName, NewFromRawYaml)
-}
 
 // Params are the params for webhooks
 type Params struct {
@@ -45,28 +47,38 @@ type Hook struct {
 type WebHook struct {
 	httpClient *http.Client
 	hooks      []*Hook
+	configured bool
 }
 
-// NewFromRawYaml unmarshals the bytes as yaml as params and call the New
-// function
-func NewFromRawYaml(p []byte) (polochon.Notifier, error) {
-	params := Params{}
-	if err := yaml.Unmarshal(p, &params); err != nil {
-		return nil, err
+// Init implements the module interface
+func (w *WebHook) Init(p []byte) error {
+	if w.configured {
+		return nil
 	}
 
+	params := &Params{}
+	if err := yaml.Unmarshal(p, &params); err != nil {
+		return err
+	}
+
+	return w.InitWithParams(params)
+}
+
+// InitWithParams configures the module
+func (w *WebHook) InitWithParams(params *Params) error {
 	for _, h := range params.Hooks {
 		url, err := template.New("url").Parse(h.URL)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		h.URLTemplate = url
 	}
 
-	return &WebHook{
-		hooks:      params.Hooks,
-		httpClient: http.DefaultClient,
-	}, nil
+	w.hooks = params.Hooks
+	w.httpClient = http.DefaultClient
+	w.configured = true
+
+	return nil
 }
 
 // Name implements the Module interface

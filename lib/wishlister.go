@@ -1,8 +1,6 @@
 package polochon
 
 import (
-	"fmt"
-
 	"github.com/sirupsen/logrus"
 )
 
@@ -50,16 +48,6 @@ func NewWishlist(wishlistConfig WishlistConfig, log *logrus.Entry) *Wishlist {
 		WishlistConfig: wishlistConfig,
 		log:            log.WithField("type", "wishlist"),
 	}
-}
-
-// RegisterWishlister helps register a new Wishlister
-func RegisterWishlister(name string, f func(params []byte) (Wishlister, error)) {
-	if _, ok := registeredModules.Wishlisters[name]; ok {
-		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeWishlister))
-	}
-
-	// Register the module
-	registeredModules.Wishlisters[name] = f
 }
 
 // Fetch the informations from the wishlister an returns a merged wishlist

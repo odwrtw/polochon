@@ -5,13 +5,20 @@ import (
 	"sort"
 	"strings"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/arbovm/levenshtein"
 	"github.com/odwrtw/addicted"
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 )
+
+// Make sure that the module is a subtitler
+var _ polochon.Subtitler = (*addictedProxy)(nil)
+
+// Register a new Subtitler
+func init() {
+	polochon.RegisterModule(&addictedProxy{})
+}
 
 var langTranslate = map[polochon.Language]string{
 	polochon.EN: "english",
@@ -29,26 +36,29 @@ type Params struct {
 	Password string `yaml:"password"`
 }
 
-// Register a new Subtitler
-func init() {
-	polochon.RegisterSubtitler(moduleName, NewFromRawYaml)
+type addictedProxy struct {
+	client     *addicted.Client
+	configured bool
 }
 
-// NewFromRawYaml unmarshals the bytes as yaml as params and call the New
-// function
-func NewFromRawYaml(p []byte) (polochon.Subtitler, error) {
-	params := &Params{}
-	if err := yaml.Unmarshal(p, params); err != nil {
-		return nil, err
+// Init implements the module interface
+func (a *addictedProxy) Init(p []byte) error {
+	if a.configured {
+		return nil
 	}
 
-	return New(params)
+	params := &Params{}
+	if err := yaml.Unmarshal(p, params); err != nil {
+		return err
+	}
+
+	return a.InitWithParams(params)
 }
 
-// New module
-func New(params *Params) (polochon.Subtitler, error) {
+// InitWithParams configures the module
+func (a *addictedProxy) InitWithParams(params *Params) error {
 	// Handle auth if the user and password are provided
-	var client *addicted.Client
+	client := &addicted.Client{}
 
 	var err error
 	if params.User != "" && params.Password != "" {
@@ -57,14 +67,13 @@ func New(params *Params) (polochon.Subtitler, error) {
 		client, err = addicted.New()
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &addictedProxy{client: *client}, nil
-}
+	a.client = client
+	a.configured = true
 
-type addictedProxy struct {
-	client addicted.Client
+	return nil
 }
 
 // Name implements the Module interface

@@ -13,15 +13,21 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Module constants
-const (
-	moduleName = "tmdb"
+// Make sure that the module is a detailer and a searcher
+var (
+	_ polochon.Detailer = (*TmDB)(nil)
+	_ polochon.Searcher = (*TmDB)(nil)
 )
 
 // Register tvdb as a Detailer
 func init() {
-	polochon.RegisterDetailer(moduleName, NewDetailer)
+	polochon.RegisterModule(&TmDB{})
 }
+
+// Module constants
+const (
+	moduleName = "tmdb"
+)
 
 // API constants
 const (
@@ -40,7 +46,8 @@ var (
 
 // TmDB implents the Detailer interface
 type TmDB struct {
-	client *tmdb.TMDb
+	client     *tmdb.TMDb
+	configured bool
 }
 
 // Params represents the module params
@@ -48,31 +55,35 @@ type Params struct {
 	APIKey string `yaml:"apikey"`
 }
 
-// New is an helper to avoid passing bytes
-func New(p *Params) (*TmDB, error) {
-	if p.APIKey == "" {
-		return nil, ErrMissingArgument
+// Init implements the module interface
+func (t *TmDB) Init(p []byte) error {
+	if t.configured {
+		return nil
 	}
 
-	return &TmDB{
-		client: tmdb.Init(tmdb.Config{APIKey: p.APIKey}),
-	}, nil
-}
-
-// NewDetailer creates a new polochon Detailer
-func NewDetailer(p []byte) (polochon.Detailer, error) {
-	return NewFromRawYaml(p)
-}
-
-// NewFromRawYaml unmarshals the bytes as yaml as params and call the New
-// function
-func NewFromRawYaml(p []byte) (*TmDB, error) {
 	params := &Params{}
 	if err := yaml.Unmarshal(p, params); err != nil {
-		return nil, err
+		return err
 	}
 
-	return New(params)
+	return t.InitWithParams(params)
+}
+
+// InitWithParams configures the module
+func (t *TmDB) InitWithParams(params *Params) error {
+	if params.APIKey == "" {
+		return ErrMissingArgument
+	}
+
+	t.client = tmdb.Init(tmdb.Config{APIKey: params.APIKey})
+	t.configured = true
+
+	return nil
+}
+
+// Name implements the Module interface
+func (t *TmDB) Name() string {
+	return moduleName
 }
 
 // Function to be overwritten during the tests
@@ -168,11 +179,6 @@ func (t *TmDB) searchByImdbID(m *polochon.Movie, log *logrus.Entry) error {
 // Function to be overwritten during the tests
 var tmdbGetMovieInfo = func(t *tmdb.TMDb, tmdbID int, options map[string]string) (*tmdb.Movie, error) {
 	return t.GetMovieInfo(tmdbID, options)
-}
-
-// Name implements the Module interface
-func (t *TmDB) Name() string {
-	return moduleName
 }
 
 // Status implements the Module interface

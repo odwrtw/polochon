@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 )
 
@@ -165,6 +165,10 @@ type Fake struct{}
 
 func (f *Fake) Name() string {
 	return "fake"
+}
+
+func (f *Fake) Init([]byte) error {
+	return nil
 }
 
 func (f *Fake) Status() (polochon.ModuleStatus, error) {

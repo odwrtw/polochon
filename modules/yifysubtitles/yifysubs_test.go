@@ -5,7 +5,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/yifysubs"
 	"github.com/sirupsen/logrus"
 )
@@ -36,13 +36,10 @@ func init() {
 }
 
 func TestNew(t *testing.T) {
-	got, err := NewFromRawYaml([]byte("lang: fr_FR"))
+	y := &YifySubs{}
+	err := y.Init([]byte("lang: fr_FR"))
 	if err != nil {
 		log.Fatalf("Got error in New: %q", err)
-	}
-
-	if got == nil {
-		t.Errorf("failed to create new YifySubs\nGot: nil subtitler")
 	}
 }
 

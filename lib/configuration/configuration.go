@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
@@ -341,12 +341,12 @@ func (c *ConfigFileRoot) loadWatcher(log *logrus.Entry) (polochon.FsNotifier, er
 	}
 
 	// Configure
-	fsNotifier, err := polochon.ConfigureFsNotifier(c.Watcher.FsNotifierName, moduleParams)
+	fsNotifier, err := polochon.GetFsNotifier(c.Watcher.FsNotifierName)
 	if err != nil {
 		return nil, err
 	}
 
-	return fsNotifier, nil
+	return fsNotifier, fsNotifier.Init(moduleParams)
 }
 
 func (c *ConfigFileRoot) initFile(log *logrus.Entry) (polochon.Guesser, error) {
@@ -362,12 +362,12 @@ func (c *ConfigFileRoot) initFile(log *logrus.Entry) (polochon.Guesser, error) {
 	}
 
 	// Configure
-	guesser, err := polochon.ConfigureGuesser(c.Video.GuesserName, moduleParams)
+	guesser, err := polochon.GetGuesser(c.Video.GuesserName)
 	if err != nil {
 		return nil, err
 	}
 
-	return guesser, nil
+	return guesser, guesser.Init(moduleParams)
 }
 
 func (c *ConfigFileRoot) initWishlist(log *logrus.Entry) (*polochon.WishlistConfig, error) {
@@ -380,10 +380,15 @@ func (c *ConfigFileRoot) initWishlist(log *logrus.Entry) (*polochon.WishlistConf
 			return nil, err
 		}
 
-		wishlister, err := polochon.ConfigureWishlister(wishlisterName, moduleParams)
+		wishlister, err := polochon.GetWishlister(wishlisterName)
 		if err != nil {
 			return nil, err
 		}
+
+		if err := wishlister.Init(moduleParams); err != nil {
+			return nil, err
+		}
+
 		wishlistConfig.Wishlisters = append(wishlistConfig.Wishlisters, wishlister)
 	}
 
@@ -418,10 +423,15 @@ func (c *ConfigFileRoot) initDownloader(log *logrus.Entry) (*DownloaderConfig, e
 			return nil, err
 		}
 
-		downloader, err := polochon.ConfigureDownloader(c.Downloader.DownloaderName, moduleParams)
+		downloader, err := polochon.GetDownloader(c.Downloader.DownloaderName)
 		if err != nil {
 			return nil, err
 		}
+
+		if err := downloader.Init(moduleParams); err != nil {
+			return nil, err
+		}
+
 		downloaderConf.Client = downloader
 	}
 
@@ -453,10 +463,15 @@ func (c *ConfigFileRoot) initNotifiers() ([]polochon.Notifier, error) {
 			return nil, err
 		}
 
-		notifier, err := polochon.ConfigureNotifier(notifierName, moduleParams)
+		notifier, err := polochon.GetNotifier(notifierName)
 		if err != nil {
 			return nil, err
 		}
+
+		if err := notifier.Init(moduleParams); err != nil {
+			return nil, err
+		}
+
 		notifiers = append(notifiers, notifier)
 	}
 
@@ -476,8 +491,12 @@ func (c *Config) InitShow(cf *ConfigFileRoot) error {
 			return err
 		}
 
-		detailer, err := polochon.ConfigureDetailer(detailerName, moduleParams)
+		detailer, err := polochon.GetDetailer(detailerName)
 		if err != nil {
+			return err
+		}
+
+		if err := detailer.Init(moduleParams); err != nil {
 			return err
 		}
 
@@ -495,10 +514,15 @@ func (c *Config) InitShow(cf *ConfigFileRoot) error {
 			return err
 		}
 
-		torrenter, err := polochon.ConfigureTorrenter(torrenterName, moduleParams)
+		torrenter, err := polochon.GetTorrenter(torrenterName)
 		if err != nil {
 			return err
 		}
+
+		if err := torrenter.Init(moduleParams); err != nil {
+			return err
+		}
+
 		showConf.Torrenters = append(showConf.Torrenters, torrenter)
 	}
 
@@ -508,10 +532,15 @@ func (c *Config) InitShow(cf *ConfigFileRoot) error {
 			return err
 		}
 
-		subtitler, err := polochon.ConfigureSubtitler(subtitlerName, moduleParams)
+		subtitler, err := polochon.GetSubtitler(subtitlerName)
 		if err != nil {
 			return err
 		}
+
+		if err := subtitler.Init(moduleParams); err != nil {
+			return err
+		}
+
 		showConf.Subtitlers = append(showConf.Subtitlers, subtitler)
 	}
 
@@ -521,10 +550,15 @@ func (c *Config) InitShow(cf *ConfigFileRoot) error {
 			return err
 		}
 
-		explorer, err := polochon.ConfigureExplorer(explorerName, moduleParams)
+		explorer, err := polochon.GetExplorer(explorerName)
 		if err != nil {
 			return err
 		}
+
+		if err := explorer.Init(moduleParams); err != nil {
+			return err
+		}
+
 		showConf.Explorers = append(showConf.Explorers, explorer)
 	}
 
@@ -534,10 +568,15 @@ func (c *Config) InitShow(cf *ConfigFileRoot) error {
 			return err
 		}
 
-		searcher, err := polochon.ConfigureSearcher(searcherName, moduleParams)
+		searcher, err := polochon.GetSearcher(searcherName)
 		if err != nil {
 			return err
 		}
+
+		if err := searcher.Init(moduleParams); err != nil {
+			return err
+		}
+
 		showConf.Searchers = append(showConf.Searchers, searcher)
 	}
 
@@ -549,8 +588,12 @@ func (c *Config) InitShow(cf *ConfigFileRoot) error {
 		}
 
 		// Configure
-		calendar, err := polochon.ConfigureCalendar(cf.Show.CalendarName, moduleParams)
+		calendar, err := polochon.GetCalendar(cf.Show.CalendarName)
 		if err != nil {
+			return err
+		}
+
+		if err := calendar.Init(moduleParams); err != nil {
 			return err
 		}
 
@@ -577,10 +620,15 @@ func (c *Config) InitMovie(cf *ConfigFileRoot) error {
 			return err
 		}
 
-		detailer, err := polochon.ConfigureDetailer(detailerName, moduleParams)
+		detailer, err := polochon.GetDetailer(detailerName)
 		if err != nil {
 			return err
 		}
+
+		if err := detailer.Init(moduleParams); err != nil {
+			return err
+		}
+
 		movieConf.Detailers = append(movieConf.Detailers, detailer)
 	}
 
@@ -595,10 +643,15 @@ func (c *Config) InitMovie(cf *ConfigFileRoot) error {
 			return err
 		}
 
-		torrenter, err := polochon.ConfigureTorrenter(torrenterName, moduleParams)
+		torrenter, err := polochon.GetTorrenter(torrenterName)
 		if err != nil {
 			return err
 		}
+
+		if err := torrenter.Init(moduleParams); err != nil {
+			return err
+		}
+
 		movieConf.Torrenters = append(movieConf.Torrenters, torrenter)
 	}
 
@@ -608,8 +661,12 @@ func (c *Config) InitMovie(cf *ConfigFileRoot) error {
 			return err
 		}
 
-		subtitler, err := polochon.ConfigureSubtitler(subtitlerName, moduleParams)
+		subtitler, err := polochon.GetSubtitler(subtitlerName)
 		if err != nil {
+			return err
+		}
+
+		if err := subtitler.Init(moduleParams); err != nil {
 			return err
 		}
 
@@ -622,10 +679,15 @@ func (c *Config) InitMovie(cf *ConfigFileRoot) error {
 			return err
 		}
 
-		explorer, err := polochon.ConfigureExplorer(explorerName, moduleParams)
+		explorer, err := polochon.GetExplorer(explorerName)
 		if err != nil {
 			return err
 		}
+
+		if err := explorer.Init(moduleParams); err != nil {
+			return err
+		}
+
 		movieConf.Explorers = append(movieConf.Explorers, explorer)
 	}
 
@@ -635,10 +697,15 @@ func (c *Config) InitMovie(cf *ConfigFileRoot) error {
 			return err
 		}
 
-		searcher, err := polochon.ConfigureSearcher(searcherName, moduleParams)
+		searcher, err := polochon.GetSearcher(searcherName)
 		if err != nil {
 			return err
 		}
+
+		if err := searcher.Init(moduleParams); err != nil {
+			return err
+		}
+
 		movieConf.Searchers = append(movieConf.Searchers, searcher)
 	}
 

@@ -14,10 +14,14 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Register tvdb as a Detailer
+// Make sure that the module is a detailer and a calendar
+var (
+	_ polochon.Detailer = (*TvDB)(nil)
+	_ polochon.Calendar = (*TvDB)(nil)
+)
+
 func init() {
-	polochon.RegisterDetailer(moduleName, NewDetailerFromRawYaml)
-	polochon.RegisterCalendar(moduleName, NewCalendarFromRawYaml)
+	polochon.RegisterModule(&TvDB{})
 }
 
 // Module constants
@@ -38,7 +42,7 @@ var (
 
 // Params represents the module params
 type Params struct {
-	ApiKey   string `yaml:"api_key"`
+	APIKey   string `yaml:"api_key"`
 	UserID   string `yaml:"user_id"`
 	Username string `yaml:"username"`
 }
@@ -47,37 +51,32 @@ type Params struct {
 type TvDB struct {
 	client           *tvdb.Client
 	lastTokenRefresh *time.Time
+	configured       bool
 }
 
-// NewFromRawYaml creates a new TvDB from YML config
-func NewFromRawYaml(p []byte) (*TvDB, error) {
-	params := &Params{}
-	if err := yaml.Unmarshal(p, params); err != nil {
-		return nil, err
+// Init implements the module interface
+func (t *TvDB) Init(p []byte) error {
+	if t.configured {
+		return nil
 	}
 
-	return New(params)
+	params := &Params{}
+	if err := yaml.Unmarshal(p, params); err != nil {
+		return err
+	}
+
+	return t.InitWithParams(params)
 }
 
-// New returns a new tvdb module
-func New(params *Params) (*TvDB, error) {
-	return &TvDB{
-		client: &tvdb.Client{
-			Apikey:   params.ApiKey,
-			Username: params.Username,
-			Userkey:  params.UserID,
-		},
-	}, nil
-}
-
-// NewDetailerFromRawYaml implements the detailer interface
-func NewDetailerFromRawYaml(p []byte) (polochon.Detailer, error) {
-	return NewFromRawYaml(p)
-}
-
-// NewCalendarFromRawYaml implements the calendar interface
-func NewCalendarFromRawYaml(p []byte) (polochon.Calendar, error) {
-	return NewFromRawYaml(p)
+// InitWithParams configures the module
+func (t *TvDB) InitWithParams(params *Params) error {
+	t.client = &tvdb.Client{
+		Apikey:   params.APIKey,
+		Username: params.Username,
+		Userkey:  params.UserID,
+	}
+	t.configured = true
+	return nil
 }
 
 // Name implements the Module interface

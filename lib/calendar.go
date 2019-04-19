@@ -1,7 +1,6 @@
 package polochon
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -11,16 +10,6 @@ import (
 type Calendar interface {
 	Module
 	GetShowCalendar(*Show, *logrus.Entry) (*ShowCalendar, error)
-}
-
-// RegisterCalendar helps register a new calendar
-func RegisterCalendar(name string, f func(params []byte) (Calendar, error)) {
-	if _, ok := registeredModules.Calendars[name]; ok {
-		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeCalendar))
-	}
-
-	// Register the module
-	registeredModules.Calendars[name] = f
 }
 
 // ShowCalendar holds the calendar for a show

@@ -2,7 +2,6 @@ package polochon
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/sirupsen/logrus"
 )
@@ -39,14 +38,4 @@ type DownloadableInfos struct {
 	UploadedSize    int                    `json:"uploaded_size"`
 	PercentDone     float32                `json:"percent_done"`
 	AdditionalInfos map[string]interface{} `json:"additional_infos"`
-}
-
-// RegisterDownloader helps register a new Downloader
-func RegisterDownloader(name string, f func(params []byte) (Downloader, error)) {
-	if _, ok := registeredModules.Downloaders[name]; ok {
-		panic(fmt.Sprintf("modules: %q of type %q is already registered", name, TypeDownloader))
-	}
-
-	// Register the module
-	registeredModules.Downloaders[name] = f
 }

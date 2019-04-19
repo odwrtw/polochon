@@ -8,11 +8,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// NewSearcher returns a new searcher
-func NewSearcher(p []byte) (polochon.Searcher, error) {
-	return &Yts{}, nil
-}
-
 // SearchMovie implements polochon Searcher interface
 func (y *Yts) SearchMovie(key string, log *logrus.Entry) ([]*polochon.Movie, error) {
 	movieList, err := yts.Search(key)

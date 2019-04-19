@@ -7,19 +7,22 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 )
+
+// Make sure that the module is a wishlister
+var _ polochon.Wishlister = (*Wishlist)(nil)
+
+// Register a new Subtitiler
+func init() {
+	polochon.RegisterModule(&Wishlist{})
+}
 
 // Module constants
 const (
 	moduleName = "canape"
 )
-
-// Register a new Subtitiler
-func init() {
-	polochon.RegisterWishlister(moduleName, NewFromRawYaml)
-}
 
 // UserWishlist represents the configurations to get a user wishlist
 type UserWishlist struct {
@@ -50,6 +53,7 @@ type movie struct {
 // Wishlist holds the canape wishlists
 type Wishlist struct {
 	*Params
+	configured bool
 }
 
 // Params represents the module params
@@ -57,20 +61,24 @@ type Params struct {
 	Wishlists []UserWishlist `yaml:"wishlists"`
 }
 
-// NewFromRawYaml unmarshals the bytes as yaml as params and call the New
-// function
-func NewFromRawYaml(p []byte) (polochon.Wishlister, error) {
-	params := &Params{}
-	if err := yaml.Unmarshal(p, params); err != nil {
-		return nil, err
+// Init implements the module interface
+func (w *Wishlist) Init(p []byte) error {
+	if w.configured {
+		return nil
 	}
 
-	return New(params)
+	params := &Params{}
+	if err := yaml.Unmarshal(p, params); err != nil {
+		return err
+	}
+
+	return w.InitWithParams(params)
 }
 
-// New module
-func New(params *Params) (polochon.Wishlister, error) {
-	return &Wishlist{Params: params}, nil
+// InitWithParams configures the module
+func (w *Wishlist) InitWithParams(params *Params) error {
+	w.Params = params
+	return nil
 }
 
 // Name implements the Module interface
