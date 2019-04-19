@@ -20,7 +20,7 @@ func NewBasicAuthMiddleware(username, password string) *BasicAuthMiddleware {
 // ServeHTTP implements the negroni middleware interface
 func (ba *BasicAuthMiddleware) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	user, pwd, ok := r.BasicAuth()
-	if ok != true || user != ba.Username || pwd != ba.Password {
+	if !ok || user != ba.Username || pwd != ba.Password {
 		rw.Header().Set("WWW-Authenticate", `Basic realm="User Auth"`)
 		http.Error(rw, "401 unauthorized", http.StatusUnauthorized)
 		return

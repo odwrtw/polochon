@@ -45,23 +45,23 @@ type Module interface {
 // Available modules types
 const (
 	TypeTorrenter  ModuleType = "torrenter"
-	TypeDetailer              = "detailer"
-	TypeGuesser               = "guesser"
-	TypeFsNotifier            = "fsnotifier"
-	TypeNotifier              = "notifier"
-	TypeSubtitler             = "subtitler"
-	TypeWishlister            = "wishlister"
-	TypeDownloader            = "downloader"
-	TypeCalendar              = "calendar"
-	TypeExplorer              = "explorer"
-	TypeSearcher              = "searcher"
+	TypeDetailer   ModuleType = "detailer"
+	TypeGuesser    ModuleType = "guesser"
+	TypeFsNotifier ModuleType = "fsnotifier"
+	TypeNotifier   ModuleType = "notifier"
+	TypeSubtitler  ModuleType = "subtitler"
+	TypeWishlister ModuleType = "wishlister"
+	TypeDownloader ModuleType = "downloader"
+	TypeCalendar   ModuleType = "calendar"
+	TypeExplorer   ModuleType = "explorer"
+	TypeSearcher   ModuleType = "searcher"
 )
 
 // Available modules statuses
 const (
 	StatusOK             ModuleStatus = "ok"
-	StatusNotImplemented              = "not_implemented"
-	StatusFail                        = "fail"
+	StatusNotImplemented ModuleStatus = "not_implemented"
+	StatusFail           ModuleStatus = "fail"
 )
 
 // modules holds the modules registered during the init process

@@ -107,7 +107,7 @@ var invalidMock = []struct {
   - name: guest1
     value: guest1token
     `),
-		Expected: "Invalid yml, role: \"doubleRole\" already exists",
+		Expected: "invalid yml, role: \"doubleRole\" already exists",
 	},
 	{
 		File: strings.NewReader(`
@@ -121,7 +121,7 @@ var invalidMock = []struct {
   - name: guest1
     value: guest2token
     `),
-		Expected: "Invalid yml, token name: \"guest1\" already exists",
+		Expected: "invalid yml, token name: \"guest1\" already exists",
 	},
 	{
 		File: strings.NewReader(`
@@ -135,7 +135,7 @@ var invalidMock = []struct {
   - name: guest2
     value: guest1token
     `),
-		Expected: "Invalid yml, token value: \"guest1token\" already exists",
+		Expected: "invalid yml, token value: \"guest1token\" already exists",
 	},
 	{
 		File: strings.NewReader(`
@@ -149,7 +149,7 @@ var invalidMock = []struct {
   - name: guest2
     value: guest2token
     `),
-		Expected: "Invalid yml, role \"user\" included but not defined",
+		Expected: "invalid yml, role \"user\" included but not defined",
 	},
 	{
 		File: strings.NewReader(`
@@ -170,7 +170,7 @@ var invalidMock = []struct {
   - name: guest1
     value: guest1token
     `),
-		Expected: "No token role already declared, you can't use \"role2\"",
+		Expected: "no token role already declared, you can't use \"role2\"",
 	},
 }
 

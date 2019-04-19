@@ -9,7 +9,7 @@ import (
 )
 
 // ErrNoSubtitleFound trigger when no subtitle found
-var ErrNoSubtitleFound = errors.New("No subtitle found")
+var ErrNoSubtitleFound = errors.New("polochon: no subtitle found")
 
 // Subtitler all subtitler must implement it
 type Subtitler interface {

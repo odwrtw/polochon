@@ -7,8 +7,9 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
 	_ "github.com/odwrtw/polochon/modules/mock"
 )
@@ -21,7 +22,7 @@ type mockLibrary struct {
 
 func (m *mockLibrary) cleanup() {
 	// Remove the tmp directory
-	if filepath.HasPrefix(m.tmpDir, os.TempDir()) {
+	if strings.HasPrefix(m.tmpDir, os.TempDir()) {
 		os.RemoveAll(m.tmpDir)
 	} else {
 		panic("trying to work in a non temporary directory")

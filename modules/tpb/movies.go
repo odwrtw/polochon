@@ -1,7 +1,6 @@
 package tpb
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/odwrtw/guessit"
@@ -16,7 +15,7 @@ type movieSearcher struct {
 }
 
 func (mS *movieSearcher) key() string {
-	return fmt.Sprintf("%s", mS.Movie.Title)
+	return mS.Movie.Title
 }
 
 func (mS *movieSearcher) users() []string {

@@ -126,7 +126,7 @@ func (a *App) init() error {
 func (a *App) Run() {
 	// Hangle os signals
 	osSig := make(chan os.Signal, 1)
-	signal.Notify(osSig, syscall.SIGINT, syscall.SIGKILL, syscall.SIGHUP)
+	signal.Notify(osSig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 
 	log := logrus.NewEntry(a.logger)
 	log.Info("starting the app")

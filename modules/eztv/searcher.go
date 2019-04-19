@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/odwrtw/eztv"
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 )
 
@@ -55,5 +55,5 @@ func (e *Eztv) SearchShow(key string, log *logrus.Entry) ([]*polochon.Show, erro
 
 // SearchMovie implements polochon Searcher interface
 func (e *Eztv) SearchMovie(key string, log *logrus.Entry) ([]*polochon.Movie, error) {
-	return nil, fmt.Errorf("Not implemented")
+	return nil, fmt.Errorf("eztv: not implemented")
 }

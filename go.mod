@@ -14,8 +14,8 @@ require (
 	github.com/jpillora/scraper v0.0.0-20171020112404-0b5e5ce320ff // indirect
 	github.com/kolo/xmlrpc v0.0.0-20190417161013-de6d879202d7 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/kylelemons/go-gypsy v0.0.0-20160905020020-08cad365cd28 // indirect
-	github.com/mailru/easyjson v0.0.0-20190403194419-1ea4449da983 // indirect
 	github.com/meatballhat/negroni-logrus v0.0.0-20170801195057-31067281800f
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
@@ -36,9 +36,8 @@ require (
 	github.com/pioz/tvdb v0.0.0-20190107104821-ffdf1011c717
 	github.com/ryanbradynd05/go-tmdb v0.0.0-20181220020137-291a20d25ffd
 	github.com/sirupsen/logrus v1.4.1
-	github.com/stretchr/objx v0.2.0 // indirect
+	github.com/stretchr/testify v1.3.0 // indirect
 	github.com/urfave/negroni v1.0.0
-	golang.org/x/crypto v0.0.0-20190417174047-f416ebab96af // indirect
 	golang.org/x/net v0.0.0-20190415214537-1da14a5a36f2 // indirect
 	golang.org/x/sys v0.0.0-20190418150532-d20716ef9d2f // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect

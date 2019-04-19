@@ -57,7 +57,7 @@ func LoadFromYaml(reader io.Reader) (*Manager, error) {
 	for _, tr := range *trlist {
 
 		if ok := gkRole.Append(tr.Role); !ok {
-			return nil, fmt.Errorf("Invalid yml, role: %q already exists", tr.Role)
+			return nil, fmt.Errorf("invalid yml, role: %q already exists", tr.Role)
 		}
 
 		var role *Role
@@ -90,10 +90,10 @@ func LoadFromYaml(reader io.Reader) (*Manager, error) {
 
 		for _, t := range tr.Token {
 			if ok := gkTokenName.Append(t.Name); !ok {
-				return nil, fmt.Errorf("Invalid yml, token name: %q already exists", t.Name)
+				return nil, fmt.Errorf("invalid yml, token name: %q already exists", t.Name)
 			}
 			if ok := gkTokenValue.Append(t.Value); !ok {
-				return nil, fmt.Errorf("Invalid yml, token value: %q already exists", t.Value)
+				return nil, fmt.Errorf("invalid yml, token value: %q already exists", t.Value)
 			}
 			manager.Tokens = append(manager.Tokens, &Token{
 				Role:  role,
@@ -104,7 +104,7 @@ func LoadFromYaml(reader io.Reader) (*Manager, error) {
 
 		if tr.AllowNoToken {
 			if allowNoTokenSet {
-				return nil, fmt.Errorf("No token role already declared, you can't use %q", tr.Role)
+				return nil, fmt.Errorf("no token role already declared, you can't use %q", tr.Role)
 			}
 			allowNoTokenSet = true
 			manager.NoTokenRole = role
@@ -114,7 +114,7 @@ func LoadFromYaml(reader io.Reader) (*Manager, error) {
 
 	for _, roleName := range usedRole {
 		if !gkRole.Has(roleName) {
-			return nil, fmt.Errorf("Invalid yml, role %q included but not defined", roleName)
+			return nil, fmt.Errorf("invalid yml, role %q included but not defined", roleName)
 		}
 	}
 	return &manager, nil
