@@ -7,28 +7,34 @@ import (
 	"time"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
+	"github.com/odwrtw/polochon/modules/mock"
 )
 
-var configFileExample = []byte(`
+var testConfigData = []byte(`
+logs:
+  level: panic
 watcher:
-  fsnotifier: fsnotify
-  dir: /home/user/downloads
+  fsnotifier: mock
+  dir: /tmp
 downloader:
-  timer: 30s
-  client: transmission
+  enabled: false
+  timer: 4h
+  client: mock
+  cleaner:
+    enabled: true
+    timer: 30s
+    ratio: 0
 http_server:
+  enable: true
   port: 8080
   host: localhost
-  enable: true
   serve_files: true
-  basic_auth: true
+  basic_auth: false
   basic_auth_user: toto
   basic_auth_password: tata
 wishlist:
   wishlisters:
-  - imdb
-  - canape
+  - mock
   show_default_qualities:
   - 720p
   - 480p
@@ -37,9 +43,9 @@ wishlist:
   - 1080p
   - 720p
 video:
-  guesser: openguessit
+  guesser: mock
   notifiers:
-  - pushover
+  - mock
   exclude_file_containing:
   - sample
   allowed_file_extensions:
@@ -53,232 +59,99 @@ video:
   - .jpg
   - .jpeg
   subtitle_languages:
-  - en_US
   - fr_FR
-modules_params:
-  - name: pushover
-    user: 9327a472s3947234792
-    key: sdf7as8f8ds7f9sf
-  - name: addicted
-    lang: fr_FR
-  - name: opensubtitles
-    lang: en_US
-    user: myUserName
-    password: myPass
+  - en_US
 show:
-  calendar: tvdb
-  dir: /home/user/tvshows
+  calendar: mock
+  dir: /tmp
   torrenters:
-    - eztv
+    - mock
   detailers:
-    - tvdb
+    - mock
   subtitlers:
-    - addicted
+    - mock
 movie:
-  dir: /home/user/movies
+  dir: /tmp
   torrenters:
-    - yts
+    - mock
   detailers:
-    - tmdb
+    - mock
   subtitlers:
-    - opensubtitles
+    - mock
+modules_params:
+  - name: mock
 `)
 
-var configStructExample = &ConfigFileRoot{
-	Watcher: ConfigFileWatcher{
-		Dir:            "/home/user/downloads",
-		FsNotifierName: "fsnotify",
-	},
-	Downloader: ConfigFileDownloader{
-		Timer:          time.Second * 30,
-		DownloaderName: "transmission",
-	},
-	HTTPServer: ConfigFileHTTPServer{
-		Enable:            true,
-		Port:              8080,
-		Host:              "localhost",
-		ServeFiles:        true,
-		BasicAuth:         true,
-		BasicAuthUser:     "toto",
-		BasicAuthPassword: "tata",
-	},
-	Wishlist: ConfigFileWishlist{
-		WishlisterNames:       []string{"imdb", "canape"},
-		ShowDefaultQualities:  []polochon.Quality{polochon.Quality720p, polochon.Quality480p, polochon.Quality1080p},
-		MovieDefaultQualities: []polochon.Quality{polochon.Quality1080p, polochon.Quality720p},
-	},
-	Video: ConfigFileVideo{
-		ExcludeFileContaining:     []string{"sample"},
-		VideoExtentions:           []string{".avi", ".mkv", ".mp4"},
-		AllowedExtentionsToDelete: []string{".srt", ".nfo", ".txt", ".jpg", ".jpeg"},
-		NotifierNames:             []string{"pushover"},
-		GuesserName:               "openguessit",
-		SubtitleLanguages:         []polochon.Language{polochon.EN, polochon.FR},
-	},
-	ModulesParams: []map[string]interface{}{
-		{
-			"name": "pushover",
-			"user": "9327a472s3947234792",
-			"key":  "sdf7as8f8ds7f9sf",
-		},
-		{
-			"name": "addicted",
-			"lang": "fr_FR",
-		},
-		{
-			"name":     "opensubtitles",
-			"lang":     "en_US",
-			"user":     "myUserName",
-			"password": "myPass",
-		},
-	},
-	Movie: ConfigFileMovie{
-		Dir:            "/home/user/movies",
-		TorrenterNames: []string{"yts"},
-		DetailerNames:  []string{"tmdb"},
-		SubtitlerNames: []string{"opensubtitles"},
-	},
-	Show: ConfigFileShow{
-		Dir:            "/home/user/tvshows",
-		TorrenterNames: []string{"eztv"},
-		DetailerNames:  []string{"tvdb"},
-		SubtitlerNames: []string{"addicted"},
-		CalendarName:   "tvdb",
-	},
-}
-
 func TestReadConfig(t *testing.T) {
-	b := bytes.NewBuffer(configFileExample)
-
-	got, err := readConfig(b)
+	buf := bytes.NewBuffer(testConfigData)
+	got, err := LoadConfig(buf)
 	if err != nil {
-		t.Fatalf("failed to read config from file: %q", err)
+		t.Fatalf("should not get any error but got %q", err)
 	}
 
-	if !reflect.DeepEqual(got, configStructExample) {
-		t.Errorf("Didn't get expected config \n %+v \n %+v", got, configStructExample)
+	// We don't really care about the logger, let's only check that it's not nil
+	if got.Logger == nil {
+		t.Fatalf("got a nil logger")
 	}
-}
+	got.Logger = nil
 
-// Fake is a structure which implements a shitload of stuff
-type Fake struct{}
+	mock := &mock.Mock{}
+	expected := &Config{
+		Watcher: WatcherConfig{
+			Dir:        "/tmp",
+			FsNotifier: mock,
+		},
+		Downloader: DownloaderConfig{
+			Enabled: false,
+			Timer:   4 * 3600 * time.Second,
+			Client:  mock,
+			Cleaner: CleanerConfig{
 
-func (f *Fake) Name() string {
-	return "fake"
-}
-
-func (f *Fake) Init([]byte) error {
-	return nil
-}
-
-func (f *Fake) Status() (polochon.ModuleStatus, error) {
-	return polochon.StatusOK, nil
-}
-
-func (f *Fake) GetTorrents(interface{}, *logrus.Entry) error {
-	return nil
-}
-
-func (f *Fake) SearchTorrents(string) ([]*polochon.Torrent, error) {
-	return nil, nil
-}
-
-func (f *Fake) GetDetails(interface{}, *logrus.Entry) error {
-	return nil
-}
-
-func (f *Fake) GetSubtitle(interface{}, polochon.Language, *logrus.Entry) (polochon.Subtitle, error) {
-	return nil, nil
-}
-
-func (f *Fake) AvailableMovieOptions() []string {
-	return nil
-}
-
-func (f *Fake) GetMovieList(option string, log *logrus.Entry) ([]*polochon.Movie, error) {
-	return nil, nil
-}
-
-func (f *Fake) AvailableShowOptions() []string {
-	return nil
-}
-
-func (f *Fake) GetShowList(option string, log *logrus.Entry) ([]*polochon.Show, error) {
-	return nil, nil
-}
-
-func (f *Fake) SearchMovie(key string, log *logrus.Entry) ([]*polochon.Movie, error) {
-	return nil, nil
-}
-
-func (f *Fake) SearchShow(key string, log *logrus.Entry) ([]*polochon.Show, error) {
-	return nil, nil
-}
-
-func TestModulesStatus(t *testing.T) {
-	fake := &Fake{}
-	c := Config{
+				Enabled: true,
+				Timer:   30 * time.Second,
+				Ratio:   0,
+			},
+		},
+		HTTPServer: HTTPServer{
+			Enable:            true,
+			Port:              8080,
+			Host:              "localhost",
+			ServeFiles:        true,
+			BasicAuth:         false,
+			BasicAuthUser:     "toto",
+			BasicAuthPassword: "tata",
+		},
+		Wishlist: polochon.WishlistConfig{
+			Wishlisters:           []polochon.Wishlister{mock},
+			ShowDefaultQualities:  []polochon.Quality{"720p", "480p", "1080p"},
+			MovieDefaultQualities: []polochon.Quality{"1080p", "720p"},
+		},
 		Movie: polochon.MovieConfig{
-			Torrenters: []polochon.Torrenter{fake},
-			Detailers:  []polochon.Detailer{fake},
-			Subtitlers: []polochon.Subtitler{fake},
-			Explorers:  []polochon.Explorer{fake},
-			Searchers:  []polochon.Searcher{fake},
+			Torrenters: []polochon.Torrenter{mock},
+			Detailers:  []polochon.Detailer{mock},
+			Subtitlers: []polochon.Subtitler{mock},
 		},
 		Show: polochon.ShowConfig{
-			Torrenters: []polochon.Torrenter{fake},
+			Calendar:   mock,
+			Torrenters: []polochon.Torrenter{mock},
+			Detailers:  []polochon.Detailer{mock},
+			Subtitlers: []polochon.Subtitler{mock},
 		},
+		File: polochon.FileConfig{
+			ExcludeFileContaining:     []string{"sample"},
+			VideoExtentions:           []string{".avi", ".mkv", ".mp4"},
+			AllowedExtentionsToDelete: []string{".srt", ".nfo", ".txt", ".jpg", ".jpeg"},
+			Guesser:                   mock,
+		},
+		Library: LibraryConfig{
+			MovieDir: "/tmp",
+			ShowDir:  "/tmp",
+		},
+		Notifiers:         []polochon.Notifier{mock},
+		SubtitleLanguages: []polochon.Language{"fr_FR", "en_US"},
 	}
-	modulesStatus := c.ModulesStatus()
-	expectedModulesStatus := ModulesStatuses{
-		"movie": {
-			"searcher": []ModuleStatus{
-				{
-					Name:   "fake",
-					Status: polochon.StatusOK,
-					Error:  "",
-				},
-			},
-			"detailer": []ModuleStatus{
-				{
-					Name:   "fake",
-					Status: polochon.StatusOK,
-					Error:  "",
-				},
-			},
-			"explorer": []ModuleStatus{
-				{
-					Name:   "fake",
-					Status: polochon.StatusOK,
-					Error:  "",
-				},
-			},
-			"torrenter": []ModuleStatus{
-				{
-					Name:   "fake",
-					Status: polochon.StatusOK,
-					Error:  "",
-				},
-			},
-			"subtitler": []ModuleStatus{
-				{
-					Name:   "fake",
-					Status: polochon.StatusOK,
-					Error:  "",
-				},
-			},
-		},
-		"show": {
-			"torrenter": []ModuleStatus{
-				{
-					Name:   "fake",
-					Status: polochon.StatusOK,
-					Error:  "",
-				},
-			},
-		},
-	}
-	if !reflect.DeepEqual(modulesStatus, expectedModulesStatus) {
-		t.Errorf("Didn't get expected module status \n %+v \n %+v", modulesStatus, expectedModulesStatus)
+
+	if !reflect.DeepEqual(got, expected) {
+		t.Fatalf("invalid configuration\ngot:\n%+v\nexpected:\n%+v", got, expected)
 	}
 }
