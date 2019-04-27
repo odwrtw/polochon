@@ -8,8 +8,17 @@ import (
 
 // Make sure that the module is a subtitler and a detailer
 var (
-	_ polochon.Subtitler = (*Mock)(nil)
-	_ polochon.Detailer  = (*Mock)(nil)
+	_ polochon.Torrenter  = (*Mock)(nil)
+	_ polochon.Detailer   = (*Mock)(nil)
+	_ polochon.Guesser    = (*Mock)(nil)
+	_ polochon.FsNotifier = (*Mock)(nil)
+	_ polochon.Notifier   = (*Mock)(nil)
+	_ polochon.Subtitler  = (*Mock)(nil)
+	_ polochon.Wishlister = (*Mock)(nil)
+	_ polochon.Downloader = (*Mock)(nil)
+	_ polochon.Calendar   = (*Mock)(nil)
+	_ polochon.Explorer   = (*Mock)(nil)
+	_ polochon.Searcher   = (*Mock)(nil)
 )
 
 func init() {
