@@ -100,6 +100,9 @@ func GetModule(name string, t ModuleType) (Module, error) {
 	return m, nil
 }
 
-func clearRegisteredModules() {
+// ClearRegisteredModules clears the registered modules from polochon. This
+// function exists for test purposes only. Do not use this unless you know what
+// you're doing.
+func ClearRegisteredModules() {
 	registeredModules = map[string]Module{}
 }
