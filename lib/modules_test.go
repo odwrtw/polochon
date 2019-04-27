@@ -31,7 +31,7 @@ func (m *testModule) GetDetails(i interface{}, log *logrus.Entry) error {
 }
 
 func TestModuleRegisterWithoutName(t *testing.T) {
-	clearRegisteredModules()
+	ClearRegisteredModules()
 	defer func() {
 		if r := recover(); r == nil {
 			t.Errorf("a module without name should not be able to register")
@@ -41,7 +41,7 @@ func TestModuleRegisterWithoutName(t *testing.T) {
 }
 
 func TestModuleRegisterWithSameNames(t *testing.T) {
-	clearRegisteredModules()
+	ClearRegisteredModules()
 	defer func() {
 		if r := recover(); r == nil {
 			t.Errorf("a module without name should not be able to register")
@@ -62,7 +62,7 @@ func TestModuleNotFound(t *testing.T) {
 }
 
 func TestModuleTypeNotFound(t *testing.T) {
-	clearRegisteredModules()
+	ClearRegisteredModules()
 	moduleName := "test"
 	RegisterModule(&testModule{name: moduleName})
 	testType := ModuleType("fakeType")
@@ -73,7 +73,7 @@ func TestModuleTypeNotFound(t *testing.T) {
 }
 
 func TestModuleWithInvalidType(t *testing.T) {
-	clearRegisteredModules()
+	ClearRegisteredModules()
 	moduleName := "test"
 	RegisterModule(&testModule{name: moduleName})
 	_, err := GetModule(moduleName, TypeCalendar)
@@ -83,7 +83,7 @@ func TestModuleWithInvalidType(t *testing.T) {
 }
 
 func TestModuleGet(t *testing.T) {
-	clearRegisteredModules()
+	ClearRegisteredModules()
 	module := &testModule{name: "test"}
 	RegisterModule(module)
 	got, err := GetModule(module.name, TypeDetailer)

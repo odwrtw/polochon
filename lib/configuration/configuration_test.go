@@ -83,6 +83,10 @@ modules_params:
 `)
 
 func TestReadConfig(t *testing.T) {
+	polochon.ClearRegisteredModules()
+	mock := &mock.Mock{}
+	polochon.RegisterModule(mock)
+
 	buf := bytes.NewBuffer(testConfigData)
 	got, err := LoadConfig(buf)
 	if err != nil {
@@ -95,7 +99,6 @@ func TestReadConfig(t *testing.T) {
 	}
 	got.Logger = nil
 
-	mock := &mock.Mock{}
 	expected := &Config{
 		Watcher: WatcherConfig{
 			Dir:        "/tmp",
