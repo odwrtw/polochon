@@ -12,6 +12,8 @@ type MovieConfig struct {
 // Movie represents a movie
 type Movie struct {
 	MovieConfig `json:"-"`
+	VideoMetadata
+
 	File
 	ImdbID        string    `json:"imdb_id"`
 	OriginalTitle string    `json:"original_title"`

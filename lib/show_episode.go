@@ -13,6 +13,8 @@ type ShowConfig struct {
 // ShowEpisode represents a tvshow episode
 type ShowEpisode struct {
 	ShowConfig `json:"-"`
+	VideoMetadata
+
 	File
 	Title         string    `json:"title"`
 	ShowTitle     string    `json:"-"`
@@ -27,7 +29,6 @@ type ShowEpisode struct {
 	ShowImdbID    string    `json:"show_imdb_id"`
 	ShowTvdbID    int       `json:"show_tvdb_id"`
 	EpisodeImdbID string    `json:"imdb_id"`
-	ReleaseGroup  string    `json:"release_group"`
 	Torrents      []Torrent `json:"torrents"`
 	Show          *Show     `json:"-"`
 }
