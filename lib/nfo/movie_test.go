@@ -87,3 +87,11 @@ func TestMovieReadNFO(t *testing.T) {
 		t.Errorf("Failed to deserialize movie NFO")
 	}
 }
+
+func TestEmptyMovieReadNFO(t *testing.T) {
+	buf := bytes.NewBuffer([]byte(`<movie></movie>`))
+	got := &polochon.Movie{}
+	if err := Read(buf, got); err != nil {
+		t.Fatal(err)
+	}
+}
