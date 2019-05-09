@@ -84,3 +84,11 @@ func TestEpisodeReadNFO(t *testing.T) {
 		t.Errorf("Failed to deserialize show episode NFO.\nGot: %#v\nExpected: %#v", got, expected)
 	}
 }
+
+func TestEmptyEpisodeReadNFO(t *testing.T) {
+	buf := bytes.NewBuffer([]byte(`<episodedetails></episodedetails>`))
+	got := &polochon.ShowEpisode{}
+	if err := Read(buf, got); err != nil {
+		t.Fatal(err)
+	}
+}

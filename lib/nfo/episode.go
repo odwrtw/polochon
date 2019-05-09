@@ -63,7 +63,7 @@ func (e *Episode) MarshalXML(enc *xml.Encoder, start xml.StartElement) error {
 
 // UnmarshalXML implements the XML Unmarshaler interface
 func (e *Episode) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	nfo := episodeFields{}
+	nfo := episodeFields{Metadata: Metadata{&polochon.VideoMetadata{}}}
 	if err := d.DecodeElement(&nfo, &start); err != nil {
 		return err
 	}
