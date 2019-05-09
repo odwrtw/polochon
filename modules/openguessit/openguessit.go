@@ -67,25 +67,35 @@ func (og *OpenGuessit) Guess(file polochon.File, movieConf polochon.MovieConfig,
 	// Format the title
 	guess.Title = toUpperCaseFirst(guess.Title)
 
+	metadata := polochon.VideoMetadata{
+		Quality:      polochon.Quality(guess.Quality),
+		ReleaseGroup: guess.ReleaseGroup,
+		AudioCodec:   guess.AudioCodec,
+		VideoCodec:   guess.VideoCodec,
+		Container:    guess.Container,
+	}
+
 	switch guess.Type {
 	case "movie":
 		return &polochon.Movie{
-			MovieConfig: movieConf,
-			File:        file,
-			Title:       guess.Title,
-			Year:        guess.Year,
+			VideoMetadata: metadata,
+			MovieConfig:   movieConf,
+			File:          file,
+			Title:         guess.Title,
+			Year:          guess.Year,
 		}, nil
 	case "episode":
 		show := polochon.NewShow(showConf)
 		show.Year = guess.Year
 		show.Title = guess.Title
 		return &polochon.ShowEpisode{
-			ShowConfig: showConf,
-			Show:       show,
-			File:       file,
-			ShowTitle:  guess.Title,
-			Episode:    guess.Episode,
-			Season:     guess.Season,
+			VideoMetadata: metadata,
+			ShowConfig:    showConf,
+			Show:          show,
+			File:          file,
+			ShowTitle:     guess.Title,
+			Episode:       guess.Episode,
+			Season:        guess.Season,
 		}, nil
 	default:
 		return nil, fmt.Errorf("openguessit: invalid guess type: %s", guess.Type)

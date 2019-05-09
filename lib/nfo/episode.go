@@ -3,7 +3,7 @@ package nfo
 import (
 	"encoding/xml"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 )
 
 // Episode represents a show episode NFO
@@ -18,6 +18,8 @@ func NewEpisode(se *polochon.ShowEpisode) *Episode {
 
 // episodeFields represents the show fileds in the NFO file
 type episodeFields struct {
+	Metadata Metadata `xml:"polochon"`
+
 	Title         string  `xml:"title"`
 	ShowTitle     string  `xml:"showtitle"`
 	Season        int     `xml:"season"`
@@ -39,6 +41,7 @@ func (e *Episode) MarshalXML(enc *xml.Encoder, start xml.StartElement) error {
 	start.Name = xml.Name{Space: "", Local: "episodedetails"}
 
 	nfo := &episodeFields{
+		Metadata:      Metadata{&e.VideoMetadata},
 		Title:         e.Title,
 		ShowTitle:     e.ShowTitle,
 		Season:        e.Season,
@@ -65,6 +68,7 @@ func (e *Episode) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 		return err
 	}
 
+	e.VideoMetadata = *nfo.Metadata.VideoMetadata
 	e.Title = nfo.Title
 	e.ShowTitle = nfo.ShowTitle
 	e.Season = nfo.Season

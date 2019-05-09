@@ -5,11 +5,19 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 )
 
 func mockEpisode() *polochon.ShowEpisode {
 	s := polochon.NewShowEpisode(polochon.ShowConfig{})
+	s.VideoMetadata = polochon.VideoMetadata{
+		DateAdded:    now(),
+		Quality:      polochon.Quality720p,
+		ReleaseGroup: "GoT[TGx]",
+		AudioCodec:   "Dolby Digital Plus",
+		VideoCodec:   "H.264",
+		Container:    "mp4",
+	}
 	s.Title = "Lost in Space"
 	s.ShowTitle = "American Dad!"
 	s.Season = 9
@@ -27,6 +35,14 @@ func mockEpisode() *polochon.ShowEpisode {
 }
 
 var episodeNFOContent = []byte(`<episodedetails>
+  <polochon>
+    <date_added>2019-05-07T12:00:00Z</date_added>
+    <quality>720p</quality>
+    <release_group>GoT[TGx]</release_group>
+    <audio_codec>Dolby Digital Plus</audio_codec>
+    <video_codec>H.264</video_codec>
+    <container>mp4</container>
+  </polochon>
   <title>Lost in Space</title>
   <showtitle>American Dad!</showtitle>
   <season>9</season>

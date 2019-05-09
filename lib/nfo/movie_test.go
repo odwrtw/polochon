@@ -10,6 +10,14 @@ import (
 
 func mockMovie() *polochon.Movie {
 	m := polochon.NewMovie(polochon.MovieConfig{})
+	m.VideoMetadata = polochon.VideoMetadata{
+		DateAdded:    now(),
+		Quality:      polochon.Quality720p,
+		ReleaseGroup: "YTS.AM",
+		AudioCodec:   "Dolby Digital Plus",
+		VideoCodec:   "H.264",
+		Container:    "mp4",
+	}
 	m.ImdbID = "tt2562232"
 	m.OriginalTitle = "Birdman"
 	m.Plot = "Awesome plot"
@@ -28,6 +36,14 @@ func mockMovie() *polochon.Movie {
 }
 
 var movieNFOContent = []byte(`<movie>
+  <polochon>
+    <date_added>2019-05-07T12:00:00Z</date_added>
+    <quality>720p</quality>
+    <release_group>YTS.AM</release_group>
+    <audio_codec>Dolby Digital Plus</audio_codec>
+    <video_codec>H.264</video_codec>
+    <container>mp4</container>
+  </polochon>
   <id>tt2562232</id>
   <originaltitle>Birdman</originaltitle>
   <plot>Awesome plot</plot>

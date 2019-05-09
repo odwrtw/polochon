@@ -3,7 +3,7 @@ package nfo
 import (
 	"encoding/xml"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 )
 
 // Movie represents a movie NFO
@@ -18,6 +18,7 @@ func NewMovie(m *polochon.Movie) *Movie {
 
 // movieFields represents the fields in the NFO file
 type movieFields struct {
+	Metadata      Metadata `xml:"polochon"`
 	ImdbID        string   `xml:"id"`
 	OriginalTitle string   `xml:"originaltitle"`
 	Plot          string   `xml:"plot"`
@@ -39,6 +40,7 @@ func (m *Movie) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	start.Name = xml.Name{Space: "", Local: "movie"}
 
 	nfo := &movieFields{
+		Metadata:      Metadata{&m.VideoMetadata},
 		ImdbID:        m.ImdbID,
 		OriginalTitle: m.OriginalTitle,
 		Plot:          m.Plot,
@@ -65,6 +67,7 @@ func (m *Movie) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 		return err
 	}
 
+	m.VideoMetadata = *nfo.Metadata.VideoMetadata
 	m.ImdbID = nfo.ImdbID
 	m.OriginalTitle = nfo.OriginalTitle
 	m.Plot = nfo.Plot
