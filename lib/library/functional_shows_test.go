@@ -8,8 +8,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/odwrtw/polochon/lib"
-	"github.com/odwrtw/polochon/lib/media_index"
+	polochon "github.com/odwrtw/polochon/lib"
+	index "github.com/odwrtw/polochon/lib/media_index"
 	_ "github.com/odwrtw/polochon/modules/mock"
 )
 
@@ -165,7 +165,8 @@ func TestAddEpisode(t *testing.T) {
 		Path: filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1"),
 		Episodes: map[int]*index.Episode{
 			1: {
-				Path: filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1/episodeTest.mp4"),
+				Path:     filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1/episodeTest.mp4"),
+				Metadata: episode.VideoMetadata,
 			},
 		},
 	}
