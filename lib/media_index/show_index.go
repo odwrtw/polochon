@@ -204,26 +204,14 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 		return err
 	}
 	if !hasShow {
-		si.Lock()
-		defer si.Unlock()
-
 		// Add a whole new show
+		si.Lock()
 		si.shows[episode.ShowImdbID] = &Show{
-			Path: showPath,
-			Seasons: map[int]*Season{
-				episode.Season: {
-					Path: seasonPath,
-					Episodes: map[int]*Episode{
-						episode.Episode: {
-							Path:     episode.Path,
-							Metadata: episode.VideoMetadata,
-						},
-					},
-				},
-			},
-			Title: episode.ShowTitle,
+			Title:   episode.ShowTitle,
+			Path:    showPath,
+			Seasons: map[int]*Season{},
 		}
-		return nil
+		si.Unlock()
 	}
 
 	// Check if the season is in the index
@@ -232,27 +220,22 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 		return err
 	}
 	if !hasSeason {
-		si.Lock()
-		defer si.Unlock()
-
 		// Add a whole new season
+		si.Lock()
 		si.shows[episode.ShowImdbID].Seasons[episode.Season] = &Season{
-			Path: seasonPath,
-			Episodes: map[int]*Episode{
-				episode.Episode: {
-					Path:     episode.Path,
-					Metadata: episode.VideoMetadata,
-				},
-			},
+			Path:     seasonPath,
+			Episodes: map[int]*Episode{},
 		}
-		return nil
+		si.Unlock()
 	}
 
-	// The show and the season are already indexed
+	// Add the episode
+	si.Lock()
 	si.shows[episode.ShowImdbID].Seasons[episode.Season].Episodes[episode.Episode] = &Episode{
 		Path:     episode.Path,
 		Metadata: episode.VideoMetadata,
 	}
+	si.Unlock()
 
 	return nil
 }
