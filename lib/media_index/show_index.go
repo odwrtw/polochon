@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 )
 
@@ -32,8 +32,9 @@ type Season struct {
 
 // Episode represents an indexed episode
 type Episode struct {
-	Path      string              `json:"-"`
-	Subtitles []polochon.Language `json:"subtitles"`
+	Path      string                 `json:"-"`
+	Metadata  polochon.VideoMetadata `json:"metadata"`
+	Subtitles []polochon.Language    `json:"subtitles"`
 }
 
 // SeasonList returns the season numbers of the indexed show
@@ -214,7 +215,8 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 					Path: seasonPath,
 					Episodes: map[int]*Episode{
 						episode.Episode: {
-							Path: episode.Path,
+							Path:     episode.Path,
+							Metadata: episode.VideoMetadata,
 						},
 					},
 				},
@@ -238,7 +240,8 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 			Path: seasonPath,
 			Episodes: map[int]*Episode{
 				episode.Episode: {
-					Path: episode.Path,
+					Path:     episode.Path,
+					Metadata: episode.VideoMetadata,
 				},
 			},
 		}
@@ -247,7 +250,8 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 
 	// The show and the season are already indexed
 	si.shows[episode.ShowImdbID].Seasons[episode.Season].Episodes[episode.Episode] = &Episode{
-		Path: episode.Path,
+		Path:     episode.Path,
+		Metadata: episode.VideoMetadata,
 	}
 
 	return nil

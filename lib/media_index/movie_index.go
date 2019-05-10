@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,9 +18,10 @@ type MovieIndex struct {
 
 // Movie represents a Movie in the index
 type Movie struct {
-	Path      string              `json:"-"`
-	Subtitles []polochon.Language `json:"subtitles"`
-	Title     string              `json:"title"`
+	Path      string                 `json:"-"`
+	Title     string                 `json:"title"`
+	Metadata  polochon.VideoMetadata `json:"metadata"`
+	Subtitles []polochon.Language    `json:"subtitles"`
 }
 
 // NewMovieIndex returns a new movie index
@@ -58,8 +59,9 @@ func (mi *MovieIndex) Add(movie *polochon.Movie) error {
 	defer mi.Unlock()
 
 	mi.ids[movie.ImdbID] = &Movie{
-		Path:  movie.Path,
-		Title: movie.Title,
+		Path:     movie.Path,
+		Title:    movie.Title,
+		Metadata: movie.VideoMetadata,
 	}
 
 	return nil
