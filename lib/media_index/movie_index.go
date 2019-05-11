@@ -18,10 +18,10 @@ type MovieIndex struct {
 
 // Movie represents a Movie in the index
 type Movie struct {
-	Path      string                 `json:"-"`
-	Title     string                 `json:"title"`
-	Metadata  polochon.VideoMetadata `json:"metadata"`
-	Subtitles []polochon.Language    `json:"subtitles"`
+	polochon.VideoMetadata
+	Path      string              `json:"-"`
+	Title     string              `json:"title"`
+	Subtitles []polochon.Language `json:"subtitles"`
 }
 
 // NewMovieIndex returns a new movie index
@@ -59,9 +59,9 @@ func (mi *MovieIndex) Add(movie *polochon.Movie) error {
 	defer mi.Unlock()
 
 	mi.ids[movie.ImdbID] = &Movie{
-		Path:     movie.Path,
-		Title:    movie.Title,
-		Metadata: movie.VideoMetadata,
+		Path:          movie.Path,
+		Title:         movie.Title,
+		VideoMetadata: movie.VideoMetadata,
 	}
 
 	return nil

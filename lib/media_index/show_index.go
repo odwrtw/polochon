@@ -32,9 +32,9 @@ type Season struct {
 
 // Episode represents an indexed episode
 type Episode struct {
-	Path      string                 `json:"-"`
-	Metadata  polochon.VideoMetadata `json:"metadata"`
-	Subtitles []polochon.Language    `json:"subtitles"`
+	polochon.VideoMetadata
+	Path      string              `json:"-"`
+	Subtitles []polochon.Language `json:"subtitles"`
 }
 
 // SeasonList returns the season numbers of the indexed show
@@ -232,8 +232,8 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 	// Add the episode
 	si.Lock()
 	si.shows[episode.ShowImdbID].Seasons[episode.Season].Episodes[episode.Episode] = &Episode{
-		Path:     episode.Path,
-		Metadata: episode.VideoMetadata,
+		Path:          episode.Path,
+		VideoMetadata: episode.VideoMetadata,
 	}
 	si.Unlock()
 
