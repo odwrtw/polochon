@@ -165,8 +165,8 @@ func TestAddEpisode(t *testing.T) {
 		Path: filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1"),
 		Episodes: map[int]*index.Episode{
 			1: {
-				Path:     filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1/episodeTest.mp4"),
-				Metadata: episode.VideoMetadata,
+				Path:          filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1/episodeTest.mp4"),
+				VideoMetadata: episode.VideoMetadata,
 			},
 		},
 	}
