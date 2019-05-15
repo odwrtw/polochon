@@ -13,7 +13,7 @@ import (
 	_ "github.com/odwrtw/polochon/modules/mock"
 )
 
-func (m *mockLibrary) mockEpisode(name string) (*polochon.ShowEpisode, error) {
+func (m *mockLibrary) mockEpisode(s *polochon.Show, name string) (*polochon.ShowEpisode, error) {
 	path := filepath.Join(m.tmpDir, "downloads", name)
 
 	// Create the episode file
@@ -24,6 +24,7 @@ func (m *mockLibrary) mockEpisode(name string) (*polochon.ShowEpisode, error) {
 	e := polochon.NewShowEpisode(m.showConfig)
 	e.Path = filepath.Join(m.tmpDir, "downloads", name)
 	e.Thumb = m.httpServer.URL
+	e.Show = s
 
 	if err := polochon.GetDetails(e, mockLogEntry); err != nil {
 		return nil, err
@@ -39,6 +40,7 @@ func (m *mockLibrary) mockShow() (*polochon.Show, error) {
 	s.Banner = m.httpServer.URL
 	s.Fanart = m.httpServer.URL
 	s.Poster = m.httpServer.URL
+	s.ImdbID = "tt12345"
 
 	if err := polochon.GetDetails(s, mockLogEntry); err != nil {
 		return nil, err
@@ -63,13 +65,10 @@ func TestAddEpisode(t *testing.T) {
 	show.Episodes = nil
 
 	// Get a mock episode
-	episode, err := lib.mockEpisode("episodeTest.mp4")
+	episode, err := lib.mockEpisode(show, "episodeTest.mp4")
 	if err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
-
-	// Set the show of the episode
-	episode.Show = show
 
 	oldEpisodePath := episode.Path
 
@@ -130,11 +129,10 @@ func TestAddEpisode(t *testing.T) {
 	}
 
 	// Get a new mock episode
-	episode, err = lib.mockEpisode("episodeTest.mp4")
+	episode, err = lib.mockEpisode(show, "episodeTest.mp4")
 	if err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
-	episode.Show = show
 
 	// Add the same episode again, this should replace the old one
 	if err := lib.Add(episode, mockLogEntry); err != nil {
@@ -299,13 +297,10 @@ func TestDeleteEpisode(t *testing.T) {
 	show.Episodes = nil
 
 	// Get a mock episode
-	episode, err := lib.mockEpisode("episodeTest.mp4")
+	episode, err := lib.mockEpisode(show, "episodeTest.mp4")
 	if err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
-
-	// Set the show of the episode
-	episode.Show = show
 
 	// Add the episode to the library
 	if err := lib.Add(episode, mockLogEntry); err != nil {

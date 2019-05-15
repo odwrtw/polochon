@@ -24,7 +24,7 @@ func (mock *Mock) GetDetails(i interface{}, log *logrus.Entry) (err error) {
 
 func (mock *Mock) getMovieDetails(m *polochon.Movie) {
 	if m.ImdbID == "" {
-		m.ImdbID = "tt12345"
+		m.ImdbID = randomImdbID()
 	}
 	if m.Title == "" {
 		m.Title = fmt.Sprintf("Movie %s", m.ImdbID)
@@ -55,8 +55,21 @@ func (mock *Mock) getMovieDetails(m *polochon.Movie) {
 }
 
 func (mock *Mock) getShowEpisodeDetails(s *polochon.ShowEpisode) {
+	// If we have infos from the show, fill up the episode
+	if s.Show != nil {
+		if s.Show.ImdbID != "" {
+			s.ShowImdbID = s.Show.ImdbID
+		}
+		if s.Show.Title != "" {
+			s.ShowTitle = s.Show.Title
+		}
+		if s.Show.TvdbID != 0 {
+			s.ShowTvdbID = s.Show.TvdbID
+		}
+	}
+
 	if s.ShowImdbID == "" {
-		s.ShowImdbID = "tt12345"
+		s.ShowImdbID = randomImdbID()
 	}
 	if s.Season == 0 {
 		s.Season = 1
@@ -77,7 +90,7 @@ func (mock *Mock) getShowEpisodeDetails(s *polochon.ShowEpisode) {
 		s.ShowTvdbID = 123456
 	}
 	if s.EpisodeImdbID == "" {
-		s.EpisodeImdbID = "tt123456"
+		s.EpisodeImdbID = randomImdbID()
 	}
 	if s.Thumb == "" {
 		s.Thumb = fmt.Sprintf("http://base-photo.com/thumb/%s.jpg", s.ShowImdbID)
@@ -92,7 +105,7 @@ func (mock *Mock) getShowEpisodeDetails(s *polochon.ShowEpisode) {
 // getShowDetails will get some show details
 func (mock *Mock) getShowDetails(s *polochon.Show) {
 	if s.ImdbID == "" {
-		s.ImdbID = "tt12345"
+		s.ImdbID = randomImdbID()
 	}
 	if s.TvdbID == 0 {
 		s.TvdbID = 12345
