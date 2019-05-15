@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	_ "github.com/odwrtw/polochon/modules/mock"
 )
 
@@ -23,6 +23,7 @@ func (m *mockLibrary) mockMovie(name string) (*polochon.Movie, error) {
 	movie := polochon.NewMovie(m.movieConfig)
 	movie.Fanart = m.httpServer.URL
 	movie.Thumb = m.httpServer.URL
+	movie.ImdbID = "tt12345"
 	movie.Path = filepath.Join(m.tmpDir, "downloads", name)
 
 	if err := polochon.GetDetails(movie, mockLogEntry); err != nil {

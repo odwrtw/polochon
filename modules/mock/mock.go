@@ -2,6 +2,8 @@ package mock
 
 import (
 	"errors"
+	"fmt"
+	"math/rand"
 
 	polochon "github.com/odwrtw/polochon/lib"
 )
@@ -51,4 +53,8 @@ func (mock *Mock) Name() string {
 // Status implements the Module interface
 func (mock *Mock) Status() (polochon.ModuleStatus, error) {
 	return polochon.StatusOK, nil
+}
+
+func randomImdbID() string {
+	return fmt.Sprintf("tt%07d", rand.Intn(999999))
 }
