@@ -29,6 +29,10 @@ var (
 	ErrInvalidArgument = errors.New("pushover: invalid argument type")
 )
 
+// Width of the pushover image file, the height will be calculated to keep the
+// original aspect ratio of the image
+const imageWidth = 720
+
 // Module constants
 const (
 	moduleName = "pushover"
@@ -125,7 +129,7 @@ func (p *Pushover) notifyMovie(movie *polochon.Movie) error {
 			return err
 		}
 
-		thumb := resize.Resize(150, 0, img, resize.Lanczos3)
+		thumb := resize.Resize(imageWidth, 0, img, resize.Lanczos3)
 
 		pr, pw := io.Pipe()
 		go func() {
