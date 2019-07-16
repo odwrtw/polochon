@@ -2,11 +2,13 @@ package webhook
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
+	"time"
 
 	"gopkg.in/yaml.v2"
 
@@ -132,14 +134,20 @@ func (w *WebHook) notify(hook *Hook, video polochon.Video, videoType string) err
 		Type: videoType,
 		Data: video,
 	})
+
 	req, err := http.NewRequest("POST", URL.String(), b)
 	if err != nil {
 		return err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+
+	// Add a context with a timeout to the request
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	// Send request
-	resp, err := w.httpClient.Do(req)
+	resp, err := w.httpClient.Do(req.WithContext(ctx))
 	if err != nil {
 		return err
 	}
@@ -149,5 +157,6 @@ func (w *WebHook) notify(hook *Hook, video polochon.Video, videoType string) err
 	if resp.StatusCode >= http.StatusBadRequest {
 		return fmt.Errorf("%s call failed with error %d", URL.String(), resp.StatusCode)
 	}
+
 	return nil
 }
