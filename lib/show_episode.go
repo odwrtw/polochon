@@ -17,7 +17,7 @@ type ShowEpisode struct {
 
 	File
 	Title         string    `json:"title"`
-	ShowTitle     string    `json:"-"`
+	ShowTitle     string    `json:"show_title"`
 	Season        int       `json:"season"`
 	Episode       int       `json:"episode"`
 	TvdbID        int       `json:"tvdb_id"`
