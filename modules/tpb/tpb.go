@@ -7,6 +7,7 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/dustin/go-humanize"
 	"github.com/odwrtw/guessit"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/tpb"
@@ -159,6 +160,8 @@ func (t *TPB) SearchTorrents(s string) ([]*polochon.Torrent, error) {
 
 	pTorrents := []*polochon.Torrent{}
 	for _, t := range torrents {
+		size, _ := humanize.ParseBytes(t.Size)
+
 		pTorrents = append(pTorrents, &polochon.Torrent{
 			Name:       t.Name,
 			URL:        t.Magnet,
@@ -167,6 +170,7 @@ func (t *TPB) SearchTorrents(s string) ([]*polochon.Torrent, error) {
 			Source:     moduleName,
 			UploadUser: t.User,
 			Quality:    getQuality(t.Name),
+			Size:       int(size),
 		})
 	}
 	return pTorrents, nil
@@ -211,6 +215,11 @@ func (t *TPB) transformTorrents(s Searcher, list []tpb.Torrent, log *logrus.Entr
 			continue
 		}
 
+		size, err := humanize.ParseBytes(t.Size)
+		if err != nil {
+			log.Debugf("tpb: failed to parse torrent size: %s", err)
+		}
+
 		log.WithFields(logrus.Fields{
 			"torrent_quality": guess.Quality,
 			"torrent_name":    torrentStr,
@@ -224,6 +233,7 @@ func (t *TPB) transformTorrents(s Searcher, list []tpb.Torrent, log *logrus.Entr
 			Source:     moduleName,
 			UploadUser: t.User,
 			Quality:    torrentQuality,
+			Size:       int(size),
 		})
 	}
 	// Filter the torrents to keep only the best ones

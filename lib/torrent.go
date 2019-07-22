@@ -9,6 +9,7 @@ type Torrent struct {
 	Leechers   int     `json:"leechers"`
 	Source     string  `json:"source"`
 	UploadUser string  `json:"upload_user"`
+	Size       int     `json:"size"`
 }
 
 // FilterTorrents filters the torrents to keep only the best ones
