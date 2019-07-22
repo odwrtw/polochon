@@ -3,6 +3,7 @@ package yts
 import (
 	"errors"
 
+	"github.com/dustin/go-humanize"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/yts"
 	"github.com/sirupsen/logrus"
@@ -133,6 +134,8 @@ func (y *Yts) SearchTorrents(s string) ([]*polochon.Torrent, error) {
 				continue
 			}
 
+			size, _ := humanize.ParseBytes(t.Size)
+
 			torrents = append(torrents, &polochon.Torrent{
 				Name:     m.Title,
 				Quality:  q,
@@ -140,6 +143,7 @@ func (y *Yts) SearchTorrents(s string) ([]*polochon.Torrent, error) {
 				Seeders:  t.Seeds,
 				Leechers: t.Peers,
 				Source:   moduleName,
+				Size:     int(size),
 			})
 		}
 	}
