@@ -6,7 +6,6 @@ import (
 	"github.com/dustin/go-humanize"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/yts"
-	"github.com/sirupsen/logrus"
 )
 
 // Make sure that the module is a torrenter, an explorer and a searcher
@@ -55,7 +54,7 @@ func (y *Yts) Status() (polochon.ModuleStatus, error) {
 }
 
 // Ensure that the given interface is an Movie
-func (y *Yts) getMovieArgument(i interface{}) (*polochon.Movie, error) {
+func getMovieArgument(i interface{}) (*polochon.Movie, error) {
 	if m, ok := i.(*polochon.Movie); ok {
 		return m, nil
 	}
@@ -68,85 +67,30 @@ var searchByImdbID = func(imdbID string) ([]yts.Movie, error) {
 	return yts.Search(imdbID)
 }
 
-// GetTorrents implements the Torrenter interface
-func (y *Yts) GetTorrents(i interface{}, log *logrus.Entry) error {
-	m, err := y.getMovieArgument(i)
-	if err != nil {
-		return err
-	}
-
-	// matches returns a list of matching movie
-	matches, err := searchByImdbID(m.ImdbID)
-	if err != nil {
-		return err
-	}
-
-	if len(matches) == 0 {
-		return polochon.ErrMovieTorrentNotFound
-	}
-
-	// since we searched by id, there should be only one movie in the list
-	ytsMovie := matches[0]
-
-	// Check the torrent
-	if len(ytsMovie.Torrents) == 0 {
-		return polochon.ErrMovieTorrentNotFound
+func polochonTorrents(m *yts.Movie) []polochon.Torrent {
+	if m.Torrents == nil || len(m.Torrents) == 0 {
+		return nil
 	}
 
 	torrents := []polochon.Torrent{}
-	for _, t := range ytsMovie.Torrents {
+	for _, t := range m.Torrents {
 		q := polochon.Quality(t.Quality)
 		if !q.IsAllowed() {
 			continue
 		}
 
+		size, _ := humanize.ParseBytes(t.Size)
+
 		torrents = append(torrents, polochon.Torrent{
+			Name:     m.Title,
 			URL:      t.URL,
 			Quality:  q,
 			Source:   moduleName,
 			Seeders:  t.Seeds,
 			Leechers: t.Peers,
+			Size:     int(size),
 		})
 	}
 
-	m.Torrents = torrents
-
-	return nil
-}
-
-// SearchTorrents implements the Torrenter interface
-func (y *Yts) SearchTorrents(s string) ([]*polochon.Torrent, error) {
-	torrents := []*polochon.Torrent{}
-
-	movies, err := yts.Search(s)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, m := range movies {
-		if m.Torrents == nil {
-			continue
-		}
-
-		for _, t := range m.Torrents {
-			q := polochon.Quality(t.Quality)
-			if !q.IsAllowed() {
-				continue
-			}
-
-			size, _ := humanize.ParseBytes(t.Size)
-
-			torrents = append(torrents, &polochon.Torrent{
-				Name:     m.Title,
-				Quality:  q,
-				URL:      t.URL,
-				Seeders:  t.Seeds,
-				Leechers: t.Peers,
-				Source:   moduleName,
-				Size:     int(size),
-			})
-		}
-	}
-
-	return torrents, nil
+	return torrents
 }
