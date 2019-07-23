@@ -21,25 +21,8 @@ func (y *Yts) SearchMovie(key string, log *logrus.Entry) ([]*polochon.Movie, err
 		m.Title = movie.Title
 		m.Year = movie.Year
 		m.ImdbID = movie.ImdbID
+		m.Torrents = polochonTorrents(&movie)
 
-		// Add the torrents
-		for _, t := range movie.Torrents {
-			// Get the torrent quality
-			torrentQuality := polochon.Quality(t.Quality)
-			if !torrentQuality.IsAllowed() {
-				log.Debugf("yts: unhandled quality: %q", torrentQuality)
-				continue
-			}
-			m.Torrents = append(m.Torrents, polochon.Torrent{
-				Quality:  torrentQuality,
-				URL:      t.URL,
-				Seeders:  t.Seeds,
-				Leechers: t.Peers,
-				Source:   moduleName,
-			})
-		}
-
-		// Append the movie
 		result = append(result, m)
 	}
 	return result, nil
