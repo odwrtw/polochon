@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"gopkg.in/yaml.v2"
 
@@ -31,23 +32,13 @@ type UserWishlist struct {
 }
 
 type movieResponse struct {
-	Status string  `json:"status"`
-	Movies []movie `json:"data"`
+	Status string                 `json:"status"`
+	Movies []polochon.WishedMovie `json:"data"`
 }
 
 type showResponse struct {
-	Status string   `json:"status"`
-	Shows  []tvShow `json:"data"`
-}
-
-type tvShow struct {
-	ImdbID  string `json:"imdb_id"`
-	Season  int    `json:"tracked_season"`
-	Episode int    `json:"tracked_episode"`
-}
-
-type movie struct {
-	ImdbID string `json:"imdb_id"`
+	Status string                `json:"status"`
+	Shows  []polochon.WishedShow `json:"data"`
 }
 
 // Wishlist holds the canape wishlists
@@ -123,7 +114,7 @@ func (w *Wishlist) getMovieWishlists() (*polochon.Wishlist, error) {
 
 		// Add the movies
 		for _, movie := range movies {
-			if err := wl.AddMovie(&polochon.WishedMovie{ImdbID: movie.ImdbID}); err != nil {
+			if err := wl.AddMovie(&movie); err != nil {
 				return nil, err
 			}
 		}
@@ -144,12 +135,7 @@ func (w *Wishlist) getShowWishlists() (*polochon.Wishlist, error) {
 
 		// Add the shows
 		for _, s := range showList {
-			err := wl.AddShow(&polochon.WishedShow{
-				ImdbID:  s.ImdbID,
-				Season:  s.Season,
-				Episode: s.Episode,
-			})
-			if err != nil {
+			if err := wl.AddShow(&s); err != nil {
 				return nil, err
 			}
 		}
@@ -159,7 +145,7 @@ func (w *Wishlist) getShowWishlists() (*polochon.Wishlist, error) {
 }
 
 // Get a user's show wishlist
-func (w *UserWishlist) getShowWishlist() ([]tvShow, error) {
+func (w *UserWishlist) getShowWishlist() ([]polochon.WishedShow, error) {
 	wishlist := &showResponse{}
 	err := w.request("wishlist/shows", wishlist)
 	if err != nil {
@@ -169,7 +155,7 @@ func (w *UserWishlist) getShowWishlist() ([]tvShow, error) {
 }
 
 // Get a user's movie wishlist
-func (w *UserWishlist) getMovieWishlist() ([]movie, error) {
+func (w *UserWishlist) getMovieWishlist() ([]polochon.WishedMovie, error) {
 	wishlist := &movieResponse{}
 	err := w.request("wishlist/movies", wishlist)
 	if err != nil {
@@ -186,8 +172,12 @@ func (w *UserWishlist) request(URL string, response interface{}) error {
 		return err
 	}
 
-	// Add the auth headers
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", w.Token))
+	// Add the token to the request
+	params := url.Values{}
+	params.Set("token", w.Token)
+	req.URL.RawQuery = params.Encode()
+
+	// Add the headers
 	req.Header.Add("Content-type", "application/json")
 
 	// Get the page

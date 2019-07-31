@@ -155,8 +155,8 @@ modules_params:
     # mandatory. You can add multiple user configuration.
   - name: canape
     wishlists:
-    - url: https://canapeapp.com
-      token: 5O32q4D6jlqj492374923749234Kso4aZtarEsAfaJs=
+    - url: https://canapeapp.com/polochons/11111-2222222-333333333-444444
+      token: 11111111-1320-41d6-8b23-27e3e7976272
     # tvdb is used as a show detailer and calendar. It requires API credentials.
   - name: tvdb
     api_key: my_api_key
