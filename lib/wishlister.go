@@ -22,8 +22,8 @@ type WishedMovie struct {
 // episode to start tracking
 type WishedShow struct {
 	ImdbID    string    `json:"imdb_id"`
-	Season    int       `json:"episode_from"`
-	Episode   int       `json:"season_from"`
+	Season    int       `json:"season_from"`
+	Episode   int       `json:"episode_from"`
 	Qualities []Quality `json:"qualities"`
 }
 
