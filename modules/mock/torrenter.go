@@ -34,7 +34,6 @@ func (mock *Mock) getShowEpisodeTorrents(e *polochon.ShowEpisode) {
 	}
 
 	e.Torrents = torrents
-	return
 }
 
 func (mock *Mock) getMovieTorrents(m *polochon.Movie) {
@@ -50,7 +49,6 @@ func (mock *Mock) getMovieTorrents(m *polochon.Movie) {
 	}
 
 	m.Torrents = torrents
-	return
 }
 
 // SearchTorrents implements the torrenter interface
