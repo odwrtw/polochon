@@ -1,6 +1,6 @@
 language: go
 go:
-  - 1.12.4
+  - 1.13.1
 sudo: false
 install: true
 before_install:
