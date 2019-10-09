@@ -1,4 +1,4 @@
-FROM debian:9.5
+FROM debian:10.1
 
 ENV RELEASE_URL=https://github.com/odwrtw/polochon/releases/download/latest/polochon_linux_amd64
 
