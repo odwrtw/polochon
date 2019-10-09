@@ -58,7 +58,7 @@ func (a *addictedProxy) Init(p []byte) error {
 // InitWithParams configures the module
 func (a *addictedProxy) InitWithParams(params *Params) error {
 	// Handle auth if the user and password are provided
-	client := &addicted.Client{}
+	var client *addicted.Client
 
 	var err error
 	if params.User != "" && params.Password != "" {
