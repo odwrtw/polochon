@@ -10,7 +10,7 @@ before_install:
   - go get github.com/modocache/gover
   - go get github.com/mitchellh/gox
 script:
-  - if [ "${TRAVIS_PULL_REQUEST}" == "false" -a "${TRAVIS_BRANCH}" == "master" ]; then make distclean all crossbuild goveralls; else make distclean all goveralls; fi
+  - if [ "${TRAVIS_PULL_REQUEST}" == "false" -a "${TRAVIS_BRANCH}" == "master" ]; then make distclean all crossbuild goveralls checksum; else make distclean all goveralls; fi
 after_success:
   - . scripts/travis_github_releases.sh
 branches:
