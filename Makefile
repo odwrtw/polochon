@@ -82,3 +82,7 @@ clean:
 .PHONY: fmt
 fmt:
 	set -e; for f in $(shell git ls-files '*.go'); do gofmt $$f | diff -u $$f - ; done
+
+.PHONY: checksum
+checksum:
+	set -e; cd builds; for f in polochon_*; do sha256sum $$f > "$$f.sha256sum"; done
