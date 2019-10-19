@@ -3,14 +3,16 @@
 
 set -e
 
+[ "$TRAVIS_BRANCH" = "master" ] || exit 0
+[ "$TRAVIS_PULL_REQUEST" = "false" ] || exit 0
+
 TAG_DATE=$(date -u "+%Y-%m-%d %H:%M:%S UTC")
 GIT_TAG=latest
 GITHUB_PROJECT=https://${GITHUB_TOKEN}@github.com/odwrtw/polochon
 RELEASE_DESC="Generated from TravisCI build $TRAVIS_BUILD_NUMBER ($TAG_DATE)"
 
 log() {
-	# shellcheck disable=SC1117
-	printf "\e[36m-->\e[39m \e[35m%s\e[39m\n" "$@"
+	printf "$(tput setaf 5)-->$(tput setaf 2) %s$(tput setaf 7)\n" "$@"
 }
 
 tag() {
@@ -68,10 +70,6 @@ trigger_docker_build() {
 	log "Docker build triggered"
 }
 
-if [ "$TRAVIS_BRANCH" = "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
-	tag
-	release
-	trigger_docker_build
-else
-	log "No need to create the $GIT_TAG tag on this branch"
-fi
+tag
+release
+trigger_docker_build
