@@ -264,6 +264,9 @@ func (t *TvDB) getShowImages(s *polochon.Show, show *tvdb.Series) error {
 	} {
 		// Fetch the image
 		if err := imageType.f(show); err != nil {
+			if tvdb.HaveCodeError(404, err) {
+				continue
+			}
 			return err
 		}
 
