@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/arbovm/levenshtein"
+	"github.com/agnivade/levenshtein"
 	"github.com/odwrtw/addicted"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
@@ -111,7 +111,7 @@ func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang p
 	var guessID string
 	guessDist := 1000
 	for showName, showID := range shows {
-		dist := levenshtein.Distance(strings.ToLower(showName), strings.ToLower(reqEpisode.ShowTitle))
+		dist := levenshtein.ComputeDistance(strings.ToLower(showName), strings.ToLower(reqEpisode.ShowTitle))
 		if dist < guessDist {
 			guessDist = dist
 			guessID = showID
@@ -140,7 +140,7 @@ func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang p
 	var release string
 
 	for _, sub := range filteredSubs {
-		dist := levenshtein.Distance(strings.ToLower(reqEpisode.ReleaseGroup), strings.ToLower(sub.Release))
+		dist := levenshtein.ComputeDistance(strings.ToLower(reqEpisode.ReleaseGroup), strings.ToLower(sub.Release))
 		if dist < subDist {
 			subDist = dist
 			subtitle = &sub
