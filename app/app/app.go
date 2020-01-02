@@ -162,7 +162,7 @@ func (a *App) Run() {
 		case sig := <-osSig:
 			log.WithField("os_event", sig).Info("got an os event")
 			switch sig {
-			case syscall.SIGINT, syscall.SIGKILL:
+			case syscall.SIGINT, syscall.SIGTERM:
 				if forceShutdown {
 					log.Warn("forced shutdown")
 					os.Exit(1)
