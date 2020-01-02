@@ -6,8 +6,10 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/agnivade/levenshtein"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/pioz/tvdb"
 	"github.com/sirupsen/logrus"
@@ -146,7 +148,7 @@ func (t *TvDB) searchByName(query string) (*tvdb.Series, error) {
 		return nil, err
 	}
 
-	series, err := t.client.BestSearch(query)
+	shows, err := t.client.SearchByName(query)
 	if err != nil {
 		if tvdb.HaveCodeError(404, err) {
 			return nil, ErrShowNotFound
@@ -155,7 +157,39 @@ func (t *TvDB) searchByName(query string) (*tvdb.Series, error) {
 		return nil, err
 	}
 
-	return &series, nil
+	// Check if the name matches the query
+	for _, show := range shows {
+		if strings.ToLower(show.SeriesName) == strings.ToLower(query) {
+			return &show, nil
+		}
+	}
+
+	// Check if one of the aliases matches the query
+	for _, show := range shows {
+		for _, alias := range show.Aliases {
+			if strings.ToLower(alias) == strings.ToLower(query) {
+				return &show, nil
+			}
+		}
+	}
+
+	// Get the best match from the levenshtein distance between the query and
+	// the title
+	var bestMatch *tvdb.Series
+	var bestDistance int
+	for _, show := range shows {
+		dist := levenshtein.ComputeDistance(
+			strings.ToLower(show.SeriesName),
+			strings.ToLower(query),
+		)
+
+		if bestMatch == nil || dist < bestDistance {
+			bestMatch = &show
+			bestDistance = dist
+		}
+	}
+
+	return bestMatch, nil
 }
 
 // GetDetails implements the Detailer interface
