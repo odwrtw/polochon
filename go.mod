@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/PuerkitoBio/goquery v1.5.0 // indirect
+	github.com/agnivade/levenshtein v1.0.3
 	github.com/arbovm/levenshtein v0.0.0-20160628152529-48b4e1c0c4d0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 // indirect
