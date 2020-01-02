@@ -7,7 +7,7 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/arbovm/levenshtein"
+	"github.com/agnivade/levenshtein"
 	polochon "github.com/odwrtw/polochon/lib"
 	tmdb "github.com/ryanbradynd05/go-tmdb"
 	"github.com/sirupsen/logrus"
@@ -126,7 +126,7 @@ func (t *TmDB) searchByTitle(m *polochon.Movie, log *logrus.Entry) error {
 	var movieShort tmdb.MovieShort
 	minDistance := 100
 	for _, result := range r.Results {
-		d := levenshtein.Distance(m.Title, result.Title)
+		d := levenshtein.ComputeDistance(m.Title, result.Title)
 		if d < minDistance {
 			minDistance = d
 			movieShort = result
