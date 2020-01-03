@@ -205,6 +205,11 @@ func (d *Downloader) downloadMissingShows(wl *polochon.Wishlist, log *logrus.Ent
 		}
 
 		for _, calEpisode := range calendar.Episodes {
+			if calEpisode.Season == 0 {
+				// Skip the show "Specials" episodes
+				continue
+			}
+
 			// Check if the episode should be downloaded
 			if calEpisode.IsOlder(wishedShow) {
 				continue
