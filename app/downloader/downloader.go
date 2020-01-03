@@ -123,9 +123,11 @@ func (d *Downloader) downloadMissingVideos(log *logrus.Entry) {
 }
 
 func (d *Downloader) downloadMissingMovies(wl *polochon.Wishlist, log *logrus.Entry) {
-	log = log.WithField("function", "download_movies")
+	logger := log.WithField("function", "download_movies")
 
 	for _, wantedMovie := range wl.Movies {
+		log := logger.WithField("imdb_id", wantedMovie.ImdbID)
+
 		ok, err := d.library.HasMovie(wantedMovie.ImdbID)
 		if err != nil {
 			log.Error(err)
@@ -139,7 +141,6 @@ func (d *Downloader) downloadMissingMovies(wl *polochon.Wishlist, log *logrus.En
 
 		m := polochon.NewMovie(d.config.Movie)
 		m.ImdbID = wantedMovie.ImdbID
-		log = log.WithField("imdb_id", m.ImdbID)
 
 		if err := polochon.GetDetails(m, log); err != nil {
 			errors.LogErrors(log, err)
@@ -182,12 +183,13 @@ func (d *Downloader) downloadMissingMovies(wl *polochon.Wishlist, log *logrus.En
 }
 
 func (d *Downloader) downloadMissingShows(wl *polochon.Wishlist, log *logrus.Entry) {
-	log = log.WithField("function", "download_shows")
+	logger := log.WithField("function", "download_shows")
 
 	for _, wishedShow := range wl.Shows {
+		log := logger.WithField("imdb_id", wishedShow.ImdbID)
+
 		s := polochon.NewShow(d.config.Show)
 		s.ImdbID = wishedShow.ImdbID
-		log = log.WithField("imdb_id", s.ImdbID)
 
 		if err := polochon.GetDetails(s, log); err != nil {
 			errors.LogErrors(log, err)
