@@ -25,7 +25,6 @@ func init() {
 
 // WebHook errors
 var (
-	ErrMissingArgument = errors.New("webhook: missing argument")
 	ErrInvalidArgument = errors.New("webhook: invalid argument type")
 )
 

@@ -159,7 +159,7 @@ func (t *TvDB) searchByName(query string) (*tvdb.Series, error) {
 
 	// Check if the name matches the query
 	for _, show := range shows {
-		if strings.ToLower(show.SeriesName) == strings.ToLower(query) {
+		if strings.EqualFold(show.SeriesName, query) {
 			return &show, nil
 		}
 	}
@@ -167,7 +167,7 @@ func (t *TvDB) searchByName(query string) (*tvdb.Series, error) {
 	// Check if one of the aliases matches the query
 	for _, show := range shows {
 		for _, alias := range show.Aliases {
-			if strings.ToLower(alias) == strings.ToLower(query) {
+			if strings.EqualFold(alias, query) {
 				return &show, nil
 			}
 		}
