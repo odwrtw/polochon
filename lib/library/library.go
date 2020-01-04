@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"github.com/odwrtw/errors"
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
-	"github.com/odwrtw/polochon/lib/media_index"
+	index "github.com/odwrtw/polochon/lib/media_index"
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,12 +19,6 @@ var (
 	ErrMissingShowImageURL        = errors.New("library: missing URL to download show images")
 	ErrMissingShowEpisodeFilePath = errors.New("library: missing file path")
 )
-
-// Config represents configuration for the library
-type Config struct {
-	MovieDir string
-	ShowDir  string
-}
 
 // Library represents a collection of videos
 type Library struct {

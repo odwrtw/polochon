@@ -23,7 +23,6 @@ const (
 // Pam module errors
 var (
 	ErrMissingArgument        = errors.New("pam: missing argument")
-	ErrInvalidArgument        = errors.New("pam: invalid argument type")
 	ErrMissingImdbID          = errors.New("pam: missing imdb id")
 	ErrMissingEpisodeOrSeason = errors.New("pam: missing episode or season number")
 	ErrInvalidType            = errors.New("pam: invalid type")

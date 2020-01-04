@@ -1,7 +1,6 @@
 package polochon
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -9,11 +8,6 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-)
-
-// File errors
-var (
-	ErrInvalidGuessType = errors.New("file: invalid guess type")
 )
 
 // FileConfig represents the configuration for a file

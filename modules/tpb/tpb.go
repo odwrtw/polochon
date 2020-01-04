@@ -1,7 +1,6 @@
 package tpb
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -24,11 +23,6 @@ func init() {
 // Module constants
 const (
 	moduleName = "thepiratebay"
-)
-
-// TPB errors
-var (
-	ErrInvalidArgument = errors.New("tpb: invalid argument")
 )
 
 // Params represents the module params

@@ -11,10 +11,7 @@ var registeredModules = map[string]Module{}
 
 // Modules error
 var (
-	ErrNoModuleFound     = errors.New("modules: no module found")
-	ErrNotAvailable      = errors.New("modules: function not available")
-	ErrMissingModuleName = errors.New("modules: missing module name")
-	ErrInvalidModuleType = errors.New("modules: invalid module type")
+	ErrNotAvailable = errors.New("modules: function not available")
 )
 
 // ModuleType holds modules type

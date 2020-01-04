@@ -1,7 +1,6 @@
 package openguessit
 
 import (
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -24,16 +23,6 @@ func init() {
 // Module constants
 const (
 	moduleName = "openguessit"
-
-	// Video types
-	MovieType   = "movie"
-	ShowType    = "episode"
-	UnknownType = "unknown"
-)
-
-// Errors
-var (
-	ErrShowNameUnknown = errors.New("show title unknown")
 )
 
 // OpenGuessit is a mix of opensubtitle and guessit
