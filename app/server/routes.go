@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/mux"
 	negronilogrus "github.com/meatballhat/negroni-logrus"
 	"github.com/odwrtw/polochon/app/token"
-	"github.com/phyber/negroni-gzip/gzip"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 )
@@ -233,9 +232,6 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 
 	// Use logrus as logger
 	n.Use(negronilogrus.NewMiddlewareFromLogger(s.log.Logger, "httpServer"))
-
-	// gzip compression
-	n.Use(gzip.Gzip(gzip.DefaultCompression))
 
 	// Add basic auth if configured
 	if s.config.HTTPServer.BasicAuth {
