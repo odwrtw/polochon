@@ -171,7 +171,7 @@ func (c *Cleaner) clean(d polochon.Downloadable, log *logrus.Entry) error {
 
 		// Check extension
 		ext := path.Ext(filePath)
-		if !stringInSlice(ext, c.config.File.AllowedExtentionsToDelete) {
+		if !stringInSlice(ext, c.config.File.AllowedExtensionsToDelete) {
 			if !file.IsSymlink() {
 				// Not allowed to delete these types of files
 				log.WithFields(logrus.Fields{

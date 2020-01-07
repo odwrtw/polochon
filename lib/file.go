@@ -13,8 +13,8 @@ import (
 // FileConfig represents the configuration for a file
 type FileConfig struct {
 	ExcludeFileContaining     []string
-	VideoExtentions           []string
-	AllowedExtentionsToDelete []string
+	VideoExtensions           []string
+	AllowedExtensionsToDelete []string
 	Guesser                   Guesser
 }
 
@@ -51,7 +51,7 @@ func (f *File) IsVideo() bool {
 	ext := path.Ext(strings.ToLower(f.Path))
 
 	// Check in the video extensions
-	for _, e := range f.VideoExtentions {
+	for _, e := range f.VideoExtensions {
 		if e == ext {
 			return true
 		}

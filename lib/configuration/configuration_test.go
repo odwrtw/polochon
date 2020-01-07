@@ -142,8 +142,8 @@ func TestReadConfig(t *testing.T) {
 		},
 		File: polochon.FileConfig{
 			ExcludeFileContaining:     []string{"sample"},
-			VideoExtentions:           []string{".avi", ".mkv", ".mp4"},
-			AllowedExtentionsToDelete: []string{".srt", ".nfo", ".txt", ".jpg", ".jpeg"},
+			VideoExtensions:           []string{".avi", ".mkv", ".mp4"},
+			AllowedExtensionsToDelete: []string{".srt", ".nfo", ".txt", ".jpg", ".jpeg"},
 			Guesser:                   mock,
 		},
 		Library: LibraryConfig{

@@ -87,7 +87,7 @@ func TestIsVideo(t *testing.T) {
 
 	// Create the file to test
 	config := FileConfig{
-		VideoExtentions:       []string{".mp4"},
+		VideoExtensions:       []string{".mp4"},
 		ExcludeFileContaining: []string{"sample"},
 	}
 	file := NewFileWithConfig(f.Name(), config)
@@ -115,7 +115,7 @@ func TestExludedFile(t *testing.T) {
 	// Create the file to test
 	config := FileConfig{
 		ExcludeFileContaining: []string{"sample"},
-		VideoExtentions:       []string{".mp4"},
+		VideoExtensions:       []string{".mp4"},
 	}
 	file := NewFileWithConfig(fileName, config)
 
