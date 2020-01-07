@@ -74,7 +74,7 @@ func newMockLibrary() (*mockLibrary, error) {
 
 	// FileConfig
 	fileConfig := polochon.FileConfig{
-		VideoExtentions: []string{".mp4"},
+		VideoExtensions: []string{".mp4"},
 	}
 
 	// MovieConfig with the mock detailer

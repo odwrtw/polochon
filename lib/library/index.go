@@ -68,7 +68,7 @@ func (l *Library) buildMovieIndex(log *logrus.Entry) error {
 		ext := path.Ext(filePath)
 
 		var moviePath string
-		for _, mext := range l.fileConfig.VideoExtentions {
+		for _, mext := range l.fileConfig.VideoExtensions {
 			if ext == mext {
 				moviePath = filePath
 				break
@@ -191,7 +191,7 @@ func (l *Library) scanEpisodes(imdbID, showRootPath string, log *logrus.Entry) e
 		ext := path.Ext(filePath)
 
 		var epPath string
-		for _, mext := range l.fileConfig.VideoExtentions {
+		for _, mext := range l.fileConfig.VideoExtensions {
 			if ext == mext {
 				epPath = filePath
 				break

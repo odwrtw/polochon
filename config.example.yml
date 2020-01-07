@@ -82,7 +82,7 @@ video:
   - .avi
   - .mkv
   - .mp4
-  # While cleaning diretories some files are considered garbage based on their extentions.
+  # While cleaning diretories some files are considered garbage based on their extensions.
   allowed_file_extensions_to_delete:
   - .srt
   - .nfo

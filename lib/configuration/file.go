@@ -28,8 +28,8 @@ type configFile struct {
 	Video struct {
 		ModuleLoader              `yaml:",inline"`
 		ExcludeFileContaining     []string            `yaml:"exclude_file_containing"`
-		VideoExtentions           []string            `yaml:"allowed_file_extensions"`
-		AllowedExtentionsToDelete []string            `yaml:"allowed_file_extensions_to_delete"`
+		VideoExtensions           []string            `yaml:"allowed_file_extensions"`
+		AllowedExtensionsToDelete []string            `yaml:"allowed_file_extensions_to_delete"`
 		SubtitleLanguages         []polochon.Language `yaml:"subtitle_languages"`
 	} `yaml:"video"`
 
@@ -100,8 +100,8 @@ func loadConfig(cf *configFile, conf *Config) error {
 	}
 	conf.File = polochon.FileConfig{
 		ExcludeFileContaining:     cf.Video.ExcludeFileContaining,
-		VideoExtentions:           cf.Video.VideoExtentions,
-		AllowedExtentionsToDelete: cf.Video.AllowedExtentionsToDelete,
+		VideoExtensions:           cf.Video.VideoExtensions,
+		AllowedExtensionsToDelete: cf.Video.AllowedExtensionsToDelete,
 		Guesser:                   cf.Video.guesser,
 	}
 	conf.Library = LibraryConfig{}
