@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	negronilogrus "github.com/meatballhat/negroni-logrus"
 	"github.com/odwrtw/polochon/app/token"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 )
@@ -215,6 +216,12 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 			path:    "/debug/pprof/trace",
 			methods: "GET",
 			handler: pprof.Trace,
+		},
+		{
+			name:    "Metrics",
+			path:    "/metrics",
+			methods: "GET",
+			handler: promhttp.Handler().ServeHTTP,
 		},
 	} {
 		if route.excluded {
