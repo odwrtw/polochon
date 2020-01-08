@@ -33,14 +33,11 @@ require (
 	github.com/odwrtw/yifysubs v0.0.0-20190417174645-d3bba6e4cfe0
 	github.com/odwrtw/yts v0.0.0-20190417175129-d51f8755d93d
 	github.com/oz/osdb v0.0.0-20190204162748-da06ada9cdc1
-	github.com/phyber/negroni-gzip v0.0.0-20180113114010-ef6356a5d029
 	github.com/pioz/tvdb v0.0.0-20190107104821-ffdf1011c717
+	github.com/prometheus/client_golang v1.3.0
 	github.com/ryanbradynd05/go-tmdb v0.0.0-20181220020137-291a20d25ffd
-	github.com/sirupsen/logrus v1.4.1
-	github.com/stretchr/testify v1.3.0 // indirect
+	github.com/sirupsen/logrus v1.4.2
 	github.com/urfave/negroni v1.0.0
-	golang.org/x/net v0.0.0-20190415214537-1da14a5a36f2 // indirect
-	golang.org/x/sys v0.0.0-20190418150532-d20716ef9d2f // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/unrolled/render.v1 v1.0.0
