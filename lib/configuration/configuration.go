@@ -7,6 +7,7 @@ import (
 	"time"
 
 	polochon "github.com/odwrtw/polochon/lib"
+	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
@@ -61,10 +62,11 @@ type WatcherConfig struct {
 
 // DownloaderConfig represents the configuration for the downloader
 type DownloaderConfig struct {
-	Enabled bool
-	Timer   time.Duration
-	Client  polochon.Downloader
-	Cleaner CleanerConfig
+	Enabled         bool
+	LaunchAtStartup bool
+	Schedule        cron.Schedule
+	Client          polochon.Downloader
+	Cleaner         CleanerConfig
 }
 
 // CleanerConfig represents the configuration for the cleaner in the configuration file

@@ -1,13 +1,12 @@
 package downloader
 
 import (
-	"time"
-
 	"github.com/odwrtw/errors"
 	"github.com/odwrtw/polochon/app/subapp"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/library"
+	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -45,17 +44,18 @@ func (d *Downloader) Run(log *logrus.Entry) error {
 	d.InitStart(log)
 
 	log.Debug("downloader started")
-
-	// Lauch the downloader at startup
-	log.Debug("initial downloader launch")
 	d.event = make(chan struct{}, 1)
-	d.event <- struct{}{}
 
-	// Start the ticker
+	if d.config.Downloader.LaunchAtStartup {
+		log.Debug("initial downloader launch")
+		d.event <- struct{}{}
+	}
+
+	// Start the scheduler
 	d.Wg.Add(1)
 	go func() {
 		defer d.Wg.Done()
-		d.ticker(log)
+		d.scheduler(log)
 	}()
 
 	// Start the downloader
@@ -82,19 +82,17 @@ func (d *Downloader) Run(log *logrus.Entry) error {
 	return err
 }
 
-func (d *Downloader) ticker(log *logrus.Entry) {
-	ticker := time.NewTicker(d.config.Downloader.Timer)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ticker.C:
-			log.Debug("downloader timer triggered")
-			d.event <- struct{}{}
-		case <-d.Done:
-			log.Debug("downloader timer stopped")
-			return
-		}
-	}
+func (d *Downloader) scheduler(log *logrus.Entry) {
+	c := cron.New()
+	c.Schedule(d.config.Downloader.Schedule, cron.FuncJob(func() {
+		log.Debug("downloader scheduler triggered")
+		d.event <- struct{}{}
+	}))
+	c.Start()
+
+	<-d.Done
+	log.Debug("downloader scheduler stopped")
+	c.Stop()
 }
 
 func (d *Downloader) downloader(log *logrus.Entry) {

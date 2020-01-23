@@ -8,6 +8,7 @@ import (
 
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/modules/mock"
+	"github.com/robfig/cron/v3"
 )
 
 var testConfigData = []byte(`
@@ -18,7 +19,8 @@ watcher:
   dir: /tmp
 downloader:
   enabled: false
-  timer: 4h
+  launch_at_startup: true
+  schedule: "@every 4h"
   client: mock
   cleaner:
     enabled: true
@@ -105,9 +107,12 @@ func TestReadConfig(t *testing.T) {
 			FsNotifier: mock,
 		},
 		Downloader: DownloaderConfig{
-			Enabled: false,
-			Timer:   4 * 3600 * time.Second,
-			Client:  mock,
+			Enabled:         false,
+			LaunchAtStartup: true,
+			Schedule: cron.ConstantDelaySchedule{
+				Delay: 4 * time.Hour,
+			},
+			Client: mock,
 			Cleaner: CleanerConfig{
 
 				Enabled: true,
