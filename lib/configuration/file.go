@@ -1,9 +1,10 @@
 package configuration
 
 import (
-	"time"
+	"errors"
 
 	polochon "github.com/odwrtw/polochon/lib"
+	"github.com/robfig/cron/v3"
 )
 
 type configFile struct {
@@ -17,10 +18,11 @@ type configFile struct {
 	} `yaml:"watcher"`
 
 	Downloader struct {
-		ModuleLoader `yaml:",inline"`
-		Enabled      bool          `yaml:"enabled"`
-		Timer        time.Duration `yaml:"timer"`
-		Cleaner      CleanerConfig `yaml:"cleaner"`
+		ModuleLoader    `yaml:",inline"`
+		LaunchAtStartup bool          `yaml:"launch_at_startup"`
+		Enabled         bool          `yaml:"enabled"`
+		Schedule        string        `yaml:"schedule"`
+		Cleaner         CleanerConfig `yaml:"cleaner"`
 	} `yaml:"downloader"`
 
 	HTTPServer HTTPServer `yaml:"http_server"`
@@ -66,16 +68,22 @@ func loadConfig(cf *configFile, conf *Config) error {
 		}
 	}
 
+	schedule, err := cron.ParseStandard(cf.Downloader.Schedule)
+	if err != nil {
+		return errors.New("configuration: " + err.Error())
+	}
+
 	conf.Logger = cf.Logs.logger
 	conf.Watcher = WatcherConfig{
 		Dir:        cf.Watcher.Dir,
 		FsNotifier: cf.Watcher.fsNotifier,
 	}
 	conf.Downloader = DownloaderConfig{
-		Enabled: cf.Downloader.Enabled,
-		Timer:   cf.Downloader.Timer,
-		Client:  cf.Downloader.downloader,
-		Cleaner: cf.Downloader.Cleaner,
+		Enabled:         cf.Downloader.Enabled,
+		LaunchAtStartup: cf.Downloader.LaunchAtStartup,
+		Schedule:        schedule,
+		Client:          cf.Downloader.downloader,
+		Cleaner:         cf.Downloader.Cleaner,
 	}
 	conf.HTTPServer = cf.HTTPServer
 	conf.Wishlist = polochon.WishlistConfig{

@@ -15,9 +15,11 @@ watcher:
 # at a fixed interval. It talks to a torrent server.
 downloader:
   enabled: false
-  # How frequently do you want to run the downloader. The supported values
-  # are golang durations: https://golang.org/pkg/time/#ParseDuration
-  timer: 4h
+  # Should the downloader start when the program starts
+  launch_at_startup: true
+  # When to schedule the downloader, it accepts the CRON job format
+  # https://en.wikipedia.org/wiki/Cron and "@every _golang duration_"
+  schedule: "@every 6h"
   # Which client would you like to use to download torrents. Transmission and
   # aria2 are supported.
   client: transmission

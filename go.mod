@@ -35,6 +35,7 @@ require (
 	github.com/oz/osdb v0.0.0-20190204162748-da06ada9cdc1
 	github.com/pioz/tvdb v0.0.0-20190107104821-ffdf1011c717
 	github.com/prometheus/client_golang v1.3.0
+	github.com/robfig/cron/v3 v3.0.0
 	github.com/ryanbradynd05/go-tmdb v0.0.0-20181220020137-291a20d25ffd
 	github.com/sirupsen/logrus v1.4.2
 	github.com/urfave/negroni v1.0.0
