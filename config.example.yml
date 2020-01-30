@@ -171,6 +171,10 @@ modules_params:
     # only download files from trusted users, you can specify those users for
     # each video type.
   - name: thepiratebay
+    urls:
+    - https://thepiratebay.org
+    - https://mypirate.cc
+    - https://piratebay.life
     show_users:
     - EtHD
     movie_users:

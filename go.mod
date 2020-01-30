@@ -3,11 +3,11 @@ module github.com/odwrtw/polochon
 go 1.13
 
 require (
-	github.com/PuerkitoBio/goquery v1.5.0 // indirect
 	github.com/agnivade/levenshtein v1.0.3
 	github.com/dustin/go-humanize v1.0.0
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
+	github.com/golang/protobuf v1.3.3 // indirect
 	github.com/gorilla/mux v1.7.1
 	github.com/gorilla/rpc v1.2.0 // indirect
 	github.com/gregdel/argo v0.0.0-20190104143955-4ac365771987
@@ -27,7 +27,7 @@ require (
 	github.com/odwrtw/guessit v0.0.0-20190418150520-9c663a4a4c84
 	github.com/odwrtw/imdb-watchlist v0.0.0-20190417175016-b7a9f7503d69
 	github.com/odwrtw/papi v0.0.0-20190413103029-bd5bfea85ae6
-	github.com/odwrtw/tpb v0.0.0-20170818120756-81ec7762d913
+	github.com/odwrtw/tpb v0.0.0-20200130133144-c846aa382c6f
 	github.com/odwrtw/trakttv v0.0.0-20170418094324-76889e438555
 	github.com/odwrtw/transmission v0.0.0-20170515140915-08885b3058e7
 	github.com/odwrtw/yifysubs v0.0.0-20190417174645-d3bba6e4cfe0
