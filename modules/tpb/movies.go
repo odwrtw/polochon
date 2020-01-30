@@ -5,7 +5,6 @@ import (
 
 	"github.com/odwrtw/guessit"
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/odwrtw/tpb"
 	"github.com/sirupsen/logrus"
 )
 
@@ -22,16 +21,8 @@ func (mS *movieSearcher) users() []string {
 	return mS.Users
 }
 
-func (mS *movieSearcher) setTorrents(torrents []polochon.Torrent, log *logrus.Entry) {
+func (mS *movieSearcher) setTorrents(torrents []polochon.Torrent) {
 	mS.Movie.Torrents = torrents
-}
-
-func (mS *movieSearcher) category() tpb.TorrentCategory {
-	return tpb.Video
-}
-
-func (mS *movieSearcher) videoType() string {
-	return "movie"
 }
 
 func (mS *movieSearcher) defaultQuality() string {
@@ -50,9 +41,10 @@ func (mS *movieSearcher) isValidGuess(guess *guessit.Response, log *logrus.Entry
 	}
 
 	// Check the video type
-	if guess.Type != mS.videoType() {
-		log.Debugf("tpb: is not a %s but a %s", mS.videoType(), guess.Type)
+	if guess.Type != "movie" {
+		log.Debugf("tpb: is not a movie but a %s", guess.Type)
 		return false
 	}
+
 	return true
 }

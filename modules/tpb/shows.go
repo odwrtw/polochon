@@ -6,7 +6,6 @@ import (
 
 	"github.com/odwrtw/guessit"
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/odwrtw/tpb"
 	"github.com/sirupsen/logrus"
 )
 
@@ -16,23 +15,20 @@ type showSearcher struct {
 }
 
 func (sS *showSearcher) key() string {
-	return fmt.Sprintf("%s S%02dE%02d", sS.Episode.ShowTitle, sS.Episode.Season, sS.Episode.Episode)
+	return fmt.Sprintf(
+		"%s S%02dE%02d",
+		sS.Episode.ShowTitle,
+		sS.Episode.Season,
+		sS.Episode.Episode,
+	)
 }
 
 func (sS *showSearcher) users() []string {
 	return sS.Users
 }
 
-func (sS *showSearcher) setTorrents(torrents []polochon.Torrent, log *logrus.Entry) {
+func (sS *showSearcher) setTorrents(torrents []polochon.Torrent) {
 	sS.Episode.Torrents = torrents
-}
-
-func (sS *showSearcher) category() tpb.TorrentCategory {
-	return tpb.Video
-}
-
-func (sS *showSearcher) videoType() string {
-	return "episode"
 }
 
 func (sS *showSearcher) defaultQuality() string {
@@ -45,8 +41,8 @@ func (sS *showSearcher) isValidGuess(guess *guessit.Response, log *logrus.Entry)
 		return false
 	}
 	// Check the video type
-	if guess.Type != sS.videoType() {
-		log.Debugf("tpb: is not a %s but a %s", sS.videoType(), guess.Type)
+	if guess.Type != "episode" {
+		log.Debugf("tpb: is not an episode but a %s", guess.Type)
 		return false
 	}
 

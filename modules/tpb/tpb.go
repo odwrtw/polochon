@@ -85,19 +85,17 @@ func (t *TPB) Status() (polochon.ModuleStatus, error) {
 	return polochon.StatusOK, nil
 }
 
-// Searcher represents an interface to search torrent
-type Searcher interface {
+// searcher represents an interface to search torrent
+type searcher interface {
 	key() string
 	users() []string
-	videoType() string
 	defaultQuality() string
-	category() tpb.TorrentCategory
-	setTorrents([]polochon.Torrent, *logrus.Entry)
+	setTorrents([]polochon.Torrent)
 	isValidGuess(guess *guessit.Response, log *logrus.Entry) bool
 }
 
-// NewSearcher will return a new Searcher
-func (t *TPB) NewSearcher(i interface{}) (Searcher, error) {
+// newSearcher will return a new Searcher
+func (t *TPB) newSearcher(i interface{}) (searcher, error) {
 	switch v := i.(type) {
 	case *polochon.ShowEpisode:
 		return &showSearcher{
@@ -115,24 +113,26 @@ func (t *TPB) NewSearcher(i interface{}) (Searcher, error) {
 }
 
 // GetTorrents implements the Torrenter interface
+func (t *TPB) search(s string) ([]*tpb.Torrent, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
+
+	return t.Client.Search(ctx, s, &tpb.Options{
+		OrderBy:  tpb.OrderBySeeds,
+		Sort:     tpb.Desc,
+		Category: tpb.Video,
+	})
+}
+
+// GetTorrents implements the Torrenter interface
 func (t *TPB) GetTorrents(i interface{}, log *logrus.Entry) error {
 	// Create a new Searcher
-	searcher, err := t.NewSearcher(i)
+	searcher, err := t.newSearcher(i)
 	if err != nil {
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
-	defer cancel()
-
-	opts := &tpb.Options{
-		OrderBy:  tpb.OrderBySeeds,
-		Sort:     tpb.Desc,
-		Category: searcher.category(),
-	}
-
-	// Search for torrents
-	torrents, err := t.Client.Search(ctx, searcher.key(), opts)
+	torrents, err := t.search(searcher.key())
 	if err != nil {
 		return err
 	}
@@ -141,30 +141,22 @@ func (t *TPB) GetTorrents(i interface{}, log *logrus.Entry) error {
 	pTorrents := t.transformTorrents(searcher, torrents, log)
 
 	// Set the torrents into the video object
-	searcher.setTorrents(pTorrents, log)
+	searcher.setTorrents(pTorrents)
 	return nil
 }
 
 // SearchTorrents implements the Torrenter interface
 func (t *TPB) SearchTorrents(s string) ([]*polochon.Torrent, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
-	defer cancel()
-
-	opts := &tpb.Options{
-		OrderBy:  tpb.OrderBySeeds,
-		Sort:     tpb.Desc,
-		Category: tpb.Video,
-	}
-
-	// Search for torrents
-	torrents, err := t.Client.Search(ctx, s, opts)
+	results, err := t.search(s)
 	if err != nil {
 		return nil, err
 	}
 
-	pTorrents := []*polochon.Torrent{}
-	for _, t := range torrents {
-		pTorrents = append(pTorrents, &polochon.Torrent{
+	torrents := make([]*polochon.Torrent, len(results))
+	for i := 0; i < len(results); i++ {
+		t := results[i]
+
+		torrents[i] = &polochon.Torrent{
 			Name:       t.Name,
 			URL:        t.Magnet,
 			Seeders:    t.Seeders,
@@ -173,9 +165,10 @@ func (t *TPB) SearchTorrents(s string) ([]*polochon.Torrent, error) {
 			UploadUser: t.User,
 			Quality:    getQuality(t.Name),
 			Size:       int(t.Size),
-		})
+		}
 	}
-	return pTorrents, nil
+
+	return torrents, nil
 }
 
 func filterTorrents(torrents []*tpb.Torrent, allowedUsers []string) []*tpb.Torrent {
@@ -200,7 +193,7 @@ func filterTorrents(torrents []*tpb.Torrent, allowedUsers []string) []*tpb.Torre
 }
 
 // transmforTorrents will filter and transform tpb.Torrent in polochon.Torrent
-func (t *TPB) transformTorrents(s Searcher, list []*tpb.Torrent, log *logrus.Entry) []polochon.Torrent {
+func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent, log *logrus.Entry) []polochon.Torrent {
 	// Use guessit to check the torrents with its infos
 	guessClient := guessit.New("http://guessit.quimbo.fr/guess/")
 
