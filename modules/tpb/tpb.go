@@ -1,12 +1,13 @@
 package tpb
 
 import (
+	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/dustin/go-humanize"
 	"github.com/odwrtw/guessit"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/tpb"
@@ -15,6 +16,8 @@ import (
 
 // Make sure that the module is a torrenter
 var _ polochon.Torrenter = (*TPB)(nil)
+
+var requestTimeout = 30 * time.Second
 
 func init() {
 	polochon.RegisterModule(&TPB{})
@@ -27,6 +30,7 @@ const (
 
 // Params represents the module params
 type Params struct {
+	URLs       []string `yaml:"urls"`
 	ShowUsers  []string `yaml:"show_users"`
 	MovieUsers []string `yaml:"movie_users"`
 }
@@ -38,8 +42,6 @@ type TPB struct {
 	ShowUsers  []string
 	configured bool
 }
-
-const endpoint = "https://thepiratebay.org"
 
 // Init implements the module interface
 func (t *TPB) Init(p []byte) error {
@@ -57,7 +59,7 @@ func (t *TPB) Init(p []byte) error {
 
 // InitWithParams configures the module
 func (t *TPB) InitWithParams(params *Params) error {
-	t.Client = tpb.New(endpoint)
+	t.Client = tpb.New(params.URLs...)
 	t.MovieUsers = params.MovieUsers
 	t.ShowUsers = params.ShowUsers
 	t.configured = true
@@ -120,13 +122,17 @@ func (t *TPB) GetTorrents(i interface{}, log *logrus.Entry) error {
 		return err
 	}
 
-	// Search for torrents
-	torrents, err := t.Client.Search(tpb.SearchOptions{
-		Key:      searcher.key(),
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
+
+	opts := &tpb.Options{
 		OrderBy:  tpb.OrderBySeeds,
 		Sort:     tpb.Desc,
 		Category: searcher.category(),
-	})
+	}
+
+	// Search for torrents
+	torrents, err := t.Client.Search(ctx, searcher.key(), opts)
 	if err != nil {
 		return err
 	}
@@ -141,50 +147,66 @@ func (t *TPB) GetTorrents(i interface{}, log *logrus.Entry) error {
 
 // SearchTorrents implements the Torrenter interface
 func (t *TPB) SearchTorrents(s string) ([]*polochon.Torrent, error) {
-	// Search for torrents
-	torrents, err := t.Client.Search(tpb.SearchOptions{
-		Key:      s,
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
+
+	opts := &tpb.Options{
 		OrderBy:  tpb.OrderBySeeds,
 		Sort:     tpb.Desc,
 		Category: tpb.Video,
-	})
+	}
+
+	// Search for torrents
+	torrents, err := t.Client.Search(ctx, s, opts)
 	if err != nil {
 		return nil, err
 	}
 
 	pTorrents := []*polochon.Torrent{}
 	for _, t := range torrents {
-		size, _ := humanize.ParseBytes(t.Size)
-
 		pTorrents = append(pTorrents, &polochon.Torrent{
 			Name:       t.Name,
 			URL:        t.Magnet,
-			Seeders:    t.Seeds,
-			Leechers:   t.Peers,
+			Seeders:    t.Seeders,
+			Leechers:   t.Leechers,
 			Source:     moduleName,
 			UploadUser: t.User,
 			Quality:    getQuality(t.Name),
-			Size:       int(size),
+			Size:       int(t.Size),
 		})
 	}
 	return pTorrents, nil
 }
 
-// transmforTorrents will filter and transform tpb.Torrent in polochon.Torrent
-func (t *TPB) transformTorrents(s Searcher, list []tpb.Torrent, log *logrus.Entry) []polochon.Torrent {
-
-	// Filter the torrents by user
-	users := s.users()
-	if len(users) > 0 {
-		list = tpb.FilterByUsers(list, s.users())
+func filterTorrents(torrents []*tpb.Torrent, allowedUsers []string) []*tpb.Torrent {
+	filteredList := []*tpb.Torrent{}
+	if len(torrents) == 0 || len(allowedUsers) == 0 {
+		return filteredList
 	}
 
+	// Create a set of users
+	userMap := map[string]struct{}{}
+	for _, u := range allowedUsers {
+		userMap[u] = struct{}{}
+	}
+
+	for _, t := range torrents {
+		if _, ok := userMap[t.User]; ok {
+			filteredList = append(filteredList, t)
+		}
+	}
+
+	return filteredList
+}
+
+// transmforTorrents will filter and transform tpb.Torrent in polochon.Torrent
+func (t *TPB) transformTorrents(s Searcher, list []*tpb.Torrent, log *logrus.Entry) []polochon.Torrent {
 	// Use guessit to check the torrents with its infos
 	guessClient := guessit.New("http://guessit.quimbo.fr/guess/")
 
 	torrents := []polochon.Torrent{}
-	for _, t := range list {
-		torrentStr := torrentGuessitStr(&t)
+	for _, t := range filterTorrents(list, s.users()) {
+		torrentStr := torrentGuessitStr(t)
 		// Make a guess
 		guess, err := guessClient.Guess(torrentStr)
 		if err != nil {
@@ -209,11 +231,6 @@ func (t *TPB) transformTorrents(s Searcher, list []tpb.Torrent, log *logrus.Entr
 			continue
 		}
 
-		size, err := humanize.ParseBytes(t.Size)
-		if err != nil {
-			log.Debugf("tpb: failed to parse torrent size: %s", err)
-		}
-
 		log.WithFields(logrus.Fields{
 			"torrent_quality": guess.Quality,
 			"torrent_name":    torrentStr,
@@ -222,12 +239,12 @@ func (t *TPB) transformTorrents(s Searcher, list []tpb.Torrent, log *logrus.Entr
 		torrents = append(torrents, polochon.Torrent{
 			Name:       t.Name,
 			URL:        t.Magnet,
-			Seeders:    t.Seeds,
-			Leechers:   t.Peers,
+			Seeders:    t.Seeders,
+			Leechers:   t.Leechers,
 			Source:     moduleName,
 			UploadUser: t.User,
 			Quality:    torrentQuality,
-			Size:       int(size),
+			Size:       int(t.Size),
 		})
 	}
 	// Filter the torrents to keep only the best ones
