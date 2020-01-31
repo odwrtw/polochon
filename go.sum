@@ -115,8 +115,8 @@ github.com/odwrtw/eztv v0.0.0-20180731154638-3ffa8598f8ef h1:K8kbRGAor5YHdcmc1a1
 github.com/odwrtw/eztv v0.0.0-20180731154638-3ffa8598f8ef/go.mod h1:pDNWZ7Z0J6I6wpwbzHILNgVuqmxlqGJ+9g8oLhqv5Kk=
 github.com/odwrtw/fanarttv v0.0.0-20170412122542-9f67d3cf0188 h1:mjAgidPA3aNSZU6EgB2iSu1yxxNU2tw9U14n57Gk7ZQ=
 github.com/odwrtw/fanarttv v0.0.0-20170412122542-9f67d3cf0188/go.mod h1:AMkzq9fSbIpWKdWbU4FAsIherygisNEeYglKfmTfq1U=
-github.com/odwrtw/guessit v0.0.0-20190418150520-9c663a4a4c84 h1:QDVwbDuB++TC4YNR83gLJ5RYxfMfnDkeGFtmVJu0g18=
-github.com/odwrtw/guessit v0.0.0-20190418150520-9c663a4a4c84/go.mod h1:W22g7wtc0AGczEARBAs+77gvBk8monDaM6U6i9Wa0vQ=
+github.com/odwrtw/guessit v0.0.0-20200131084001-f88613483547 h1:O0wEl/ORBHpPpZtibQyiZR1kQVFWo97gzcQQH4qI5C8=
+github.com/odwrtw/guessit v0.0.0-20200131084001-f88613483547/go.mod h1:W22g7wtc0AGczEARBAs+77gvBk8monDaM6U6i9Wa0vQ=
 github.com/odwrtw/imdb-watchlist v0.0.0-20190417175016-b7a9f7503d69 h1:ow6b/4Jj7J5iYwU678/rbijvaNUJrYkg13j9Nivkung=
 github.com/odwrtw/imdb-watchlist v0.0.0-20190417175016-b7a9f7503d69/go.mod h1:o2tLH95CtNdqhDb0aS2NbU+1I4PmaNsODpr33Ry0JC0=
 github.com/odwrtw/papi v0.0.0-20190413103029-bd5bfea85ae6 h1:bF8XKFfYNY4quRdqJ5E9ERd+FdR26H1X1Z2fNRGePSk=

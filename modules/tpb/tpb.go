@@ -17,7 +17,10 @@ import (
 // Make sure that the module is a torrenter
 var _ polochon.Torrenter = (*TPB)(nil)
 
-var requestTimeout = 30 * time.Second
+var (
+	defaultTimeout         = 30 * time.Second
+	defaultGuessitEndpoint = "http://guessit.quimbo.fr/guess/"
+)
 
 func init() {
 	polochon.RegisterModule(&TPB{})
@@ -30,17 +33,21 @@ const (
 
 // Params represents the module params
 type Params struct {
-	URLs       []string `yaml:"urls"`
-	ShowUsers  []string `yaml:"show_users"`
-	MovieUsers []string `yaml:"movie_users"`
+	URLs            []string `yaml:"urls"`
+	Timeout         string   `yaml:"timeout"`
+	GuessitEndpoint string   `yaml:"guessit_endpoint"`
+	ShowUsers       []string `yaml:"show_users"`
+	MovieUsers      []string `yaml:"movie_users"`
 }
 
 // TPB is a source for torrents
 type TPB struct {
-	Client     *tpb.Client
-	MovieUsers []string
-	ShowUsers  []string
-	configured bool
+	Client          *tpb.Client
+	Timeout         time.Duration
+	GuessitEndpoint string
+	MovieUsers      []string
+	ShowUsers       []string
+	configured      bool
 }
 
 // Init implements the module interface
@@ -63,7 +70,19 @@ func (t *TPB) InitWithParams(params *Params) error {
 	t.MovieUsers = params.MovieUsers
 	t.ShowUsers = params.ShowUsers
 	t.configured = true
-	return nil
+	t.GuessitEndpoint = params.GuessitEndpoint
+	if t.GuessitEndpoint == "" {
+		t.GuessitEndpoint = defaultGuessitEndpoint
+	}
+
+	var err error
+	if params.Timeout == "" {
+		t.Timeout = defaultTimeout
+	} else {
+		t.Timeout, err = time.ParseDuration(params.Timeout)
+	}
+
+	return err
 }
 
 // Name implements the Module interface
@@ -114,7 +133,7 @@ func (t *TPB) newSearcher(i interface{}) (searcher, error) {
 
 // GetTorrents implements the Torrenter interface
 func (t *TPB) search(s string) ([]*tpb.Torrent, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), t.Timeout)
 	defer cancel()
 
 	return t.Client.Search(ctx, s, &tpb.Options{
@@ -192,10 +211,10 @@ func filterTorrents(torrents []*tpb.Torrent, allowedUsers []string) []*tpb.Torre
 	return filteredList
 }
 
-// transmforTorrents will filter and transform tpb.Torrent in polochon.Torrent
+// transformTorrents will filter and transform tpb.Torrent in polochon.Torrent
 func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent, log *logrus.Entry) []polochon.Torrent {
 	// Use guessit to check the torrents with its infos
-	guessClient := guessit.New("http://guessit.quimbo.fr/guess/")
+	guessClient := guessit.New(t.GuessitEndpoint)
 
 	torrents := []polochon.Torrent{}
 	for _, t := range filterTorrents(list, s.users()) {
