@@ -3,7 +3,6 @@ package token
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 
 	"gopkg.in/yaml.v2"
 )
@@ -33,13 +32,9 @@ func (g *gatekeeper) Has(str string) bool {
 
 // LoadFromYaml returns a Manager from io.Reader which
 // contain yaml
-func LoadFromYaml(reader io.Reader) (*Manager, error) {
-	b, err := ioutil.ReadAll(reader)
-	if err != nil {
-		return nil, err
-	}
+func LoadFromYaml(r io.Reader) (*Manager, error) {
 	trlist := &fileTokenRoleList{}
-	err = yaml.Unmarshal(b, trlist)
+	err := yaml.NewDecoder(r).Decode(trlist)
 	if err != nil {
 		return nil, err
 	}

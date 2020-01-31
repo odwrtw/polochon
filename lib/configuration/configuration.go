@@ -2,7 +2,6 @@ package configuration
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -88,14 +87,9 @@ type HTTPServer struct {
 }
 
 // LoadConfig loads the configuration from a reader
-func LoadConfig(reader io.Reader) (*Config, error) {
-	b, err := ioutil.ReadAll(reader)
-	if err != nil {
-		return nil, err
-	}
-
+func LoadConfig(r io.Reader) (*Config, error) {
 	config := &Config{}
-	return config, yaml.Unmarshal(b, config)
+	return config, yaml.NewDecoder(r).Decode(config)
 }
 
 // LoadConfigFile reads a file from a path and returns a config
