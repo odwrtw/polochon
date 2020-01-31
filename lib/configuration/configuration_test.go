@@ -18,7 +18,7 @@ watcher:
   fsnotifier: mock
   dir: /tmp
 downloader:
-  enabled: false
+  enabled: true
   launch_at_startup: true
   schedule: "@every 4h"
   client: mock
@@ -107,7 +107,7 @@ func TestReadConfig(t *testing.T) {
 			FsNotifier: mock,
 		},
 		Downloader: DownloaderConfig{
-			Enabled:         false,
+			Enabled:         true,
 			LaunchAtStartup: true,
 			Schedule: cron.ConstantDelaySchedule{
 				Delay: 4 * time.Hour,
