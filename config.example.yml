@@ -171,6 +171,10 @@ modules_params:
     # only download files from trusted users, you can specify those users for
     # each video type.
   - name: thepiratebay
+    # timeout for the search (optional, default 30s)
+    timeout: 30s
+    # guessit endpoint (optional)
+    guessit_endpoint: "https://api.myguessit.mydomain"
     urls:
     - https://thepiratebay.org
     - https://mypirate.cc

@@ -24,7 +24,7 @@ require (
 	github.com/odwrtw/errors v0.0.0-20170604160533-c747b9d17833
 	github.com/odwrtw/eztv v0.0.0-20180731154638-3ffa8598f8ef
 	github.com/odwrtw/fanarttv v0.0.0-20170412122542-9f67d3cf0188
-	github.com/odwrtw/guessit v0.0.0-20190418150520-9c663a4a4c84
+	github.com/odwrtw/guessit v0.0.0-20200131084001-f88613483547
 	github.com/odwrtw/imdb-watchlist v0.0.0-20190417175016-b7a9f7503d69
 	github.com/odwrtw/papi v0.0.0-20190413103029-bd5bfea85ae6
 	github.com/odwrtw/tpb v0.0.0-20200130133144-c846aa382c6f
