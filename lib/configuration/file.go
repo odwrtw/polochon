@@ -68,9 +68,13 @@ func loadConfig(cf *configFile, conf *Config) error {
 		}
 	}
 
-	schedule, err := cron.ParseStandard(cf.Downloader.Schedule)
-	if err != nil {
-		return errors.New("configuration: " + err.Error())
+	var schedule cron.Schedule
+	if cf.Downloader.Enabled {
+		var err error
+		schedule, err = cron.ParseStandard(cf.Downloader.Schedule)
+		if err != nil {
+			return errors.New("configuration: " + err.Error())
+		}
 	}
 
 	conf.Logger = cf.Logs.logger
