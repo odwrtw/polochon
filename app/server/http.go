@@ -8,9 +8,9 @@ import (
 
 	"gopkg.in/unrolled/render.v1"
 
+	"github.com/odwrtw/polochon/app/auth"
 	"github.com/odwrtw/polochon/app/subapp"
-	"github.com/odwrtw/polochon/app/token"
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/library"
 	"github.com/sirupsen/logrus"
@@ -25,20 +25,20 @@ type Server struct {
 
 	config         *configuration.Config
 	library        *library.Library
-	tokenManager   *token.Manager
+	authManager    *auth.Manager
 	gracefulServer *http.Server
 	log            *logrus.Entry
 	render         *render.Render
 }
 
 // New returns a new server
-func New(config *configuration.Config, vs *library.Library, tm *token.Manager) *Server {
+func New(config *configuration.Config, vs *library.Library, auth *auth.Manager) *Server {
 	return &Server{
-		Base:         subapp.NewBase(AppName),
-		config:       config,
-		library:      vs,
-		tokenManager: tm,
-		render:       render.New(),
+		Base:        subapp.NewBase(AppName),
+		config:      config,
+		library:     vs,
+		authManager: auth,
+		render:      render.New(),
 	}
 }
 
@@ -81,6 +81,6 @@ func (s *Server) serveFile(w http.ResponseWriter, r *http.Request, file *polocho
 
 func (s *Server) tokenGetAllowed(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("token")
-	allowed := s.tokenManager.GetAllowed(token)
+	allowed := s.authManager.GetAllowed(token)
 	s.renderOK(w, allowed)
 }

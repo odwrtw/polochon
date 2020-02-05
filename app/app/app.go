@@ -7,13 +7,13 @@ import (
 	"syscall"
 
 	"github.com/odwrtw/errors"
+	"github.com/odwrtw/polochon/app/auth"
 	"github.com/odwrtw/polochon/app/cleaner"
 	"github.com/odwrtw/polochon/app/downloader"
 	"github.com/odwrtw/polochon/app/organizer"
 	"github.com/odwrtw/polochon/app/safeguard"
 	"github.com/odwrtw/polochon/app/server"
 	"github.com/odwrtw/polochon/app/subapp"
-	"github.com/odwrtw/polochon/app/token"
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/library"
 	"github.com/sirupsen/logrus"
@@ -22,8 +22,8 @@ import (
 // App represents the polochon app
 type App struct {
 	// Keep the config file paths to be able to reload the app later
-	configPath      string
-	tokenConfigPath string
+	configPath     string
+	authConfigPath string
 
 	// subApps hold the sub applications
 	subApps []subapp.App
@@ -44,14 +44,14 @@ type App struct {
 }
 
 // NewApp create a new app from the given configuration path
-func NewApp(configPath, tokenManagerPath string) (*App, error) {
+func NewApp(configPath, authManagerPath string) (*App, error) {
 	// Create the app
 	app := &App{
-		configPath:      configPath,
-		tokenConfigPath: tokenManagerPath,
-		safeguard:       safeguard.New(),
-		done:            make(chan struct{}),
-		reload:          make(chan subapp.App),
+		configPath:     configPath,
+		authConfigPath: authManagerPath,
+		safeguard:      safeguard.New(),
+		done:           make(chan struct{}),
+		reload:         make(chan subapp.App),
 	}
 
 	// Init the app
@@ -95,26 +95,26 @@ func (a *App) init() error {
 
 	// Only run the HTTP server if specified
 	if config.HTTPServer.Enable {
-		// Read the config of the token manager
-		var tokenManager *token.Manager
-		if _, err := os.Stat(a.tokenConfigPath); err == nil {
-			log.Debug("loading token manager configuration")
+		// Read the config of the auth manager
+		var authManager *auth.Manager
+		if _, err := os.Stat(a.authConfigPath); err == nil {
+			log.Debug("loading auth manager configuration")
 
-			file, err := os.Open(a.tokenConfigPath)
+			file, err := os.Open(a.authConfigPath)
 			defer file.Close()
 			if err != nil {
 				return err
 			}
 
-			tokenManager, err = token.LoadFromYaml(file)
+			authManager, err = auth.New(file)
 			if err != nil {
 				return err
 			}
-			log.Debug("token manager configuration loaded")
+			log.Debug("auth manager configuration loaded")
 		}
 
 		// Add the http server
-		a.subApps = append(a.subApps, server.New(config, library, tokenManager))
+		a.subApps = append(a.subApps, server.New(config, library, authManager))
 	}
 
 	log.Debug("app configuration loaded")
