@@ -7,7 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	negronilogrus "github.com/meatballhat/negroni-logrus"
-	"github.com/odwrtw/polochon/app/token"
+	"github.com/odwrtw/polochon/app/auth"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
@@ -247,8 +247,8 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 	}
 
 	// Add token auth middleware if token configuration file specified
-	if s.tokenManager != nil {
-		n.Use(token.NewMiddleware(s.tokenManager, mux))
+	if s.authManager != nil {
+		n.Use(auth.NewMiddleware(s.authManager, mux))
 		mux.HandleFunc("/tokens/allowed", s.tokenGetAllowed).Name("TokenGetAllowed")
 	}
 

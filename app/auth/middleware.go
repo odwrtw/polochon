@@ -1,4 +1,4 @@
-package token
+package auth
 
 import (
 	"net/http"
@@ -22,26 +22,27 @@ func NewMiddleware(manager *Manager, router *mux.Router) *Middleware {
 
 // ServeHTTP implements the negroni middleware interface
 func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	token := r.URL.Query().Get("token")
+	token := r.Header.Get("X-Auth-Token")
+	if token == "" {
+		token = r.URL.Query().Get("token")
+	}
 
 	var match mux.RouteMatch
 
-	// Unknow route let the app handle that case ie 404
-	if ok := m.router.Match(r, &match); !ok {
-		next(w, r)
+	if !m.router.Match(r, &match) {
+		http.NotFound(w, r)
 		return
 	}
 
-	// No route name forbidden
-	if match.Route.GetName() == "" {
-		http.Error(w, "Invalid route", http.StatusForbidden)
-		return
-	}
-
+	// Get the route name
 	routeName := match.Route.GetName()
+	if routeName == "" {
+		http.NotFound(w, r)
+		return
+	}
 
-	if ok := m.manager.IsAllowed(token, routeName); !ok {
-		http.Error(w, "Invalid token", http.StatusForbidden)
+	if !m.manager.IsAllowed(token, routeName) {
+		http.NotFound(w, r)
 		return
 	}
 
