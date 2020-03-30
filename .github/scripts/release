@@ -1,0 +1,84 @@
+#!/bin/sh
+# vim: set noexpandtab tabstop=4 shiftwidth=4 softtabstop=4 :
+set -e
+
+_log() {
+	printf "$(tput setaf 5)-->$(tput setaf 2) %s$(tput setaf 7)\n" "$@"
+}
+
+_log_err() {
+	echo "$1"
+	exit 1
+}
+
+ARTIFACTS_PATH="artifacts"
+
+[ -d "$ARTIFACTS_PATH" ] || _log_err "Artifact directory not found"
+[ "$GH_TOKEN" ]          || _log_err "Missing github token"
+[ "$GH_REPO" ]           || _log_err "Missing github repo"
+[ "$GH_COMMIT" ]         || _log_err "Missing commit hash"
+[ "$GH_ACTION_ID" ]      || _log_err "Missing github action id"
+
+_api_call() {
+	path=$1
+	shift
+	curl \
+		--silent \
+		--show-error \
+		-H "Authorization: token $GH_TOKEN" \
+		"$@" \
+		"https://api.github.com/repos/$GH_REPO/$path"
+}
+
+_upload_file() {
+	release_id=$1
+	file=$2
+	[ "$file" ] || return 1
+	curl \
+		--silent \
+		--show-error \
+		-H "Authorization: token $GH_TOKEN" \
+		-H "Content-Type: $(file -b --mime-type "$file")" \
+		--data-binary "@$file" \
+		"https://uploads.github.com/repos/$GH_REPO/releases/$release_id/assets?name=$(basename "$file")"
+}
+
+release_id=$(_api_call releases/latest | jq .id)
+if [ "$release_id" != "null" ]; then
+	_log "Deleting the release $release_id"
+	_api_call "releases/$release_id" -X DELETE
+fi
+
+_log "Deleting the latest tag"
+_api_call "git/refs/tags/latest" -X DELETE
+
+_log "Create the latest tag"
+ref_data=$(jq -n -c \
+	--arg commit "$GH_COMMIT" \
+	'{
+		"ref": "refs/tags/latest",
+		"sha": $commit
+	}'
+)
+_api_call "git/refs" -X POST --data "$ref_data"
+
+_log "Create the latest release"
+release_data=$(jq -n -c \
+	--arg body "Created by github action https://github.com/$GH_REPO/actions/runs/$GH_ACTION_ID" \
+	'{
+		"tag_name": "latest",
+		"name": "latest",
+		"body": $body,
+		"draft": false,
+		"prerelease": false
+	}'
+)
+_api_call "releases" -X POST --data "$release_data"
+
+_log "Uploading artifacts"
+release_id=$(_api_call releases/latest | jq .id)
+for file in "$ARTIFACTS_PATH"/*; do
+	_log "Uploading $file"
+	_upload_file "$release_id" "$file"
+	echo
+done

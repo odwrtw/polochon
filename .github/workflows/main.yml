@@ -1,0 +1,61 @@
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    env:
+      TERM: xterm
+    steps:
+
+    - name: Set up Go
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.14.1
+      id: go
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: Build
+      run: scripts/build.sh build all
+      shell: sh
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2-preview
+      with:
+        name: artifacts
+        path: builds/*
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    env:
+      TERM: xterm
+    if: github.ref == 'refs/heads/master'
+    needs: build
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v1
+      with:
+        name: artifacts
+
+    - name: Upload release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_REPO: ${{ github.repository }}
+        GH_COMMIT: ${{ github.sha }}
+        GH_ACTION_ID: ${{ github.run_id }}
+      run: .github/scripts/release
+      shell: sh

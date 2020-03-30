@@ -66,21 +66,6 @@ _coverage() {
 		[ "$(wc -l < "$coverfile")" = "1" ] && continue
 		grep -v "mode" "$coverfile" >> "$coverprofile"
 	done
-	_log "Cleaning up cover profiles..."
-	find "$BASE_PATH" -name '*.coverprofile' -delete
-
-	[ "$TRAVIS" = "true" ] || return 0
-
-	_log "Downloading goveralls..."
-	goveralls_bin="$GOPATH/bin/goveralls"
-	[ -x "$goveralls_bin" ] || \
-		GO111MODULES=off go get -u -v github.com/mattn/goveralls
-
-	_log "Uploading coverprofile..."
-	"$goveralls_bin" -coverprofile="$coverprofile" -service=travis-ci
-
-	_log "Cleaning up..."
-	rm "$coverprofile"
 }
 
 _test() {
