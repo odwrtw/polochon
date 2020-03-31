@@ -15,6 +15,8 @@ func (trakt *TraktTV) GetDetails(i interface{}, log *logrus.Entry) error {
 	switch v := i.(type) {
 	case *polochon.Show:
 		err = trakt.getShowDetails(v, log)
+	case *polochon.ShowEpisode:
+		err = trakt.getShowEpisodeDetails(v, log)
 	case *polochon.Movie:
 		err = trakt.getMovieDetails(v, log)
 	default:
@@ -102,6 +104,37 @@ func (trakt *TraktTV) getShowDetails(show *polochon.Show, log *logrus.Entry) err
 	if banner != nil {
 		show.Banner = banner.URL
 	}
+
+	return nil
+}
+
+// getShowEpisodeDetails gets details for the polochon ShowEpisode
+func (trakt *TraktTV) getShowEpisodeDetails(e *polochon.ShowEpisode, log *logrus.Entry) error {
+	if e.Season == 0 || e.Episode == 0 {
+		return ErrInvalidArgument
+	}
+
+	tEpisode, err := trakt.client.SearchEpisode(
+		e.ShowImdbID,
+		e.Season,
+		e.Episode,
+		trakttv.QueryOption{
+			ExtendedInfos: []trakttv.ExtendedInfo{
+				trakttv.ExtendedInfoFull,
+			},
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	e.Title = tEpisode.Title
+	e.Plot = tEpisode.Overview
+	e.Aired = tEpisode.FirstAired.String()
+	e.Rating = float32(tEpisode.Rating)
+	e.Runtime = tEpisode.Runtime
+	e.TvdbID = tEpisode.IDs.TvDB
+	e.EpisodeImdbID = tEpisode.IDs.ImDB
 
 	return nil
 }
