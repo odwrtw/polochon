@@ -119,8 +119,8 @@ github.com/odwrtw/papi v0.0.0-20190413103029-bd5bfea85ae6 h1:bF8XKFfYNY4quRdqJ5E
 github.com/odwrtw/papi v0.0.0-20190413103029-bd5bfea85ae6/go.mod h1:CXotdtODLpW0/yuFV5XH8Rmrj0eAfPLvdMKykPM2WCk=
 github.com/odwrtw/tpb v0.0.0-20200130133144-c846aa382c6f h1:fwEIGT+o3e8+XkBqrwsE3/+9ketTQXflPhCkv3/w990=
 github.com/odwrtw/tpb v0.0.0-20200130133144-c846aa382c6f/go.mod h1:updLvMbQo2xHoz94MX9+GqmSoKhf6E8fs/J+wLvvu6A=
-github.com/odwrtw/trakttv v0.0.0-20170418094324-76889e438555 h1:5JfY2cKMq0g+IpgAaY+6EPRZZK8eV2lgRIUsqPB+hBY=
-github.com/odwrtw/trakttv v0.0.0-20170418094324-76889e438555/go.mod h1:vb2u+kCVrf+HyvVMzmTzisu+OUsBwwGfFtEmT+S5nzw=
+github.com/odwrtw/trakttv v0.0.0-20200404161731-0d594827e4f9 h1:PuQLHO75MXUsJpf9BcTVxvR/FCkdn1MZnZt6h3o6cJI=
+github.com/odwrtw/trakttv v0.0.0-20200404161731-0d594827e4f9/go.mod h1:I2ogRfOYYqNpMhljPYdFUVUrLbZQ89Ba7QdfiW6EcJ0=
 github.com/odwrtw/transmission v0.0.0-20170515140915-08885b3058e7 h1:NZz8yuBWWG4o3EGdoMap4o+JPKLBhqeSQ7nTfX6XPos=
 github.com/odwrtw/transmission v0.0.0-20170515140915-08885b3058e7/go.mod h1:geyfqmhRrxMwbEo5RPwf5rw5vITQHHQlA7+azUQSIJM=
 github.com/odwrtw/yifysubs v0.0.0-20190417174645-d3bba6e4cfe0 h1:LasNCTYd9Pc3x34xc1p054ZF8rVPLhD2Vfk3Db2KSpo=
