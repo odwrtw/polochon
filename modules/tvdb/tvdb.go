@@ -143,6 +143,26 @@ func (t *TvDB) searchByImdbID(id string) (*tvdb.Series, error) {
 	return &series[0], nil
 }
 
+func (t *TvDB) searchByTvdbID(id int) (*tvdb.Series, error) {
+	if err := t.login(); err != nil {
+		return nil, err
+	}
+
+	show := &tvdb.Series{
+		ID: id,
+	}
+	err := t.client.GetSeries(show)
+	if err != nil {
+		if tvdb.HaveCodeError(404, err) {
+			return nil, ErrShowNotFound
+		}
+
+		return nil, err
+	}
+
+	return show, nil
+}
+
 func (t *TvDB) searchByName(query string) (*tvdb.Series, error) {
 	if err := t.login(); err != nil {
 		return nil, err
@@ -209,6 +229,8 @@ func (t *TvDB) searchShow(s *polochon.Show) (*tvdb.Series, error) {
 	var err error
 
 	switch {
+	case s.TvdbID != 0:
+		show, err = t.searchByTvdbID(s.TvdbID)
 	case s.ImdbID != "":
 		show, err = t.searchByImdbID(s.ImdbID)
 	case s.Title != "":
@@ -229,6 +251,11 @@ func (t *TvDB) searchShow(s *polochon.Show) (*tvdb.Series, error) {
 
 	if show == nil {
 		return nil, ErrShowNotFound
+	}
+
+	// If TvDB doesn't have the ImdbID, restore it
+	if show.ImdbID == "" && s.ImdbID != "" {
+		show.ImdbID = s.ImdbID
 	}
 
 	return show, nil
@@ -351,8 +378,11 @@ func (t *TvDB) getShowDetails(s *polochon.Show, params url.Values) error {
 	s.Title = show.SeriesName
 	s.Plot = show.Overview
 	s.TvdbID = show.ID
-	s.ImdbID = show.ImdbID
 	s.Rating = show.SiteRating
+	// Only override the imdbID if it's defined
+	if show.ImdbID != "" {
+		s.ImdbID = show.ImdbID
+	}
 
 	// Get the year from the first aired date
 	if show.FirstAired != "" {
