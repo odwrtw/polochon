@@ -76,13 +76,17 @@ func (trakt *TraktTV) getShowDetails(show *polochon.Show, log *logrus.Entry) err
 		return err
 	}
 
-	// Update show details
 	show.TvdbID = tshow.IDs.TvDB
 	show.Title = tshow.Title
 	show.Year = tshow.Year
 	show.Plot = tshow.Overview
 	show.FirstAired = &tshow.FirstAired
 	show.Rating = float32(tshow.Rating)
+
+	err = trakt.getShowEpisodes(show, log)
+	if err != nil {
+		return err
+	}
 
 	// Search for images
 	res, err := trakt.fanartClient.GetShowImages(strconv.Itoa(tshow.IDs.TvDB))
@@ -105,6 +109,40 @@ func (trakt *TraktTV) getShowDetails(show *polochon.Show, log *logrus.Entry) err
 		show.Banner = banner.URL
 	}
 
+	return nil
+}
+
+// getShowEpisodes gets the list of all the episodes of a polochon Show
+func (trakt *TraktTV) getShowEpisodes(show *polochon.Show, log *logrus.Entry) error {
+	seasons, err := trakt.client.GetShowSeasons(show.ImdbID, trakttv.QueryOption{
+		ExtendedInfos: []trakttv.ExtendedInfo{
+			trakttv.ExtendedInfoFull,
+			trakttv.ExtendedInfoEpisodes,
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	show.Episodes = []*polochon.ShowEpisode{}
+	for _, s := range seasons {
+		for _, e := range s.Episodes {
+			episode := polochon.NewShowEpisode(polochon.ShowConfig{})
+			episode.Title = e.Title
+			episode.ShowTitle = s.Title
+			episode.Season = e.Season
+			episode.Episode = e.Number
+			episode.TvdbID = e.IDs.TvDB
+			episode.Aired = e.FirstAired.String()
+			episode.Plot = e.Overview
+			episode.Runtime = e.Runtime
+			episode.ShowImdbID = show.ImdbID
+			episode.ShowTvdbID = show.TvdbID
+			episode.EpisodeImdbID = e.IDs.ImDB
+			episode.Rating = float32(e.Rating)
+			show.Episodes = append(show.Episodes, episode)
+		}
+	}
 	return nil
 }
 
