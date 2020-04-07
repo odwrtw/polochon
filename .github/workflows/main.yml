@@ -25,15 +25,15 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Test
-      run: scripts/build.sh coverage
       shell: sh
+      run: go test -coverprofile=/tmp/code.coverage ./...
 
     - name: Upload coverage
       env:
         COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         go install github.com/mattn/goveralls
-        goveralls -coverprofile=builds/code.coverage -service=github
+        goveralls -coverprofile=/tmp/code.coverage -service=github
 
   build:
     name: Build
