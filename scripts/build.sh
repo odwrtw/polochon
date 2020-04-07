@@ -55,19 +55,6 @@ _build() {
 	_checksum
 }
 
-_coverage() {
-	_log "Generating cover profiles..."
-    coverprofile="$BUILD_DIR/code.coverage"
-	echo "mode: set" > "$coverprofile"
-	for pkg in $(go list "$BASE_PATH/..."); do
-		path="$BASE_PATH/${pkg##$PKG_NAME}"
-		coverfile="$path/cover.coverprofile"
-		go test -coverprofile="$coverfile" "$path"
-		[ "$(wc -l < "$coverfile")" = "1" ] && continue
-		grep -v "mode" "$coverfile" >> "$coverprofile"
-	done
-}
-
 _test() {
 	go test -cover "$BASE_PATH/..."
 }
@@ -77,7 +64,6 @@ _usage() {
 	echo "		build [all] - Build [for all achitecture]"
 	echo "		clean       - Clean the builds"
 	echo "		test        - Test the packages"
-	echo "		coverage    - Generate *.coverprofile"
 	exit 1
 }
 
@@ -90,9 +76,6 @@ case "$1" in
 		;;
 	test)
 		_test
-		;;
-	coverage)
-		_coverage
 		;;
 	*)
 		_usage
