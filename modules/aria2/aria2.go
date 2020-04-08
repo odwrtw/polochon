@@ -83,7 +83,7 @@ func (c *Client) Status() (polochon.ModuleStatus, error) {
 }
 
 // Download implements the downloader interface
-func (c *Client) Download(URI string, log *logrus.Entry) error {
+func (c *Client) Download(URI string, metadata *polochon.DownloadableMetadata, log *logrus.Entry) error {
 	_, err := c.protocol.AddURI(URI)
 	return err
 }

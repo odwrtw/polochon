@@ -156,24 +156,29 @@ func (d *Downloader) downloadMissingMovies(wl *polochon.Wishlist, log *logrus.En
 			}
 		}
 
-		// Keep the torrent URL
-		var torrentURL string
+		var torrent *polochon.Torrent
 	quality_loop:
 		for _, q := range wantedMovie.Qualities {
 			for _, t := range m.Torrents {
 				if t.Quality == q {
-					torrentURL = t.URL
+					torrent = &t
 					break quality_loop
 				}
 			}
 		}
 
-		if torrentURL == "" {
+		if torrent == nil {
 			log.Debug("no torrent found")
 			continue
 		}
 
-		if err := d.config.Downloader.Client.Download(torrentURL, log); err != nil {
+		metadata := &polochon.DownloadableMetadata{
+			Type:    "movie",
+			ImdbID:  m.ImdbID,
+			Quality: torrent.Quality,
+		}
+
+		if err := d.config.Downloader.Client.Download(torrent.URL, metadata, log); err != nil {
 			log.Error(err)
 			continue
 		}
@@ -246,25 +251,31 @@ func (d *Downloader) downloadMissingShows(wl *polochon.Wishlist, log *logrus.Ent
 				}
 			}
 
-			// Keep the torrent URL
-			var torrentURL string
-
+			var torrent *polochon.Torrent
 		quality_loop:
 			for _, q := range wishedShow.Qualities {
 				for _, t := range e.Torrents {
 					if t.Quality == q {
-						torrentURL = t.URL
+						torrent = &t
 						break quality_loop
 					}
 				}
 			}
 
-			if torrentURL == "" {
+			if torrent == nil {
 				log.Debug("no torrent found")
 				continue
 			}
 
-			if err := d.config.Downloader.Client.Download(torrentURL, log); err != nil {
+			metadata := &polochon.DownloadableMetadata{
+				Type:    "episode",
+				ImdbID:  e.ShowImdbID,
+				Quality: torrent.Quality,
+				Season:  e.Season,
+				Episode: e.Episode,
+			}
+
+			if err := d.config.Downloader.Client.Download(torrent.URL, metadata, log); err != nil {
 				log.Error(err)
 				continue
 			}

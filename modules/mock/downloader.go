@@ -9,7 +9,7 @@ import (
 )
 
 // Download implements the downloader interface
-func (mock *Mock) Download(string, *logrus.Entry) error {
+func (mock *Mock) Download(string, *polochon.DownloadableMetadata, *logrus.Entry) error {
 	return nil
 }
 
@@ -31,6 +31,11 @@ func (t Torrent) Infos() *polochon.DownloadableInfos {
 		PercentDone:    float32(rand.Intn(100)),
 		Ratio:          11,
 		TotalSize:      500,
+		Metadata: &polochon.DownloadableMetadata{
+			ImdbID:  id,
+			Quality: "720p",
+			Type:    "movie",
+		},
 	}
 }
 

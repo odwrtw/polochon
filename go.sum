@@ -121,8 +121,8 @@ github.com/odwrtw/tpb v0.0.0-20200130133144-c846aa382c6f h1:fwEIGT+o3e8+XkBqrwsE
 github.com/odwrtw/tpb v0.0.0-20200130133144-c846aa382c6f/go.mod h1:updLvMbQo2xHoz94MX9+GqmSoKhf6E8fs/J+wLvvu6A=
 github.com/odwrtw/trakttv v0.0.0-20200404161731-0d594827e4f9 h1:PuQLHO75MXUsJpf9BcTVxvR/FCkdn1MZnZt6h3o6cJI=
 github.com/odwrtw/trakttv v0.0.0-20200404161731-0d594827e4f9/go.mod h1:I2ogRfOYYqNpMhljPYdFUVUrLbZQ89Ba7QdfiW6EcJ0=
-github.com/odwrtw/transmission v0.0.0-20200408113711-450944b7799b h1:7oCzxTMBjh+VGu/GjN+NX11Fzw7D76FbepmzHLwtteQ=
-github.com/odwrtw/transmission v0.0.0-20200408113711-450944b7799b/go.mod h1:o+HdjqpVQPFqVTG4jncidwE0/cQoAfCJ4JMFaB481xc=
+github.com/odwrtw/transmission v0.0.0-20200408122227-b562b9fbcbee h1:BttuvaEGtpe3rL7zm+e2RwVkj1DBo/Mb6XdbWd0a7ds=
+github.com/odwrtw/transmission v0.0.0-20200408122227-b562b9fbcbee/go.mod h1:o+HdjqpVQPFqVTG4jncidwE0/cQoAfCJ4JMFaB481xc=
 github.com/odwrtw/yifysubs v0.0.0-20190417174645-d3bba6e4cfe0 h1:LasNCTYd9Pc3x34xc1p054ZF8rVPLhD2Vfk3Db2KSpo=
 github.com/odwrtw/yifysubs v0.0.0-20190417174645-d3bba6e4cfe0/go.mod h1:9TPMeWCUplybvf4aCW6Hu3KwJian+oSeK6jZ597z9i4=
 github.com/odwrtw/yts v0.0.0-20190417175129-d51f8755d93d h1:f100x20G/oZHNqC4iebFULY0wj4Inv5HRN+j53flOaA=
