@@ -198,14 +198,14 @@ func (t Torrent) Infos() *polochon.DownloadableInfos {
 	i := polochon.DownloadableInfos{
 		ID:             strconv.Itoa(t.T.ID),
 		DownloadRate:   t.T.RateDownload,
-		DownloadedSize: t.T.DownloadedEver,
-		UploadedSize:   t.T.UploadedEver,
+		DownloadedSize: int(t.T.DownloadedEver),
+		UploadedSize:   int(t.T.UploadedEver),
 		FilePaths:      filePaths,
 		IsFinished:     isFinished,
 		Name:           t.T.Name,
 		PercentDone:    float32(t.T.PercentDone) * 100,
 		Ratio:          float32(t.T.UploadRatio),
-		TotalSize:      t.T.SizeWhenDone,
+		TotalSize:      int(t.T.SizeWhenDone),
 		UploadRate:     t.T.RateUpload,
 	}
 

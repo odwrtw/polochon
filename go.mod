@@ -29,7 +29,7 @@ require (
 	github.com/odwrtw/papi v0.0.0-20190413103029-bd5bfea85ae6
 	github.com/odwrtw/tpb v0.0.0-20200130133144-c846aa382c6f
 	github.com/odwrtw/trakttv v0.0.0-20200404161731-0d594827e4f9
-	github.com/odwrtw/transmission v0.0.0-20170515140915-08885b3058e7
+	github.com/odwrtw/transmission v0.0.0-20200408113711-450944b7799b
 	github.com/odwrtw/yifysubs v0.0.0-20190417174645-d3bba6e4cfe0
 	github.com/odwrtw/yts v0.0.0-20190417175129-d51f8755d93d
 	github.com/oz/osdb v0.0.0-20190204162748-da06ada9cdc1
