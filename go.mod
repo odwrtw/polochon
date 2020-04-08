@@ -1,6 +1,6 @@
 module github.com/odwrtw/polochon
 
-go 1.13
+go 1.14
 
 require (
 	github.com/agnivade/levenshtein v1.0.3
