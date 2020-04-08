@@ -123,12 +123,20 @@ func (c *Client) Status() (polochon.ModuleStatus, error) {
 }
 
 // Download implements the downloader interface
-func (c *Client) Download(URL string, log *logrus.Entry) error {
-	_, err := c.tClient.Add(URL)
+func (c *Client) Download(URL string, metadata *polochon.DownloadableMetadata, log *logrus.Entry) error {
+	t, err := c.tClient.Add(URL)
 	if err != nil {
 		return err
 	}
-	return nil
+
+	labels := labels(metadata)
+	if labels == nil {
+		return nil
+	}
+
+	return t.Set(transmission.SetTorrentArg{
+		Labels: labels,
+	})
 }
 
 // List implements the downloader interface
@@ -195,7 +203,7 @@ func (t Torrent) Infos() *polochon.DownloadableInfos {
 		}
 	}
 
-	i := polochon.DownloadableInfos{
+	return &polochon.DownloadableInfos{
 		ID:             strconv.Itoa(t.T.ID),
 		DownloadRate:   t.T.RateDownload,
 		DownloadedSize: int(t.T.DownloadedEver),
@@ -207,7 +215,6 @@ func (t Torrent) Infos() *polochon.DownloadableInfos {
 		Ratio:          float32(t.T.UploadRatio),
 		TotalSize:      int(t.T.SizeWhenDone),
 		UploadRate:     t.T.RateUpload,
+		Metadata:       metadata(t.T.Labels),
 	}
-
-	return &i
 }

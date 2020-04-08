@@ -18,8 +18,12 @@ func (s *Server) addTorrent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(struct{ URL string })
-	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+	req := struct {
+		// TODO: change URL to lowercase
+		URL      string                         `json:"URL"`
+		Metadata *polochon.DownloadableMetadata `json:"metadata"`
+	}{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		s.renderError(w, &Error{
 			Code:    http.StatusBadRequest,
 			Message: "Unable to read payload",
@@ -35,7 +39,7 @@ func (s *Server) addTorrent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.config.Downloader.Client.Download(req.URL, s.log.WithField("function", "downloader")); err != nil {
+	if err := s.config.Downloader.Client.Download(req.URL, req.Metadata, s.log.WithField("function", "downloader")); err != nil {
 		if err == polochon.ErrDuplicateTorrent {
 			s.renderError(w, &Error{
 				Code:    http.StatusConflict,
