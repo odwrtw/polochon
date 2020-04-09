@@ -23,10 +23,15 @@ func (e *Eztv) GetMovieList(string, *logrus.Entry) ([]*polochon.Movie, error) {
 	return nil, polochon.ErrNotAvailable
 }
 
+// Function to be overwritten during the tests
+var eztvListShows = func(page int) ([]*eztv.Show, error) {
+	return eztv.ListShows(page)
+}
+
 // GetShowList implements the Explorer interface
 func (e *Eztv) GetShowList(string, *logrus.Entry) ([]*polochon.Show, error) {
 	// Get the page of the shows
-	showList, err := eztv.ListShows(1)
+	showList, err := eztvListShows(1)
 	if err != nil {
 		return nil, err
 	}
