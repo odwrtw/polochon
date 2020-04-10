@@ -63,9 +63,10 @@ func TestFilterTorrents(t *testing.T) {
 	t2 := &Torrent{Quality: Quality1080p, Result: &TorrentResult{Seeders: 200}}
 	t3 := &Torrent{Quality: Quality1080p, Result: &TorrentResult{Seeders: 100}}
 	t4 := &Torrent{Quality: Quality720p, Result: &TorrentResult{Seeders: 50}}
-	input := []*Torrent{t1, t2, t3, t4}
+	t5 := &Torrent{Quality: Quality720p}
+	input := []*Torrent{t1, t2, t3, t4, t5}
 
-	expected := []*Torrent{t4, t2}
+	expected := []*Torrent{t2, t4}
 
 	got := FilterTorrents(input)
 	if !reflect.DeepEqual(got, expected) {
@@ -98,5 +99,96 @@ func TestChooseTorrentFromQualitiesNotFound(t *testing.T) {
 	got := ChooseTorrentFromQualities(input, []Quality{Quality1080p, Quality720p})
 	if got != nil {
 		t.Fatalf("expected no result, got %#v", got)
+	}
+}
+
+func TestHasVideo(t *testing.T) {
+	// Valid movie
+	validMovieTorrent := &Torrent{
+		ImdbID:  "tt000000",
+		Type:    "movie",
+		Quality: Quality1080p,
+	}
+
+	// Valid episode
+	validEpisodeTorrent := &Torrent{
+		ImdbID:  "tt000000",
+		Type:    "episode",
+		Quality: Quality720p,
+		Season:  1,
+		Episode: 3,
+	}
+
+	expectedShow := &Show{ImdbID: validEpisodeTorrent.ImdbID}
+	expectedEpisode := &ShowEpisode{
+		ShowImdbID: validEpisodeTorrent.ImdbID,
+		Season:     validEpisodeTorrent.Season,
+		Episode:    validEpisodeTorrent.Episode,
+		VideoMetadata: VideoMetadata{
+			Quality: validEpisodeTorrent.Quality,
+		},
+		Torrents: []*Torrent{validEpisodeTorrent},
+		Show:     expectedShow,
+	}
+	expectedShow.Episodes = []*ShowEpisode{expectedEpisode}
+
+	tt := []struct {
+		name     string
+		torrent  *Torrent
+		expected Video
+	}{
+		{
+			name:     "torrent without type",
+			torrent:  &Torrent{ImdbID: "tt000000"},
+			expected: nil,
+		},
+		{
+			name:     "torrent with invliad type",
+			torrent:  &Torrent{ImdbID: "tt000000", Type: "invalid"},
+			expected: nil,
+		},
+		{
+			name:    "valid movie",
+			torrent: validMovieTorrent,
+			expected: &Movie{
+				ImdbID: validMovieTorrent.ImdbID,
+				VideoMetadata: VideoMetadata{
+					Quality: validMovieTorrent.Quality,
+				},
+				Torrents: []*Torrent{validMovieTorrent},
+			},
+		},
+		{
+			name: "episode with missing season",
+			torrent: &Torrent{
+				ImdbID:  "tt000000",
+				Type:    "episode",
+				Episode: 2,
+			},
+			expected: nil,
+		},
+		{
+			name: "episode with missing episode number",
+			torrent: &Torrent{
+				ImdbID: "tt000000",
+				Type:   "episode",
+				Season: 1,
+			},
+			expected: nil,
+		},
+		{
+			name:     "episode with missing episode number",
+			torrent:  validEpisodeTorrent,
+			expected: expectedEpisode,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			got := tc.torrent.Video()
+			if !reflect.DeepEqual(got, tc.expected) {
+				t.Fatalf("expected %+v, got %+v", tc.expected, got)
+			}
+		})
 	}
 }

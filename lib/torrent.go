@@ -1,6 +1,9 @@
 package polochon
 
-import "errors"
+import (
+	"errors"
+	"sort"
+)
 
 var (
 	// ErrDuplicateTorrent returned when the torrent is already added
@@ -45,6 +48,58 @@ type Torrent struct {
 	Status *TorrentStatus `json:"status"`
 }
 
+// HasVideo returns true if the torrent has enough information to return a
+// video
+func (t *Torrent) HasVideo() bool {
+	if t.ImdbID == "" || t.Type == "" {
+		return false
+	}
+
+	if t.Type == "movie" {
+		return true
+	}
+
+	if t.Type != "episode" {
+		return false
+	}
+
+	return (t.Season != 0 && t.Episode != 0)
+}
+
+// Video returns a new video based on the torrent informations
+func (t *Torrent) Video() Video {
+	if !t.HasVideo() {
+		return nil
+	}
+
+	switch t.Type {
+	case "movie":
+		return &Movie{
+			ImdbID: t.ImdbID,
+			VideoMetadata: VideoMetadata{
+				Quality: t.Quality,
+			},
+			Torrents: []*Torrent{t},
+		}
+	case "episode":
+		show := &Show{ImdbID: t.ImdbID}
+		episode := &ShowEpisode{
+			ShowImdbID: t.ImdbID,
+			Season:     t.Season,
+			Episode:    t.Episode,
+			VideoMetadata: VideoMetadata{
+				Quality: t.Quality,
+			},
+			Torrents: []*Torrent{t},
+			Show:     show,
+		}
+		show.Episodes = []*ShowEpisode{episode}
+		return episode
+	default:
+		return nil
+	}
+}
+
 // RatioReached tells if the given ratio has been reached
 func (t *Torrent) RatioReached(ratio float32) bool {
 	if t.Status == nil || !t.Status.IsFinished {
@@ -58,6 +113,9 @@ func (t *Torrent) RatioReached(ratio float32) bool {
 func FilterTorrents(torrents []*Torrent) []*Torrent {
 	torrentByQuality := map[Quality]*Torrent{}
 
+	// Keep the qualities in an array to produce a predictable output
+	qualities := []string{}
+
 	for _, t := range torrents {
 		if t.Result == nil {
 			continue
@@ -66,6 +124,7 @@ func FilterTorrents(torrents []*Torrent) []*Torrent {
 		bestByQuality, ok := torrentByQuality[t.Quality]
 		if !ok {
 			torrentByQuality[t.Quality] = t
+			qualities = append(qualities, string(t.Quality))
 			continue
 		}
 
@@ -74,9 +133,10 @@ func FilterTorrents(torrents []*Torrent) []*Torrent {
 		}
 	}
 
-	filtered := []*Torrent{}
-	for _, t := range torrentByQuality {
-		filtered = append(filtered, t)
+	sort.Strings(qualities)
+	filtered := make([]*Torrent, len(qualities))
+	for i, q := range qualities {
+		filtered[i] = torrentByQuality[Quality(q)]
 	}
 
 	return filtered
