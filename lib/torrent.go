@@ -74,3 +74,17 @@ func FilterTorrents(torrents []*Torrent) []*Torrent {
 
 	return filtered
 }
+
+// ChooseTorrentFromQualities chooses the best torrent matching the given
+// qualities
+func ChooseTorrentFromQualities(torrents []*Torrent, qualities []Quality) *Torrent {
+	for _, quality := range qualities {
+		for _, torrent := range torrents {
+			if torrent.Quality == quality {
+				return torrent
+			}
+		}
+	}
+
+	return nil
+}

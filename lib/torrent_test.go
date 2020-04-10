@@ -63,3 +63,31 @@ func TestFilterTorrents(t *testing.T) {
 		t.Fatalf("expected %#v, got %#v", expected, got)
 	}
 }
+
+func TestChooseTorrentFromQualities(t *testing.T) {
+	t1 := &Torrent{Quality: Quality3D}
+	t2 := &Torrent{Quality: Quality480p}
+	t3 := &Torrent{Quality: Quality720p}
+	t4 := &Torrent{Quality: Quality1080p}
+	t5 := &Torrent{Quality: Quality1080p}
+	input := []*Torrent{t1, t2, t3, t4, t5}
+
+	expected := t4
+
+	got := ChooseTorrentFromQualities(input, []Quality{Quality1080p, Quality720p})
+	if !reflect.DeepEqual(got, expected) {
+		t.Fatalf("expected %#v, got %#v", expected, got)
+	}
+}
+
+func TestChooseTorrentFromQualitiesNotFound(t *testing.T) {
+	input := []*Torrent{
+		{Quality: Quality3D},
+		{Quality: Quality480p},
+	}
+
+	got := ChooseTorrentFromQualities(input, []Quality{Quality1080p, Quality720p})
+	if got != nil {
+		t.Fatalf("expected no result, got %#v", got)
+	}
+}

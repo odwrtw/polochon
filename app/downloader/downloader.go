@@ -156,17 +156,7 @@ func (d *Downloader) downloadMissingMovies(wl *polochon.Wishlist, log *logrus.En
 			}
 		}
 
-		var torrent *polochon.Torrent
-	quality_loop:
-		for _, q := range wantedMovie.Qualities {
-			for _, t := range m.Torrents {
-				if t.Quality == q {
-					torrent = t
-					break quality_loop
-				}
-			}
-		}
-
+		torrent := polochon.ChooseTorrentFromQualities(m.Torrents, wantedMovie.Qualities)
 		if torrent == nil {
 			log.Debug("no torrent found")
 			continue
@@ -251,17 +241,7 @@ func (d *Downloader) downloadMissingShows(wl *polochon.Wishlist, log *logrus.Ent
 				}
 			}
 
-			var torrent *polochon.Torrent
-		quality_loop:
-			for _, q := range wishedShow.Qualities {
-				for _, t := range e.Torrents {
-					if t.Quality == q {
-						torrent = t
-						break quality_loop
-					}
-				}
-			}
-
+			torrent := polochon.ChooseTorrentFromQualities(e.Torrents, wishedShow.Qualities)
 			if torrent == nil {
 				log.Debug("no torrent found")
 				continue
