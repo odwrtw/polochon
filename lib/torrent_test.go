@@ -15,16 +15,23 @@ func TestTorrentRatio(t *testing.T) {
 		{
 			name: "torrent is not finished",
 			torrent: &Torrent{
-				IsFinished: false,
+				Status: &TorrentStatus{IsFinished: false},
 			},
+			expected: false,
+		},
+		{
+			name:     "torrent is has no result",
+			torrent:  &Torrent{},
 			expected: false,
 		},
 		{
 			name:  "torrent has reached the expected ratio",
 			ratio: 2,
 			torrent: &Torrent{
-				IsFinished: true,
-				Ratio:      3,
+				Status: &TorrentStatus{
+					IsFinished: true,
+					Ratio:      3,
+				},
 			},
 			expected: true,
 		},
@@ -32,8 +39,10 @@ func TestTorrentRatio(t *testing.T) {
 			name:  "torrent has not yet reached the expected ratio",
 			ratio: 1,
 			torrent: &Torrent{
-				IsFinished: true,
-				Ratio:      0.3,
+				Status: &TorrentStatus{
+					IsFinished: true,
+					Ratio:      0.3,
+				},
 			},
 			expected: false,
 		},
@@ -50,10 +59,10 @@ func TestTorrentRatio(t *testing.T) {
 }
 
 func TestFilterTorrents(t *testing.T) {
-	t1 := &Torrent{Quality: Quality720p, Seeders: 2}
-	t2 := &Torrent{Quality: Quality1080p, Seeders: 200}
-	t3 := &Torrent{Quality: Quality1080p, Seeders: 100}
-	t4 := &Torrent{Quality: Quality720p, Seeders: 50}
+	t1 := &Torrent{Quality: Quality720p, Result: &TorrentResult{Seeders: 2}}
+	t2 := &Torrent{Quality: Quality1080p, Result: &TorrentResult{Seeders: 200}}
+	t3 := &Torrent{Quality: Quality1080p, Result: &TorrentResult{Seeders: 100}}
+	t4 := &Torrent{Quality: Quality720p, Result: &TorrentResult{Seeders: 50}}
 	input := []*Torrent{t1, t2, t3, t4}
 
 	expected := []*Torrent{t4, t2}

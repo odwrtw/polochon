@@ -176,14 +176,16 @@ func (t *TPB) SearchTorrents(s string) ([]*polochon.Torrent, error) {
 		t := results[i]
 
 		torrents[i] = &polochon.Torrent{
-			Name:       t.Name,
-			URL:        t.Magnet,
-			Seeders:    t.Seeders,
-			Leechers:   t.Leechers,
-			Source:     moduleName,
-			UploadUser: t.User,
-			Quality:    getQuality(t.Name),
-			Size:       int(t.Size),
+			Quality: getQuality(t.Name),
+			Result: &polochon.TorrentResult{
+				Name:       t.Name,
+				URL:        t.Magnet,
+				Seeders:    t.Seeders,
+				Leechers:   t.Leechers,
+				Source:     moduleName,
+				UploadUser: t.User,
+				Size:       int(t.Size),
+			},
 		}
 	}
 
@@ -249,14 +251,16 @@ func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent, log *logrus.Ent
 		}).Debug("Adding torrent to the list")
 
 		torrents = append(torrents, &polochon.Torrent{
-			Name:       t.Name,
-			URL:        t.Magnet,
-			Seeders:    t.Seeders,
-			Leechers:   t.Leechers,
-			Source:     moduleName,
-			UploadUser: t.User,
-			Quality:    torrentQuality,
-			Size:       int(t.Size),
+			Quality: torrentQuality,
+			Result: &polochon.TorrentResult{
+				Name:       t.Name,
+				URL:        t.Magnet,
+				Seeders:    t.Seeders,
+				Leechers:   t.Leechers,
+				Source:     moduleName,
+				UploadUser: t.User,
+				Size:       int(t.Size),
+			},
 		})
 	}
 	// Filter the torrents to keep only the best ones

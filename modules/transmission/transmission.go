@@ -131,16 +131,16 @@ func (c *Client) Status() (polochon.ModuleStatus, error) {
 
 // Download implements the downloader interface
 func (c *Client) Download(torrent *polochon.Torrent) error {
-	if torrent.URL == "" {
+	if torrent.Result == nil || torrent.Result.URL == "" {
 		return ErrMissingURL
 	}
 
-	t, err := c.transmission.Add(torrent.URL)
+	t, err := c.transmission.Add(torrent.Result.URL)
 	if err != nil {
 		return err
 	}
 
-	labels := labels(torrent.Metadata)
+	labels := labels(torrent)
 	if labels == nil {
 		return nil
 	}
@@ -175,20 +175,24 @@ func (c *Client) List() ([]*polochon.Torrent, error) {
 			}
 		}
 
-		torrents = append(torrents, &polochon.Torrent{
-			ID:             strconv.Itoa(t.ID),
-			DownloadRate:   t.RateDownload,
-			DownloadedSize: int(t.DownloadedEver),
-			UploadedSize:   int(t.UploadedEver),
-			FilePaths:      filePaths,
-			IsFinished:     isFinished,
-			Name:           t.Name,
-			PercentDone:    float32(t.PercentDone) * 100,
-			Ratio:          float32(t.UploadRatio),
-			TotalSize:      int(t.SizeWhenDone),
-			UploadRate:     t.RateUpload,
-			Metadata:       metadata(t.Labels),
-		})
+		torrent := &polochon.Torrent{
+			Status: &polochon.TorrentStatus{
+				ID:             strconv.Itoa(t.ID),
+				DownloadRate:   t.RateDownload,
+				DownloadedSize: int(t.DownloadedEver),
+				UploadedSize:   int(t.UploadedEver),
+				FilePaths:      filePaths,
+				IsFinished:     isFinished,
+				Name:           t.Name,
+				PercentDone:    float32(t.PercentDone) * 100,
+				Ratio:          float32(t.UploadRatio),
+				TotalSize:      int(t.SizeWhenDone),
+				UploadRate:     t.RateUpload,
+			},
+		}
+		updateFromLabel(torrent, t.Labels)
+
+		torrents = append(torrents, torrent)
 	}
 
 	return torrents, nil
@@ -196,11 +200,11 @@ func (c *Client) List() ([]*polochon.Torrent, error) {
 
 // Remove implements the downloader interface
 func (c *Client) Remove(torrent *polochon.Torrent) error {
-	if torrent.ID == "" {
+	if torrent.Status == nil || torrent.Status.ID == "" {
 		return ErrMissingID
 	}
 
-	id, err := strconv.Atoi(torrent.ID)
+	id, err := strconv.Atoi(torrent.Status.ID)
 	if err != nil {
 		return ErrInvalidID
 	}

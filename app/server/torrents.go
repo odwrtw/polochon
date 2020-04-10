@@ -27,7 +27,7 @@ func (s *Server) addTorrent(w http.ResponseWriter, r *http.Request) {
 		s.log.Warning(err.Error())
 		return
 	}
-	if torrent.URL == "" {
+	if torrent.Result == nil || torrent.Result.URL == "" {
 		s.renderError(w, &Error{
 			Code:    http.StatusBadRequest,
 			Message: "Unable to find the URL in the request",
@@ -94,7 +94,11 @@ func (s *Server) removeTorrent(w http.ResponseWriter, r *http.Request) {
 	id := vars["id"]
 
 	// Delete the torrent
-	err := s.config.Downloader.Client.Remove(&polochon.Torrent{ID: id})
+	err := s.config.Downloader.Client.Remove(&polochon.Torrent{
+		Status: &polochon.TorrentStatus{
+			ID: id,
+		},
+	})
 	if err != nil {
 		s.log.Warningf("error while removing torrent: %q", err)
 		s.renderError(w, &Error{

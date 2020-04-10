@@ -10,22 +10,22 @@ import (
 func TestLabels(t *testing.T) {
 	tt := []struct {
 		name     string
-		metadata *polochon.TorrentMetadata
+		torrent  *polochon.Torrent
 		expected []string
 	}{
 		{
 			name:     "no metadata",
-			metadata: nil,
+			torrent:  &polochon.Torrent{},
 			expected: nil,
 		},
 		{
 			name:     "no imdb id",
-			metadata: &polochon.TorrentMetadata{Type: "movie"},
+			torrent:  &polochon.Torrent{Type: "movie"},
 			expected: nil,
 		},
 		{
 			name: "invalid type",
-			metadata: &polochon.TorrentMetadata{
+			torrent: &polochon.Torrent{
 				ImdbID:  "tt000000",
 				Quality: polochon.Quality720p,
 				Type:    "test",
@@ -34,7 +34,7 @@ func TestLabels(t *testing.T) {
 		},
 		{
 			name: "valid movie",
-			metadata: &polochon.TorrentMetadata{
+			torrent: &polochon.Torrent{
 				ImdbID:  "tt000000",
 				Quality: polochon.Quality720p,
 				Type:    "movie",
@@ -47,7 +47,7 @@ func TestLabels(t *testing.T) {
 		},
 		{
 			name: "invalid episode",
-			metadata: &polochon.TorrentMetadata{
+			torrent: &polochon.Torrent{
 				ImdbID:  "tt000000",
 				Quality: polochon.Quality720p,
 				Type:    "episode",
@@ -56,7 +56,7 @@ func TestLabels(t *testing.T) {
 		},
 		{
 			name: "valid episode",
-			metadata: &polochon.TorrentMetadata{
+			torrent: &polochon.Torrent{
 				ImdbID:  "tt000000",
 				Quality: polochon.Quality720p,
 				Type:    "episode",
@@ -75,7 +75,7 @@ func TestLabels(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			got := labels(tc.metadata)
+			got := labels(tc.torrent)
 			if !reflect.DeepEqual(got, tc.expected) {
 				t.Fatalf("expected %+v, got %+v", tc.expected, got)
 			}
@@ -87,20 +87,12 @@ func TestMetadata(t *testing.T) {
 	tt := []struct {
 		name     string
 		labels   []string
-		expected *polochon.TorrentMetadata
+		expected *polochon.Torrent
 	}{
 		{
 			name:     "no labels",
 			labels:   nil,
-			expected: nil,
-		},
-		{
-			name: "missing movie quality",
-			labels: []string{
-				"type=movie",
-				"imdb_id=tt000000",
-			},
-			expected: nil,
+			expected: &polochon.Torrent{},
 		},
 		{
 			name: "valid movie",
@@ -109,7 +101,7 @@ func TestMetadata(t *testing.T) {
 				"imdb_id=tt000000",
 				"quality=720p",
 			},
-			expected: &polochon.TorrentMetadata{
+			expected: &polochon.Torrent{
 				ImdbID:  "tt000000",
 				Quality: polochon.Quality720p,
 				Type:    "movie",
@@ -124,7 +116,7 @@ func TestMetadata(t *testing.T) {
 				"season=1",
 				"episode=3",
 			},
-			expected: &polochon.TorrentMetadata{
+			expected: &polochon.Torrent{
 				ImdbID:  "tt000000",
 				Quality: polochon.Quality720p,
 				Type:    "episode",
@@ -141,7 +133,12 @@ func TestMetadata(t *testing.T) {
 				"season=invalid",
 				"episode=3",
 			},
-			expected: nil,
+			expected: &polochon.Torrent{
+				ImdbID:  "tt000000",
+				Quality: polochon.Quality720p,
+				Type:    "episode",
+				Episode: 3,
+			},
 		},
 		{
 			name: "invalid episode number",
@@ -152,7 +149,12 @@ func TestMetadata(t *testing.T) {
 				"season=1",
 				"episode=invalid",
 			},
-			expected: nil,
+			expected: &polochon.Torrent{
+				ImdbID:  "tt000000",
+				Quality: polochon.Quality720p,
+				Type:    "episode",
+				Season:  1,
+			},
 		},
 		{
 			name: "invalid quality",
@@ -163,20 +165,26 @@ func TestMetadata(t *testing.T) {
 				"season=1",
 				"episode=3",
 			},
-			expected: nil,
+			expected: &polochon.Torrent{
+				ImdbID:  "tt000000",
+				Type:    "episode",
+				Season:  1,
+				Episode: 3,
+			},
 		},
 		{
 			name: "invalid labels",
 			labels: []string{
 				"invalid",
 			},
-			expected: nil,
+			expected: &polochon.Torrent{},
 		},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			got := metadata(tc.labels)
+			got := &polochon.Torrent{}
+			updateFromLabel(got, tc.labels)
 			if !reflect.DeepEqual(got, tc.expected) {
 				t.Fatalf("expected %+v, got %+v", tc.expected, got)
 			}

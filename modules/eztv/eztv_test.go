@@ -95,9 +95,27 @@ func TestEztvGetTorrents(t *testing.T) {
 	}
 
 	expected := []*polochon.Torrent{
-		{Source: "eztv", Quality: polochon.Quality480p, URL: "http://480p.torrent"},
-		{Source: "eztv", Quality: polochon.Quality720p, URL: "http://720p.torrent"},
-		{Source: "eztv", Quality: polochon.Quality1080p, URL: "http://1080p.torrent"},
+		{
+			Quality: polochon.Quality480p,
+			Result: &polochon.TorrentResult{
+				Source: "eztv",
+				URL:    "http://480p.torrent",
+			},
+		},
+		{
+			Quality: polochon.Quality720p,
+			Result: &polochon.TorrentResult{
+				Source: "eztv",
+				URL:    "http://720p.torrent",
+			},
+		},
+		{
+			Quality: polochon.Quality1080p,
+			Result: &polochon.TorrentResult{
+				Source: "eztv",
+				URL:    "http://1080p.torrent",
+			},
+		},
 	}
 
 	if !reflect.DeepEqual(expected, s.Torrents) {

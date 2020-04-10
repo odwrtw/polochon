@@ -115,11 +115,15 @@ func (c *Cleaner) cleanDoneVideos(log *logrus.Entry) {
 	}
 
 	for _, torrent := range torrents {
-		log = log.WithField("torrent_name", torrent.Name)
+		if torrent.Status == nil {
+			continue
+		}
+
+		log = log.WithField("torrent_name", torrent.Status.Name)
 
 		// Check if the file is ready to be cleaned
 		if !torrent.RatioReached(c.config.Downloader.Cleaner.Ratio) {
-			log.Debugf("ratio is not reached (%.02f / %.02f)", torrent.Ratio, c.config.Downloader.Cleaner.Ratio)
+			log.Debugf("ratio is not reached (%.02f / %.02f)", torrent.Status.Ratio, c.config.Downloader.Cleaner.Ratio)
 			continue
 		}
 
@@ -140,8 +144,12 @@ func (c *Cleaner) cleanDoneVideos(log *logrus.Entry) {
 }
 
 func (c *Cleaner) clean(torrent *polochon.Torrent, log *logrus.Entry) error {
+	if torrent.Status == nil {
+		return fmt.Errorf("missing torrent status")
+	}
+
 	// Going over all the files and remove only the allowed ones
-	for _, tPath := range torrent.FilePaths {
+	for _, tPath := range torrent.Status.FilePaths {
 		filePath := filepath.Join(c.config.Watcher.Dir, tPath)
 		file := polochon.NewFile(filePath)
 
@@ -184,13 +192,17 @@ func (c *Cleaner) remove(filePath string, log *logrus.Entry) error {
 }
 
 func (c *Cleaner) cleanDirectory(torrent *polochon.Torrent, log *logrus.Entry) error {
-	if len(torrent.FilePaths) == 0 {
+	if torrent.Status == nil {
+		return fmt.Errorf("missing torrent status")
+	}
+
+	if len(torrent.Status.FilePaths) == 0 {
 		return fmt.Errorf("no torrent files to clean")
 	}
 
 	// Get the path of one of the file to guess the directory that needs to be
 	// deleted
-	torrentFilePath := torrent.FilePaths[0]
+	torrentFilePath := torrent.Status.FilePaths[0]
 
 	// Get the full path of the file
 	filePath := filepath.Join(c.config.Watcher.Dir, torrentFilePath)

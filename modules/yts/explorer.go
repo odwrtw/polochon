@@ -56,11 +56,13 @@ func (y *Yts) GetMovieList(option string, log *logrus.Entry) ([]*polochon.Movie,
 				continue
 			}
 			m.Torrents = append(m.Torrents, &polochon.Torrent{
-				Quality:  torrentQuality,
-				URL:      t.URL,
-				Seeders:  t.Seeds,
-				Leechers: t.Peers,
-				Source:   moduleName,
+				Quality: torrentQuality,
+				Result: &polochon.TorrentResult{
+					URL:      t.URL,
+					Seeders:  t.Seeds,
+					Leechers: t.Peers,
+					Source:   moduleName,
+				},
 			})
 		}
 
