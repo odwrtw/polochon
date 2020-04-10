@@ -38,11 +38,11 @@ type TorrentStatus struct {
 
 // Torrent represents a torrent file
 type Torrent struct {
-	ImdbID  string  `json:"imdb_id"`
-	Type    string  `json:"type"`
-	Season  int     `json:"season"`
-	Episode int     `json:"episode"`
-	Quality Quality `json:"quality"`
+	ImdbID  string    `json:"imdb_id"`
+	Type    VideoType `json:"type"`
+	Season  int       `json:"season"`
+	Episode int       `json:"episode"`
+	Quality Quality   `json:"quality"`
 
 	Result *TorrentResult `json:"result"`
 	Status *TorrentStatus `json:"status"`
@@ -51,15 +51,15 @@ type Torrent struct {
 // HasVideo returns true if the torrent has enough information to return a
 // video
 func (t *Torrent) HasVideo() bool {
-	if t.ImdbID == "" || t.Type == "" {
+	if t.ImdbID == "" || string(t.Type) == "" {
 		return false
 	}
 
-	if t.Type == "movie" {
+	if t.Type == TypeMovie {
 		return true
 	}
 
-	if t.Type != "episode" {
+	if t.Type != TypeEpisode {
 		return false
 	}
 
@@ -73,7 +73,7 @@ func (t *Torrent) Video() Video {
 	}
 
 	switch t.Type {
-	case "movie":
+	case TypeMovie:
 		return &Movie{
 			ImdbID: t.ImdbID,
 			VideoMetadata: VideoMetadata{
@@ -81,7 +81,7 @@ func (t *Torrent) Video() Video {
 			},
 			Torrents: []*Torrent{t},
 		}
-	case "episode":
+	case TypeEpisode:
 		show := &Show{ImdbID: t.ImdbID}
 		episode := &ShowEpisode{
 			ShowImdbID: t.ImdbID,
