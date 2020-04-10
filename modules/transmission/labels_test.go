@@ -10,7 +10,7 @@ import (
 func TestLabels(t *testing.T) {
 	tt := []struct {
 		name     string
-		metadata *polochon.DownloadableMetadata
+		metadata *polochon.TorrentMetadata
 		expected []string
 	}{
 		{
@@ -20,12 +20,12 @@ func TestLabels(t *testing.T) {
 		},
 		{
 			name:     "no imdb id",
-			metadata: &polochon.DownloadableMetadata{Type: "movie"},
+			metadata: &polochon.TorrentMetadata{Type: "movie"},
 			expected: nil,
 		},
 		{
 			name: "invalid type",
-			metadata: &polochon.DownloadableMetadata{
+			metadata: &polochon.TorrentMetadata{
 				ImdbID:  "tt000000",
 				Quality: polochon.Quality720p,
 				Type:    "test",
@@ -34,7 +34,7 @@ func TestLabels(t *testing.T) {
 		},
 		{
 			name: "valid movie",
-			metadata: &polochon.DownloadableMetadata{
+			metadata: &polochon.TorrentMetadata{
 				ImdbID:  "tt000000",
 				Quality: polochon.Quality720p,
 				Type:    "movie",
@@ -47,7 +47,7 @@ func TestLabels(t *testing.T) {
 		},
 		{
 			name: "invalid episode",
-			metadata: &polochon.DownloadableMetadata{
+			metadata: &polochon.TorrentMetadata{
 				ImdbID:  "tt000000",
 				Quality: polochon.Quality720p,
 				Type:    "episode",
@@ -56,7 +56,7 @@ func TestLabels(t *testing.T) {
 		},
 		{
 			name: "valid episode",
-			metadata: &polochon.DownloadableMetadata{
+			metadata: &polochon.TorrentMetadata{
 				ImdbID:  "tt000000",
 				Quality: polochon.Quality720p,
 				Type:    "episode",
@@ -87,7 +87,7 @@ func TestMetadata(t *testing.T) {
 	tt := []struct {
 		name     string
 		labels   []string
-		expected *polochon.DownloadableMetadata
+		expected *polochon.TorrentMetadata
 	}{
 		{
 			name:     "no labels",
@@ -109,7 +109,7 @@ func TestMetadata(t *testing.T) {
 				"imdb_id=tt000000",
 				"quality=720p",
 			},
-			expected: &polochon.DownloadableMetadata{
+			expected: &polochon.TorrentMetadata{
 				ImdbID:  "tt000000",
 				Quality: polochon.Quality720p,
 				Type:    "movie",
@@ -124,7 +124,7 @@ func TestMetadata(t *testing.T) {
 				"season=1",
 				"episode=3",
 			},
-			expected: &polochon.DownloadableMetadata{
+			expected: &polochon.TorrentMetadata{
 				ImdbID:  "tt000000",
 				Quality: polochon.Quality720p,
 				Type:    "episode",

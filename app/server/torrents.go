@@ -18,12 +18,8 @@ func (s *Server) addTorrent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := struct {
-		// TODO: change URL to lowercase
-		URL      string                         `json:"URL"`
-		Metadata *polochon.DownloadableMetadata `json:"metadata"`
-	}{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	torrent := &polochon.Torrent{}
+	if err := json.NewDecoder(r.Body).Decode(torrent); err != nil {
 		s.renderError(w, &Error{
 			Code:    http.StatusBadRequest,
 			Message: "Unable to read payload",
@@ -31,7 +27,7 @@ func (s *Server) addTorrent(w http.ResponseWriter, r *http.Request) {
 		s.log.Warning(err.Error())
 		return
 	}
-	if req.URL == "" {
+	if torrent.URL == "" {
 		s.renderError(w, &Error{
 			Code:    http.StatusBadRequest,
 			Message: "Unable to find the URL in the request",
@@ -39,7 +35,7 @@ func (s *Server) addTorrent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.config.Downloader.Client.Download(req.URL, req.Metadata, s.log.WithField("function", "downloader")); err != nil {
+	if err := s.config.Downloader.Client.Download(torrent); err != nil {
 		if err == polochon.ErrDuplicateTorrent {
 			s.renderError(w, &Error{
 				Code:    http.StatusConflict,
@@ -69,7 +65,7 @@ func (s *Server) getTorrents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the list of the ongoing torrents
-	list, err := s.config.Downloader.Client.List()
+	torrents, err := s.config.Downloader.Client.List()
 	if err != nil {
 		s.log.Warningf("error while listing torrents via the API: %q", err)
 		s.renderError(w, &Error{
@@ -79,14 +75,7 @@ func (s *Server) getTorrents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fill an array of DownloadableInfos
-	result := []*polochon.DownloadableInfos{}
-	for _, t := range list {
-		result = append(result, t.Infos())
-	}
-
-	// render the response
-	s.renderOK(w, result)
+	s.renderOK(w, torrents)
 }
 
 func (s *Server) removeTorrent(w http.ResponseWriter, r *http.Request) {
@@ -102,46 +91,10 @@ func (s *Server) removeTorrent(w http.ResponseWriter, r *http.Request) {
 
 	// Get the torrent ID from the URL
 	vars := mux.Vars(r)
-	torrentID := vars["id"]
-
-	// List all the ongoing torrents
-	list, err := s.config.Downloader.Client.List()
-	if err != nil {
-		s.renderError(w, &Error{
-			Code:    http.StatusInternalServerError,
-			Message: "Unable to list torrents",
-		})
-		s.log.Errorf("error while getting torrent list: %q", err)
-		return
-	}
-
-	var torrent *polochon.Downloadable
-	// Iterate over the list, looking for the torrent to delete
-	for _, t := range list {
-		// Fetch the infos of the given torrent
-		torrentInfos := t.Infos()
-		if torrentInfos == nil {
-			s.log.Warn("got nil Infos while getting torrent infos")
-			continue
-		}
-
-		if torrentInfos.ID == torrentID {
-			torrent = &t
-			break
-		}
-	}
-
-	// If we didn't find the torrent, return an error
-	if torrent == nil {
-		s.renderError(w, &Error{
-			Code:    http.StatusNotFound,
-			Message: "No such torrent",
-		})
-		return
-	}
+	id := vars["id"]
 
 	// Delete the torrent
-	err = s.config.Downloader.Client.Remove(*torrent)
+	err := s.config.Downloader.Client.Remove(&polochon.Torrent{ID: id})
 	if err != nil {
 		s.log.Warningf("error while removing torrent: %q", err)
 		s.renderError(w, &Error{

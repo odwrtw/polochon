@@ -7,7 +7,6 @@ import (
 
 	"github.com/gregdel/argo/rpc"
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -83,13 +82,17 @@ func (c *Client) Status() (polochon.ModuleStatus, error) {
 }
 
 // Download implements the downloader interface
-func (c *Client) Download(URI string, metadata *polochon.DownloadableMetadata, log *logrus.Entry) error {
-	_, err := c.protocol.AddURI(URI)
+func (c *Client) Download(torrent *polochon.Torrent) error {
+	if torrent.URL == "" {
+		return fmt.Errorf("aria2: missing torrent URL")
+	}
+
+	_, err := c.protocol.AddURI(torrent.URL)
 	return err
 }
 
 // List implements the downloader interface
-func (c *Client) List() ([]polochon.Downloadable, error) {
+func (c *Client) List() ([]*polochon.Torrent, error) {
 	list := []rpc.StatusInfo{}
 
 	// Get active downloads
@@ -116,26 +119,62 @@ func (c *Client) List() ([]polochon.Downloadable, error) {
 		}
 	}
 
-	result := []polochon.Downloadable{}
-	for _, e := range list {
-		result = append(result, NewTorrentStatus(e))
+	result := []*polochon.Torrent{}
+	for _, status := range list {
+		i := &polochon.Torrent{
+			ID:   status.Gid,
+			Name: status.BitTorrent.Info.Name,
+		}
+
+		// Add the filePaths
+		i.FilePaths = []string{}
+		for _, f := range status.Files {
+			i.FilePaths = append(i.FilePaths, f.Path)
+		}
+
+		// Set the path as the default name
+		if i.Name == "" && len(i.FilePaths) > 0 {
+			i.Name = i.FilePaths[0]
+		}
+
+		for i, s := range map[*int]string{
+			&i.DownloadRate:   status.DownloadSpeed,
+			&i.UploadRate:     status.UploadSpeed,
+			&i.DownloadedSize: status.CompletedLength,
+			&i.UploadedSize:   status.UploadLength,
+			&i.TotalSize:      status.TotalLength,
+		} {
+			var err error
+			*i, err = strconv.Atoi(s)
+			if err != nil {
+				continue
+			}
+		}
+
+		if status.CompletedLength == status.TotalLength {
+			i.IsFinished = true
+			i.PercentDone = 100
+		} else {
+			i.PercentDone = float32(i.DownloadedSize) * 100 / float32(i.TotalSize)
+		}
+
+		if i.UploadedSize != 0 {
+			i.Ratio = float32(i.UploadedSize) / float32(i.TotalSize)
+		}
+
+		result = append(result, i)
 	}
 
 	return result, nil
 }
 
 // Remove implements the downloader interface
-func (c *Client) Remove(d polochon.Downloadable) error {
-	infos := d.Infos()
-	if infos == nil {
-		return fmt.Errorf("aria2: got nil downloadable")
-	}
-
-	if infos.ID == "" {
+func (c *Client) Remove(torrent *polochon.Torrent) error {
+	if torrent.ID == "" {
 		return fmt.Errorf("aria2: no id to remove the download")
 	}
 
-	_, err := c.protocol.Remove(infos.ID)
+	_, err := c.protocol.Remove(torrent.ID)
 	if err != nil {
 		if strings.Contains(err.Error(), "Active Download not found") {
 			// This downloadable is not active
@@ -146,60 +185,4 @@ func (c *Client) Remove(d polochon.Downloadable) error {
 
 	_, err = c.protocol.PurgeDownloadResult()
 	return err
-}
-
-// TorrentStatus represents the status of a torrent
-type TorrentStatus struct {
-	rpc.StatusInfo
-}
-
-// NewTorrentStatus creates a TorrentStatus from a rcp.StatusInfo
-func NewTorrentStatus(si rpc.StatusInfo) *TorrentStatus {
-	return &TorrentStatus{si}
-}
-
-// Infos implement the downloadable interface
-func (ts *TorrentStatus) Infos() *polochon.DownloadableInfos {
-	i := polochon.DownloadableInfos{
-		ID:   ts.StatusInfo.Gid,
-		Name: ts.StatusInfo.BitTorrent.Info.Name,
-	}
-
-	// Add the filePaths
-	i.FilePaths = []string{}
-	for _, f := range ts.StatusInfo.Files {
-		i.FilePaths = append(i.FilePaths, f.Path)
-	}
-
-	// Set the path as the default name
-	if i.Name == "" && len(i.FilePaths) > 0 {
-		i.Name = i.FilePaths[0]
-	}
-
-	for i, s := range map[*int]string{
-		&i.DownloadRate:   ts.StatusInfo.DownloadSpeed,
-		&i.UploadRate:     ts.StatusInfo.UploadSpeed,
-		&i.DownloadedSize: ts.StatusInfo.CompletedLength,
-		&i.UploadedSize:   ts.StatusInfo.UploadLength,
-		&i.TotalSize:      ts.StatusInfo.TotalLength,
-	} {
-		var err error
-		*i, err = strconv.Atoi(s)
-		if err != nil {
-			return nil
-		}
-	}
-
-	if ts.StatusInfo.CompletedLength == ts.StatusInfo.TotalLength {
-		i.IsFinished = true
-		i.PercentDone = 100
-	} else {
-		i.PercentDone = float32(i.DownloadedSize) * 100 / float32(i.TotalSize)
-	}
-
-	if i.UploadedSize != 0 {
-		i.Ratio = float32(i.UploadedSize) / float32(i.TotalSize)
-	}
-
-	return &i
 }
