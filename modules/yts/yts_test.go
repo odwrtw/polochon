@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/yts"
 	"github.com/sirupsen/logrus"
 )
@@ -73,7 +73,7 @@ func TestYtsTorrents(t *testing.T) {
 	}
 
 	expected := polochon.NewMovie(polochon.MovieConfig{})
-	expected.Torrents = []polochon.Torrent{
+	expected.Torrents = []*polochon.Torrent{
 		{Source: "yts", Quality: polochon.Quality480p, URL: "http://test.480p.magnet"},
 		{Source: "yts", Quality: polochon.Quality720p, URL: "http://test.720p.magnet"},
 		{Source: "yts", Quality: polochon.Quality1080p, URL: "http://test.1080p.magnet"},

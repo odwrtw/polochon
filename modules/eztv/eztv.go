@@ -69,7 +69,7 @@ func (e *Eztv) getShowEpisodeDetails(s *polochon.ShowEpisode) error {
 		return polochon.ErrTorrentNotFound
 	}
 
-	torrents := []polochon.Torrent{}
+	torrents := []*polochon.Torrent{}
 	for _, quality := range []polochon.Quality{
 		polochon.Quality480p,
 		polochon.Quality720p,
@@ -80,7 +80,7 @@ func (e *Eztv) getShowEpisodeDetails(s *polochon.ShowEpisode) error {
 			continue
 		}
 
-		torrents = append(torrents, polochon.Torrent{
+		torrents = append(torrents, &polochon.Torrent{
 			Quality: quality,
 			URL:     torrent.URL,
 			Source:  moduleName,

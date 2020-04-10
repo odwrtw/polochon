@@ -15,21 +15,21 @@ type Movie struct {
 	VideoMetadata
 
 	File
-	ImdbID        string    `json:"imdb_id"`
-	OriginalTitle string    `json:"original_title"`
-	Plot          string    `json:"plot"`
-	Rating        float32   `json:"rating"`
-	Runtime       int       `json:"runtime"`
-	SortTitle     string    `json:"sort_title"`
-	Tagline       string    `json:"tag_line"`
-	Thumb         string    `json:"thumb"`
-	Fanart        string    `json:"fanart"`
-	Title         string    `json:"title"`
-	TmdbID        int       `json:"tmdb_id"`
-	Votes         int       `json:"votes"`
-	Year          int       `json:"year"`
-	Genres        []string  `json:"genres"`
-	Torrents      []Torrent `json:"torrents"`
+	ImdbID        string     `json:"imdb_id"`
+	OriginalTitle string     `json:"original_title"`
+	Plot          string     `json:"plot"`
+	Rating        float32    `json:"rating"`
+	Runtime       int        `json:"runtime"`
+	SortTitle     string     `json:"sort_title"`
+	Tagline       string     `json:"tag_line"`
+	Thumb         string     `json:"thumb"`
+	Fanart        string     `json:"fanart"`
+	Title         string     `json:"title"`
+	TmdbID        int        `json:"tmdb_id"`
+	Votes         int        `json:"votes"`
+	Year          int        `json:"year"`
+	Genres        []string   `json:"genres"`
+	Torrents      []*Torrent `json:"torrents"`
 }
 
 // NewMovie returns a new movie

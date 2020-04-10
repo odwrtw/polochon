@@ -21,7 +21,7 @@ func (mS *movieSearcher) users() []string {
 	return mS.Users
 }
 
-func (mS *movieSearcher) setTorrents(torrents []polochon.Torrent) {
+func (mS *movieSearcher) setTorrents(torrents []*polochon.Torrent) {
 	mS.Movie.Torrents = torrents
 }
 

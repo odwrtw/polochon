@@ -22,9 +22,9 @@ func (mock *Mock) GetTorrents(i interface{}, log *logrus.Entry) error {
 }
 
 func (mock *Mock) getShowEpisodeTorrents(e *polochon.ShowEpisode) {
-	torrents := []polochon.Torrent{}
+	e.Torrents = []*polochon.Torrent{}
 	for _, q := range []polochon.Quality{polochon.Quality480p, polochon.Quality720p} {
-		torrents = append(torrents, polochon.Torrent{
+		e.Torrents = append(e.Torrents, &polochon.Torrent{
 			URL:      fmt.Sprintf("https://mock.com/t%s.torrent", q),
 			Quality:  q,
 			Source:   moduleName,
@@ -32,14 +32,12 @@ func (mock *Mock) getShowEpisodeTorrents(e *polochon.ShowEpisode) {
 			Leechers: rand.Intn(500),
 		})
 	}
-
-	e.Torrents = torrents
 }
 
 func (mock *Mock) getMovieTorrents(m *polochon.Movie) {
-	torrents := []polochon.Torrent{}
+	m.Torrents = []*polochon.Torrent{}
 	for _, q := range []polochon.Quality{polochon.Quality720p, polochon.Quality1080p, polochon.Quality3D} {
-		torrents = append(torrents, polochon.Torrent{
+		m.Torrents = append(m.Torrents, &polochon.Torrent{
 			URL:      fmt.Sprintf("https://mock.com/t%s.torrent", q),
 			Quality:  q,
 			Source:   moduleName,
@@ -47,8 +45,6 @@ func (mock *Mock) getMovieTorrents(m *polochon.Movie) {
 			Leechers: rand.Intn(500),
 		})
 	}
-
-	m.Torrents = torrents
 }
 
 // SearchTorrents implements the torrenter interface
