@@ -7,7 +7,7 @@ import (
 	polochon "github.com/odwrtw/polochon/lib"
 )
 
-func isValidMetadata(metadata *polochon.DownloadableMetadata) bool {
+func isValidMetadata(metadata *polochon.TorrentMetadata) bool {
 	if metadata == nil {
 		return false
 	}
@@ -29,7 +29,7 @@ func isValidMetadata(metadata *polochon.DownloadableMetadata) bool {
 	}
 }
 
-func labels(metadata *polochon.DownloadableMetadata) []string {
+func labels(metadata *polochon.TorrentMetadata) []string {
 	if !isValidMetadata(metadata) {
 		return nil
 	}
@@ -59,12 +59,12 @@ func parseLabel(label string) (string, string) {
 	return s[0], s[1]
 }
 
-func metadata(labels []string) *polochon.DownloadableMetadata {
+func metadata(labels []string) *polochon.TorrentMetadata {
 	if len(labels) == 0 {
 		return nil
 	}
 
-	m := &polochon.DownloadableMetadata{}
+	m := &polochon.TorrentMetadata{}
 	for _, label := range labels {
 		k, v := parseLabel(label)
 		switch k {

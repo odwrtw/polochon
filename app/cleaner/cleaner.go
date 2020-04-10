@@ -108,19 +108,17 @@ func (c *Cleaner) cleaner(log *logrus.Entry) {
 }
 
 func (c *Cleaner) cleanDoneVideos(log *logrus.Entry) {
-	list, err := c.config.Downloader.Client.List()
+	torrents, err := c.config.Downloader.Client.List()
 	if err != nil {
 		log.Errorf("error while getting torrent list: %q", err)
 		return
 	}
 
-	for _, t := range list {
-		torrentInfos := t.Infos()
-
-		log = log.WithField("torrent_name", torrentInfos.Name)
+	for _, torrent := range torrents {
+		log = log.WithField("torrent_name", torrent.Name)
 
 		// Check if the file is ready to be cleaned
-		isReady := c.isReadyToBeCleaned(t, log)
+		isReady := c.isReadyToBeCleaned(torrent, log)
 		if !isReady {
 			log.Debug("torrent is not ready to be cleaned")
 			continue
@@ -128,22 +126,21 @@ func (c *Cleaner) cleanDoneVideos(log *logrus.Entry) {
 
 		// We remove the torrent
 		log.Debugf("removing torrent")
-		err := c.config.Downloader.Client.Remove(t)
+		err := c.config.Downloader.Client.Remove(torrent)
 		if err != nil {
 			log.Errorf("got error when removing torrent : %q", err)
 			continue
 		}
 
 		log.Debug("removing files")
-		if err = c.clean(t, log); err != nil {
+		if err = c.clean(torrent, log); err != nil {
 			log.Errorf("failed to clean torrent files: %q", err)
 			continue
 		}
 	}
 }
 
-func (c *Cleaner) isReadyToBeCleaned(d polochon.Downloadable, log *logrus.Entry) bool {
-	torrent := d.Infos()
+func (c *Cleaner) isReadyToBeCleaned(torrent *polochon.Torrent, log *logrus.Entry) bool {
 	log = log.WithField("torrent_name", torrent.Name)
 
 	// First check that the torrent download is finished
@@ -161,9 +158,7 @@ func (c *Cleaner) isReadyToBeCleaned(d polochon.Downloadable, log *logrus.Entry)
 	return true
 }
 
-func (c *Cleaner) clean(d polochon.Downloadable, log *logrus.Entry) error {
-	torrent := d.Infos()
-
+func (c *Cleaner) clean(torrent *polochon.Torrent, log *logrus.Entry) error {
 	// Going over all the files and remove only the allowed ones
 	for _, tPath := range torrent.FilePaths {
 		filePath := filepath.Join(c.config.Watcher.Dir, tPath)
@@ -207,7 +202,7 @@ func (c *Cleaner) remove(filePath string, log *logrus.Entry) error {
 	return os.Remove(filePath)
 }
 
-func (c *Cleaner) cleanDirectory(torrent *polochon.DownloadableInfos, log *logrus.Entry) error {
+func (c *Cleaner) cleanDirectory(torrent *polochon.Torrent, log *logrus.Entry) error {
 	if len(torrent.FilePaths) == 0 {
 		return fmt.Errorf("no torrent files to clean")
 	}

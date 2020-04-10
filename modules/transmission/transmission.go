@@ -2,7 +2,7 @@ package transmission
 
 import (
 	"crypto/tls"
-	"fmt"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -10,11 +10,19 @@ import (
 
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/transmission"
-	"github.com/sirupsen/logrus"
 )
 
 // Make sure that the module is a downloader
 var _ polochon.Downloader = (*Client)(nil)
+
+// Custom errors
+var (
+	ErrMissingServerURL         = errors.New("transmission: missing server URL")
+	ErrMissingServerCredentials = errors.New("transmission: missing server credentials")
+	ErrMissingURL               = errors.New("transmission: missing torrent URL")
+	ErrMissingID                = errors.New("transmission: missing torrent ID")
+	ErrInvalidID                = errors.New("transmission: invalid ID, not an int")
+)
 
 func init() {
 	polochon.RegisterModule(&Client{})
@@ -37,8 +45,8 @@ type Params struct {
 // Client holds the connection with transmission
 type Client struct {
 	*Params
-	tClient    *transmission.Client
-	configured bool
+	transmission *transmission.Client
+	configured   bool
 }
 
 // Init implements the module interface
@@ -74,12 +82,12 @@ func (c *Client) InitWithParams(params *Params) error {
 
 func (c *Client) checkConfig() error {
 	if c.URL == "" {
-		return fmt.Errorf("transmission: missing URL")
+		return ErrMissingServerURL
 	}
 
 	if c.BasicAuth {
 		if c.Username == "" || c.Password == "" {
-			return fmt.Errorf("transmission: missing authentication params")
+			return ErrMissingServerCredentials
 		}
 	}
 
@@ -99,15 +107,14 @@ func (c *Client) setTransmissionClient() error {
 		Address:    c.URL,
 		User:       c.Username,
 		Password:   c.Password,
-		HTTPClient: &httpClient,
-	}
+		HTTPClient: &httpClient}
 
 	t, err := transmission.New(conf)
 	if err != nil {
 		return err
 	}
 
-	c.tClient = t
+	c.transmission = t
 
 	return nil
 }
@@ -123,13 +130,17 @@ func (c *Client) Status() (polochon.ModuleStatus, error) {
 }
 
 // Download implements the downloader interface
-func (c *Client) Download(URL string, metadata *polochon.DownloadableMetadata, log *logrus.Entry) error {
-	t, err := c.tClient.Add(URL)
+func (c *Client) Download(torrent *polochon.Torrent) error {
+	if torrent.URL == "" {
+		return ErrMissingURL
+	}
+
+	t, err := c.transmission.Add(torrent.URL)
 	if err != nil {
 		return err
 	}
 
-	labels := labels(metadata)
+	labels := labels(torrent.Metadata)
 	if labels == nil {
 		return nil
 	}
@@ -140,81 +151,61 @@ func (c *Client) Download(URL string, metadata *polochon.DownloadableMetadata, l
 }
 
 // List implements the downloader interface
-func (c *Client) List() ([]polochon.Downloadable, error) {
-	torrents, err := c.tClient.GetTorrents()
+func (c *Client) List() ([]*polochon.Torrent, error) {
+	tt, err := c.transmission.GetTorrents()
 	if err != nil {
 		return nil, err
 	}
 
-	var res []polochon.Downloadable
-	for _, t := range torrents {
-		res = append(res, Torrent{
-			T: t,
+	var torrents []*polochon.Torrent
+	for _, t := range tt {
+
+		isFinished := false
+
+		// Check that the torrent is finished
+		if t.PercentDone == 1 {
+			isFinished = true
+		}
+
+		// Add the filePaths
+		var filePaths []string
+		if t.Files != nil {
+			for _, f := range *t.Files {
+				filePaths = append(filePaths, f.Name)
+			}
+		}
+
+		torrents = append(torrents, &polochon.Torrent{
+			ID:             strconv.Itoa(t.ID),
+			DownloadRate:   t.RateDownload,
+			DownloadedSize: int(t.DownloadedEver),
+			UploadedSize:   int(t.UploadedEver),
+			FilePaths:      filePaths,
+			IsFinished:     isFinished,
+			Name:           t.Name,
+			PercentDone:    float32(t.PercentDone) * 100,
+			Ratio:          float32(t.UploadRatio),
+			TotalSize:      int(t.SizeWhenDone),
+			UploadRate:     t.RateUpload,
+			Metadata:       metadata(t.Labels),
 		})
 	}
 
-	return res, nil
+	return torrents, nil
 }
 
 // Remove implements the downloader interface
-func (c *Client) Remove(d polochon.Downloadable) error {
-	// Get infos from the torrent
-	tInfos := d.Infos()
-	if tInfos == nil {
-		return fmt.Errorf("transmission: got nil Infos")
+func (c *Client) Remove(torrent *polochon.Torrent) error {
+	if torrent.ID == "" {
+		return ErrMissingID
 	}
 
-	// Get the torrentID needed to delete the torrent
-	if tInfos.ID == "" {
-		return fmt.Errorf("transmission: problem when getting torrentID in Remove")
-	}
-
-	torrentID, err := strconv.Atoi(tInfos.ID)
+	id, err := strconv.Atoi(torrent.ID)
 	if err != nil {
-		return fmt.Errorf("transmission: the id is not a int")
+		return ErrInvalidID
 	}
 
 	// Delete the torrent and the data
-	return c.tClient.RemoveTorrents([]*transmission.Torrent{{ID: torrentID}}, false)
-}
-
-// Torrent represents a Torrent
-type Torrent struct {
-	T *transmission.Torrent
-}
-
-// Infos prints the Torrent status
-func (t Torrent) Infos() *polochon.DownloadableInfos {
-	if t.T == nil {
-		return nil
-	}
-	isFinished := false
-
-	// Check that the torrent is finished
-	if t.T.PercentDone == 1 {
-		isFinished = true
-	}
-
-	// Add the filePaths
-	var filePaths []string
-	if t.T.Files != nil {
-		for _, f := range *t.T.Files {
-			filePaths = append(filePaths, f.Name)
-		}
-	}
-
-	return &polochon.DownloadableInfos{
-		ID:             strconv.Itoa(t.T.ID),
-		DownloadRate:   t.T.RateDownload,
-		DownloadedSize: int(t.T.DownloadedEver),
-		UploadedSize:   int(t.T.UploadedEver),
-		FilePaths:      filePaths,
-		IsFinished:     isFinished,
-		Name:           t.T.Name,
-		PercentDone:    float32(t.T.PercentDone) * 100,
-		Ratio:          float32(t.T.UploadRatio),
-		TotalSize:      int(t.T.SizeWhenDone),
-		UploadRate:     t.T.RateUpload,
-		Metadata:       metadata(t.T.Labels),
-	}
+	return c.transmission.RemoveTorrents(
+		[]*transmission.Torrent{{ID: id}}, false)
 }
