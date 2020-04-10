@@ -7,30 +7,8 @@ import (
 	polochon "github.com/odwrtw/polochon/lib"
 )
 
-func validLabels(torrent *polochon.Torrent) bool {
-	if torrent == nil {
-		return false
-	}
-
-	if torrent.ImdbID == "" || torrent.Type == "" || torrent.Quality == "" {
-		return false
-	}
-
-	switch torrent.Type {
-	case "movie":
-		return true
-	case "episode":
-		if torrent.Season == 0 || torrent.Episode == 0 {
-			return false
-		}
-		return true
-	default:
-		return false
-	}
-}
-
 func labels(torrent *polochon.Torrent) []string {
-	if !validLabels(torrent) {
+	if !torrent.HasVideo() {
 		return nil
 	}
 
