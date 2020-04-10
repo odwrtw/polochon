@@ -7,20 +7,20 @@ import (
 	polochon "github.com/odwrtw/polochon/lib"
 )
 
-func isValidMetadata(metadata *polochon.TorrentMetadata) bool {
-	if metadata == nil {
+func validLabels(torrent *polochon.Torrent) bool {
+	if torrent == nil {
 		return false
 	}
 
-	if metadata.ImdbID == "" || metadata.Type == "" || metadata.Quality == "" {
+	if torrent.ImdbID == "" || torrent.Type == "" || torrent.Quality == "" {
 		return false
 	}
 
-	switch metadata.Type {
+	switch torrent.Type {
 	case "movie":
 		return true
 	case "episode":
-		if metadata.Season == 0 || metadata.Episode == 0 {
+		if torrent.Season == 0 || torrent.Episode == 0 {
 			return false
 		}
 		return true
@@ -29,25 +29,28 @@ func isValidMetadata(metadata *polochon.TorrentMetadata) bool {
 	}
 }
 
-func labels(metadata *polochon.TorrentMetadata) []string {
-	if !isValidMetadata(metadata) {
+func labels(torrent *polochon.Torrent) []string {
+	if !validLabels(torrent) {
 		return nil
 	}
 
-	if metadata.Type == "movie" {
+	switch torrent.Type {
+	case "movie":
 		return []string{
 			"type=movie",
-			"imdb_id=" + metadata.ImdbID,
-			"quality=" + string(metadata.Quality),
+			"imdb_id=" + torrent.ImdbID,
+			"quality=" + string(torrent.Quality),
 		}
-	}
-
-	return []string{
-		"type=episode",
-		"imdb_id=" + metadata.ImdbID,
-		"quality=" + string(metadata.Quality),
-		"season=" + strconv.Itoa(metadata.Season),
-		"episode=" + strconv.Itoa(metadata.Episode),
+	case "episode":
+		return []string{
+			"type=episode",
+			"imdb_id=" + torrent.ImdbID,
+			"quality=" + string(torrent.Quality),
+			"season=" + strconv.Itoa(torrent.Season),
+			"episode=" + strconv.Itoa(torrent.Episode),
+		}
+	default:
+		return nil
 	}
 }
 
@@ -59,43 +62,36 @@ func parseLabel(label string) (string, string) {
 	return s[0], s[1]
 }
 
-func metadata(labels []string) *polochon.TorrentMetadata {
+func updateFromLabel(torrent *polochon.Torrent, labels []string) {
 	if len(labels) == 0 {
-		return nil
+		return
 	}
 
-	m := &polochon.TorrentMetadata{}
 	for _, label := range labels {
 		k, v := parseLabel(label)
 		switch k {
 		case "type":
-			m.Type = v
+			torrent.Type = v
 		case "imdb_id":
-			m.ImdbID = v
+			torrent.ImdbID = v
 		case "quality":
 			q, err := polochon.StringToQuality(v)
 			if err != nil {
 				continue
 			}
-			m.Quality = *q
+			torrent.Quality = *q
 		case "season":
 			s, err := strconv.Atoi(v)
 			if err != nil {
 				continue
 			}
-			m.Season = s
+			torrent.Season = s
 		case "episode":
 			e, err := strconv.Atoi(v)
 			if err != nil {
 				continue
 			}
-			m.Episode = e
+			torrent.Episode = e
 		}
 	}
-
-	if !isValidMetadata(m) {
-		return nil
-	}
-
-	return m
 }

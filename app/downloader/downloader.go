@@ -162,12 +162,8 @@ func (d *Downloader) downloadMissingMovies(wl *polochon.Wishlist, log *logrus.En
 			continue
 		}
 
-		torrent.Metadata = &polochon.TorrentMetadata{
-			Type:    "movie",
-			ImdbID:  m.ImdbID,
-			Quality: torrent.Quality,
-		}
-
+		torrent.Type = "movie"
+		torrent.ImdbID = m.ImdbID
 		if err := d.config.Downloader.Client.Download(torrent); err != nil {
 			log.Error(err)
 			continue
@@ -247,14 +243,10 @@ func (d *Downloader) downloadMissingShows(wl *polochon.Wishlist, log *logrus.Ent
 				continue
 			}
 
-			torrent.Metadata = &polochon.TorrentMetadata{
-				Type:    "episode",
-				ImdbID:  e.ShowImdbID,
-				Quality: torrent.Quality,
-				Season:  e.Season,
-				Episode: e.Episode,
-			}
-
+			torrent.Type = "episode"
+			torrent.ImdbID = e.ShowImdbID
+			torrent.Season = e.Season
+			torrent.Episode = e.Episode
 			if err := d.config.Downloader.Client.Download(torrent); err != nil {
 				log.Error(err)
 				continue

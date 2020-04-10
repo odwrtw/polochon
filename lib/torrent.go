@@ -7,30 +7,21 @@ var (
 	ErrDuplicateTorrent = errors.New("Torrent already added")
 )
 
-// TorrentMetadata represent the metadata of a torrent
-type TorrentMetadata struct {
-	ImdbID  string  `json:"imdb_id"`
-	Type    string  `json:"type"`
-	Season  int     `json:"season"`
-	Episode int     `json:"episode"`
-	Quality Quality `json:"quality"`
+// TorrentResult represents a torrent result from a search
+type TorrentResult struct {
+	Name       string `json:"name"`
+	URL        string `json:"url"`
+	Seeders    int    `json:"seeders"`
+	Leechers   int    `json:"leechers"`
+	Source     string `json:"source"`
+	UploadUser string `json:"upload_user"`
+	Size       int    `json:"size"`
 }
 
-// Torrent represents a torrent file
-type Torrent struct {
-	// Generic properties
-	Name       string           `json:"name"`
-	Quality    Quality          `json:"quality"`
-	URL        string           `json:"url"`
-	Seeders    int              `json:"seeders"`
-	Leechers   int              `json:"leechers"`
-	Source     string           `json:"source"`
-	UploadUser string           `json:"upload_user"`
-	Size       int              `json:"size"`
-	Metadata   *TorrentMetadata `json:"metadata"`
-
-	// Properties once downloading
+// TorrentStatus represents the status of the downloaded torrent
+type TorrentStatus struct {
 	ID             string   `json:"id"`
+	Name           string   `json:"name"`
 	Ratio          float32  `json:"ratio"`
 	IsFinished     bool     `json:"is_finished"`
 	FilePaths      []string `json:"file_paths"`
@@ -42,13 +33,25 @@ type Torrent struct {
 	PercentDone    float32  `json:"percent_done"`
 }
 
+// Torrent represents a torrent file
+type Torrent struct {
+	ImdbID  string  `json:"imdb_id"`
+	Type    string  `json:"type"`
+	Season  int     `json:"season"`
+	Episode int     `json:"episode"`
+	Quality Quality `json:"quality"`
+
+	Result *TorrentResult `json:"result"`
+	Status *TorrentStatus `json:"status"`
+}
+
 // RatioReached tells if the given ratio has been reached
 func (t *Torrent) RatioReached(ratio float32) bool {
-	if !t.IsFinished {
+	if t.Status == nil || !t.Status.IsFinished {
 		return false
 	}
 
-	return t.Ratio >= ratio
+	return t.Status.Ratio >= ratio
 }
 
 // FilterTorrents filters the torrents to keep only the best ones
@@ -56,13 +59,17 @@ func FilterTorrents(torrents []*Torrent) []*Torrent {
 	torrentByQuality := map[Quality]*Torrent{}
 
 	for _, t := range torrents {
+		if t.Result == nil {
+			continue
+		}
+
 		bestByQuality, ok := torrentByQuality[t.Quality]
 		if !ok {
 			torrentByQuality[t.Quality] = t
 			continue
 		}
 
-		if t.Seeders > bestByQuality.Seeders {
+		if t.Result.Seeders > bestByQuality.Result.Seeders {
 			torrentByQuality[t.Quality] = t
 		}
 	}

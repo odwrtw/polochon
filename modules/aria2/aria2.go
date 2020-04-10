@@ -83,11 +83,11 @@ func (c *Client) Status() (polochon.ModuleStatus, error) {
 
 // Download implements the downloader interface
 func (c *Client) Download(torrent *polochon.Torrent) error {
-	if torrent.URL == "" {
+	if torrent.Result == nil || torrent.Result.URL == "" {
 		return fmt.Errorf("aria2: missing torrent URL")
 	}
 
-	_, err := c.protocol.AddURI(torrent.URL)
+	_, err := c.protocol.AddURI(torrent.Result.URL)
 	return err
 }
 
@@ -122,27 +122,29 @@ func (c *Client) List() ([]*polochon.Torrent, error) {
 	result := []*polochon.Torrent{}
 	for _, status := range list {
 		i := &polochon.Torrent{
-			ID:   status.Gid,
-			Name: status.BitTorrent.Info.Name,
+			Status: &polochon.TorrentStatus{
+				ID:   status.Gid,
+				Name: status.BitTorrent.Info.Name,
+			},
 		}
 
 		// Add the filePaths
-		i.FilePaths = []string{}
+		i.Status.FilePaths = []string{}
 		for _, f := range status.Files {
-			i.FilePaths = append(i.FilePaths, f.Path)
+			i.Status.FilePaths = append(i.Status.FilePaths, f.Path)
 		}
 
 		// Set the path as the default name
-		if i.Name == "" && len(i.FilePaths) > 0 {
-			i.Name = i.FilePaths[0]
+		if i.Status.Name == "" && len(i.Status.FilePaths) > 0 {
+			i.Status.Name = i.Status.FilePaths[0]
 		}
 
 		for i, s := range map[*int]string{
-			&i.DownloadRate:   status.DownloadSpeed,
-			&i.UploadRate:     status.UploadSpeed,
-			&i.DownloadedSize: status.CompletedLength,
-			&i.UploadedSize:   status.UploadLength,
-			&i.TotalSize:      status.TotalLength,
+			&i.Status.DownloadRate:   status.DownloadSpeed,
+			&i.Status.UploadRate:     status.UploadSpeed,
+			&i.Status.DownloadedSize: status.CompletedLength,
+			&i.Status.UploadedSize:   status.UploadLength,
+			&i.Status.TotalSize:      status.TotalLength,
 		} {
 			var err error
 			*i, err = strconv.Atoi(s)
@@ -152,14 +154,14 @@ func (c *Client) List() ([]*polochon.Torrent, error) {
 		}
 
 		if status.CompletedLength == status.TotalLength {
-			i.IsFinished = true
-			i.PercentDone = 100
+			i.Status.IsFinished = true
+			i.Status.PercentDone = 100
 		} else {
-			i.PercentDone = float32(i.DownloadedSize) * 100 / float32(i.TotalSize)
+			i.Status.PercentDone = float32(i.Status.DownloadedSize) * 100 / float32(i.Status.TotalSize)
 		}
 
-		if i.UploadedSize != 0 {
-			i.Ratio = float32(i.UploadedSize) / float32(i.TotalSize)
+		if i.Status.UploadedSize != 0 {
+			i.Status.Ratio = float32(i.Status.UploadedSize) / float32(i.Status.TotalSize)
 		}
 
 		result = append(result, i)
@@ -170,11 +172,11 @@ func (c *Client) List() ([]*polochon.Torrent, error) {
 
 // Remove implements the downloader interface
 func (c *Client) Remove(torrent *polochon.Torrent) error {
-	if torrent.ID == "" {
+	if torrent.Status == nil || torrent.Status.ID == "" {
 		return fmt.Errorf("aria2: no id to remove the download")
 	}
 
-	_, err := c.protocol.Remove(torrent.ID)
+	_, err := c.protocol.Remove(torrent.Status.ID)
 	if err != nil {
 		if strings.Contains(err.Error(), "Active Download not found") {
 			// This downloadable is not active
