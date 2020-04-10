@@ -7,6 +7,15 @@ var (
 	ErrDuplicateTorrent = errors.New("Torrent already added")
 )
 
+// TorrentMetadata represent the metadata of a torrent
+type TorrentMetadata struct {
+	ImdbID  string  `json:"imdb_id"`
+	Type    string  `json:"type"`
+	Season  int     `json:"season"`
+	Episode int     `json:"episode"`
+	Quality Quality `json:"quality"`
+}
+
 // Torrent represents a torrent file
 type Torrent struct {
 	// Generic properties
@@ -33,18 +42,18 @@ type Torrent struct {
 	PercentDone    float32  `json:"percent_done"`
 }
 
-// TorrentMetadata represent the metadata of a torrent
-type TorrentMetadata struct {
-	ImdbID  string  `json:"imdb_id"`
-	Type    string  `json:"type"`
-	Season  int     `json:"season"`
-	Episode int     `json:"episode"`
-	Quality Quality `json:"quality"`
+// RatioReached tells if the given ratio has been reached
+func (t *Torrent) RatioReached(ratio float32) bool {
+	if !t.IsFinished {
+		return false
+	}
+
+	return t.Ratio >= ratio
 }
 
 // FilterTorrents filters the torrents to keep only the best ones
-func FilterTorrents(torrents []Torrent) []Torrent {
-	torrentByQuality := map[Quality]Torrent{}
+func FilterTorrents(torrents []*Torrent) []*Torrent {
+	torrentByQuality := map[Quality]*Torrent{}
 
 	for _, t := range torrents {
 		bestByQuality, ok := torrentByQuality[t.Quality]
@@ -58,7 +67,7 @@ func FilterTorrents(torrents []Torrent) []Torrent {
 		}
 	}
 
-	filtered := []Torrent{}
+	filtered := []*Torrent{}
 	for _, t := range torrentByQuality {
 		filtered = append(filtered, t)
 	}

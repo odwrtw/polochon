@@ -27,7 +27,7 @@ func (sS *showSearcher) users() []string {
 	return sS.Users
 }
 
-func (sS *showSearcher) setTorrents(torrents []polochon.Torrent) {
+func (sS *showSearcher) setTorrents(torrents []*polochon.Torrent) {
 	sS.Episode.Torrents = torrents
 }
 

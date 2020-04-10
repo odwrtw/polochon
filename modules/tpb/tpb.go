@@ -109,7 +109,7 @@ type searcher interface {
 	key() string
 	users() []string
 	defaultQuality() string
-	setTorrents([]polochon.Torrent)
+	setTorrents([]*polochon.Torrent)
 	isValidGuess(guess *guessit.Response, log *logrus.Entry) bool
 }
 
@@ -212,11 +212,11 @@ func filterTorrents(torrents []*tpb.Torrent, allowedUsers []string) []*tpb.Torre
 }
 
 // transformTorrents will filter and transform tpb.Torrent in polochon.Torrent
-func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent, log *logrus.Entry) []polochon.Torrent {
+func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent, log *logrus.Entry) []*polochon.Torrent {
 	// Use guessit to check the torrents with its infos
 	guessClient := guessit.New(t.GuessitEndpoint)
 
-	torrents := []polochon.Torrent{}
+	torrents := []*polochon.Torrent{}
 	for _, t := range filterTorrents(list, s.users()) {
 		torrentStr := torrentGuessitStr(t)
 		// Make a guess
@@ -248,7 +248,7 @@ func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent, log *logrus.Ent
 			"torrent_name":    torrentStr,
 		}).Debug("Adding torrent to the list")
 
-		torrents = append(torrents, polochon.Torrent{
+		torrents = append(torrents, &polochon.Torrent{
 			Name:       t.Name,
 			URL:        t.Magnet,
 			Seeders:    t.Seeders,

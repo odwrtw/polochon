@@ -55,7 +55,7 @@ func (y *Yts) GetMovieList(option string, log *logrus.Entry) ([]*polochon.Movie,
 				log.Debugf("yts: unhandled quality: %q", torrentQuality)
 				continue
 			}
-			m.Torrents = append(m.Torrents, polochon.Torrent{
+			m.Torrents = append(m.Torrents, &polochon.Torrent{
 				Quality:  torrentQuality,
 				URL:      t.URL,
 				Seeders:  t.Seeds,

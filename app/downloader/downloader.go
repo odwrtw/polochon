@@ -161,7 +161,7 @@ func (d *Downloader) downloadMissingMovies(wl *polochon.Wishlist, log *logrus.En
 		for _, q := range wantedMovie.Qualities {
 			for _, t := range m.Torrents {
 				if t.Quality == q {
-					torrent = &t
+					torrent = t
 					break quality_loop
 				}
 			}
@@ -256,7 +256,7 @@ func (d *Downloader) downloadMissingShows(wl *polochon.Wishlist, log *logrus.Ent
 			for _, q := range wishedShow.Qualities {
 				for _, t := range e.Torrents {
 					if t.Quality == q {
-						torrent = &t
+						torrent = t
 						break quality_loop
 					}
 				}

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/odwrtw/eztv"
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 )
 
@@ -94,7 +94,7 @@ func TestEztvGetTorrents(t *testing.T) {
 		t.Fatalf("Expected no error, got %q", err)
 	}
 
-	expected := []polochon.Torrent{
+	expected := []*polochon.Torrent{
 		{Source: "eztv", Quality: polochon.Quality480p, URL: "http://480p.torrent"},
 		{Source: "eztv", Quality: polochon.Quality720p, URL: "http://720p.torrent"},
 		{Source: "eztv", Quality: polochon.Quality1080p, URL: "http://1080p.torrent"},

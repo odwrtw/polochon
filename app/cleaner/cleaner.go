@@ -118,9 +118,8 @@ func (c *Cleaner) cleanDoneVideos(log *logrus.Entry) {
 		log = log.WithField("torrent_name", torrent.Name)
 
 		// Check if the file is ready to be cleaned
-		isReady := c.isReadyToBeCleaned(torrent, log)
-		if !isReady {
-			log.Debug("torrent is not ready to be cleaned")
+		if !torrent.RatioReached(c.config.Downloader.Cleaner.Ratio) {
+			log.Debugf("ratio is not reached (%.02f / %.02f)", torrent.Ratio, c.config.Downloader.Cleaner.Ratio)
 			continue
 		}
 
@@ -138,24 +137,6 @@ func (c *Cleaner) cleanDoneVideos(log *logrus.Entry) {
 			continue
 		}
 	}
-}
-
-func (c *Cleaner) isReadyToBeCleaned(torrent *polochon.Torrent, log *logrus.Entry) bool {
-	log = log.WithField("torrent_name", torrent.Name)
-
-	// First check that the torrent download is finished
-	if !torrent.IsFinished {
-		log.Debugf("torrent is not yet finished")
-		return false
-	}
-
-	// Check that the ratio is reached
-	if torrent.Ratio < c.config.Downloader.Cleaner.Ratio {
-		log.Debugf("ratio is not reached (%.02f / %.02f)", torrent.Ratio, c.config.Downloader.Cleaner.Ratio)
-		return false
-	}
-
-	return true
 }
 
 func (c *Cleaner) clean(torrent *polochon.Torrent, log *logrus.Entry) error {

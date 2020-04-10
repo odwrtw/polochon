@@ -67,12 +67,12 @@ var searchByImdbID = func(imdbID string) ([]yts.Movie, error) {
 	return yts.Search(imdbID)
 }
 
-func polochonTorrents(m *yts.Movie) []polochon.Torrent {
+func polochonTorrents(m *yts.Movie) []*polochon.Torrent {
 	if m.Torrents == nil || len(m.Torrents) == 0 {
 		return nil
 	}
 
-	torrents := []polochon.Torrent{}
+	torrents := []*polochon.Torrent{}
 	for _, t := range m.Torrents {
 		q := polochon.Quality(t.Quality)
 		if !q.IsAllowed() {
@@ -81,7 +81,7 @@ func polochonTorrents(m *yts.Movie) []polochon.Torrent {
 
 		size, _ := humanize.ParseBytes(t.Size)
 
-		torrents = append(torrents, polochon.Torrent{
+		torrents = append(torrents, &polochon.Torrent{
 			Name:     m.Title,
 			URL:      t.URL,
 			Quality:  q,

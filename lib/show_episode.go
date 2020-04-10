@@ -16,21 +16,21 @@ type ShowEpisode struct {
 	VideoMetadata
 
 	File
-	Title         string    `json:"title"`
-	ShowTitle     string    `json:"show_title"`
-	Season        int       `json:"season"`
-	Episode       int       `json:"episode"`
-	TvdbID        int       `json:"tvdb_id"`
-	Aired         string    `json:"aired"`
-	Plot          string    `json:"plot"`
-	Runtime       int       `json:"runtime"`
-	Thumb         string    `json:"thumb"`
-	Rating        float32   `json:"rating"`
-	ShowImdbID    string    `json:"show_imdb_id"`
-	ShowTvdbID    int       `json:"show_tvdb_id"`
-	EpisodeImdbID string    `json:"imdb_id"`
-	Torrents      []Torrent `json:"torrents"`
-	Show          *Show     `json:"-"`
+	Title         string     `json:"title"`
+	ShowTitle     string     `json:"show_title"`
+	Season        int        `json:"season"`
+	Episode       int        `json:"episode"`
+	TvdbID        int        `json:"tvdb_id"`
+	Aired         string     `json:"aired"`
+	Plot          string     `json:"plot"`
+	Runtime       int        `json:"runtime"`
+	Thumb         string     `json:"thumb"`
+	Rating        float32    `json:"rating"`
+	ShowImdbID    string     `json:"show_imdb_id"`
+	ShowTvdbID    int        `json:"show_tvdb_id"`
+	EpisodeImdbID string     `json:"imdb_id"`
+	Torrents      []*Torrent `json:"torrents"`
+	Show          *Show      `json:"-"`
 }
 
 // NewShowEpisode returns a new show episode
