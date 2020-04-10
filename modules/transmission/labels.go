@@ -49,7 +49,12 @@ func updateFromLabel(torrent *polochon.Torrent, labels []string) {
 		k, v := parseLabel(label)
 		switch k {
 		case "type":
-			torrent.Type = v
+			if v == "movie" {
+				torrent.Type = polochon.TypeMovie
+			}
+			if v == "episode" {
+				torrent.Type = polochon.TypeEpisode
+			}
 		case "imdb_id":
 			torrent.ImdbID = v
 		case "quality":

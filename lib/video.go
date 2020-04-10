@@ -45,6 +45,15 @@ func (q *Quality) IsAllowed() bool {
 	return false
 }
 
+// VideoType represents the type of a video
+type VideoType string
+
+// Possible video types
+const (
+	TypeMovie   VideoType = "movie"
+	TypeEpisode VideoType = "episode"
+)
+
 // Video represents a generic video type
 type Video interface {
 	Subtitlable

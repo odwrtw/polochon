@@ -162,7 +162,7 @@ func (d *Downloader) downloadMissingMovies(wl *polochon.Wishlist, log *logrus.En
 			continue
 		}
 
-		torrent.Type = "movie"
+		torrent.Type = polochon.TypeMovie
 		torrent.ImdbID = m.ImdbID
 		if err := d.config.Downloader.Client.Download(torrent); err != nil {
 			log.Error(err)
@@ -243,7 +243,7 @@ func (d *Downloader) downloadMissingShows(wl *polochon.Wishlist, log *logrus.Ent
 				continue
 			}
 
-			torrent.Type = "episode"
+			torrent.Type = polochon.TypeEpisode
 			torrent.ImdbID = e.ShowImdbID
 			torrent.Season = e.Season
 			torrent.Episode = e.Episode
