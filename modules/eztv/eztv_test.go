@@ -96,6 +96,10 @@ func TestEztvGetTorrents(t *testing.T) {
 
 	expected := []*polochon.Torrent{
 		{
+			ImdbID:  s.ShowImdbID,
+			Type:    polochon.TypeEpisode,
+			Season:  s.Season,
+			Episode: s.Episode,
 			Quality: polochon.Quality480p,
 			Result: &polochon.TorrentResult{
 				Source: "eztv",
@@ -103,6 +107,10 @@ func TestEztvGetTorrents(t *testing.T) {
 			},
 		},
 		{
+			ImdbID:  s.ShowImdbID,
+			Type:    polochon.TypeEpisode,
+			Season:  s.Season,
+			Episode: s.Episode,
 			Quality: polochon.Quality720p,
 			Result: &polochon.TorrentResult{
 				Source: "eztv",
@@ -110,6 +118,10 @@ func TestEztvGetTorrents(t *testing.T) {
 			},
 		},
 		{
+			ImdbID:  s.ShowImdbID,
+			Type:    polochon.TypeEpisode,
+			Season:  s.Season,
+			Episode: s.Episode,
 			Quality: polochon.Quality1080p,
 			Result: &polochon.TorrentResult{
 				Source: "eztv",

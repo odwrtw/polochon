@@ -22,6 +22,10 @@ func (mS *movieSearcher) users() []string {
 }
 
 func (mS *movieSearcher) setTorrents(torrents []*polochon.Torrent) {
+	for _, t := range torrents {
+		t.ImdbID = mS.Movie.ImdbID
+		t.Type = polochon.TypeMovie
+	}
 	mS.Movie.Torrents = torrents
 }
 

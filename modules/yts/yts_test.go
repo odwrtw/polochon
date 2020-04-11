@@ -54,10 +54,12 @@ func TestYtsNoTorrent(t *testing.T) {
 func TestYtsTorrents(t *testing.T) {
 	y := &Yts{}
 	m := polochon.NewMovie(polochon.MovieConfig{})
+	m.ImdbID = "tt0000"
 
 	searchByImdbID = func(imdbID string) ([]yts.Movie, error) {
 		return []yts.Movie{
 			{
+				ImdbID: imdbID,
 				Torrents: []yts.Torrent{
 					{Quality: "480p", URL: "http://test.480p.magnet"},
 					{Quality: "720p", URL: "http://test.720p.magnet"},
@@ -73,8 +75,11 @@ func TestYtsTorrents(t *testing.T) {
 	}
 
 	expected := polochon.NewMovie(polochon.MovieConfig{})
+	expected.ImdbID = "tt0000"
 	expected.Torrents = []*polochon.Torrent{
 		{
+			ImdbID:  "tt0000",
+			Type:    polochon.TypeMovie,
 			Quality: polochon.Quality480p,
 			Result: &polochon.TorrentResult{
 				Source: "yts",
@@ -82,6 +87,8 @@ func TestYtsTorrents(t *testing.T) {
 			},
 		},
 		{
+			ImdbID:  "tt0000",
+			Type:    polochon.TypeMovie,
 			Quality: polochon.Quality720p,
 			Result: &polochon.TorrentResult{
 				Source: "yts",
@@ -89,6 +96,8 @@ func TestYtsTorrents(t *testing.T) {
 			},
 		},
 		{
+			ImdbID:  "tt0000",
+			Type:    polochon.TypeMovie,
 			Quality: polochon.Quality1080p,
 			Result: &polochon.TorrentResult{
 				Source: "yts",
