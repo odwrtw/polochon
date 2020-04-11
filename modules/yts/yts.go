@@ -82,6 +82,8 @@ func polochonTorrents(m *yts.Movie) []*polochon.Torrent {
 		size, _ := humanize.ParseBytes(t.Size)
 
 		torrents = append(torrents, &polochon.Torrent{
+			ImdbID:  m.ImdbID,
+			Type:    polochon.TypeMovie,
 			Quality: q,
 			Result: &polochon.TorrentResult{
 				Name:     m.Title,

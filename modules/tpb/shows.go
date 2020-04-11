@@ -28,6 +28,12 @@ func (sS *showSearcher) users() []string {
 }
 
 func (sS *showSearcher) setTorrents(torrents []*polochon.Torrent) {
+	for _, t := range torrents {
+		t.ImdbID = sS.Episode.ShowImdbID
+		t.Season = sS.Episode.Season
+		t.Episode = sS.Episode.Episode
+		t.Type = polochon.TypeEpisode
+	}
 	sS.Episode.Torrents = torrents
 }
 
