@@ -19,11 +19,12 @@ type configFile struct {
 
 	Downloader struct {
 		ModuleLoader    `yaml:",inline"`
-		LaunchAtStartup bool          `yaml:"launch_at_startup"`
-		Enabled         bool          `yaml:"enabled"`
-		Schedule        string        `yaml:"schedule"`
-		Cleaner         CleanerConfig `yaml:"cleaner"`
+		LaunchAtStartup bool   `yaml:"launch_at_startup"`
+		Enabled         bool   `yaml:"enabled"`
+		Schedule        string `yaml:"schedule"`
 	} `yaml:"downloader"`
+
+	DownloadManager DownloadManagerConfig `yaml:"download_manager"`
 
 	HTTPServer HTTPServer `yaml:"http_server"`
 
@@ -87,8 +88,8 @@ func loadConfig(cf *configFile, conf *Config) error {
 		LaunchAtStartup: cf.Downloader.LaunchAtStartup,
 		Schedule:        schedule,
 		Client:          cf.Downloader.downloader,
-		Cleaner:         cf.Downloader.Cleaner,
 	}
+	conf.DownloadManager = cf.DownloadManager
 	conf.HTTPServer = cf.HTTPServer
 	conf.Wishlist = polochon.WishlistConfig{
 		Wishlisters:           cf.Wishlist.wishlisters,

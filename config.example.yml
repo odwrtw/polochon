@@ -6,10 +6,11 @@ logs:
   file: /var/log/polochon.log
 
 # Watcher is used to organize the downloaded files directly when added to
-# the directory. This is the download directory. Only fsnotify is supported.
+# the directory. This is where the files are moved if not organized by the
+# download manager. Only fsnotify is supported.
 watcher:
   fsnotifier: fsnotify
-  dir: /home/user/downloads/done
+  dir: /home/user/downloads/todo
 
 # The downloader will download missing files from your library periodically
 # at a fixed interval. It talks to a torrent server.
@@ -23,15 +24,18 @@ downloader:
   # Which client would you like to use to download torrents. Transmission and
   # aria2 are supported.
   client: transmission
-  # The cleaner will run periodically to cleanup the torrents from the
-  # torrent list of the client and remove all the useless files left behind.
-  cleaner:
-    enabled: true
-    timer: 30s
-    # You can remove a torrent from the client list only when a specific
-    # ratio is reached. Setting this value to 0 will remove the torrent as
-    # soon as the torrent is downloaded.
-    ratio: 0
+
+# The downloader manager manages the torrents and organise the files.
+download_manager:
+  enabled: true
+  # Dir holds the downloaded files to be organized
+  dir: /home/user/downloads
+  # The timer defines the polling time of the torrent client
+  timer: 10s
+  # You can remove a torrent from the client list only when a specific
+  # ratio is reached. Setting this value to 0 will remove the torrent as
+  # soon as the torrent is downloaded.
+  ratio: 0
 
 # The HTTP server exposes an API to polochon
 http_server:

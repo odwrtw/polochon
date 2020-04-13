@@ -82,3 +82,8 @@ func (s *ShowEpisode) GetFile() *File {
 func (s *ShowEpisode) SetFile(f *File) {
 	s.File = *f
 }
+
+// SetMetadata implements the video interface
+func (s *ShowEpisode) SetMetadata(metadata *VideoMetadata) {
+	s.VideoMetadata.Update(metadata)
+}

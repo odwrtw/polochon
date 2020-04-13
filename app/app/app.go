@@ -8,7 +8,7 @@ import (
 
 	"github.com/odwrtw/errors"
 	"github.com/odwrtw/polochon/app/auth"
-	"github.com/odwrtw/polochon/app/cleaner"
+	"github.com/odwrtw/polochon/app/dm"
 	"github.com/odwrtw/polochon/app/downloader"
 	"github.com/odwrtw/polochon/app/organizer"
 	"github.com/odwrtw/polochon/app/safeguard"
@@ -86,11 +86,11 @@ func (a *App) init() error {
 	if config.Downloader.Enabled {
 		// Add the downloader
 		a.subApps = append(a.subApps, downloader.New(config, library))
+	}
 
-		if config.Downloader.Cleaner.Enabled {
-			// Add the cleaner
-			a.subApps = append(a.subApps, cleaner.New(config))
-		}
+	if config.DownloadManager.Enabled {
+		// Add the download manager
+		a.subApps = append(a.subApps, dm.New(config, library))
 	}
 
 	// Only run the HTTP server if specified
