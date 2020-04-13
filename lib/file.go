@@ -44,8 +44,8 @@ func (f *File) Exists() bool {
 	return exists(f.Path)
 }
 
-// IsVideo returns true is the file is considered as a video, using the allowed
-// extensions in the configuration
+// IsVideo returns true is the file is considered as a video, using the
+// allowed extensions in the configuration
 func (f *File) IsVideo() bool {
 	// Get the lower case extension
 	ext := path.Ext(strings.ToLower(f.Path))
@@ -107,6 +107,11 @@ func (f *File) Ignore() error {
 // Guess video information from file
 func (f *File) Guess(movieConf MovieConfig, showConf ShowConfig, log *logrus.Entry) (Video, error) {
 	return f.Guesser.Guess(*f, movieConf, showConf, log)
+}
+
+// GuessMetadata guesses the metadata of a file
+func (f *File) GuessMetadata() (*VideoMetadata, error) {
+	return f.Guesser.GuessMetadata(f)
 }
 
 // NfoPath is an helper to get the nfo filename from the video filename

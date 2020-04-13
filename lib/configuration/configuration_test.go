@@ -16,16 +16,17 @@ logs:
   level: panic
 watcher:
   fsnotifier: mock
-  dir: /tmp
+  dir: /downloads/todo
 downloader:
   enabled: true
   launch_at_startup: true
   schedule: "@every 4h"
   client: mock
-  cleaner:
-    enabled: true
-    timer: 30s
-    ratio: 0
+download_manager:
+  enabled: true
+  timer: 30s
+  ratio: 0
+  dir: /downloads
 http_server:
   enable: true
   port: 8080
@@ -103,7 +104,7 @@ func TestReadConfig(t *testing.T) {
 
 	expected := &Config{
 		Watcher: WatcherConfig{
-			Dir:        "/tmp",
+			Dir:        "/downloads/todo",
 			FsNotifier: mock,
 		},
 		Downloader: DownloaderConfig{
@@ -113,12 +114,12 @@ func TestReadConfig(t *testing.T) {
 				Delay: 4 * time.Hour,
 			},
 			Client: mock,
-			Cleaner: CleanerConfig{
-
-				Enabled: true,
-				Timer:   30 * time.Second,
-				Ratio:   0,
-			},
+		},
+		DownloadManager: DownloadManagerConfig{
+			Enabled: true,
+			Dir:     "/downloads",
+			Timer:   30 * time.Second,
+			Ratio:   0,
 		},
 		HTTPServer: HTTPServer{
 			Enable:            true,

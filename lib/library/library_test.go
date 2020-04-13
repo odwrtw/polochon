@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/sirupsen/logrus"
 )
@@ -19,6 +19,7 @@ func (m *mockInvalidType) GetFile() *polochon.File             { return &polocho
 func (m *mockInvalidType) GetSubtitlers() []polochon.Subtitler { return nil }
 func (m *mockInvalidType) GetDetailers() []polochon.Detailer   { return nil }
 func (m *mockInvalidType) GetTorrenters() []polochon.Torrenter { return nil }
+func (m *mockInvalidType) SetMetadata(*polochon.VideoMetadata) { return }
 func (m *mockInvalidType) SubtitlePath(lang polochon.Language) string {
 	return "path_" + string(lang)
 }

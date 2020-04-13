@@ -9,4 +9,5 @@ import (
 type Guesser interface {
 	Module
 	Guess(File, MovieConfig, ShowConfig, *logrus.Entry) (Video, error)
+	GuessMetadata(*File) (*VideoMetadata, error)
 }

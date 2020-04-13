@@ -45,6 +45,23 @@ func (og *OpenGuessit) Status() (polochon.ModuleStatus, error) {
 	return polochon.StatusNotImplemented, nil
 }
 
+// GuessMetadata guess the metadata of a file
+func (og *OpenGuessit) GuessMetadata(file *polochon.File) (*polochon.VideoMetadata, error) {
+	filePath := filepath.Base(file.Path)
+	guess, err := og.GuessitClient.Guess(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return &polochon.VideoMetadata{
+		Quality:      polochon.Quality(guess.Quality),
+		ReleaseGroup: guess.ReleaseGroup,
+		AudioCodec:   guess.AudioCodec,
+		VideoCodec:   guess.VideoCodec,
+		Container:    guess.Container,
+	}, nil
+}
+
 // Guess implements the Guesser interface
 func (og *OpenGuessit) Guess(file polochon.File, movieConf polochon.MovieConfig, showConf polochon.ShowConfig, log *logrus.Entry) (polochon.Video, error) {
 	filename := filepath.Base(file.Path)

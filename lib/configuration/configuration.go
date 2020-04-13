@@ -16,6 +16,7 @@ type Config struct {
 	Logger            *logrus.Logger
 	Watcher           WatcherConfig
 	Downloader        DownloaderConfig
+	DownloadManager   DownloadManagerConfig
 	HTTPServer        HTTPServer
 	Wishlist          polochon.WishlistConfig
 	Movie             polochon.MovieConfig
@@ -65,18 +66,19 @@ type DownloaderConfig struct {
 	LaunchAtStartup bool
 	Schedule        cron.Schedule
 	Client          polochon.Downloader
-	Cleaner         CleanerConfig
 }
 
-// CleanerConfig represents the configuration for the cleaner in the configuration file
-type CleanerConfig struct {
+// DownloadManagerConfig represents the configuration for the download manager
+type DownloadManagerConfig struct {
 	Enabled bool          `yaml:"enabled"`
+	Dir     string        `yaml:"dir"`
 	Timer   time.Duration `yaml:"timer"`
 	Ratio   float32       `yaml:"ratio"`
 }
 
 // HTTPServer represents the configuration for the HTTP Server
 type HTTPServer struct {
+	// TODO: enable => enabled
 	Enable            bool   `yaml:"enable"`
 	Port              int    `yaml:"port"`
 	Host              string `yaml:"host"`

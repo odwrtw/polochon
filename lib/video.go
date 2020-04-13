@@ -61,4 +61,5 @@ type Video interface {
 	Torrentable
 	SetFile(f *File)
 	GetFile() *File
+	SetMetadata(*VideoMetadata)
 }
