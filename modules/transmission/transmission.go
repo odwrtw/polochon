@@ -179,7 +179,7 @@ func (c *Client) List() ([]*polochon.Torrent, error) {
 			Status: &polochon.TorrentStatus{
 				ID:             strconv.Itoa(t.ID),
 				DownloadRate:   t.RateDownload,
-				DownloadedSize: int(t.DownloadedEver),
+				DownloadedSize: int(t.SizeWhenDone - t.LeftUntilDone),
 				UploadedSize:   int(t.UploadedEver),
 				FilePaths:      filePaths,
 				IsFinished:     isFinished,
