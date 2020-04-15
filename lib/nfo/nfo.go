@@ -4,7 +4,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"io"
-	"io/ioutil"
 
 	polochon "github.com/odwrtw/polochon/lib"
 )
@@ -29,12 +28,7 @@ func Read(r io.Reader, i interface{}) error {
 		return ErrInvalidType
 	}
 
-	b, err := ioutil.ReadAll(r)
-	if err != nil {
-		return err
-	}
-
-	return xml.Unmarshal(b, nfo)
+	return xml.NewDecoder(r).Decode(nfo)
 }
 
 // Write writes the NFO into a writer
@@ -52,15 +46,7 @@ func Write(w io.Writer, i interface{}) error {
 		return ErrInvalidType
 	}
 
-	b, err := xml.MarshalIndent(nfo, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	_, err = w.Write(b)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	enc := xml.NewEncoder(w)
+	enc.Indent("", "  ")
+	return enc.Encode(nfo)
 }
