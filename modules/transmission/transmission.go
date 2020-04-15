@@ -188,6 +188,7 @@ func (c *Client) List() ([]*polochon.Torrent, error) {
 				Ratio:          float32(t.UploadRatio),
 				TotalSize:      int(t.SizeWhenDone),
 				UploadRate:     t.RateUpload,
+				State:          state(t.Status),
 			},
 		}
 		updateFromLabel(torrent, t.Labels)

@@ -10,6 +10,20 @@ var (
 	ErrDuplicateTorrent = errors.New("Torrent already added")
 )
 
+// TorrentState represents the torrent state
+type TorrentState string
+
+// Possible torrent statuses
+const (
+	TorrentStateStopped         TorrentState = "stopped"
+	TorrentStatePending         TorrentState = "pending"
+	TorrentStateChecking        TorrentState = "checking"
+	TorrentStateDownloadPending TorrentState = "download_pending"
+	TorrentStateDownloading     TorrentState = "downloading"
+	TorrentStateSeedPending     TorrentState = "seed_pending"
+	TorrentStateSeeding         TorrentState = "seeding"
+)
+
 // TorrentResult represents a torrent result from a search
 type TorrentResult struct {
 	Name       string `json:"name"`
@@ -23,17 +37,18 @@ type TorrentResult struct {
 
 // TorrentStatus represents the status of the downloaded torrent
 type TorrentStatus struct {
-	ID             string   `json:"id"`
-	Name           string   `json:"name"`
-	Ratio          float32  `json:"ratio"`
-	IsFinished     bool     `json:"is_finished"`
-	FilePaths      []string `json:"file_paths"`
-	DownloadRate   int      `json:"download_rate"`
-	UploadRate     int      `json:"upload_rate"`
-	TotalSize      int      `json:"total_size"`
-	DownloadedSize int      `json:"downloaded_size"`
-	UploadedSize   int      `json:"uploaded_size"`
-	PercentDone    float32  `json:"percent_done"`
+	ID             string       `json:"id"`
+	Name           string       `json:"name"`
+	Ratio          float32      `json:"ratio"`
+	IsFinished     bool         `json:"is_finished"`
+	FilePaths      []string     `json:"file_paths"`
+	DownloadRate   int          `json:"download_rate"`
+	UploadRate     int          `json:"upload_rate"`
+	TotalSize      int          `json:"total_size"`
+	DownloadedSize int          `json:"downloaded_size"`
+	UploadedSize   int          `json:"uploaded_size"`
+	PercentDone    float32      `json:"percent_done"`
+	State          TorrentState `json:"state"`
 }
 
 // Torrent represents a torrent file
