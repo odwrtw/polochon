@@ -1,8 +1,8 @@
-// Package pam - Polochon api module
 package pam
 
 import (
 	polochon "github.com/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib/papi"
 	"github.com/sirupsen/logrus"
 )
 
@@ -10,11 +10,14 @@ import (
 func (p *Pam) GetDetails(i interface{}, log *logrus.Entry) error {
 	switch resource := i.(type) {
 	case *polochon.Movie:
-		return p.getMovieDetails(resource)
+		m := &papi.Movie{Movie: resource}
+		return p.client.GetDetails(m)
 	case *polochon.Show:
-		return p.getShowDetails(resource)
+		s := &papi.Show{Show: resource}
+		return p.client.GetDetails(s)
 	case *polochon.ShowEpisode:
-		return p.getEpisodeDetails(resource)
+		e := &papi.Episode{ShowEpisode: resource}
+		return p.client.GetDetails(e)
 	default:
 		return ErrInvalidType
 	}

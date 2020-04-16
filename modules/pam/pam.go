@@ -3,8 +3,8 @@ package pam
 import (
 	"errors"
 
-	"github.com/odwrtw/papi"
 	polochon "github.com/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib/papi"
 	"gopkg.in/yaml.v2"
 )
 
