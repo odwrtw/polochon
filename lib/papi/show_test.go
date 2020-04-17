@@ -17,7 +17,13 @@ var showByIDsResponse = `
 		"title": "Chef's table",
 		"seasons": {
 			"01": {
-				"01": {}
+				"01": {
+					"quality": "720p",
+					"release_group": "R1",
+					"audio_codec": "AAC",
+					"video_codec": "H.264",
+					"container": "mkv"
+				}
 			}
 		}
 	},
@@ -54,6 +60,13 @@ func TestGetShows(t *testing.T) {
 						Season:     1,
 						Episodes: map[int]*Episode{
 							1: {ShowEpisode: &polochon.ShowEpisode{
+								VideoMetadata: polochon.VideoMetadata{
+									Quality:      polochon.Quality720p,
+									ReleaseGroup: "R1",
+									AudioCodec:   "AAC",
+									VideoCodec:   "H.264",
+									Container:    "mkv",
+								},
 								ShowImdbID: "tt4295140",
 								Season:     1,
 								Episode:    1,
@@ -153,7 +166,13 @@ var showResponse = `
 	"first_aired": "2011-04-17T00:00:00Z",
 	"seasons": {
 		"06": {
-			"01":{}
+			"01":{
+				"quality": "720p",
+				"release_group": "R1",
+				"audio_codec": "AAC",
+				"video_codec": "H.264",
+				"container": "mkv"
+			}
 		}
 	}
 }
@@ -187,6 +206,13 @@ func TestGetShow(t *testing.T) {
 						ShowImdbID: "tt0944947",
 						Season:     6,
 						Episode:    1,
+						VideoMetadata: polochon.VideoMetadata{
+							Quality:      polochon.Quality720p,
+							ReleaseGroup: "R1",
+							AudioCodec:   "AAC",
+							VideoCodec:   "H.264",
+							Container:    "mkv",
+						},
 					}},
 				},
 			},
@@ -224,6 +250,13 @@ func TestGetShow(t *testing.T) {
 		ShowImdbID: "tt0944947",
 		Season:     6,
 		Episode:    1,
+		VideoMetadata: polochon.VideoMetadata{
+			Quality:      polochon.Quality720p,
+			ReleaseGroup: "R1",
+			AudioCodec:   "AAC",
+			VideoCodec:   "H.264",
+			Container:    "mkv",
+		},
 	}}
 
 	episode := expected.GetEpisode(6, 1)

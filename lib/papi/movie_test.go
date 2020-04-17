@@ -53,14 +53,41 @@ func TestGetMovies(t *testing.T) {
 	var requestURI string
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestURI = r.RequestURI
-		fmt.Fprint(w, `{"tt001": {}, "tt002": {}}`)
+		fmt.Fprint(w, `
+			{
+				"tt001": {
+					"title": "title_1",
+					"quality": "1080p",
+					"release_group": "R1",
+					"audio_codec": "AAC",
+					"video_codec": "H.264",
+					"container": "mkv"
+				},
+				"tt002": {
+					"title": "title_2"
+				}
+			}
+		`)
 	}))
 	defer ts.Close()
 
 	expected := &MovieCollection{
 		movies: map[string]*Movie{
-			"tt001": {Movie: &polochon.Movie{ImdbID: "tt001"}},
-			"tt002": {Movie: &polochon.Movie{ImdbID: "tt002"}},
+			"tt001": {Movie: &polochon.Movie{
+				VideoMetadata: polochon.VideoMetadata{
+					Quality:      polochon.Quality1080p,
+					ReleaseGroup: "R1",
+					AudioCodec:   "AAC",
+					VideoCodec:   "H.264",
+					Container:    "mkv",
+				},
+				ImdbID: "tt001",
+				Title:  "title_1",
+			}},
+			"tt002": {Movie: &polochon.Movie{
+				ImdbID: "tt002",
+				Title:  "title_2",
+			}},
 		},
 	}
 
@@ -75,7 +102,7 @@ func TestGetMovies(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(movies, expected) {
-		t.Fatalf("expected: %+v, got %+v", expected, movies)
+		t.Fatalf("expected: %#v, got %#v", expected, movies)
 	}
 
 	expectedRequestURI := "/movies"

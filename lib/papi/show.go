@@ -27,38 +27,36 @@ func (s *Show) uri() (string, error) {
 	return fmt.Sprintf("shows/%s", s.ImdbID), nil
 }
 
-func extractSeasons(imdbID string, input map[string]map[string]*Episode) (map[int]*Season, error) {
+func extractSeasons(imdbID string, input map[string]map[string]*polochon.ShowEpisode) (map[int]*Season, error) {
 	ret := map[int]*Season{}
 
-	for sStr, episodes := range input {
-		sNum, err := strconv.Atoi(sStr)
+	for season, episodes := range input {
+		sn, err := strconv.Atoi(season)
 		if err != nil {
 			return nil, err
 		}
 
 		s := &Season{
 			ShowImdbID: imdbID,
-			Season:     sNum,
+			Season:     sn,
 			Episodes:   map[int]*Episode{},
 		}
 
-		for eStr := range episodes {
-			eNum, err := strconv.Atoi(eStr)
+		for episode, e := range episodes {
+			en, err := strconv.Atoi(episode)
 			if err != nil {
 				return nil, err
 			}
 
-			s.Episodes[eNum] = &Episode{
-				ShowEpisode: &polochon.ShowEpisode{
-					ShowImdbID: imdbID,
-					Episode:    eNum,
-					Season:     sNum,
-				},
-			}
+			e.ShowImdbID = imdbID
+			e.Episode = en
+			e.Season = sn
+			s.Episodes[en] = &Episode{ShowEpisode: e}
 		}
 
-		ret[sNum] = s
+		ret[sn] = s
 	}
+
 	return ret, nil
 }
 
@@ -67,7 +65,7 @@ func (c *Client) GetShows() (*ShowCollection, error) {
 	url := fmt.Sprintf("%s/%s", c.endpoint, "shows")
 
 	ids := map[string]struct {
-		Seasons map[string]map[string]*Episode
+		Seasons map[string]map[string]*polochon.ShowEpisode
 		Title   string
 	}{}
 
@@ -138,14 +136,13 @@ func (c *Client) getShowDetails(s *Show) error {
 		return err
 	}
 
-	type Input struct {
+	input := &struct {
 		*Show
-		Seasons map[string]map[string]*Episode `json:"seasons"`
-	}
-	input := Input{Show: s}
+		Seasons map[string]map[string]*polochon.ShowEpisode `json:"seasons"`
+	}{Show: s}
 
 	url := fmt.Sprintf("%s/%s", c.endpoint, uri)
-	if err := c.get(url, &input); err != nil {
+	if err := c.get(url, input); err != nil {
 		return err
 	}
 
@@ -161,12 +158,7 @@ func (c *Client) getShowDetails(s *Show) error {
 // GetShow returns the detailed infos from polochon about a show
 func (c *Client) GetShow(id string) (*Show, error) {
 	s := &Show{Show: &polochon.Show{ImdbID: id}}
-
-	if err := c.getShowDetails(s); err != nil {
-		return nil, err
-	}
-
-	return s, nil
+	return s, c.getShowDetails(s)
 }
 
 // GetEpisode checks if the show has an episode
