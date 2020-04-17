@@ -50,15 +50,22 @@ func (m *Movie) subtitleURL(lang string) (string, error) {
 func (c *Client) GetMovies() (*MovieCollection, error) {
 	url := fmt.Sprintf("%s/%s", c.endpoint, "movies")
 
-	index := map[string]*Movie{}
+	index := map[string]*struct {
+		polochon.Movie
+		Subtitles []string `json:"subtitles"`
+	}{}
 	if err := c.get(url, &index); err != nil {
 		return nil, err
 	}
 
 	mc := NewMovieCollection()
 	for id, m := range index {
-		m.Movie = &polochon.Movie{ImdbID: id}
-		mc.Add(m)
+		m.ImdbID = id
+		movie := &Movie{
+			Movie:     &m.Movie,
+			Subtitles: m.Subtitles,
+		}
+		mc.Add(movie)
 	}
 
 	return mc, nil
@@ -77,19 +84,11 @@ func (c *Client) getMovieDetails(movie *Movie) error {
 	}
 
 	url := fmt.Sprintf("%s/%s", c.endpoint, uri)
-	if err := c.get(url, &movie); err != nil {
-		return err
-	}
-
-	return nil
+	return c.get(url, movie)
 }
 
 // GetMovie returns a movie with de detailed infos from polochon
 func (c *Client) GetMovie(id string) (*Movie, error) {
 	movie := &Movie{Movie: &polochon.Movie{ImdbID: id}}
-	if err := c.getMovieDetails(movie); err != nil {
-		return nil, err
-	}
-
-	return movie, nil
+	return movie, c.getMovieDetails(movie)
 }

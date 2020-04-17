@@ -59,19 +59,11 @@ func (c *Client) getEpisodeDetails(e *Episode) error {
 	}
 
 	url := fmt.Sprintf("%s/%s", c.endpoint, uri)
-	if err := c.get(url, e); err != nil {
-		return err
-	}
-
-	return nil
+	return c.get(url, e)
 }
 
 // GetEpisode returns a new show episode with detailed informations
 func (c *Client) GetEpisode(id string, season, episode int) (*Episode, error) {
 	e := &Episode{ShowEpisode: &polochon.ShowEpisode{ShowImdbID: id, Season: season, Episode: episode}}
-	if err := c.getEpisodeDetails(e); err != nil {
-		return nil, err
-	}
-
-	return e, nil
+	return e, c.getEpisodeDetails(e)
 }

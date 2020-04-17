@@ -115,8 +115,6 @@ github.com/odwrtw/guessit v0.0.0-20200131084001-f88613483547 h1:O0wEl/ORBHpPpZti
 github.com/odwrtw/guessit v0.0.0-20200131084001-f88613483547/go.mod h1:W22g7wtc0AGczEARBAs+77gvBk8monDaM6U6i9Wa0vQ=
 github.com/odwrtw/imdb-watchlist v0.0.0-20190417175016-b7a9f7503d69 h1:ow6b/4Jj7J5iYwU678/rbijvaNUJrYkg13j9Nivkung=
 github.com/odwrtw/imdb-watchlist v0.0.0-20190417175016-b7a9f7503d69/go.mod h1:o2tLH95CtNdqhDb0aS2NbU+1I4PmaNsODpr33Ry0JC0=
-github.com/odwrtw/papi v0.0.0-20190413103029-bd5bfea85ae6 h1:bF8XKFfYNY4quRdqJ5E9ERd+FdR26H1X1Z2fNRGePSk=
-github.com/odwrtw/papi v0.0.0-20190413103029-bd5bfea85ae6/go.mod h1:CXotdtODLpW0/yuFV5XH8Rmrj0eAfPLvdMKykPM2WCk=
 github.com/odwrtw/tpb v0.0.0-20200130133144-c846aa382c6f h1:fwEIGT+o3e8+XkBqrwsE3/+9ketTQXflPhCkv3/w990=
 github.com/odwrtw/tpb v0.0.0-20200130133144-c846aa382c6f/go.mod h1:updLvMbQo2xHoz94MX9+GqmSoKhf6E8fs/J+wLvvu6A=
 github.com/odwrtw/trakttv v0.0.0-20200404161731-0d594827e4f9 h1:PuQLHO75MXUsJpf9BcTVxvR/FCkdn1MZnZt6h3o6cJI=

@@ -26,7 +26,6 @@ require (
 	github.com/odwrtw/fanarttv v0.0.0-20170412122542-9f67d3cf0188
 	github.com/odwrtw/guessit v0.0.0-20200131084001-f88613483547
 	github.com/odwrtw/imdb-watchlist v0.0.0-20190417175016-b7a9f7503d69
-	github.com/odwrtw/papi v0.0.0-20190413103029-bd5bfea85ae6
 	github.com/odwrtw/tpb v0.0.0-20200130133144-c846aa382c6f
 	github.com/odwrtw/trakttv v0.0.0-20200404161731-0d594827e4f9
 	github.com/odwrtw/transmission v0.0.0-20200408122227-b562b9fbcbee
