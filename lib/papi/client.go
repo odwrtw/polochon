@@ -49,7 +49,6 @@ func New(endpoint string) (*Client, error) {
 // SetToken sets the token
 func (c *Client) SetToken(token string) {
 	c.token = token
-	return
 }
 
 // SetBasicAuth set the basic auth details
@@ -58,8 +57,6 @@ func (c *Client) SetBasicAuth(username, password string) {
 		username: username,
 		password: password,
 	}
-
-	return
 }
 
 // GetDetails get the detailed informations of a resource

@@ -101,10 +101,10 @@ func (a *App) init() error {
 			log.Debug("loading auth manager configuration")
 
 			file, err := os.Open(a.authConfigPath)
-			defer file.Close()
 			if err != nil {
 				return err
 			}
+			defer file.Close()
 
 			authManager, err = auth.New(file)
 			if err != nil {
