@@ -17,7 +17,7 @@ func TestEztvGetTorrentsInvalidArgumens(t *testing.T) {
 
 	err := eztv.GetTorrents(m, fakeLogEntry)
 	if err != ErrInvalidArgument {
-		t.Fatalf("Expected %q got %q", ErrInvalidArgument, err)
+		t.Fatalf("expected %q got %q", ErrInvalidArgument, err)
 	}
 }
 
@@ -27,13 +27,13 @@ func TestEztvInvalidArguments(t *testing.T) {
 
 	err := e.GetTorrents(s, fakeLogEntry)
 	if err != ErrMissingShowImdbID {
-		t.Fatalf("Expected %q got %q", ErrMissingShowImdbID, err)
+		t.Fatalf("expected %q got %q", ErrMissingShowImdbID, err)
 	}
 
 	s.ShowImdbID = "tt2562232"
 	err = e.GetTorrents(s, fakeLogEntry)
 	if err != ErrInvalidShowEpisode {
-		t.Fatalf("Expected %q got %q", ErrInvalidShowEpisode, err)
+		t.Fatalf("expected %q got %q", ErrInvalidShowEpisode, err)
 	}
 }
 
@@ -44,13 +44,13 @@ func TestEztvNoShowEpisodeFound(t *testing.T) {
 	s.Season = 1
 	s.Episode = 1
 
-	eztvGetEpisode = func(imdbID string, season, episode int) (*eztv.ShowEpisode, error) {
+	eztvGetEpisode = func(imdbID string, season, episode int) ([]*eztv.EpisodeTorrent, error) {
 		return nil, eztv.ErrEpisodeNotFound
 	}
 
 	err := e.GetTorrents(s, fakeLogEntry)
 	if err != polochon.ErrShowEpisodeTorrentNotFound {
-		t.Fatalf("Expected %q got %q", polochon.ErrShowEpisodeTorrentNotFound, err)
+		t.Fatalf("expected %q got %q", polochon.ErrShowEpisodeTorrentNotFound, err)
 	}
 }
 
@@ -61,13 +61,13 @@ func TestEztvNoTorrentFound(t *testing.T) {
 	s.Season = 1
 	s.Episode = 1
 
-	eztvGetEpisode = func(imdbID string, season, episode int) (*eztv.ShowEpisode, error) {
-		return &eztv.ShowEpisode{}, nil
+	eztvGetEpisode = func(imdbID string, season, episode int) ([]*eztv.EpisodeTorrent, error) {
+		return []*eztv.EpisodeTorrent{}, nil
 	}
 
 	err := e.GetTorrents(s, fakeLogEntry)
 	if err != polochon.ErrTorrentNotFound {
-		t.Fatalf("Expected %q got %q", polochon.ErrTorrentNotFound, err)
+		t.Fatalf("expected %q got %q", polochon.ErrTorrentNotFound, err)
 	}
 }
 
@@ -78,20 +78,41 @@ func TestEztvGetTorrents(t *testing.T) {
 	s.Season = 1
 	s.Episode = 1
 
-	eztvGetEpisode = func(imdbID string, season, episode int) (*eztv.ShowEpisode, error) {
-		return &eztv.ShowEpisode{
-			Torrents: map[string]*eztv.ShowTorrent{
-				"0":     {URL: "http://0.torrent"},
-				"480p":  {URL: "http://480p.torrent"},
-				"720p":  {URL: "http://720p.torrent"},
-				"1080p": {URL: "http://1080p.torrent"},
+	eztvGetEpisode = func(imdbID string, season, episode int) ([]*eztv.EpisodeTorrent, error) {
+		return []*eztv.EpisodeTorrent{
+			{
+				ID:        2,
+				ImdbID:    s.ShowImdbID,
+				Season:    s.Season,
+				Episode:   s.Episode,
+				Hash:      "yoshi",
+				Filename:  "pwet.mkv",
+				MagnetURL: "magnet:?xt=urn:btih:yoshi2",
+			},
+			{
+				ID:        1,
+				ImdbID:    s.ShowImdbID,
+				Season:    s.Season,
+				Episode:   s.Episode,
+				Hash:      "yoshi",
+				Filename:  "pwet.720p.mkv",
+				MagnetURL: "magnet:?xt=urn:btih:yoshi1",
+			},
+			{
+				ID:        2,
+				ImdbID:    s.ShowImdbID,
+				Season:    s.Season,
+				Episode:   s.Episode,
+				Hash:      "yoshi",
+				Filename:  "pwet.1080p.mkv",
+				MagnetURL: "magnet:?xt=urn:btih:yoshi3",
 			},
 		}, nil
 	}
 
 	err := e.GetTorrents(s, fakeLogEntry)
 	if err != nil {
-		t.Fatalf("Expected no error, got %q", err)
+		t.Fatalf("expected no error, got %q", err)
 	}
 
 	expected := []*polochon.Torrent{
@@ -103,7 +124,7 @@ func TestEztvGetTorrents(t *testing.T) {
 			Quality: polochon.Quality480p,
 			Result: &polochon.TorrentResult{
 				Source: "eztv",
-				URL:    "http://480p.torrent",
+				URL:    "magnet:?xt=urn:btih:yoshi2",
 			},
 		},
 		{
@@ -114,7 +135,7 @@ func TestEztvGetTorrents(t *testing.T) {
 			Quality: polochon.Quality720p,
 			Result: &polochon.TorrentResult{
 				Source: "eztv",
-				URL:    "http://720p.torrent",
+				URL:    "magnet:?xt=urn:btih:yoshi1",
 			},
 		},
 		{
@@ -125,12 +146,12 @@ func TestEztvGetTorrents(t *testing.T) {
 			Quality: polochon.Quality1080p,
 			Result: &polochon.TorrentResult{
 				Source: "eztv",
-				URL:    "http://1080p.torrent",
+				URL:    "magnet:?xt=urn:btih:yoshi3",
 			},
 		},
 	}
 
 	if !reflect.DeepEqual(expected, s.Torrents) {
-		t.Errorf("Failed to get torrents from eztv\nExpected %+v\nGot %+v", expected, s.Torrents)
+		t.Errorf("failed to get torrents from eztv\nexpected %+v\ngot %+v", expected, s.Torrents)
 	}
 }
