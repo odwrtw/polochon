@@ -2,6 +2,7 @@ package eztv
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/odwrtw/eztv"
 	polochon "github.com/odwrtw/polochon/lib"
@@ -11,8 +12,6 @@ import (
 // Make sure that the module is a torrenter, an explorer and a searcher
 var (
 	_ polochon.Torrenter = (*Eztv)(nil)
-	_ polochon.Explorer  = (*Eztv)(nil)
-	_ polochon.Searcher  = (*Eztv)(nil)
 )
 
 // Register eztv as a Torrenter
@@ -41,8 +40,8 @@ func (e *Eztv) Init(p []byte) error {
 }
 
 // Function to be overwritten during the tests
-var eztvGetEpisode = func(imdbID string, season, episode int) (*eztv.ShowEpisode, error) {
-	return eztv.GetEpisode(imdbID, season, episode)
+var eztvGetEpisode = func(imdbID string, season, episode int) ([]*eztv.EpisodeTorrent, error) {
+	return eztv.GetEpisodeTorrents(imdbID, season, episode)
 }
 
 // Get the show infos from eztv
@@ -55,7 +54,7 @@ func (e *Eztv) getShowEpisodeDetails(s *polochon.ShowEpisode) error {
 		return ErrInvalidShowEpisode
 	}
 
-	episode, err := eztvGetEpisode(s.ShowImdbID, s.Season, s.Episode)
+	episodeTorrents, err := eztvGetEpisode(s.ShowImdbID, s.Season, s.Episode)
 	switch err {
 	case nil:
 		// continue
@@ -65,29 +64,22 @@ func (e *Eztv) getShowEpisodeDetails(s *polochon.ShowEpisode) error {
 		return err
 	}
 
-	if len(episode.Torrents) == 0 {
+	if len(episodeTorrents) == 0 {
 		return polochon.ErrTorrentNotFound
 	}
 
 	torrents := []*polochon.Torrent{}
-	for _, quality := range []polochon.Quality{
-		polochon.Quality480p,
-		polochon.Quality720p,
-		polochon.Quality1080p,
-	} {
-		torrent, ok := episode.Torrents[string(quality)]
-		if !ok {
-			continue
-		}
+	for _, t := range episodeTorrents {
+		quality := getQuality(t.Filename)
 
 		torrents = append(torrents, &polochon.Torrent{
-			ImdbID:  s.ShowImdbID,
+			ImdbID:  t.ImdbID,
 			Type:    polochon.TypeEpisode,
-			Season:  s.Season,
-			Episode: s.Episode,
+			Season:  t.Season,
+			Episode: t.Episode,
 			Quality: quality,
 			Result: &polochon.TorrentResult{
-				URL:    torrent.URL,
+				URL:    t.MagnetURL,
 				Source: moduleName,
 			},
 		})
@@ -107,14 +99,14 @@ func (e *Eztv) Name() string {
 func (e *Eztv) Status() (polochon.ModuleStatus, error) {
 	status := polochon.StatusOK
 
-	// Get the page of the shows
-	showList, err := eztv.ListShows(1)
+	// Get some torrents
+	torrents, err := eztv.GetTorrents(10, 1)
 	if err != nil {
 		status = polochon.StatusFail
 	}
 
 	// Check if there is any results
-	if len(showList) == 0 {
+	if len(torrents) == 0 {
 		return polochon.StatusFail, polochon.ErrShowEpisodeTorrentNotFound
 	}
 
@@ -135,4 +127,18 @@ func (e *Eztv) GetTorrents(i interface{}, log *logrus.Entry) error {
 func (e *Eztv) SearchTorrents(s string) ([]*polochon.Torrent, error) {
 	// Not yet implemented
 	return nil, nil
+}
+
+// Helper to guess the quality of the torrent from its name
+func getQuality(filename string) polochon.Quality {
+	for _, quality := range []polochon.Quality{
+		polochon.Quality480p,
+		polochon.Quality720p,
+		polochon.Quality1080p,
+	} {
+		if strings.Contains(filename, string(quality)) {
+			return quality
+		}
+	}
+	return polochon.Quality480p
 }

@@ -89,8 +89,8 @@ github.com/odwrtw/addicted v0.0.0-20180216115522-9b8bc38b027d h1:KMwCV8ynXqII4NT
 github.com/odwrtw/addicted v0.0.0-20180216115522-9b8bc38b027d/go.mod h1:U8EU21PaKybcci1txfa1dK9OHjSbu4J02lZIMZDNJ5s=
 github.com/odwrtw/errors v0.0.0-20170604160533-c747b9d17833 h1:JbimDtyFaekFnqCkv3goowabwGNeDfWZk8aCnmRJvT4=
 github.com/odwrtw/errors v0.0.0-20170604160533-c747b9d17833/go.mod h1:KwBfTZvOQqi/hpk4jq8SKmKlf4yoxW8yap93PEvhs0c=
-github.com/odwrtw/eztv v0.0.0-20180731154638-3ffa8598f8ef h1:K8kbRGAor5YHdcmc1a1ZRtJDFq9rK0fEZ1NpZAAm4kE=
-github.com/odwrtw/eztv v0.0.0-20180731154638-3ffa8598f8ef/go.mod h1:pDNWZ7Z0J6I6wpwbzHILNgVuqmxlqGJ+9g8oLhqv5Kk=
+github.com/odwrtw/eztv v0.0.0-20200508142644-22fa13f87790 h1:feifZZy9joOB+VdWcmXvac2zG7sbHn/ymOnXDqGFjOA=
+github.com/odwrtw/eztv v0.0.0-20200508142644-22fa13f87790/go.mod h1:fAKpKPEs8in5Mela1ImVeaaLETZ8zejDV05GCEtJ5Rk=
 github.com/odwrtw/fanarttv v0.0.0-20170412122542-9f67d3cf0188 h1:mjAgidPA3aNSZU6EgB2iSu1yxxNU2tw9U14n57Gk7ZQ=
 github.com/odwrtw/fanarttv v0.0.0-20170412122542-9f67d3cf0188/go.mod h1:AMkzq9fSbIpWKdWbU4FAsIherygisNEeYglKfmTfq1U=
 github.com/odwrtw/guessit v0.0.0-20200131084001-f88613483547 h1:O0wEl/ORBHpPpZtibQyiZR1kQVFWo97gzcQQH4qI5C8=
