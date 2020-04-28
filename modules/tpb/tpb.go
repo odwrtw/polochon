@@ -14,8 +14,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Make sure that the module is a torrenter
-var _ polochon.Torrenter = (*TPB)(nil)
+// Make sure that the module is a torrenter and an explorer
+var (
+	_ polochon.Torrenter = (*TPB)(nil)
+	_ polochon.Explorer  = (*TPB)(nil)
+)
 
 var (
 	defaultTimeout         = 30 * time.Second
@@ -48,6 +51,7 @@ type TPB struct {
 	MovieUsers      []string
 	ShowUsers       []string
 	configured      bool
+	GuessClient     *guessit.Client
 }
 
 // Init implements the module interface
@@ -74,6 +78,9 @@ func (t *TPB) InitWithParams(params *Params) error {
 	if t.GuessitEndpoint == "" {
 		t.GuessitEndpoint = defaultGuessitEndpoint
 	}
+
+	// Use guessit to check the torrents with its infos
+	t.GuessClient = guessit.New(t.GuessitEndpoint)
 
 	var err error
 	if params.Timeout == "" {
@@ -214,16 +221,15 @@ func filterTorrents(torrents []*tpb.Torrent, allowedUsers []string) []*tpb.Torre
 
 // transformTorrents will filter and transform tpb.Torrent in polochon.Torrent
 func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent, log *logrus.Entry) []*polochon.Torrent {
-	// Use guessit to check the torrents with its infos
-	guessClient := guessit.New(t.GuessitEndpoint)
-
 	torrents := []*polochon.Torrent{}
-	for _, t := range filterTorrents(list, s.users()) {
-		torrentStr := torrentGuessitStr(t)
+	for _, torrent := range filterTorrents(list, s.users()) {
+		torrentStr := torrentGuessitStr(torrent)
 		// Make a guess
-		guess, err := guessClient.Guess(torrentStr)
+		guess, err := t.GuessClient.Guess(torrentStr)
 		if err != nil {
-			log.Debugf("tpb: guess failed: %q", err)
+			log.WithFields(logrus.Fields{
+				"torrent_string": torrentStr,
+			}).Debugf("tpb: guess failed: %q", err)
 			continue
 		}
 
@@ -233,14 +239,14 @@ func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent, log *logrus.Ent
 		}
 
 		// If the torrent has an ImdbID, check it
-		if t.ImdbID != "" && t.ImdbID != s.imdbID() {
-			log.Debugf("tpb: imdbIDs doesn't match %s != %s", t.ImdbID, s.imdbID())
+		if torrent.ImdbID != "" && torrent.ImdbID != s.imdbID() {
+			log.Debugf("tpb: imdbIDs doesn't match %s != %s", torrent.ImdbID, s.imdbID())
 			continue
 		}
 
 		// Set the default quality if none is defined
 		if guess.Quality == "" {
-			log.Debugf("tpb: default quality for %s", t.Name)
+			log.Debugf("tpb: default quality for %s", torrent.Name)
 			guess.Quality = s.defaultQuality()
 		}
 
@@ -259,13 +265,13 @@ func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent, log *logrus.Ent
 		torrents = append(torrents, &polochon.Torrent{
 			Quality: torrentQuality,
 			Result: &polochon.TorrentResult{
-				Name:       t.Name,
-				URL:        t.Magnet(),
-				Seeders:    t.Seeders,
-				Leechers:   t.Leechers,
+				Name:       torrent.Name,
+				URL:        torrent.Magnet(),
+				Seeders:    torrent.Seeders,
+				Leechers:   torrent.Leechers,
 				Source:     moduleName,
-				UploadUser: t.User,
-				Size:       int(t.Size),
+				UploadUser: torrent.User,
+				Size:       int(torrent.Size),
 			},
 		})
 	}
@@ -276,7 +282,7 @@ func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent, log *logrus.Ent
 func torrentGuessitStr(t *tpb.Torrent) string {
 	// Hack to make the torrent name look like a video name so that guessit
 	// can guess the title, year and quality
-	return strings.Replace(t.Name, " ", ".", -1) + ".mp4"
+	return strings.Replace(t.Name, " ", ".", -1)
 }
 
 func getQuality(s string) polochon.Quality {
