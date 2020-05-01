@@ -41,6 +41,10 @@ func (sS *showSearcher) defaultQuality() string {
 	return string(polochon.Quality480p)
 }
 
+func (sS *showSearcher) imdbID() string {
+	return sS.Episode.ShowImdbID
+}
+
 func (sS *showSearcher) isValidGuess(guess *guessit.Response, log *logrus.Entry) bool {
 	if guess.VideoCodec == "h265" {
 		log.Debugf("skipping h265 codec")

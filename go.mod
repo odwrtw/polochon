@@ -3,7 +3,9 @@ module github.com/odwrtw/polochon
 go 1.14
 
 require (
+	github.com/PuerkitoBio/goquery v1.5.0 // indirect
 	github.com/agnivade/levenshtein v1.0.3
+	github.com/andybalholm/cascadia v1.1.0 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
@@ -26,7 +28,7 @@ require (
 	github.com/odwrtw/fanarttv v0.0.0-20170412122542-9f67d3cf0188
 	github.com/odwrtw/guessit v0.0.0-20200131084001-f88613483547
 	github.com/odwrtw/imdb-watchlist v0.0.0-20190417175016-b7a9f7503d69
-	github.com/odwrtw/tpb v0.0.0-20200130133144-c846aa382c6f
+	github.com/odwrtw/tpb v0.0.0-20200507114501-df19547bbff1
 	github.com/odwrtw/trakttv v0.0.0-20200404161731-0d594827e4f9
 	github.com/odwrtw/transmission v0.0.0-20200408122227-b562b9fbcbee
 	github.com/odwrtw/yifysubs v0.0.0-20190417174645-d3bba6e4cfe0
@@ -38,6 +40,8 @@ require (
 	github.com/ryanbradynd05/go-tmdb v0.0.0-20181220020137-291a20d25ffd
 	github.com/sirupsen/logrus v1.4.2
 	github.com/urfave/negroni v1.0.0
+	golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa // indirect
+	golang.org/x/text v0.3.2 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/unrolled/render.v1 v1.0.0

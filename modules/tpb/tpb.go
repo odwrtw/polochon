@@ -19,7 +19,7 @@ var _ polochon.Torrenter = (*TPB)(nil)
 
 var (
 	defaultTimeout         = 30 * time.Second
-	defaultGuessitEndpoint = "http://guessit.quimbo.fr/guess/"
+	defaultGuessitEndpoint = "http://guessit.quimbo.fr/guess"
 )
 
 func init() {
@@ -111,6 +111,7 @@ type searcher interface {
 	defaultQuality() string
 	setTorrents([]*polochon.Torrent)
 	isValidGuess(guess *guessit.Response, log *logrus.Entry) bool
+	imdbID() string
 }
 
 // newSearcher will return a new Searcher
@@ -136,9 +137,7 @@ func (t *TPB) search(s string) ([]*tpb.Torrent, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), t.Timeout)
 	defer cancel()
 
-	return t.Client.Search(ctx, s, &tpb.Options{
-		OrderBy:  tpb.OrderBySeeds,
-		Sort:     tpb.Desc,
+	return t.Client.Search(ctx, s, &tpb.SearchOptions{
 		Category: tpb.Video,
 	})
 }
@@ -179,7 +178,7 @@ func (t *TPB) SearchTorrents(s string) ([]*polochon.Torrent, error) {
 			Quality: getQuality(t.Name),
 			Result: &polochon.TorrentResult{
 				Name:       t.Name,
-				URL:        t.Magnet,
+				URL:        t.Magnet(),
 				Seeders:    t.Seeders,
 				Leechers:   t.Leechers,
 				Source:     moduleName,
@@ -224,11 +223,18 @@ func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent, log *logrus.Ent
 		// Make a guess
 		guess, err := guessClient.Guess(torrentStr)
 		if err != nil {
+			log.Debugf("tpb: guess failed: %q", err)
 			continue
 		}
 
 		// Check the guess validity
 		if !s.isValidGuess(guess, log) {
+			continue
+		}
+
+		// If the torrent has an ImdbID, check it
+		if t.ImdbID != "" && t.ImdbID != s.imdbID() {
+			log.Debugf("tpb: imdbIDs doesn't match %s != %s", t.ImdbID, s.imdbID())
 			continue
 		}
 
@@ -254,7 +260,7 @@ func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent, log *logrus.Ent
 			Quality: torrentQuality,
 			Result: &polochon.TorrentResult{
 				Name:       t.Name,
-				URL:        t.Magnet,
+				URL:        t.Magnet(),
 				Seeders:    t.Seeders,
 				Leechers:   t.Leechers,
 				Source:     moduleName,

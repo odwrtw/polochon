@@ -33,6 +33,10 @@ func (mS *movieSearcher) defaultQuality() string {
 	return string(polochon.Quality720p)
 }
 
+func (mS *movieSearcher) imdbID() string {
+	return mS.Movie.ImdbID
+}
+
 func (mS *movieSearcher) isValidGuess(guess *guessit.Response, log *logrus.Entry) bool {
 	if guess.VideoCodec == "h265" {
 		log.Debugf("skipping h265 codec")
