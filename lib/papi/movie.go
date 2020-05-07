@@ -90,5 +90,9 @@ func (c *Client) getMovieDetails(movie *Movie) error {
 // GetMovie returns a movie with de detailed infos from polochon
 func (c *Client) GetMovie(id string) (*Movie, error) {
 	movie := &Movie{Movie: &polochon.Movie{ImdbID: id}}
-	return movie, c.getMovieDetails(movie)
+	if err := c.getMovieDetails(movie); err != nil {
+		return nil, err
+	}
+
+	return movie, nil
 }

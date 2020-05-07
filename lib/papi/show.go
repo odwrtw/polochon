@@ -158,7 +158,10 @@ func (c *Client) getShowDetails(s *Show) error {
 // GetShow returns the detailed infos from polochon about a show
 func (c *Client) GetShow(id string) (*Show, error) {
 	s := &Show{Show: &polochon.Show{ImdbID: id}}
-	return s, c.getShowDetails(s)
+	if err := c.getShowDetails(s); err != nil {
+		return nil, err
+	}
+	return s, nil
 }
 
 // GetEpisode checks if the show has an episode
