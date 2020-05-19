@@ -22,7 +22,11 @@ var showByIDsResponse = `
 					"release_group": "R1",
 					"audio_codec": "AAC",
 					"video_codec": "H.264",
-					"container": "mkv"
+					"container": "mkv",
+					"subtitles": [
+					  "fr_FR",
+					  "en_US"
+					]
 				}
 			}
 		}
@@ -59,18 +63,24 @@ func TestGetShows(t *testing.T) {
 						ShowImdbID: "tt4295140",
 						Season:     1,
 						Episodes: map[int]*Episode{
-							1: {ShowEpisode: &polochon.ShowEpisode{
-								VideoMetadata: polochon.VideoMetadata{
-									Quality:      polochon.Quality720p,
-									ReleaseGroup: "R1",
-									AudioCodec:   "AAC",
-									VideoCodec:   "H.264",
-									Container:    "mkv",
+							1: {
+								ShowEpisode: &polochon.ShowEpisode{
+									VideoMetadata: polochon.VideoMetadata{
+										Quality:      polochon.Quality720p,
+										ReleaseGroup: "R1",
+										AudioCodec:   "AAC",
+										VideoCodec:   "H.264",
+										Container:    "mkv",
+									},
+									ShowImdbID: "tt4295140",
+									Season:     1,
+									Episode:    1,
 								},
-								ShowImdbID: "tt4295140",
-								Season:     1,
-								Episode:    1,
-							}},
+								Subtitles: []string{
+									"fr_FR",
+									"en_US",
+								},
+							},
 						},
 					},
 				},

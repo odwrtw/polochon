@@ -27,7 +27,7 @@ func (s *Show) uri() (string, error) {
 	return fmt.Sprintf("shows/%s", s.ImdbID), nil
 }
 
-func extractSeasons(imdbID string, input map[string]map[string]*polochon.ShowEpisode) (map[int]*Season, error) {
+func extractSeasons(imdbID string, input map[string]map[string]*Episode) (map[int]*Season, error) {
 	ret := map[int]*Season{}
 
 	for season, episodes := range input {
@@ -48,10 +48,14 @@ func extractSeasons(imdbID string, input map[string]map[string]*polochon.ShowEpi
 				return nil, err
 			}
 
+			if e.ShowEpisode == nil {
+				e.ShowEpisode = &polochon.ShowEpisode{}
+			}
+
 			e.ShowImdbID = imdbID
 			e.Episode = en
 			e.Season = sn
-			s.Episodes[en] = &Episode{ShowEpisode: e}
+			s.Episodes[en] = e
 		}
 
 		ret[sn] = s
@@ -65,7 +69,7 @@ func (c *Client) GetShows() (*ShowCollection, error) {
 	url := fmt.Sprintf("%s/%s", c.endpoint, "shows")
 
 	ids := map[string]struct {
-		Seasons map[string]map[string]*polochon.ShowEpisode
+		Seasons map[string]map[string]*Episode
 		Title   string
 	}{}
 
@@ -138,7 +142,7 @@ func (c *Client) getShowDetails(s *Show) error {
 
 	input := &struct {
 		*Show
-		Seasons map[string]map[string]*polochon.ShowEpisode `json:"seasons"`
+		Seasons map[string]map[string]*Episode `json:"seasons"`
 	}{Show: s}
 
 	url := fmt.Sprintf("%s/%s", c.endpoint, uri)
