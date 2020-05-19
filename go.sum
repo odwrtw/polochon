@@ -58,6 +58,7 @@ github.com/gregdel/argo v0.0.0-20190104143955-4ac365771987/go.mod h1:dS8cBtIK+0j
 github.com/gregdel/pushover v0.0.0-20190217183207-15d3fef40636 h1:6agUllU8gUNAallyB+afeLXMRLL6Q1z+S6YC7Pi1EIY=
 github.com/gregdel/pushover v0.0.0-20190217183207-15d3fef40636/go.mod h1:NbuXd8Iwy5dU99qFToB8mSE29qJOQNW/bphiV8CWj/k=
 github.com/jpillora/opts v0.0.0-20160806153215-0b3373f6c34d/go.mod h1:8/sC6XyMKHq/ybiU9Oqc1i0tDjFA/6otW7+Ha/qtnfo=
+github.com/jpillora/scraper v0.0.0-20190930150335-f06f890eb841 h1:DSiWcaEafVv5lLmUoYgr+Q/0ZhlOFzZHHqvmkEC8vKY=
 github.com/jpillora/scraper v0.0.0-20190930150335-f06f890eb841/go.mod h1:rwZ1CpR9lO34N/3IDicjhl2N/jfe124j1zdwYJNjsEI=
 github.com/json-iterator/go v1.1.6/go.mod h1:+SdeFBvtyEkXs7REEP0seUULqWtbJapLOCVDaaPEHmU=
 github.com/json-iterator/go v1.1.8/go.mod h1:KdQUCv79m/52Kvf8AW2vK1V8akMuk1QjK/uOdHXbAo4=
