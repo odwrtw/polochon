@@ -22,7 +22,7 @@ require (
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/odwrtw/addicted v0.0.0-20200509145452-a5d36bf9d0f8
 	github.com/odwrtw/errors v0.0.0-20170604160533-c747b9d17833
-	github.com/odwrtw/eztv v0.0.0-20200508142644-22fa13f87790
+	github.com/odwrtw/eztv v0.0.0-20201119092300-1cf1c95b0e34
 	github.com/odwrtw/fanarttv v0.0.0-20170412122542-9f67d3cf0188
 	github.com/odwrtw/guessit v0.0.0-20200131084001-f88613483547
 	github.com/odwrtw/imdb-watchlist v0.0.0-20190417175016-b7a9f7503d69
