@@ -20,23 +20,31 @@ type FileConfig struct {
 
 // File handles polochon files
 type File struct {
-	FileConfig `xml:"-" json:"-"`
-	Path       string `xml:"-" json:"-"`
+	FileConfig
+	Path string
+	Size int64
 }
 
 // NewFile returns a new file from a path
 func NewFile(path string) *File {
+	var size int64 = 0
+
+	info, err := os.Stat(path)
+	if err == nil {
+		size = info.Size()
+	}
+
 	return &File{
 		Path: path,
+		Size: size,
 	}
 }
 
 // NewFileWithConfig returns a new file from a path
 func NewFileWithConfig(path string, conf FileConfig) *File {
-	return &File{
-		FileConfig: conf,
-		Path:       path,
-	}
+	f := NewFile(path)
+	f.FileConfig = conf
+	return f
 }
 
 // Exists returns true is the file exists
