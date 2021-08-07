@@ -21,6 +21,8 @@ type Movie struct {
 	polochon.VideoMetadata
 	Path      string              `json:"-"`
 	Title     string              `json:"title"`
+	Year      int                 `json:"year"`
+	Size      int64               `json:"size"`
 	Subtitles []polochon.Language `json:"subtitles"`
 }
 
@@ -61,6 +63,8 @@ func (mi *MovieIndex) Add(movie *polochon.Movie) error {
 	mi.ids[movie.ImdbID] = &Movie{
 		Path:          movie.Path,
 		Title:         movie.Title,
+		Year:          movie.Year,
+		Size:          movie.Size,
 		VideoMetadata: movie.VideoMetadata,
 	}
 

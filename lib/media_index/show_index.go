@@ -34,6 +34,7 @@ type Season struct {
 type Episode struct {
 	polochon.VideoMetadata
 	Path      string              `json:"-"`
+	Size      int64               `json:"size"`
 	Subtitles []polochon.Language `json:"subtitles"`
 }
 
@@ -233,6 +234,7 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 	si.Lock()
 	si.shows[episode.ShowImdbID].Seasons[episode.Season].Episodes[episode.Episode] = &Episode{
 		Path:          episode.Path,
+		Size:          episode.Size,
 		VideoMetadata: episode.VideoMetadata,
 	}
 	si.Unlock()
