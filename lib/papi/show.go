@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	polochon "github.com/odwrtw/polochon/lib"
+	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
 // Show struct returned by papi
@@ -27,7 +28,7 @@ func (s *Show) uri() (string, error) {
 	return fmt.Sprintf("shows/%s", s.ImdbID), nil
 }
 
-func extractSeasons(imdbID string, input map[string]map[string]*Episode) (map[int]*Season, error) {
+func extractSeasons(imdbID string, input map[string]map[string]*index.Episode) (map[int]*Season, error) {
 	ret := map[int]*Season{}
 
 	for season, episodes := range input {
@@ -48,14 +49,18 @@ func extractSeasons(imdbID string, input map[string]map[string]*Episode) (map[in
 				return nil, err
 			}
 
-			if e.ShowEpisode == nil {
-				e.ShowEpisode = &polochon.ShowEpisode{}
+			s.Episodes[en] = &Episode{
+				ShowEpisode: &polochon.ShowEpisode{
+					ShowImdbID: imdbID,
+					Episode:    en,
+					Season:     sn,
+					File: polochon.File{
+						Path: e.Filename,
+						Size: e.Size,
+					},
+				},
+				Subtitles: e.Subtitles,
 			}
-
-			e.ShowImdbID = imdbID
-			e.Episode = en
-			e.Season = sn
-			s.Episodes[en] = e
 		}
 
 		ret[sn] = s
@@ -69,8 +74,8 @@ func (c *Client) GetShows() (*ShowCollection, error) {
 	url := fmt.Sprintf("%s/%s", c.endpoint, "shows")
 
 	ids := map[string]struct {
-		Seasons map[string]map[string]*Episode
 		Title   string
+		Seasons map[string]map[string]*index.Episode
 	}{}
 
 	if err := c.get(url, &ids); err != nil {
@@ -142,7 +147,7 @@ func (c *Client) getShowDetails(s *Show) error {
 
 	input := &struct {
 		*Show
-		Seasons map[string]map[string]*Episode `json:"seasons"`
+		Seasons map[string]map[string]*index.Episode `json:"seasons"`
 	}{Show: s}
 
 	url := fmt.Sprintf("%s/%s", c.endpoint, uri)

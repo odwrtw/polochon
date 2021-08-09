@@ -9,6 +9,7 @@ import (
 	"time"
 
 	polochon "github.com/odwrtw/polochon/lib"
+	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
 var showByIDsResponse = `
@@ -76,9 +77,13 @@ func TestGetShows(t *testing.T) {
 									Season:     1,
 									Episode:    1,
 								},
-								Subtitles: []string{
-									"fr_FR",
-									"en_US",
+								Subtitles: []*index.Subtitle{
+									{
+										Lang: polochon.FR,
+									},
+									{
+										Lang: polochon.EN,
+									},
 								},
 							},
 						},

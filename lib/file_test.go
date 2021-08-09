@@ -32,6 +32,16 @@ func TestIgnorePath(t *testing.T) {
 	}
 }
 
+func TestFilename(t *testing.T) {
+	file := NewFile("/path/test")
+	expected := "test"
+	got := file.Filename()
+
+	if got != expected {
+		t.Errorf("got %q, expected %q", got, expected)
+	}
+}
+
 func TestIgnoreFile(t *testing.T) {
 	// Create a temp dir
 	tmpDir, err := ioutil.TempDir(os.TempDir(), "polochon-file-test")

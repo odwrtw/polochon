@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 )
 
@@ -23,9 +23,15 @@ func mockShowIndex() *ShowIndex {
 						Episodes: map[int]*Episode{
 							2: {
 								Path: "/home/shows/Game Of Thrones/Season 2/s02e02.mp4",
-								Subtitles: []polochon.Language{
-									polochon.FR,
-									polochon.EN,
+								Subtitles: []*Subtitle{
+									{
+										Size: 1000000,
+										Lang: polochon.FR,
+									},
+									{
+										Size: 1000000,
+										Lang: polochon.EN,
+									},
 								},
 							},
 						},
@@ -415,7 +421,8 @@ func TestShowIndexHasEpisodeSubtitle(t *testing.T) {
 		{"tt1520211", 2, 1, polochon.FR, false, nil},
 		{"tt11111", 2, 1, polochon.FR, false, ErrNotFound},
 	} {
-		got, err := idx.HasEpisodeSubtitle(mock.imdbID, mock.season, mock.episode, mock.lang)
+		sub := &polochon.Subtitle{Lang: mock.lang}
+		got, err := idx.HasEpisodeSubtitle(mock.imdbID, mock.season, mock.episode, sub)
 		if err != mock.expectedErr {
 			t.Fatalf("expected error %q, got %q", mock.expectedErr, err)
 		}
@@ -459,8 +466,10 @@ func TestShowIndexAddSubtitle(t *testing.T) {
 		idx := mockShowIndex()
 		mock.episode.Path = mock.episodePath
 
+		sub := polochon.NewSubtitleFromVideo(mock.episode, polochon.FR)
+
 		// Add subtitle to the index
-		if err := idx.AddSubtitle(mock.episode, polochon.FR); err == nil {
+		if err := idx.AddSubtitle(mock.episode, sub); err == nil {
 			t.Fatalf("should get an error while adding show subtitle in the index: %q", err)
 		}
 
@@ -470,12 +479,12 @@ func TestShowIndexAddSubtitle(t *testing.T) {
 		}
 
 		// Add subtitle to the index
-		if err := idx.AddSubtitle(mock.episode, polochon.FR); err != nil {
+		if err := idx.AddSubtitle(mock.episode, sub); err != nil {
 			t.Fatalf("got an error while adding show subtitle in the index: %q", err)
 		}
 
 		// Check
-		hasEpisodeSub, err := idx.HasEpisodeSubtitle(mock.episode.ShowImdbID, mock.episode.Season, mock.episode.Episode, polochon.FR)
+		hasEpisodeSub, err := idx.HasEpisodeSubtitle(mock.episode.ShowImdbID, mock.episode.Season, mock.episode.Episode, sub)
 		if err != nil {
 			t.Fatalf("expected no error, got %q", err)
 		}

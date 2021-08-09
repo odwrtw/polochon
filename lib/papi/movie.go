@@ -4,13 +4,14 @@ import (
 	"fmt"
 
 	polochon "github.com/odwrtw/polochon/lib"
+	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
 // Movie struct returned by papi
 type Movie struct {
 	*polochon.Movie
 
-	Subtitles []string `json:"subtitles"`
+	Subtitles []*index.Subtitle `json:"subtitles"`
 }
 
 // uri implements the Resource interface
@@ -51,8 +52,10 @@ func (c *Client) GetMovies() (*MovieCollection, error) {
 	url := fmt.Sprintf("%s/%s", c.endpoint, "movies")
 
 	index := map[string]*struct {
-		polochon.Movie
-		Subtitles []string `json:"subtitles"`
+		*polochon.Movie
+		Filename string `json:"filename"`
+
+		Subtitles []*index.Subtitle `json:"subtitles"`
 	}{}
 	if err := c.get(url, &index); err != nil {
 		return nil, err
@@ -61,8 +64,9 @@ func (c *Client) GetMovies() (*MovieCollection, error) {
 	mc := NewMovieCollection()
 	for id, m := range index {
 		m.ImdbID = id
+		m.Path = m.Filename
 		movie := &Movie{
-			Movie:     &m.Movie,
+			Movie:     m.Movie,
 			Subtitles: m.Subtitles,
 		}
 		mc.Add(movie)

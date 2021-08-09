@@ -77,20 +77,27 @@ func TestAddEpisode(t *testing.T) {
 		t.Fatalf("failed to add the episode: %q", err)
 	}
 
-	wantedSubs := []polochon.Language{polochon.FR, polochon.EN}
+	langs := []polochon.Language{polochon.FR, polochon.EN}
+
 	// Add subtitles for the episode
-	subs, err := lib.AddSubtitles(episode, wantedSubs, mockLogEntry)
+	subs, err := lib.AddSubtitles(episode, langs, mockLogEntry)
 	if err != nil {
 		t.Fatalf("failed to add subtitles for the episode: %q", err)
 	}
+
+	wantedSubs := []*polochon.Subtitle{
+		polochon.NewSubtitleFromVideo(episode, polochon.FR),
+		polochon.NewSubtitleFromVideo(episode, polochon.EN),
+	}
+
 	if !reflect.DeepEqual(subs, wantedSubs) {
 		t.Errorf("invalid subs, expected %+v got %+v", subs, wantedSubs)
 	}
 
 	// Check the content of the downloaded subtitles files
-	for _, lang := range wantedSubs {
-		has := lib.HasSubtitle(episode, lang)
-		if !has {
+	for _, lang := range langs {
+		sub := lib.GetSubtitle(episode, lang)
+		if sub == nil {
 			t.Fatal("should have subtitle")
 		}
 		content, err := ioutil.ReadFile(episode.SubtitlePath(lang))
@@ -105,7 +112,7 @@ func TestAddEpisode(t *testing.T) {
 	}
 
 	// Add subtitles for the episode once more
-	subs, err = lib.AddSubtitles(episode, wantedSubs, mockLogEntry)
+	subs, err = lib.AddSubtitles(episode, langs, mockLogEntry)
 	if err != nil {
 		t.Fatalf("failed to add subtitles for the episode: %q", err)
 	}
@@ -164,6 +171,7 @@ func TestAddEpisode(t *testing.T) {
 		Episodes: map[int]*index.Episode{
 			1: {
 				Path:          filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1/episodeTest.mp4"),
+				Filename:      "episodeTest.mp4",
 				VideoMetadata: episode.VideoMetadata,
 			},
 		},
@@ -186,7 +194,7 @@ func TestAddEpisode(t *testing.T) {
 	// Ensure the index if valid
 	gotIDs := lib.ShowIDs()
 	if !reflect.DeepEqual(expectedIDs, gotIDs) {
-		t.Errorf("invalid show ids, expected %+v got %+v", expectedIDs, gotIDs)
+		t.Errorf("invalid show ids, expected %#v got %#v", expectedIDs, gotIDs)
 	}
 
 	// Ensure the library has the show episode
