@@ -50,18 +50,6 @@ func TestName(t *testing.T) {
 	}
 }
 
-func TestGetShowSubtitle(t *testing.T) {
-	y := &YifySubs{}
-	r, err := y.GetShowSubtitle(&polochon.ShowEpisode{}, polochon.EN, fakeLogEntry)
-	if r != nil {
-		log.Fatalf("expected no result, got %+v", r)
-	}
-
-	if err != polochon.ErrNoSubtitleFound {
-		log.Fatalf("expected error %q, got %q", polochon.ErrNoSubtitleFound, err)
-	}
-}
-
 // fakeSearcher implements the Searcher interface
 type fakeSearcher struct{}
 
@@ -83,7 +71,7 @@ func TestGetMovieSubtitle(t *testing.T) {
 		log.Fatalf("expected no error, got %q", err)
 	}
 
-	s, ok := sub.(*yifysubs.Subtitle)
+	s, ok := sub.ReadCloser.(*yifysubs.Subtitle)
 	if !ok {
 		log.Fatal("the sub is not a yifysubs.Subtitle")
 	}
