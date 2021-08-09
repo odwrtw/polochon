@@ -95,10 +95,12 @@ func (l *Library) buildMovieIndex(log *logrus.Entry) error {
 
 		// Check for subtitles in the same folder
 		for _, subLang := range l.SubtitleLanguages {
-			if !l.HasSubtitle(movie, subLang) {
+			sub := l.GetSubtitle(movie, subLang)
+			if sub == nil {
 				continue
 			}
-			if err = l.movieIndex.AddSubtitle(movie, subLang); err != nil {
+
+			if err = l.movieIndex.AddSubtitle(movie, sub); err != nil {
 				walkLog.Warnf("library: failed to add subtitles %s : %q", subLang, err)
 				continue
 			}
@@ -112,13 +114,14 @@ func (l *Library) buildMovieIndex(log *logrus.Entry) error {
 	return err
 }
 
-// HasSubtitle returns true if the subtitle exists on the disk
-func (l *Library) HasSubtitle(v polochon.Video, lang polochon.Language) bool {
-	if _, err := os.Stat(v.SubtitlePath(lang)); err == nil {
-		// There is no such file
-		return true
+// GetSubtitle returns the subtitle if it exists, nil otherwise
+func (l *Library) GetSubtitle(v polochon.Video, lang polochon.Language) *polochon.Subtitle {
+	sub := polochon.NewSubtitleFromVideo(v, lang)
+	if !sub.Exists() {
+		return nil
 	}
-	return false
+
+	return sub
 }
 
 func (l *Library) buildShowIndex(log *logrus.Entry) error {
@@ -219,10 +222,12 @@ func (l *Library) scanEpisodes(imdbID, showRootPath string, log *logrus.Entry) e
 
 		// Check for subtitles in the same folder
 		for _, subLang := range l.SubtitleLanguages {
-			if !l.HasSubtitle(episode, subLang) {
+			sub := l.GetSubtitle(episode, subLang)
+			if sub == nil {
 				continue
 			}
-			if err = l.showIndex.AddSubtitle(episode, subLang); err != nil {
+
+			if err = l.showIndex.AddSubtitle(episode, sub); err != nil {
 				walkLog.Warnf("library: failed to add subtitles %s : %q", subLang, err)
 				continue
 			}

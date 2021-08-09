@@ -137,6 +137,11 @@ func (f *File) IgnorePath() string {
 	return f.Path + ".ignore"
 }
 
+// Filename returns the file name
+func (f *File) Filename() string {
+	return filepath.Base(f.Path)
+}
+
 // PathWithoutExt returns the file path without the file extension
 func (f *File) PathWithoutExt() string {
 	return removeExt(f.Path)

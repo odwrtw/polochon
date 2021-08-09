@@ -128,7 +128,7 @@ func (s *Server) getShowEpisodeIDDetails(w http.ResponseWriter, req *http.Reques
 
 	episode := struct {
 		*polochon.ShowEpisode
-		Subtitles []polochon.Language `json:"subtitles"`
+		Subtitles []*index.Subtitle `json:"subtitles"`
 	}{
 		ShowEpisode: e,
 		Subtitles:   idxEpisode.Subtitles,

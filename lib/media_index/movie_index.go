@@ -19,11 +19,12 @@ type MovieIndex struct {
 // Movie represents a Movie in the index
 type Movie struct {
 	polochon.VideoMetadata
-	Path      string              `json:"-"`
-	Title     string              `json:"title"`
-	Year      int                 `json:"year"`
-	Size      int64               `json:"size"`
-	Subtitles []polochon.Language `json:"subtitles"`
+	Path      string      `json:"-"`
+	Filename  string      `json:"filename"`
+	Title     string      `json:"title"`
+	Year      int         `json:"year"`
+	Size      int64       `json:"size"`
+	Subtitles []*Subtitle `json:"subtitles"`
 }
 
 // NewMovieIndex returns a new movie index
@@ -62,6 +63,7 @@ func (mi *MovieIndex) Add(movie *polochon.Movie) error {
 
 	mi.ids[movie.ImdbID] = &Movie{
 		Path:          movie.Path,
+		Filename:      movie.Filename(),
 		Title:         movie.Title,
 		Year:          movie.Year,
 		Size:          movie.Size,
@@ -72,7 +74,7 @@ func (mi *MovieIndex) Add(movie *polochon.Movie) error {
 }
 
 // AddSubtitle adds a movie subtitle to an index
-func (mi *MovieIndex) AddSubtitle(movie *polochon.Movie, lang polochon.Language) error {
+func (mi *MovieIndex) AddSubtitle(movie *polochon.Movie, sub *polochon.Subtitle) error {
 	// Check that we have the movie
 	has, err := mi.Has(movie.ImdbID)
 	if err != nil {
@@ -88,7 +90,7 @@ func (mi *MovieIndex) AddSubtitle(movie *polochon.Movie, lang polochon.Language)
 	// Append the subtitle to the index
 	mi.ids[movie.ImdbID].Subtitles = append(
 		mi.ids[movie.ImdbID].Subtitles,
-		lang,
+		NewSubtitle(sub),
 	)
 	return nil
 }
@@ -141,7 +143,7 @@ func (mi *MovieIndex) Has(imdbID string) (bool, error) {
 
 // HasSubtitle searches the movie index for a subtitle in language lang and
 // ImdbID and returns true if the subtitle is present
-func (mi *MovieIndex) HasSubtitle(imdbID string, lang polochon.Language) (bool, error) {
+func (mi *MovieIndex) HasSubtitle(imdbID string, sub *polochon.Subtitle) (bool, error) {
 	movie, err := mi.Movie(imdbID)
 	if err != nil {
 		if err == ErrNotFound {
@@ -150,8 +152,8 @@ func (mi *MovieIndex) HasSubtitle(imdbID string, lang polochon.Language) (bool, 
 		return false, err
 	}
 
-	for _, l := range movie.Subtitles {
-		if lang == l {
+	for _, s := range movie.Subtitles {
+		if sub.Lang == s.Lang {
 			return true, nil
 		}
 	}

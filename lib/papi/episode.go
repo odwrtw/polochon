@@ -4,13 +4,14 @@ import (
 	"fmt"
 
 	polochon "github.com/odwrtw/polochon/lib"
+	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
 // Episode struct returned by papi
 type Episode struct {
 	*polochon.ShowEpisode
 
-	Subtitles []string `json:"subtitles"`
+	Subtitles []*index.Subtitle `json:"subtitles"`
 }
 
 // uri implements the Resource interface

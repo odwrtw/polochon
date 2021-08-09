@@ -33,9 +33,10 @@ type Season struct {
 // Episode represents an indexed episode
 type Episode struct {
 	polochon.VideoMetadata
-	Path      string              `json:"-"`
-	Size      int64               `json:"size"`
-	Subtitles []polochon.Language `json:"subtitles"`
+	Path      string      `json:"-"`
+	Filename  string      `json:"filename"`
+	Size      int64       `json:"size"`
+	Subtitles []*Subtitle `json:"subtitles"`
 }
 
 // SeasonList returns the season numbers of the indexed show
@@ -106,13 +107,13 @@ func (si *ShowIndex) HasEpisode(imdbID string, season, episode int) (bool, error
 
 // HasEpisodeSubtitle searches for a show episode by id, season and episode and
 // returns true if this episode has a subtitle indexed
-func (si *ShowIndex) HasEpisodeSubtitle(imdbID string, season, episode int, lang polochon.Language) (bool, error) {
+func (si *ShowIndex) HasEpisodeSubtitle(imdbID string, season, episode int, sub *polochon.Subtitle) (bool, error) {
 	e, err := si.Episode(imdbID, season, episode)
 	if err != nil {
 		return false, err
 	}
-	for _, l := range e.Subtitles {
-		if l == lang {
+	for _, s := range e.Subtitles {
+		if s.Lang == sub.Lang {
 			return true, nil
 		}
 	}
@@ -234,6 +235,7 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 	si.Lock()
 	si.shows[episode.ShowImdbID].Seasons[episode.Season].Episodes[episode.Episode] = &Episode{
 		Path:          episode.Path,
+		Filename:      episode.Filename(),
 		Size:          episode.Size,
 		VideoMetadata: episode.VideoMetadata,
 	}
@@ -321,7 +323,7 @@ func (si *ShowIndex) RemoveEpisode(episode *polochon.ShowEpisode, log *logrus.En
 }
 
 // AddSubtitle adds a movie subtitle to an index
-func (si *ShowIndex) AddSubtitle(episode *polochon.ShowEpisode, lang polochon.Language) error {
+func (si *ShowIndex) AddSubtitle(episode *polochon.ShowEpisode, sub *polochon.Subtitle) error {
 	// Check that we have the show
 	has, err := si.HasEpisode(episode.ShowImdbID, episode.Season, episode.Episode)
 	if err != nil {
@@ -337,7 +339,7 @@ func (si *ShowIndex) AddSubtitle(episode *polochon.ShowEpisode, lang polochon.La
 	// Append the subtitle to the index
 	si.shows[episode.ShowImdbID].Seasons[episode.Season].Episodes[episode.Episode].Subtitles = append(
 		si.shows[episode.ShowImdbID].Seasons[episode.Season].Episodes[episode.Episode].Subtitles,
-		lang,
+		NewSubtitle(sub),
 	)
 	return nil
 }

@@ -94,20 +94,27 @@ func TestAddMovie(t *testing.T) {
 		}
 	}
 
-	wantedSubs := []polochon.Language{polochon.FR, polochon.EN}
+	langs := []polochon.Language{polochon.FR, polochon.EN}
+
 	// Add subtitles for the movie
-	subs, err := lib.AddSubtitles(m, wantedSubs, mockLogEntry)
+	subs, err := lib.AddSubtitles(m, langs, mockLogEntry)
 	if err != nil {
 		t.Fatalf("failed to add subtitles for the movie: %q", err)
 	}
+
+	wantedSubs := []*polochon.Subtitle{
+		polochon.NewSubtitleFromVideo(m, polochon.FR),
+		polochon.NewSubtitleFromVideo(m, polochon.EN),
+	}
+
 	if !reflect.DeepEqual(subs, wantedSubs) {
 		t.Errorf("invalid subs, expected %+v got %+v", subs, wantedSubs)
 	}
 
 	// Check the content of the downloaded subtitles files
-	for _, lang := range wantedSubs {
-		has := lib.HasSubtitle(m, lang)
-		if !has {
+	for _, lang := range langs {
+		sub := lib.GetSubtitle(m, lang)
+		if sub == nil {
 			t.Fatal("should have subtitle")
 		}
 		content, err := ioutil.ReadFile(m.SubtitlePath(lang))
@@ -121,7 +128,7 @@ func TestAddMovie(t *testing.T) {
 		}
 	}
 	// Add subtitles for the movie once more
-	subs, err = lib.AddSubtitles(m, wantedSubs, mockLogEntry)
+	subs, err = lib.AddSubtitles(m, langs, mockLogEntry)
 	if err != nil {
 		t.Fatalf("failed to add subtitles for the movie: %q", err)
 	}

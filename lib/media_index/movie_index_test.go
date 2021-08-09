@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 )
 
 // mockMovieIndex returns a mock movie index
@@ -14,9 +14,15 @@ func mockMovieIndex() *MovieIndex {
 		ids: map[string]*Movie{
 			"tt56789": {
 				Path: "/home/test/movie/movie.mp4",
-				Subtitles: []polochon.Language{
-					polochon.FR,
-					polochon.EN,
+				Subtitles: []*Subtitle{
+					{
+						Size: 1000000,
+						Lang: polochon.FR,
+					},
+					{
+						Size: 1000000,
+						Lang: polochon.EN,
+					},
 				},
 			},
 			"tt12345": {
@@ -123,9 +129,15 @@ func TestMovieIndex(t *testing.T) {
 	expected := map[string]*Movie{
 		"tt56789": {
 			Path: "/home/test/movie/movie.mp4",
-			Subtitles: []polochon.Language{
-				polochon.FR,
-				polochon.EN,
+			Subtitles: []*Subtitle{
+				{
+					Size: 1000000,
+					Lang: polochon.FR,
+				},
+				{
+					Size: 1000000,
+					Lang: polochon.EN,
+				},
 			},
 		},
 		"tt12345": {
@@ -177,7 +189,9 @@ func TestMovieIndexHasSubtitles(t *testing.T) {
 			expectedErr: ErrNotFound,
 		},
 	} {
-		got, err := idx.HasSubtitle(test.imdbID, test.lang)
+		sub := &polochon.Subtitle{Lang: test.lang}
+
+		got, err := idx.HasSubtitle(test.imdbID, sub)
 		if err != nil {
 			t.Fatalf("expected no error, got %q", err)
 		}
@@ -193,8 +207,10 @@ func TestMovieIndexAddSubtitles(t *testing.T) {
 	m := &polochon.Movie{ImdbID: "tt2562232"}
 	m.Path = "/home/test/movie/movie.mp4"
 
+	sub := polochon.NewSubtitleFromVideo(m, polochon.FR)
+
 	// Check to add subtitle if movie not yet added
-	err := idx.AddSubtitle(m, polochon.FR)
+	err := idx.AddSubtitle(m, sub)
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -208,7 +224,7 @@ func TestMovieIndexAddSubtitles(t *testing.T) {
 		t.Fatalf("expected no error, got %q", err)
 	}
 
-	subInIndex, err := idx.HasSubtitle(m.ImdbID, polochon.FR)
+	subInIndex, err := idx.HasSubtitle(m.ImdbID, sub)
 	if err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
@@ -217,12 +233,12 @@ func TestMovieIndexAddSubtitles(t *testing.T) {
 	}
 
 	// Add the subtitle
-	err = idx.AddSubtitle(m, polochon.FR)
+	err = idx.AddSubtitle(m, sub)
 	if err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
 
-	subInIndex, err = idx.HasSubtitle(m.ImdbID, polochon.FR)
+	subInIndex, err = idx.HasSubtitle(m.ImdbID, sub)
 	if err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}

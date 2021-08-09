@@ -5,6 +5,7 @@ import (
 
 	"github.com/gorilla/mux"
 	polochon "github.com/odwrtw/polochon/lib"
+	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
 func (s *Server) movieIndex(w http.ResponseWriter, req *http.Request) {
@@ -45,7 +46,7 @@ func (s *Server) getMovieDetails(w http.ResponseWriter, req *http.Request) {
 
 	movie := struct {
 		*polochon.Movie
-		Subtitles []polochon.Language `json:"subtitles"`
+		Subtitles []*index.Subtitle `json:"subtitles"`
 	}{
 		Movie:     m,
 		Subtitles: idxMovie.Subtitles,
