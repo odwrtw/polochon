@@ -90,13 +90,19 @@ var fakeSubtitles = osdb.Subtitles{
 		SeriesSeason:     "2",
 	},
 }
-var fakeShowEpisode = polochon.ShowEpisode{
+var fakeShowEpisode = &polochon.ShowEpisode{
 	ShowImdbID: "tt0001234",
 	Season:     1,
 	Episode:    1,
+	File: polochon.File{
+		Path: "fakePath",
+	},
 }
-var fakeMovie = polochon.Movie{
+var fakeMovie = &polochon.Movie{
 	ImdbID: "tt0012345",
+	File: polochon.File{
+		Path: "fakePath",
+	},
 }
 
 func TestInvalidNew(t *testing.T) {
@@ -261,6 +267,7 @@ func TestSearchSubtitles(t *testing.T) {
 			nil,
 		},
 	}
+
 	for _, situation := range situations {
 		newOsdbClient = situation.newOsdbClient
 		checkOsdbClient = situation.checkOsdbClient
@@ -268,11 +275,11 @@ func TestSearchSubtitles(t *testing.T) {
 		searchOsdbSubtitles = situation.searchOsdbSubtitles
 		fileSearchSubtitles = situation.fileSearchSubtitles
 
-		for _, video := range []interface{}{
+		for _, video := range []polochon.Video{
 			fakeMovie,
 			fakeShowEpisode,
 		} {
-			sub, err := fakeProxy.searchSubtitles(video, "fakePath", string(polochon.FR), fakeLoggerEntry)
+			sub, err := fakeProxy.searchSubtitles(video, string(polochon.FR), fakeLoggerEntry)
 			if err != situation.expectedErr {
 				log.Fatalf("Got error in searchMovieSubtitles: %q, wanted : %q", err, situation.expectedErr)
 			}

@@ -94,7 +94,7 @@ func (a *addictedProxy) Status() (polochon.ModuleStatus, error) {
 	return polochon.StatusOK, nil
 }
 
-func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
+func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
 	// TODO: add year
 	// TODO: handle release
 
@@ -130,20 +130,22 @@ func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang p
 
 	sort.Sort(addicted.ByDownloads(filteredSubs))
 
+	subtitle := polochon.NewSubtitleFromVideo(reqEpisode, lang)
+
 	if reqEpisode.ReleaseGroup == "" {
 		// No release group specified get the most downloaded subtitle
-		return &filteredSubs[0], err
+		subtitle.ReadCloser = &filteredSubs[0]
+		return subtitle, err
 	}
 
 	subDist := 1000
-	var subtitle polochon.Subtitle
 	var release string
 
 	for _, sub := range filteredSubs {
 		dist := levenshtein.ComputeDistance(strings.ToLower(reqEpisode.ReleaseGroup), strings.ToLower(sub.Release))
 		if dist < subDist {
 			subDist = dist
-			subtitle = &sub
+			subtitle.ReadCloser = &sub
 			release = sub.Release
 		}
 	}
@@ -152,7 +154,7 @@ func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang p
 }
 
 // GetSubtitle implements the Subtitler interface
-func (a *addictedProxy) GetSubtitle(i interface{}, lang polochon.Language, log *logrus.Entry) (polochon.Subtitle, error) {
+func (a *addictedProxy) GetSubtitle(i interface{}, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
 	switch v := i.(type) {
 	case *polochon.ShowEpisode:
 		return a.getShowSubtitle(v, lang, log)
