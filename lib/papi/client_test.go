@@ -10,32 +10,24 @@ import (
 	polochon "github.com/odwrtw/polochon/lib"
 )
 
-func TestURLWithToken(t *testing.T) {
-	c, err := New("http://mock.url")
+func TestTokenAuth(t *testing.T) {
+	var foundToken string
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		foundToken = r.Header.Get("X-Auth-Token")
+	}))
+	defer ts.Close()
+
+	c, err := New(ts.URL)
 	if err != nil {
 		t.Fatalf("invalid endpoint: %q", err)
 	}
 	c.SetToken("token1")
 
-	for _, test := range []struct {
-		ExpectedURL string
-		URL         string
-		ExpectedErr error
-	}{
-		{
-			ExpectedURL: "http://mock.url/test?token=token1",
-			URL:         "http://mock.url/test",
-			ExpectedErr: nil,
-		},
-	} {
-		got, err := c.url(test.URL)
-		if err != test.ExpectedErr {
-			t.Fatalf("expected err %q, got %q", test.ExpectedErr, err)
-		}
-
-		if got != test.ExpectedURL {
-			t.Fatalf("expected %q, got %q", test.ExpectedURL, got)
-		}
+	// Don't need to check the result of this call, the point is to get the
+	// header
+	c.GetMovies()
+	if foundToken != "token1" {
+		t.Fatalf("token not set in the header")
 	}
 }
 
