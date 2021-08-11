@@ -1,6 +1,7 @@
 package addicted
 
 import (
+	"bytes"
 	"fmt"
 	"sort"
 	"strings"
@@ -132,24 +133,44 @@ func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang p
 
 	subtitle := polochon.NewSubtitleFromVideo(reqEpisode, lang)
 
+	data := &bytes.Buffer{}
+
 	if reqEpisode.ReleaseGroup == "" {
 		// No release group specified get the most downloaded subtitle
-		subtitle.ReadCloser = &filteredSubs[0]
+		_, err = data.ReadFrom(&filteredSubs[0])
+		if err != nil {
+			return nil, err
+		}
+
+		subtitle.Data = data.Bytes()
 		return subtitle, err
 	}
 
 	subDist := 1000
 	var release string
+	var chosen *addicted.Subtitle
 
 	for _, sub := range filteredSubs {
 		dist := levenshtein.ComputeDistance(strings.ToLower(reqEpisode.ReleaseGroup), strings.ToLower(sub.Release))
 		if dist < subDist {
 			subDist = dist
-			subtitle.ReadCloser = &sub
+			chosen = &sub
 			release = sub.Release
 		}
 	}
+
+	if chosen == nil {
+		return nil, nil
+	}
+
 	log.Info("Subtitle chosen ", release, " whit distance ", subDist)
+
+	_, err = data.ReadFrom(&filteredSubs[0])
+	if err != nil {
+		return nil, err
+	}
+
+	subtitle.Data = data.Bytes()
 	return subtitle, err
 }
 

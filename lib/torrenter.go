@@ -21,7 +21,7 @@ type Torrenter interface {
 	SearchTorrents(string) ([]*Torrent, error)
 }
 
-// Torrentable represents a ressource which can be torrented
+// Torrentable represents a resource which can be torrented
 type Torrentable interface {
 	GetTorrenters() []Torrenter
 }

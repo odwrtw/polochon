@@ -1,7 +1,6 @@
 package index
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -208,41 +207,17 @@ func TestMovieIndexAddSubtitles(t *testing.T) {
 	m.Path = "/home/test/movie/movie.mp4"
 
 	sub := polochon.NewSubtitleFromVideo(m, polochon.FR)
-
-	// Check to add subtitle if movie not yet added
-	err := idx.AddSubtitle(m, sub)
-	if err == nil {
-		t.Fatal("expected error")
-	}
-
-	expectedErrString := fmt.Sprintf("failed to add subtitle : movie %s not indexed", m.ImdbID)
-	if err.Error() != expectedErrString {
-		t.Fatalf("expected error %q - got %q", expectedErrString, err)
-	}
+	m.Subtitles = []*polochon.Subtitle{sub}
 
 	if err := idx.Add(m); err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
 
-	subInIndex, err := idx.HasSubtitle(m.ImdbID, sub)
+	ok, err := idx.HasSubtitle(m.ImdbID, sub)
 	if err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
-	if subInIndex {
-		t.Fatalf("the movie subtitle %q should not be in the index", m.ImdbID)
-	}
-
-	// Add the subtitle
-	err = idx.AddSubtitle(m, sub)
-	if err != nil {
-		t.Fatalf("expected no error, got %q", err)
-	}
-
-	subInIndex, err = idx.HasSubtitle(m.ImdbID, sub)
-	if err != nil {
-		t.Fatalf("expected no error, got %q", err)
-	}
-	if !subInIndex {
+	if !ok {
 		t.Fatalf("the movie subtitle %q should be in the index", m.ImdbID)
 	}
 }

@@ -24,9 +24,17 @@ var showByIDsResponse = `
 					"audio_codec": "AAC",
 					"video_codec": "H.264",
 					"container": "mkv",
+					"filename": "Chefs.table.S01E01.mkv",
+					"size": 546325850,
 					"subtitles": [
-					  "fr_FR",
-					  "en_US"
+					  {
+						"size": 35037,
+						"lang": "fr_FR"
+					  },
+					  {
+						"size": 39349,
+						"lang": "en_US"
+					  }
 					]
 				}
 			}
@@ -66,12 +74,18 @@ func TestGetShows(t *testing.T) {
 						Episodes: map[int]*Episode{
 							1: {
 								ShowEpisode: &polochon.ShowEpisode{
-									VideoMetadata: polochon.VideoMetadata{
-										Quality:      polochon.Quality720p,
-										ReleaseGroup: "R1",
-										AudioCodec:   "AAC",
-										VideoCodec:   "H.264",
-										Container:    "mkv",
+									BaseVideo: polochon.BaseVideo{
+										File: polochon.File{
+											Size: 546325850,
+											Path: "Chefs.table.S01E01.mkv",
+										},
+										VideoMetadata: polochon.VideoMetadata{
+											Quality:      polochon.Quality720p,
+											ReleaseGroup: "R1",
+											AudioCodec:   "AAC",
+											VideoCodec:   "H.264",
+											Container:    "mkv",
+										},
 									},
 									ShowImdbID: "tt4295140",
 									Season:     1,
@@ -80,9 +94,11 @@ func TestGetShows(t *testing.T) {
 								Subtitles: []*index.Subtitle{
 									{
 										Lang: polochon.FR,
+										Size: 35037,
 									},
 									{
 										Lang: polochon.EN,
+										Size: 39349,
 									},
 								},
 							},
@@ -127,6 +143,7 @@ func TestGetShows(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to get shows by IDs: %q", err)
 	}
+
 	if !reflect.DeepEqual(got, expected) {
 		t.Fatalf("expected: %+v, got %+v", expected, got)
 	}
@@ -221,12 +238,14 @@ func TestGetShow(t *testing.T) {
 						ShowImdbID: "tt0944947",
 						Season:     6,
 						Episode:    1,
-						VideoMetadata: polochon.VideoMetadata{
-							Quality:      polochon.Quality720p,
-							ReleaseGroup: "R1",
-							AudioCodec:   "AAC",
-							VideoCodec:   "H.264",
-							Container:    "mkv",
+						BaseVideo: polochon.BaseVideo{
+							VideoMetadata: polochon.VideoMetadata{
+								Quality:      polochon.Quality720p,
+								ReleaseGroup: "R1",
+								AudioCodec:   "AAC",
+								VideoCodec:   "H.264",
+								Container:    "mkv",
+							},
 						},
 					}},
 				},
@@ -265,12 +284,14 @@ func TestGetShow(t *testing.T) {
 		ShowImdbID: "tt0944947",
 		Season:     6,
 		Episode:    1,
-		VideoMetadata: polochon.VideoMetadata{
-			Quality:      polochon.Quality720p,
-			ReleaseGroup: "R1",
-			AudioCodec:   "AAC",
-			VideoCodec:   "H.264",
-			Container:    "mkv",
+		BaseVideo: polochon.BaseVideo{
+			VideoMetadata: polochon.VideoMetadata{
+				Quality:      polochon.Quality720p,
+				ReleaseGroup: "R1",
+				AudioCodec:   "AAC",
+				VideoCodec:   "H.264",
+				Container:    "mkv",
+			},
 		},
 	}}
 

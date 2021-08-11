@@ -110,6 +110,7 @@ func (l *Library) addShow(ep *polochon.ShowEpisode, log *logrus.Entry) error {
 			name: "banner.jpg",
 		},
 	} {
+		log.Debug("downloading " + img.name)
 		savePath := filepath.Join(dir, img.name)
 		if err := download(img.url, savePath); err != nil {
 			return err

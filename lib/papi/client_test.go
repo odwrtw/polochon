@@ -180,27 +180,6 @@ func TestDelete(t *testing.T) {
 	}
 }
 
-func TestUpdateSubtitles(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`["fr_FR","en_US"]`))
-	}))
-	defer ts.Close()
-
-	client, err := New(ts.URL)
-	if err != nil {
-		t.Fatalf("expected no error doing new client, got %q", err)
-	}
-
-	subs, err := client.UpdateSubtitles(&Movie{Movie: &polochon.Movie{ImdbID: "fake_id"}})
-	if err != nil {
-		t.Fatalf("Expected no error, got %+v", err)
-	}
-	expectedSubs := []string{"fr_FR", "en_US"}
-	if !reflect.DeepEqual(subs, expectedSubs) {
-		t.Fatalf("expected: %+v, got %+v", expectedSubs, subs)
-	}
-}
-
 func TestBasicAuth(t *testing.T) {
 	var useBasicAuth bool
 	var username, password string
@@ -240,35 +219,5 @@ func TestBasicAuth(t *testing.T) {
 
 	if expectedPassword != password {
 		t.Fatalf("invalid password, expected %q, got %q", expectedPassword, password)
-	}
-}
-
-func TestSubtitleURL(t *testing.T) {
-	c, err := New("http://mock.url")
-	if err != nil {
-		t.Fatalf("invalid endpoint: %q", err)
-	}
-
-	for _, test := range []struct {
-		Downloadable Downloadable
-		lang         string
-		ExpectedURL  string
-		ExpectedErr  error
-	}{
-		{
-			Downloadable: &Movie{Movie: &polochon.Movie{ImdbID: "tt001"}},
-			lang:         "fr_FR",
-			ExpectedURL:  "http://mock.url/movies/tt001/subtitles/fr_FR/download",
-			ExpectedErr:  nil,
-		},
-	} {
-		got, err := c.SubtitleURL(test.Downloadable, test.lang)
-		if err != test.ExpectedErr {
-			t.Fatalf("expected err %q, got %q", test.ExpectedErr, err)
-		}
-
-		if got != test.ExpectedURL {
-			t.Fatalf("expected %q, got %q", test.ExpectedURL, got)
-		}
 	}
 }

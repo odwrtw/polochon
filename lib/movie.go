@@ -12,24 +12,22 @@ type MovieConfig struct {
 // Movie represents a movie
 type Movie struct {
 	MovieConfig `json:"-"`
-	VideoMetadata
 
-	File
-	ImdbID        string     `json:"imdb_id"`
-	OriginalTitle string     `json:"original_title"`
-	Plot          string     `json:"plot"`
-	Rating        float32    `json:"rating"`
-	Runtime       int        `json:"runtime"`
-	SortTitle     string     `json:"sort_title"`
-	Tagline       string     `json:"tag_line"`
-	Thumb         string     `json:"thumb"`
-	Fanart        string     `json:"fanart"`
-	Title         string     `json:"title"`
-	TmdbID        int        `json:"tmdb_id"`
-	Votes         int        `json:"votes"`
-	Year          int        `json:"year"`
-	Genres        []string   `json:"genres"`
-	Torrents      []*Torrent `json:"torrents"`
+	BaseVideo
+	ImdbID        string   `json:"imdb_id"`
+	OriginalTitle string   `json:"original_title"`
+	Plot          string   `json:"plot"`
+	Rating        float32  `json:"rating"`
+	Runtime       int      `json:"runtime"`
+	SortTitle     string   `json:"sort_title"`
+	Tagline       string   `json:"tag_line"`
+	Thumb         string   `json:"thumb"`
+	Fanart        string   `json:"fanart"`
+	Title         string   `json:"title"`
+	TmdbID        int      `json:"tmdb_id"`
+	Votes         int      `json:"votes"`
+	Year          int      `json:"year"`
+	Genres        []string `json:"genres"`
 }
 
 // NewMovie returns a new movie
@@ -41,10 +39,11 @@ func NewMovie(movieConfig MovieConfig) *Movie {
 
 // NewMovieFromFile returns a new movie from a file
 func NewMovieFromFile(movieConfig MovieConfig, file File) *Movie {
-	return &Movie{
+	m := &Movie{
 		MovieConfig: movieConfig,
-		File:        file,
 	}
+	m.File = file
+	return m
 }
 
 // GetTorrenters implements the Torrentable interface
@@ -70,19 +69,4 @@ func (m *MovieConfig) GetExplorers() []Explorer {
 // GetSearchers implements the Searcher interface
 func (m *MovieConfig) GetSearchers() []Searcher {
 	return m.Searchers
-}
-
-// SetFile implements the video interface
-func (m *Movie) SetFile(f *File) {
-	m.File = *f
-}
-
-// GetFile implements the video interface
-func (m *Movie) GetFile() *File {
-	return &m.File
-}
-
-// SetMetadata implements the video interface
-func (m *Movie) SetMetadata(metadata *VideoMetadata) {
-	m.VideoMetadata.Update(metadata)
 }

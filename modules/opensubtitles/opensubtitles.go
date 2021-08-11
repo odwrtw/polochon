@@ -1,6 +1,7 @@
 package opensubtitles
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -399,9 +400,14 @@ func (osp *osProxy) GetSubtitle(i interface{}, lang polochon.Language, log *logr
 		return nil, err
 	}
 
-	s := polochon.NewSubtitleFromVideo(video, lang)
-	s.ReadCloser = sub
+	data := &bytes.Buffer{}
+	_, err = data.ReadFrom(sub)
+	if err != nil {
+		return nil, err
+	}
 
+	s := polochon.NewSubtitleFromVideo(video, lang)
+	s.Data = data.Bytes()
 	return s, nil
 }
 

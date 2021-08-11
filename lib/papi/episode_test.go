@@ -129,14 +129,14 @@ func TestShowEpisodeSubtitleURL(t *testing.T) {
 	for _, test := range []struct {
 		ShowEpisode         *Episode
 		ExpectedSubtitleURL string
-		lang                string
+		lang                polochon.Language
 		ExpectedError       error
 	}{
 		{
 			ShowEpisode: &Episode{ShowEpisode: &polochon.ShowEpisode{
 				ShowImdbID: "tt2357547", Season: 1, Episode: 6,
 			}},
-			lang:                "fr_FR",
+			lang:                polochon.FR,
 			ExpectedSubtitleURL: "shows/tt2357547/seasons/1/episodes/6/subtitles/fr_FR/download",
 			ExpectedError:       nil,
 		},
@@ -144,7 +144,7 @@ func TestShowEpisodeSubtitleURL(t *testing.T) {
 			ShowEpisode: &Episode{ShowEpisode: &polochon.ShowEpisode{
 				Season: 1, Episode: 6,
 			}},
-			lang:                "fr_FR",
+			lang:                polochon.FR,
 			ExpectedSubtitleURL: "",
 			ExpectedError:       ErrMissingShowEpisodeInformations,
 		},
@@ -152,7 +152,7 @@ func TestShowEpisodeSubtitleURL(t *testing.T) {
 			ShowEpisode: &Episode{ShowEpisode: &polochon.ShowEpisode{
 				ShowImdbID: "tt2357547",
 			}},
-			lang:                "fr_FR",
+			lang:                polochon.FR,
 			ExpectedSubtitleURL: "",
 			ExpectedError:       ErrMissingShowEpisodeInformations,
 		},

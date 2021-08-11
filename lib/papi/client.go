@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+
+	polochon "github.com/odwrtw/polochon/lib"
 )
 
 // Resource is an interface to identify a resource
@@ -19,7 +21,7 @@ type Resource interface {
 type Downloadable interface {
 	Resource
 	downloadURL() (string, error)
-	subtitleURL(lang string) (string, error)
+	subtitleURL(lang polochon.Language) (string, error)
 }
 
 type basicAuth struct {
@@ -74,16 +76,6 @@ func (c *Client) DownloadURL(target Downloadable) (string, error) {
 	return c.endpoint + "/" + url, nil
 }
 
-// SubtitleURL returns the subtitle URL of a subtitlable content
-func (c *Client) SubtitleURL(target Downloadable, lang string) (string, error) {
-	url, err := target.subtitleURL(lang)
-	if err != nil {
-		return "", err
-	}
-
-	return c.endpoint + "/" + url, nil
-}
-
 // Delete deletes a ressource
 func (c *Client) Delete(target Resource) error {
 	url, err := target.uri()
@@ -92,17 +84,6 @@ func (c *Client) Delete(target Resource) error {
 	}
 
 	return c.delete(fmt.Sprintf("%s/%s", c.endpoint, url))
-}
-
-// UpdateSubtitles updates the subtitles of a ressource
-func (c *Client) UpdateSubtitles(target Resource) ([]string, error) {
-	url, err := target.uri()
-	if err != nil {
-		return nil, err
-	}
-
-	var subtitles []string
-	return subtitles, c.post(fmt.Sprintf("%s/%s/subtitles", c.endpoint, url), nil, &subtitles)
 }
 
 func (c *Client) get(url string, result interface{}) error {

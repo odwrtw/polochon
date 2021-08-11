@@ -74,12 +74,14 @@ func TestGetMovies(t *testing.T) {
 	expected := &MovieCollection{
 		movies: map[string]*Movie{
 			"tt001": {Movie: &polochon.Movie{
-				VideoMetadata: polochon.VideoMetadata{
-					Quality:      polochon.Quality1080p,
-					ReleaseGroup: "R1",
-					AudioCodec:   "AAC",
-					VideoCodec:   "H.264",
-					Container:    "mkv",
+				BaseVideo: polochon.BaseVideo{
+					VideoMetadata: polochon.VideoMetadata{
+						Quality:      polochon.Quality1080p,
+						ReleaseGroup: "R1",
+						AudioCodec:   "AAC",
+						VideoCodec:   "H.264",
+						Container:    "mkv",
+					},
 				},
 				ImdbID: "tt001",
 				Title:  "title_1",
@@ -180,24 +182,24 @@ func TestMovieSubtitleURL(t *testing.T) {
 	for _, test := range []struct {
 		Movie               *Movie
 		ExpectedSubtitleURL string
-		lang                string
+		lang                polochon.Language
 		ExpectedError       error
 	}{
 		{
 			Movie:               &Movie{Movie: &polochon.Movie{ImdbID: "tt0086190"}},
-			lang:                "fr_FR",
+			lang:                polochon.FR,
 			ExpectedSubtitleURL: "movies/tt0086190/subtitles/fr_FR/download",
 			ExpectedError:       nil,
 		},
 		{
 			Movie:               &Movie{},
-			lang:                "fr_FR",
+			lang:                polochon.FR,
 			ExpectedSubtitleURL: "",
 			ExpectedError:       ErrMissingMovie,
 		},
 		{
 			Movie:               &Movie{Movie: &polochon.Movie{}},
-			lang:                "fr_FR",
+			lang:                polochon.FR,
 			ExpectedSubtitleURL: "",
 			ExpectedError:       ErrMissingMovieID,
 		},

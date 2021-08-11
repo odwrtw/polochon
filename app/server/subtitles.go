@@ -14,6 +14,24 @@ func getLanguage(w http.ResponseWriter, req *http.Request) polochon.Language {
 	return polochon.Language(lang)
 }
 
+func (s *Server) updateSubtitles(w http.ResponseWriter, req *http.Request, v polochon.Video) {
+	log := s.logEntry(req)
+
+	err := polochon.GetSubtitles(v, s.config.SubtitleLanguages, log)
+	if err != nil {
+		s.renderError(w, req, err)
+		return
+	}
+
+	err = s.library.SaveSubtitles(v, log)
+	if err != nil {
+		s.renderError(w, req, err)
+		return
+	}
+
+	s.renderOK(w, v.GetSubtitles())
+}
+
 func (s *Server) updateMovieSubtitles(w http.ResponseWriter, req *http.Request) {
 	log := s.logEntry(req)
 	log.Infof("updating movie subtitles")
@@ -23,13 +41,7 @@ func (s *Server) updateMovieSubtitles(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	subs, err := s.library.AddSubtitles(m, s.config.SubtitleLanguages, log)
-	if err != nil {
-		s.renderError(w, req, err)
-		return
-	}
-
-	s.renderOK(w, subs)
+	s.updateSubtitles(w, req, m)
 }
 
 func (s *Server) updateEpisodeSubtitles(w http.ResponseWriter, req *http.Request) {
@@ -41,13 +53,7 @@ func (s *Server) updateEpisodeSubtitles(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	subs, err := s.library.AddSubtitles(e, s.config.SubtitleLanguages, log)
-	if err != nil {
-		s.renderError(w, req, err)
-		return
-	}
-
-	s.renderOK(w, subs)
+	s.updateSubtitles(w, req, e)
 }
 
 func (s *Server) serveMovieSubtitle(w http.ResponseWriter, req *http.Request) {

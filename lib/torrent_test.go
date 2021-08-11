@@ -124,12 +124,12 @@ func TestHasVideo(t *testing.T) {
 		ShowImdbID: validEpisodeTorrent.ImdbID,
 		Season:     validEpisodeTorrent.Season,
 		Episode:    validEpisodeTorrent.Episode,
-		VideoMetadata: VideoMetadata{
-			Quality: validEpisodeTorrent.Quality,
-		},
-		Torrents: []*Torrent{validEpisodeTorrent},
-		Show:     expectedShow,
+		Show:       expectedShow,
 	}
+	expectedEpisode.SetMetadata(&VideoMetadata{
+		Quality: validEpisodeTorrent.Quality,
+	})
+	expectedEpisode.SetTorrents([]*Torrent{validEpisodeTorrent})
 	expectedShow.Episodes = []*ShowEpisode{expectedEpisode}
 
 	tt := []struct {
@@ -152,10 +152,12 @@ func TestHasVideo(t *testing.T) {
 			torrent: validMovieTorrent,
 			expected: &Movie{
 				ImdbID: validMovieTorrent.ImdbID,
-				VideoMetadata: VideoMetadata{
-					Quality: validMovieTorrent.Quality,
+				BaseVideo: BaseVideo{
+					VideoMetadata: VideoMetadata{
+						Quality: validMovieTorrent.Quality,
+					},
+					Torrents: []*Torrent{validMovieTorrent},
 				},
-				Torrents: []*Torrent{validMovieTorrent},
 			},
 		},
 		{

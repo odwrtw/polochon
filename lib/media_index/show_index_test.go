@@ -467,20 +467,11 @@ func TestShowIndexAddSubtitle(t *testing.T) {
 		mock.episode.Path = mock.episodePath
 
 		sub := polochon.NewSubtitleFromVideo(mock.episode, polochon.FR)
-
-		// Add subtitle to the index
-		if err := idx.AddSubtitle(mock.episode, sub); err == nil {
-			t.Fatalf("should get an error while adding show subtitle in the index: %q", err)
-		}
+		mock.episode.Subtitles = []*polochon.Subtitle{sub}
 
 		// Add episode it to the index
 		if err := idx.Add(mock.episode); err != nil {
 			t.Fatalf("error while adding show in the index: %q", err)
-		}
-
-		// Add subtitle to the index
-		if err := idx.AddSubtitle(mock.episode, sub); err != nil {
-			t.Fatalf("got an error while adding show subtitle in the index: %q", err)
 		}
 
 		// Check

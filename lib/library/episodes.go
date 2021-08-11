@@ -17,7 +17,14 @@ func (l *Library) HasShowEpisode(imdbID string, season, episode int) (bool, erro
 }
 
 // AddShowEpisode adds an episode to the store
-func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode, log *logrus.Entry) error {
+func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode, logEntry *logrus.Entry) error {
+	log := logEntry.WithFields(logrus.Fields{
+		"type":         "show_episode",
+		"show_title":   ep.ShowTitle,
+		"show_imdb_id": ep.ShowImdbID,
+		"episode":      ep.Episode,
+		"season":       ep.Season,
+	})
 	if ep.Path == "" {
 		return ErrMissingShowEpisodeFilePath
 	}
@@ -63,7 +70,10 @@ func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode, log *logrus.Entry) er
 
 	// Move the episode into the folder
 	newPath := filepath.Join(seasonDir, path.Base(ep.Path))
-	log.Debugf("Moving episode to folder Old path: %q, New path: %q", ep.Path, newPath)
+	log.WithFields(logrus.Fields{
+		"old_path": ep.Path,
+		"new_path": newPath,
+	}).Debugf("moving episode")
 	if err := os.Rename(ep.Path, newPath); err != nil {
 		return err
 	}
@@ -75,12 +85,17 @@ func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode, log *logrus.Entry) er
 	// Only if the downloader is enabled
 	if l.downloaderConfig.Enabled {
 		if err := os.Symlink(ep.Path, oldPath); err != nil {
-			log.Warnf("Error while making symlink between %s and %s : %+v", oldPath, ep.Path, err)
+			log.Warnf("error while making symlink")
 		}
 	}
 
 	// Create show NFO if necessary
 	if err := writeNFOFile(ep.NfoPath(), ep); err != nil {
+		return err
+	}
+
+	// Save the subtitles here
+	if err := l.SaveSubtitles(ep, log); err != nil {
 		return err
 	}
 
@@ -90,7 +105,7 @@ func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode, log *logrus.Entry) er
 // DeleteShowEpisode will delete the showEpisode
 func (l *Library) DeleteShowEpisode(se *polochon.ShowEpisode, log *logrus.Entry) error {
 	// Delete the episode
-	log.Infof("Removing ShowEpisode %q", se.Path)
+	log.Infof("removing episode file")
 	// Remove the episode
 	if err := os.RemoveAll(se.Path); err != nil {
 		return err
@@ -99,7 +114,7 @@ func (l *Library) DeleteShowEpisode(se *polochon.ShowEpisode, log *logrus.Entry)
 	// Remove also the .nfo and .srt files
 	for _, ext := range []string{"nfo", "srt"} {
 		fileToDelete := fmt.Sprintf("%s.%s", pathWithoutExt, ext)
-		log.Debugf("Removing %q", fileToDelete)
+		log.Debugf("removing associated extention %s", ext)
 		// Remove file
 		if err := os.RemoveAll(fileToDelete); err != nil {
 			return err
@@ -154,5 +169,6 @@ func (l *Library) newEpisodeFromPath(path string) (*polochon.ShowEpisode, error)
 		return nil, err
 	}
 
+	l.UpdateSubtitles(se)
 	return se, nil
 }

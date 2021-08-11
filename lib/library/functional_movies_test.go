@@ -20,13 +20,18 @@ func (m *mockLibrary) mockMovie(name string) (*polochon.Movie, error) {
 		return nil, err
 	}
 
-	movie := polochon.NewMovie(m.movieConfig)
+	file := polochon.NewFile(path)
+
+	movie := polochon.NewMovieFromFile(m.movieConfig, *file)
 	movie.Fanart = m.httpServer.URL
 	movie.Thumb = m.httpServer.URL
 	movie.ImdbID = "tt12345"
-	movie.Path = filepath.Join(m.tmpDir, "downloads", name)
 
 	if err := polochon.GetDetails(movie, mockLogEntry); err != nil {
+		return nil, err
+	}
+
+	if err := polochon.GetSubtitles(movie, m.SubtitleLanguages, mockLogEntry); err != nil {
 		return nil, err
 	}
 
@@ -36,6 +41,7 @@ func (m *mockLibrary) mockMovie(name string) (*polochon.Movie, error) {
 func TestAddMovie(t *testing.T) {
 	lib, err := newMockLibrary()
 	defer lib.cleanup()
+
 	if err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
@@ -94,25 +100,8 @@ func TestAddMovie(t *testing.T) {
 		}
 	}
 
-	langs := []polochon.Language{polochon.FR, polochon.EN}
-
-	// Add subtitles for the movie
-	subs, err := lib.AddSubtitles(m, langs, mockLogEntry)
-	if err != nil {
-		t.Fatalf("failed to add subtitles for the movie: %q", err)
-	}
-
-	wantedSubs := []*polochon.Subtitle{
-		polochon.NewSubtitleFromVideo(m, polochon.FR),
-		polochon.NewSubtitleFromVideo(m, polochon.EN),
-	}
-
-	if !reflect.DeepEqual(subs, wantedSubs) {
-		t.Errorf("invalid subs, expected %+v got %+v", subs, wantedSubs)
-	}
-
 	// Check the content of the downloaded subtitles files
-	for _, lang := range langs {
+	for _, lang := range lib.SubtitleLanguages {
 		sub := lib.GetSubtitle(m, lang)
 		if sub == nil {
 			t.Fatal("should have subtitle")
@@ -124,16 +113,8 @@ func TestAddMovie(t *testing.T) {
 
 		// The mock content comes from the httptest server
 		if string(content) != fmt.Sprintf("subtitle in %s", lang) {
-			t.Error("invalid subtitle content")
+			t.Errorf("invalid subtitle content: %q", string(content))
 		}
-	}
-	// Add subtitles for the movie once more
-	subs, err = lib.AddSubtitles(m, langs, mockLogEntry)
-	if err != nil {
-		t.Fatalf("failed to add subtitles for the movie: %q", err)
-	}
-	if !reflect.DeepEqual(subs, wantedSubs) {
-		t.Errorf("invalid subs, expected %+v got %+v", subs, wantedSubs)
 	}
 
 	// Check the movie index
@@ -158,8 +139,14 @@ func TestAddMovie(t *testing.T) {
 		t.Fatalf("expected no error, got %q", err)
 	}
 
+	// The mock movie have the data but not the episode from the lib, let's
+	// remove the data to compare the two
+	for _, s := range m.Subtitles {
+		s.Data = nil
+	}
+
 	if !reflect.DeepEqual(m, movieFromLib) {
-		t.Errorf("invalid movie from lib, expected %+v got %+v", m, movieFromLib)
+		t.Errorf("invalid movie from lib, expected \n%+v\ngot\n%+v", m, movieFromLib)
 	}
 
 	// Rebuild the index, the movie should be found and added to the index
@@ -172,7 +159,6 @@ func TestAddMovie(t *testing.T) {
 	if !reflect.DeepEqual(gotIDs, expectedIDs) {
 		t.Errorf("invalid ids, expected %+v got %+v", expectedIDs, gotIDs)
 	}
-
 }
 
 func TestDeleteMovie(t *testing.T) {

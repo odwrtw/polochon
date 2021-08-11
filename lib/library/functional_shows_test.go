@@ -30,6 +30,10 @@ func (m *mockLibrary) mockEpisode(s *polochon.Show, name string) (*polochon.Show
 		return nil, err
 	}
 
+	if err := polochon.GetSubtitles(e, m.SubtitleLanguages, mockLogEntry); err != nil {
+		return nil, err
+	}
+
 	return e, nil
 }
 
@@ -77,25 +81,8 @@ func TestAddEpisode(t *testing.T) {
 		t.Fatalf("failed to add the episode: %q", err)
 	}
 
-	langs := []polochon.Language{polochon.FR, polochon.EN}
-
-	// Add subtitles for the episode
-	subs, err := lib.AddSubtitles(episode, langs, mockLogEntry)
-	if err != nil {
-		t.Fatalf("failed to add subtitles for the episode: %q", err)
-	}
-
-	wantedSubs := []*polochon.Subtitle{
-		polochon.NewSubtitleFromVideo(episode, polochon.FR),
-		polochon.NewSubtitleFromVideo(episode, polochon.EN),
-	}
-
-	if !reflect.DeepEqual(subs, wantedSubs) {
-		t.Errorf("invalid subs, expected %+v got %+v", subs, wantedSubs)
-	}
-
 	// Check the content of the downloaded subtitles files
-	for _, lang := range langs {
+	for _, lang := range lib.SubtitleLanguages {
 		sub := lib.GetSubtitle(episode, lang)
 		if sub == nil {
 			t.Fatal("should have subtitle")
@@ -109,15 +96,6 @@ func TestAddEpisode(t *testing.T) {
 		if string(content) != fmt.Sprintf("subtitle in %s", lang) {
 			t.Error("invalid subtitle content")
 		}
-	}
-
-	// Add subtitles for the episode once more
-	subs, err = lib.AddSubtitles(episode, langs, mockLogEntry)
-	if err != nil {
-		t.Fatalf("failed to add subtitles for the episode: %q", err)
-	}
-	if !reflect.DeepEqual(subs, wantedSubs) {
-		t.Errorf("invalid subs, expected %+v got %+v", subs, wantedSubs)
 	}
 
 	// Check the new file location
@@ -161,6 +139,12 @@ func TestAddEpisode(t *testing.T) {
 	// manually
 	episodeFromLib.Show = episode.Show
 
+	// The mock episode have the data but not the episode from the lib, let's
+	// remove the data to compare the two
+	for _, s := range episode.Subtitles {
+		s.Data = nil
+	}
+
 	if !reflect.DeepEqual(episode, episodeFromLib) {
 		t.Errorf("invalid episode from lib, expected %+v got %+v", episode, episodeFromLib)
 	}
@@ -173,6 +157,10 @@ func TestAddEpisode(t *testing.T) {
 				Path:          filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1/episodeTest.mp4"),
 				Filename:      "episodeTest.mp4",
 				VideoMetadata: episode.VideoMetadata,
+				Subtitles: []*index.Subtitle{
+					{Lang: polochon.FR, Size: 17},
+					{Lang: polochon.EN, Size: 17},
+				},
 			},
 		},
 	}
@@ -194,7 +182,7 @@ func TestAddEpisode(t *testing.T) {
 	// Ensure the index if valid
 	gotIDs := lib.ShowIDs()
 	if !reflect.DeepEqual(expectedIDs, gotIDs) {
-		t.Errorf("invalid show ids, expected %#v got %#v", expectedIDs, gotIDs)
+		t.Fatalf("invalid show ids, expected %#v got %#v", expectedIDs, gotIDs)
 	}
 
 	// Ensure the library has the show episode
@@ -213,7 +201,7 @@ func TestAddEpisode(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(expectedIndexedShow, gotIndexedShow) {
-		t.Errorf("invalid show ids, expected %+v got %+v", expectedIndexedShow, gotIndexedShow)
+		t.Fatalf("invalid show ids, expected %+v got %+v", expectedIndexedShow, gotIndexedShow)
 	}
 
 	// Get the indexed season
@@ -223,7 +211,7 @@ func TestAddEpisode(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(expectedIndexedSeason, gotIndexedSeason) {
-		t.Errorf("invalid season, expected %+v got %+v", expectedIndexedSeason, gotIndexedSeason)
+		t.Fatalf("invalid season, expected %+v got %+v", expectedIndexedSeason, gotIndexedSeason)
 	}
 
 	// Rebuild the index, the episode should be found and added to the index
@@ -234,7 +222,7 @@ func TestAddEpisode(t *testing.T) {
 	// Ensure the index is still valid after a rebuild
 	gotIDs = lib.ShowIDs()
 	if !reflect.DeepEqual(expectedIDs, gotIDs) {
-		t.Errorf("invalid show ids, expected %+v got %+v", expectedIDs, gotIDs)
+		t.Fatalf("invalid show ids, expected %+v got %+v", expectedIDs, gotIDs)
 	}
 }
 

@@ -87,14 +87,12 @@ func (t *Torrent) Video() Video {
 		return nil
 	}
 
+	var video Video
+
 	switch t.Type {
 	case TypeMovie:
-		return &Movie{
+		video = &Movie{
 			ImdbID: t.ImdbID,
-			VideoMetadata: VideoMetadata{
-				Quality: t.Quality,
-			},
-			Torrents: []*Torrent{t},
 		}
 	case TypeEpisode:
 		show := &Show{ImdbID: t.ImdbID}
@@ -102,17 +100,20 @@ func (t *Torrent) Video() Video {
 			ShowImdbID: t.ImdbID,
 			Season:     t.Season,
 			Episode:    t.Episode,
-			VideoMetadata: VideoMetadata{
-				Quality: t.Quality,
-			},
-			Torrents: []*Torrent{t},
-			Show:     show,
+			Show:       show,
 		}
 		show.Episodes = []*ShowEpisode{episode}
-		return episode
+		video = episode
 	default:
 		return nil
 	}
+
+	video.SetTorrents([]*Torrent{t})
+	video.SetMetadata(&VideoMetadata{
+		Quality: t.Quality,
+	})
+
+	return video
 }
 
 // RatioReached tells if the given ratio has been reached
