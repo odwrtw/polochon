@@ -1,7 +1,6 @@
 package index
 
 import (
-	"fmt"
 	"sync"
 
 	polochon "github.com/odwrtw/polochon/lib"
@@ -58,10 +57,7 @@ func (mi *MovieIndex) Movie(imdbID string) (*Movie, error) {
 
 // Add adds a movie to an index
 func (mi *MovieIndex) Add(movie *polochon.Movie) error {
-	mi.Lock()
-	defer mi.Unlock()
-
-	mi.ids[movie.ImdbID] = &Movie{
+	m := &Movie{
 		Path:          movie.Path,
 		Filename:      movie.Filename(),
 		Title:         movie.Title,
@@ -70,28 +66,14 @@ func (mi *MovieIndex) Add(movie *polochon.Movie) error {
 		VideoMetadata: movie.VideoMetadata,
 	}
 
-	return nil
-}
-
-// AddSubtitle adds a movie subtitle to an index
-func (mi *MovieIndex) AddSubtitle(movie *polochon.Movie, sub *polochon.Subtitle) error {
-	// Check that we have the movie
-	has, err := mi.Has(movie.ImdbID)
-	if err != nil {
-		return err
-	}
-	if !has {
-		return fmt.Errorf("failed to add subtitle : movie %s not indexed", movie.ImdbID)
+	for _, s := range movie.Subtitles {
+		m.Subtitles = append(m.Subtitles, NewSubtitle(s))
 	}
 
 	mi.Lock()
-	defer mi.Unlock()
+	mi.ids[movie.ImdbID] = m
+	mi.Unlock()
 
-	// Append the subtitle to the index
-	mi.ids[movie.ImdbID].Subtitles = append(
-		mi.ids[movie.ImdbID].Subtitles,
-		NewSubtitle(sub),
-	)
 	return nil
 }
 

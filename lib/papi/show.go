@@ -49,17 +49,20 @@ func extractSeasons(imdbID string, input map[string]map[string]*index.Episode) (
 				return nil, err
 			}
 
+			pe := &polochon.ShowEpisode{
+				ShowImdbID: imdbID,
+				Episode:    en,
+				Season:     sn,
+			}
+			pe.SetFile(polochon.File{
+				Path: e.Filename,
+				Size: e.Size,
+			})
+			pe.SetMetadata(&e.VideoMetadata)
+
 			s.Episodes[en] = &Episode{
-				ShowEpisode: &polochon.ShowEpisode{
-					ShowImdbID: imdbID,
-					Episode:    en,
-					Season:     sn,
-					File: polochon.File{
-						Path: e.Filename,
-						Size: e.Size,
-					},
-				},
-				Subtitles: e.Subtitles,
+				ShowEpisode: pe,
+				Subtitles:   e.Subtitles,
 			}
 		}
 

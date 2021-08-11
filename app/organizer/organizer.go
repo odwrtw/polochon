@@ -6,7 +6,7 @@ import (
 
 	"github.com/odwrtw/errors"
 	"github.com/odwrtw/polochon/app/subapp"
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/library"
 	"github.com/sirupsen/logrus"
@@ -173,15 +173,15 @@ func (o *Organizer) organizeFile(filePath string, log *logrus.Entry) error {
 		}
 	}
 
+	// Get subtitles
+	if err := polochon.GetSubtitles(video, o.config.SubtitleLanguages, log); err != nil {
+		errors.LogErrors(log, err)
+	}
+
 	// Store the video
 	if err := o.library.Add(video, log); err != nil {
 		errors.LogErrors(log, err)
 		return file.Ignore()
-	}
-
-	// Get subtitles
-	if _, err = o.library.AddSubtitles(video, o.config.SubtitleLanguages, log); err != nil {
-		errors.LogErrors(log, err)
 	}
 
 	// Notify

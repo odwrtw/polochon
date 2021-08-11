@@ -1,9 +1,9 @@
 package polochon
 
-// Language typc
+// Language type
 type Language string
 
-// Based on unix loacle
+// Based on unix locale
 const (
 	EN Language = "en_US"
 	FR Language = "fr_FR"

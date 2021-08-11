@@ -121,7 +121,7 @@ func (dm *DownloadManager) run(log *logrus.Entry) {
 			dm.moveToWatcherDirectory(torrent, tlog)
 			continue
 		}
-		video.SetFile(file)
+		video.SetFile(*file)
 
 		if file.IsSymlink() {
 			if torrent.RatioReached(dm.config.DownloadManager.Ratio) {
@@ -147,7 +147,7 @@ func (dm *DownloadManager) run(log *logrus.Entry) {
 			continue
 		}
 
-		// Get video details
+		// Get the video details
 		if err := polochon.GetDetails(video, tlog); err != nil {
 			errors.LogErrors(tlog, err)
 			if errors.IsFatal(err) {
@@ -156,16 +156,16 @@ func (dm *DownloadManager) run(log *logrus.Entry) {
 			}
 		}
 
+		// Get the video subtitles
+		if err := polochon.GetSubtitles(video, dm.config.SubtitleLanguages, tlog); err != nil {
+			errors.LogErrors(tlog, err)
+		}
+
 		// Store the video
 		if err := dm.library.Add(video, tlog); err != nil {
 			errors.LogErrors(tlog, err)
 			dm.moveToWatcherDirectory(torrent, tlog)
 			continue
-		}
-
-		// Get subtitles
-		if _, err = dm.library.AddSubtitles(video, dm.config.SubtitleLanguages, tlog); err != nil {
-			errors.LogErrors(tlog, err)
 		}
 
 		// Notify

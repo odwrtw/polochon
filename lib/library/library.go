@@ -1,9 +1,6 @@
 package library
 
 import (
-	"io"
-	"os"
-
 	"github.com/odwrtw/errors"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
@@ -58,7 +55,7 @@ func (l *Library) HasVideo(video polochon.Video) (bool, error) {
 	}
 }
 
-// Add video
+// Add adds a video in the library
 func (l *Library) Add(video polochon.Video, log *logrus.Entry) error {
 	switch v := video.(type) {
 	case *polochon.Movie:
@@ -70,101 +67,13 @@ func (l *Library) Add(video polochon.Video, log *logrus.Entry) error {
 	}
 }
 
-// Delete will delete the video
+// Delete deletes a video from the library
 func (l *Library) Delete(video polochon.Video, log *logrus.Entry) error {
 	switch v := video.(type) {
 	case *polochon.Movie:
 		return l.DeleteMovie(v, log)
 	case *polochon.ShowEpisode:
 		return l.DeleteShowEpisode(v, log)
-	default:
-		return ErrInvalidIndexVideoType
-	}
-}
-
-// AddSubtitles gets and downloads subtitles of different languages
-func (l *Library) AddSubtitles(video polochon.Video, languages []polochon.Language, log *logrus.Entry) ([]*polochon.Subtitle, error) {
-	c := errors.NewCollector()
-	addedSubtitles := []*polochon.Subtitle{}
-
-	// We're going to ask subtitles in each language for each subtitles
-	for _, lang := range languages {
-		subtitlerLog := log.WithField("lang", lang)
-		// Ask all the subtitlers
-		for _, subtitler := range video.GetSubtitlers() {
-			subtitlerLog = subtitlerLog.WithField("subtitler", subtitler.Name())
-			subtitle, err := subtitler.GetSubtitle(video, lang, subtitlerLog)
-			if err != nil {
-				// If there was no errors, add the subtitle to the map of
-				// subtitles
-				c.Push(errors.Wrap(err).Ctx("Subtitler", subtitler.Name()).Ctx("lang", lang))
-				continue
-			}
-
-			err = l.DownloadSubtitle(subtitle, video, lang)
-			if err != nil {
-				c.Push(errors.Wrap(err).Ctx("Subtitler", subtitler.Name()).Ctx("lang", lang))
-				continue
-			}
-
-			sub := polochon.NewSubtitleFromVideo(video, lang)
-
-			err = l.AddSubtitleIndex(video, sub)
-			if err != nil {
-				c.Push(errors.Wrap(err).Ctx("Subtitler", subtitler.Name()).Ctx("lang", lang))
-				continue
-			}
-			addedSubtitles = append(addedSubtitles, sub)
-			break
-		}
-	}
-	if c.HasErrors() {
-		if c.IsFatal() {
-			return nil, c
-		}
-		log.Warnf("Got non fatal errors while getting subtitles: %s", c)
-	}
-
-	return addedSubtitles, nil
-}
-
-// DownloadSubtitle will download the subtitle
-func (l *Library) DownloadSubtitle(subtitle io.ReadCloser, v polochon.Subtitlable, lang polochon.Language) error {
-	file, err := os.Create(v.SubtitlePath(lang))
-	if err != nil {
-		return err
-
-	}
-	defer file.Close()
-	defer subtitle.Close()
-
-	if _, err := io.Copy(file, subtitle); err != nil {
-		return err
-	}
-	return nil
-}
-
-// AddSubtitleIndex will add a subtitle in the index
-func (l *Library) AddSubtitleIndex(video polochon.Subtitlable, sub *polochon.Subtitle) error {
-	switch v := video.(type) {
-	case *polochon.Movie:
-		ok, err := l.movieIndex.HasSubtitle(v.ImdbID, sub)
-		if err != nil {
-			return err
-		}
-		if ok {
-			return nil
-		}
-		return l.movieIndex.AddSubtitle(v, sub)
-	case *polochon.ShowEpisode:
-		ok, err := l.showIndex.HasEpisodeSubtitle(v.ShowImdbID, v.Season, v.Episode, sub)
-		if err != nil {
-			return err
-		}
-		if ok {
-			return nil
-		}
-		return l.showIndex.AddSubtitle(v, sub)
 	default:
 		return ErrInvalidIndexVideoType
 	}

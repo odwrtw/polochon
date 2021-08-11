@@ -1,7 +1,6 @@
 package index
 
 import (
-	"fmt"
 	"path/filepath"
 	"sync"
 
@@ -232,13 +231,19 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 	}
 
 	// Add the episode
-	si.Lock()
-	si.shows[episode.ShowImdbID].Seasons[episode.Season].Episodes[episode.Episode] = &Episode{
+	e := &Episode{
 		Path:          episode.Path,
 		Filename:      episode.Filename(),
 		Size:          episode.Size,
 		VideoMetadata: episode.VideoMetadata,
 	}
+
+	for _, s := range episode.Subtitles {
+		e.Subtitles = append(e.Subtitles, NewSubtitle(s))
+	}
+
+	si.Lock()
+	si.shows[episode.ShowImdbID].Seasons[episode.Season].Episodes[episode.Episode] = e
 	si.Unlock()
 
 	return nil
@@ -285,7 +290,7 @@ func (si *ShowIndex) IsSeasonEmpty(imdbID string, season int) (bool, error) {
 
 // RemoveSeason removes the season from the index
 func (si *ShowIndex) RemoveSeason(show *polochon.Show, season int, log *logrus.Entry) error {
-	log.Infof("Deleting whole season %d of %s from index", season, show.ImdbID)
+	log.Infof("deleting whole season from index")
 
 	delete(si.shows[show.ImdbID].Seasons, season)
 
@@ -294,7 +299,7 @@ func (si *ShowIndex) RemoveSeason(show *polochon.Show, season int, log *logrus.E
 
 // RemoveShow removes the show from the index
 func (si *ShowIndex) RemoveShow(show *polochon.Show, log *logrus.Entry) error {
-	log.Infof("Deleting whole show %s from index", show.ImdbID)
+	log.Infof("deleting whole show from index")
 
 	si.Lock()
 	defer si.Unlock()
@@ -319,27 +324,5 @@ func (si *ShowIndex) RemoveEpisode(episode *polochon.ShowEpisode, log *logrus.En
 	defer si.Unlock()
 	delete(si.shows[id].Seasons[sNum].Episodes, eNum)
 
-	return nil
-}
-
-// AddSubtitle adds a movie subtitle to an index
-func (si *ShowIndex) AddSubtitle(episode *polochon.ShowEpisode, sub *polochon.Subtitle) error {
-	// Check that we have the show
-	has, err := si.HasEpisode(episode.ShowImdbID, episode.Season, episode.Episode)
-	if err != nil {
-		return err
-	}
-	if !has {
-		return fmt.Errorf("failed to add subtitle : show %s S%02dE%02d not indexed", episode.ShowImdbID, episode.Season, episode.Episode)
-	}
-
-	si.Lock()
-	defer si.Unlock()
-
-	// Append the subtitle to the index
-	si.shows[episode.ShowImdbID].Seasons[episode.Season].Episodes[episode.Episode].Subtitles = append(
-		si.shows[episode.ShowImdbID].Seasons[episode.Season].Episodes[episode.Episode].Subtitles,
-		NewSubtitle(sub),
-	)
 	return nil
 }

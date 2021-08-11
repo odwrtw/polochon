@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 )
 
@@ -93,35 +92,12 @@ func (l *Library) buildMovieIndex(log *logrus.Entry) error {
 			return nil
 		}
 
-		// Check for subtitles in the same folder
-		for _, subLang := range l.SubtitleLanguages {
-			sub := l.GetSubtitle(movie, subLang)
-			if sub == nil {
-				continue
-			}
-
-			if err = l.movieIndex.AddSubtitle(movie, sub); err != nil {
-				walkLog.Warnf("library: failed to add subtitles %s : %q", subLang, err)
-				continue
-			}
-		}
-
 		return nil
 	})
 
-	log.Infof("Index built in %s", time.Since(start))
+	log.Infof("movie index built in %s", time.Since(start))
 
 	return err
-}
-
-// GetSubtitle returns the subtitle if it exists, nil otherwise
-func (l *Library) GetSubtitle(v polochon.Video, lang polochon.Language) *polochon.Subtitle {
-	sub := polochon.NewSubtitleFromVideo(v, lang)
-	if !sub.Exists() {
-		return nil
-	}
-
-	return sub
 }
 
 func (l *Library) buildShowIndex(log *logrus.Entry) error {
@@ -142,7 +118,7 @@ func (l *Library) buildShowIndex(log *logrus.Entry) error {
 			return nil
 		}
 
-		// The root folder is only walk once
+		// The root folder is only walked once
 		if !rootWalked {
 			rootWalked = true
 			return nil
@@ -169,7 +145,7 @@ func (l *Library) buildShowIndex(log *logrus.Entry) error {
 		return err
 	}
 
-	log.Infof("Index built in %s", time.Since(start))
+	log.Infof("show index built in %s", time.Since(start))
 
 	return nil
 
@@ -218,19 +194,6 @@ func (l *Library) scanEpisodes(imdbID, showRootPath string, log *logrus.Entry) e
 		if err != nil {
 			walkLog.Errorf("library: failed to add movie to the Library: %q", err)
 			return nil
-		}
-
-		// Check for subtitles in the same folder
-		for _, subLang := range l.SubtitleLanguages {
-			sub := l.GetSubtitle(episode, subLang)
-			if sub == nil {
-				continue
-			}
-
-			if err = l.showIndex.AddSubtitle(episode, sub); err != nil {
-				walkLog.Warnf("library: failed to add subtitles %s : %q", subLang, err)
-				continue
-			}
 		}
 
 		return nil

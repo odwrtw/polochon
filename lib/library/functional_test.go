@@ -104,6 +104,9 @@ func newMockLibrary() (*mockLibrary, error) {
 		File:       fileConfig,
 		Library:    config,
 		Downloader: downloaderConfig,
+		SubtitleLanguages: []polochon.Language{
+			polochon.FR, polochon.EN,
+		},
 	}
 
 	return &mockLibrary{

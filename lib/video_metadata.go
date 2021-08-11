@@ -2,7 +2,7 @@ package polochon
 
 import "time"
 
-// VideoMetadata represents metadatas of the video file
+// VideoMetadata represents the metadata of a video
 type VideoMetadata struct {
 	DateAdded    time.Time `json:"date_added"`
 	Quality      Quality   `json:"quality"`

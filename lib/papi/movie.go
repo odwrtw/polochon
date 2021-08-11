@@ -38,7 +38,7 @@ func (m *Movie) downloadURL() (string, error) {
 }
 
 // subtitleURL implements the Downloadable interface
-func (m *Movie) subtitleURL(lang string) (string, error) {
+func (m *Movie) subtitleURL(lang polochon.Language) (string, error) {
 	uri, err := m.uri()
 	if err != nil {
 		return "", err

@@ -1,6 +1,7 @@
 package yifysubtitles
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 
@@ -73,8 +74,7 @@ func (y *YifySubs) Status() (polochon.ModuleStatus, error) {
 	return polochon.StatusOK, nil
 }
 
-// GetMovieSubtitle will get a movie subtitle
-func (y *YifySubs) GetMovieSubtitle(m *polochon.Movie, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
+func (y *YifySubs) getMovieSubtitle(m *polochon.Movie, lang polochon.Language, log *logrus.Entry) (*yifysubs.Subtitle, error) {
 	if m.ImdbID == "" {
 		return nil, ErrMissingImdbID
 	}
@@ -100,9 +100,24 @@ func (y *YifySubs) GetMovieSubtitle(m *polochon.Movie, lang polochon.Language, l
 		return nil, polochon.ErrNoSubtitleFound
 	}
 
-	sub := polochon.NewSubtitleFromVideo(m, lang)
-	sub.ReadCloser = subs[0]
+	return subs[0], nil
+}
 
+// GetMovieSubtitle will get a movie subtitle
+func (y *YifySubs) GetMovieSubtitle(m *polochon.Movie, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
+	s, err := y.getMovieSubtitle(m, lang, log)
+	if err != nil {
+		return nil, err
+	}
+
+	data := &bytes.Buffer{}
+	_, err = data.ReadFrom(s)
+	if err != nil {
+		return nil, err
+	}
+
+	sub := polochon.NewSubtitleFromVideo(m, lang)
+	sub.Data = data.Bytes()
 	return sub, nil
 }
 

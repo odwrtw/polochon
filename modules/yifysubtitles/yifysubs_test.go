@@ -66,14 +66,9 @@ func TestGetMovieSubtitle(t *testing.T) {
 		Client: fakeClient,
 	}
 
-	sub, err := y.GetMovieSubtitle(m, polochon.FR, fakeLogEntry)
+	s, err := y.getMovieSubtitle(m, polochon.FR, fakeLogEntry)
 	if err != nil {
 		log.Fatalf("expected no error, got %q", err)
-	}
-
-	s, ok := sub.ReadCloser.(*yifysubs.Subtitle)
-	if !ok {
-		log.Fatal("the sub is not a yifysubs.Subtitle")
 	}
 
 	expectedURL := "http://www.yifysubtitles.com/subtitles/aloha-yify-58809"

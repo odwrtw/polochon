@@ -73,39 +73,40 @@ func (og *OpenGuessit) Guess(file polochon.File, movieConf polochon.MovieConfig,
 	// Format the title
 	guess.Title = toUpperCaseFirst(guess.Title)
 
-	metadata := polochon.VideoMetadata{
+	var video polochon.Video
+
+	switch guess.Type {
+	case "movie":
+		video = &polochon.Movie{
+			MovieConfig: movieConf,
+			Title:       guess.Title,
+			Year:        guess.Year,
+		}
+	case "episode":
+		show := polochon.NewShow(showConf)
+		show.Year = guess.Year
+		show.Title = guess.Title
+		video = &polochon.ShowEpisode{
+			ShowConfig: showConf,
+			Show:       show,
+			ShowTitle:  guess.Title,
+			Episode:    guess.Episode,
+			Season:     guess.Season,
+		}
+	default:
+		return nil, fmt.Errorf("openguessit: invalid guess type: %s", guess.Type)
+	}
+
+	video.SetFile(file)
+	video.SetMetadata(&polochon.VideoMetadata{
 		Quality:      polochon.Quality(guess.Quality),
 		ReleaseGroup: guess.ReleaseGroup,
 		AudioCodec:   guess.AudioCodec,
 		VideoCodec:   guess.VideoCodec,
 		Container:    guess.Container,
-	}
+	})
 
-	switch guess.Type {
-	case "movie":
-		return &polochon.Movie{
-			VideoMetadata: metadata,
-			MovieConfig:   movieConf,
-			File:          file,
-			Title:         guess.Title,
-			Year:          guess.Year,
-		}, nil
-	case "episode":
-		show := polochon.NewShow(showConf)
-		show.Year = guess.Year
-		show.Title = guess.Title
-		return &polochon.ShowEpisode{
-			VideoMetadata: metadata,
-			ShowConfig:    showConf,
-			Show:          show,
-			File:          file,
-			ShowTitle:     guess.Title,
-			Episode:       guess.Episode,
-			Season:        guess.Season,
-		}, nil
-	default:
-		return nil, fmt.Errorf("openguessit: invalid guess type: %s", guess.Type)
-	}
+	return video, nil
 }
 
 // toUpperCaseFirst is an helper to get the uppercase first of a string

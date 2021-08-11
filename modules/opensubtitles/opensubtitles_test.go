@@ -94,14 +94,19 @@ var fakeShowEpisode = &polochon.ShowEpisode{
 	ShowImdbID: "tt0001234",
 	Season:     1,
 	Episode:    1,
-	File: polochon.File{
-		Path: "fakePath",
+	BaseVideo: polochon.BaseVideo{
+		File: polochon.File{
+			Path: "fakePath",
+		},
 	},
 }
+
 var fakeMovie = &polochon.Movie{
 	ImdbID: "tt0012345",
-	File: polochon.File{
-		Path: "fakePath",
+	BaseVideo: polochon.BaseVideo{
+		File: polochon.File{
+			Path: "fakePath",
+		},
 	},
 }
 

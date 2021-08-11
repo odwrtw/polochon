@@ -38,7 +38,7 @@ func (e *Episode) downloadURL() (string, error) {
 }
 
 // subtitleURL implements the Downloadable interface
-func (e *Episode) subtitleURL(lang string) (string, error) {
+func (e *Episode) subtitleURL(lang polochon.Language) (string, error) {
 	uri, err := e.uri()
 	if err != nil {
 		return "", err
