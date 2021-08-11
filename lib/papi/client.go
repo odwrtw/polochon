@@ -71,7 +71,7 @@ func (c *Client) DownloadURL(target Downloadable) (string, error) {
 		return "", err
 	}
 
-	return c.url(fmt.Sprintf("%s/%s", c.endpoint, url))
+	return c.endpoint + "/" + url, nil
 }
 
 // SubtitleURL returns the subtitle URL of a subtitlable content
@@ -81,7 +81,7 @@ func (c *Client) SubtitleURL(target Downloadable, lang string) (string, error) {
 		return "", err
 	}
 
-	return c.url(fmt.Sprintf("%s/%s", c.endpoint, url))
+	return c.endpoint + "/" + url, nil
 }
 
 // Delete deletes a ressource
@@ -105,24 +105,6 @@ func (c *Client) UpdateSubtitles(target Resource) ([]string, error) {
 	return subtitles, c.post(fmt.Sprintf("%s/%s/subtitles", c.endpoint, url), nil, &subtitles)
 }
 
-func (c *Client) url(URL string) (string, error) {
-	// Parse the given URL
-	u, err := url.Parse(URL)
-	if err != nil {
-		return "", err
-	}
-
-	// Add the URL params
-	if c.token != "" {
-		v := url.Values{}
-		v.Set("token", c.token)
-		u.RawQuery = v.Encode()
-	}
-
-	// Add the params to the URL
-	return u.String(), nil
-}
-
 func (c *Client) get(url string, result interface{}) error {
 	return c.request("GET", url, nil, result)
 }
@@ -142,14 +124,13 @@ func (c *Client) delete(url string) error {
 }
 
 func (c *Client) request(httpType, url string, data io.Reader, result interface{}) error {
-	URL, err := c.url(url)
+	req, err := http.NewRequest(httpType, url, data)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequest(httpType, URL, data)
-	if err != nil {
-		return err
+	if c.token != "" {
+		req.Header.Add("X-Auth-Token", c.token)
 	}
 
 	if c.basicAuth != nil {
