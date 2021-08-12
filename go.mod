@@ -17,7 +17,6 @@ require (
 	github.com/kolo/xmlrpc v0.0.0-20190417161013-de6d879202d7 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kylelemons/go-gypsy v0.0.0-20160905020020-08cad365cd28 // indirect
-	github.com/meatballhat/negroni-logrus v0.0.0-20170801195057-31067281800f
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/odwrtw/addicted v0.0.0-20200509145452-a5d36bf9d0f8
