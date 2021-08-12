@@ -110,3 +110,42 @@ func TestMiddleWare(t *testing.T) {
 		})
 	}
 }
+
+func TestMiddlewareCtx(t *testing.T) {
+	manager := &Manager{
+		tokens: map[string]*token{
+			"token1": &token{
+				name:  "user 1",
+				value: "token1",
+				routeMap: map[string]struct{}{
+					"GetStuff": {},
+				},
+			},
+		},
+	}
+
+	router := mux.NewRouter()
+	router.HandleFunc("/stuff", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}).Name("GetStuff").Methods("GET")
+
+	middleware := NewMiddleware(manager, router)
+
+	w := httptest.NewRecorder()
+	r, err := http.NewRequest("GET", "/stuff", nil)
+	if err != nil {
+		t.Fatalf("got an error while creating the request: %s", err)
+	}
+	r.Header.Add("X-Auth-Token", "token1")
+
+	middleware.ServeHTTP(w, r, func(w http.ResponseWriter, r *http.Request) {
+		tokenName, ok := r.Context().Value(TokenName).(string)
+		if !ok {
+			t.Fatalf("expected the token name in the context")
+		}
+
+		if tokenName != "user 1" {
+			t.Fatalf("invalid token name: %q", tokenName)
+		}
+	})
+}
