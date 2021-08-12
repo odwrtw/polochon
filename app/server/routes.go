@@ -6,7 +6,6 @@ import (
 	"net/http/pprof"
 
 	"github.com/gorilla/mux"
-	negronilogrus "github.com/meatballhat/negroni-logrus"
 	"github.com/odwrtw/polochon/app/auth"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -238,7 +237,7 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 	n.Use(negroni.NewRecovery())
 
 	// Use logrus as logger
-	n.Use(negronilogrus.NewMiddlewareFromLogger(s.log.Logger, "httpServer"))
+	n.Use(newLogrusMiddleware(s.log.Logger))
 
 	// Add basic auth if configured
 	if s.config.HTTPServer.BasicAuth {
@@ -251,6 +250,9 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 		n.Use(auth.NewMiddleware(s.authManager, mux))
 		mux.HandleFunc("/tokens/allowed", s.tokenGetAllowed).Name("TokenGetAllowed")
 	}
+
+	// Auth logger
+	n.Use(newLogrusAuthMiddleware(s.log.Logger))
 
 	// Wrap the router
 	n.UseHandler(mux)
