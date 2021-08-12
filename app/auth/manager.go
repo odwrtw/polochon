@@ -92,16 +92,18 @@ func (m *Manager) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-// IsAllowed return true if the given route name is allowed with
-// the given token's value
-func (m *Manager) IsAllowed(token, route string) bool {
+// IsAllowed checks if the given route is allowed with the given token
+func (m *Manager) IsAllowed(token, route string) (string, bool) {
 	t, ok := m.tokens[token]
 	if !ok {
-		return false
+		return "", false
 	}
 
 	_, ok = t.routeMap[route]
-	return ok
+	if !ok {
+		return "", false
+	}
+	return t.name, ok
 }
 
 // GetAllowed returns the allowed routes names for a token

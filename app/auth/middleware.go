@@ -1,10 +1,17 @@
 package auth
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
+
+// CtxKey is a type of context key
+type CtxKey string
+
+// TokenName is the key used in the context
+const TokenName CtxKey = "auth-token-name"
 
 // Middleware used for check the token and access rigth
 type Middleware struct {
@@ -41,10 +48,13 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http
 		return
 	}
 
-	if !m.manager.IsAllowed(token, routeName) {
+	name, ok := m.manager.IsAllowed(token, routeName)
+	if !ok {
 		http.NotFound(w, r)
 		return
 	}
 
-	next(w, r)
+	ctx := context.WithValue(r.Context(), TokenName, name)
+
+	next(w, r.WithContext(ctx))
 }

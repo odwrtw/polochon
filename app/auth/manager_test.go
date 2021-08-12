@@ -101,10 +101,11 @@ func TestIsAllowed(t *testing.T) {
 	}
 
 	tt := []struct {
-		name     string
-		token    string
-		route    string
-		expected bool
+		name              string
+		token             string
+		route             string
+		expected          bool
+		expectedTokenName string
 	}{
 		{
 			name:     "invalid token on user routes",
@@ -113,10 +114,11 @@ func TestIsAllowed(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "guest on guest routes",
-			token:    "guest1token",
-			route:    "MoviesListIDs",
-			expected: true,
+			name:              "guest on guest routes",
+			token:             "guest1token",
+			route:             "MoviesListIDs",
+			expected:          true,
+			expectedTokenName: "guest1",
 		},
 		{
 			name:     "guest on user routes",
@@ -125,10 +127,11 @@ func TestIsAllowed(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "user on user routes",
-			token:    "user1token",
-			route:    "TorrentsAdd",
-			expected: true,
+			name:              "user on user routes",
+			token:             "user1token",
+			route:             "TorrentsAdd",
+			expected:          true,
+			expectedTokenName: "user1",
 		},
 		{
 			name:     "user on admin routes",
@@ -137,18 +140,24 @@ func TestIsAllowed(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "admin on admin routes",
-			token:    "admin1token",
-			route:    "DeleteEpisode",
-			expected: true,
+			name:              "admin on admin routes",
+			token:             "admin1token",
+			route:             "DeleteEpisode",
+			expected:          true,
+			expectedTokenName: "admin1",
 		},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			allowed := manager.IsAllowed(tc.token, tc.route)
+			tokenName, allowed := manager.IsAllowed(tc.token, tc.route)
 			if allowed != tc.expected {
 				t.Fatalf("expected %t, got %t", tc.expected, allowed)
+			}
+
+			if tokenName != tc.expectedTokenName {
+				t.Fatalf("invalid token name expected %q, got %q",
+					tc.expectedTokenName, tokenName)
 			}
 		})
 	}
