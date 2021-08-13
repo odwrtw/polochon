@@ -251,9 +251,6 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 		mux.HandleFunc("/tokens/allowed", s.tokenGetAllowed).Name("TokenGetAllowed")
 	}
 
-	// Auth logger
-	n.Use(newLogrusAuthMiddleware(s.log.Logger))
-
 	// Wrap the router
 	n.UseHandler(mux)
 

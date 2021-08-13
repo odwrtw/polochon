@@ -58,26 +58,3 @@ func (lm *logrusMiddleware) ServeHTTP(rw http.ResponseWriter, r *http.Request, n
 
 	entry.Info("completed handling request")
 }
-
-type logrusAuthMiddleware struct {
-	logger *logrus.Logger
-}
-
-func newLogrusAuthMiddleware(logger *logrus.Logger) *logrusAuthMiddleware {
-	return &logrusAuthMiddleware{
-		logger: logger,
-	}
-}
-
-func (lam *logrusAuthMiddleware) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	tokenName, ok := r.Context().Value(auth.TokenName).(string)
-	if ok {
-		logrus.
-			NewEntry(lam.logger).
-			WithFields(logFieldsFromRequest(r)).
-			WithField("token_name", tokenName).
-			Info("authorized")
-	}
-
-	next(rw, r)
-}

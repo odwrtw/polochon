@@ -62,11 +62,14 @@ func (s *Server) Stop(log *logrus.Entry) {
 	s.gracefulServer.Shutdown(context.Background())
 }
 
-func (s *Server) wishlist(w http.ResponseWriter, req *http.Request) {
-	wl := polochon.NewWishlist(s.config.Wishlist, s.log)
+func (s *Server) wishlist(w http.ResponseWriter, r *http.Request) {
+	log := s.logEntry(r)
+	log.Infof("getting wishlist")
+
+	wl := polochon.NewWishlist(s.config.Wishlist, log)
 
 	if err := wl.Fetch(); err != nil {
-		s.renderError(w, err)
+		s.renderError(w, r, err)
 		return
 	}
 
@@ -74,12 +77,15 @@ func (s *Server) wishlist(w http.ResponseWriter, req *http.Request) {
 }
 
 func (s *Server) serveFile(w http.ResponseWriter, r *http.Request, file *polochon.File) {
+	filename := filepath.Base(file.Path)
+	s.logEntry(r).Infof("serving file %q", filename)
 	// Set the header so that when downloading, the real filename will be given
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filepath.Base(file.Path)))
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
 	http.ServeFile(w, r, file.Path)
 }
 
 func (s *Server) tokenGetAllowed(w http.ResponseWriter, r *http.Request) {
+	s.logEntry(r).Infof("getting tokens")
 	token := r.URL.Query().Get("token")
 	allowed := s.authManager.GetAllowed(token)
 	s.renderOK(w, allowed)
