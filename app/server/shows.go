@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
@@ -29,7 +29,7 @@ func formatSeasons(show *index.Show) map[string]map[string]*index.Episode {
 }
 
 func (s *Server) showIds(w http.ResponseWriter, req *http.Request) {
-	s.log.Debug("listing shows")
+	s.logEntry(req).Infof("listing shows")
 
 	type formatedShow struct {
 		Title   string                               `json:"title"`
@@ -48,6 +48,7 @@ func (s *Server) showIds(w http.ResponseWriter, req *http.Request) {
 
 // TODO: handle this in a middleware
 func (s *Server) getEpisode(w http.ResponseWriter, req *http.Request) *polochon.ShowEpisode {
+	s.logEntry(req).Infof("getting episode")
 	vars := mux.Vars(req)
 
 	var season, episode int
@@ -57,7 +58,7 @@ func (s *Server) getEpisode(w http.ResponseWriter, req *http.Request) *polochon.
 	} {
 		v, err := strconv.Atoi(str)
 		if err != nil {
-			s.renderError(w, fmt.Errorf("invalid season or episode"))
+			s.renderError(w, req, fmt.Errorf("invalid season or episode"))
 			return nil
 		}
 		*ptr = v
@@ -65,7 +66,7 @@ func (s *Server) getEpisode(w http.ResponseWriter, req *http.Request) *polochon.
 
 	e, err := s.library.GetEpisode(vars["id"], season, episode)
 	if err != nil {
-		s.renderError(w, err)
+		s.renderError(w, req, err)
 		return nil
 	}
 
@@ -73,17 +74,18 @@ func (s *Server) getEpisode(w http.ResponseWriter, req *http.Request) *polochon.
 }
 
 func (s *Server) getShowDetails(w http.ResponseWriter, req *http.Request) {
+	s.logEntry(req).Infof("getting show details")
 	vars := mux.Vars(req)
 
 	show, err := s.library.GetShow(vars["id"])
 	if err != nil {
-		s.renderError(w, err)
+		s.renderError(w, req, err)
 		return
 	}
 
 	indexedShow, err := s.library.GetIndexedShow(vars["id"])
 	if err != nil {
-		s.renderError(w, err)
+		s.renderError(w, req, err)
 		return
 	}
 
@@ -99,10 +101,12 @@ func (s *Server) getShowDetails(w http.ResponseWriter, req *http.Request) {
 }
 
 func (s *Server) deleteShow(w http.ResponseWriter, req *http.Request) {
+	log := s.logEntry(req)
+	log.Infof("deleting show")
 	vars := mux.Vars(req)
 
-	if err := s.library.DeleteShow(vars["id"], s.log); err != nil {
-		s.renderError(w, err)
+	if err := s.library.DeleteShow(vars["id"], log); err != nil {
+		s.renderError(w, req, err)
 		return
 	}
 
@@ -110,6 +114,7 @@ func (s *Server) deleteShow(w http.ResponseWriter, req *http.Request) {
 }
 
 func (s *Server) getShowEpisodeIDDetails(w http.ResponseWriter, req *http.Request) {
+	s.logEntry(req).Infof("getting episode details")
 	e := s.getEpisode(w, req)
 	if e == nil {
 		return
@@ -117,7 +122,7 @@ func (s *Server) getShowEpisodeIDDetails(w http.ResponseWriter, req *http.Reques
 
 	idxEpisode, err := s.library.GetIndexedEpisode(e.ShowImdbID, e.Season, e.Episode)
 	if err != nil {
-		s.renderError(w, err)
+		s.renderError(w, req, err)
 		return
 	}
 
@@ -133,13 +138,16 @@ func (s *Server) getShowEpisodeIDDetails(w http.ResponseWriter, req *http.Reques
 }
 
 func (s *Server) deleteEpisode(w http.ResponseWriter, req *http.Request) {
+	log := s.logEntry(req)
+	log.Infof("deleting episode")
+
 	e := s.getEpisode(w, req)
 	if e == nil {
 		return
 	}
 
-	if err := s.library.Delete(e, s.log); err != nil {
-		s.renderError(w, err)
+	if err := s.library.Delete(e, log); err != nil {
+		s.renderError(w, req, err)
 		return
 	}
 
