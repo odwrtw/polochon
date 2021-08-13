@@ -36,26 +36,55 @@ func TestDownloadURL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("invalid endpoint: %q", err)
 	}
+	c.SetToken("test")
 
 	for _, test := range []struct {
-		Downloadable Downloadable
-		ExpectedURL  string
-		ExpectedErr  error
+		name         string
+		downloadable Downloadable
+		expectedURL  string
+		expectedErr  error
+		withToken    bool
 	}{
 		{
-			Downloadable: &Movie{Movie: &polochon.Movie{ImdbID: "tt001"}},
-			ExpectedURL:  "http://mock.url/movies/tt001/download",
-			ExpectedErr:  nil,
+			name:         "movie without token",
+			downloadable: &Movie{Movie: &polochon.Movie{ImdbID: "tt001"}},
+			expectedURL:  "http://mock.url/movies/tt001/download",
+			expectedErr:  nil,
+		},
+		{
+			name:         "movie with token",
+			downloadable: &Movie{Movie: &polochon.Movie{ImdbID: "tt001"}},
+			expectedURL:  "http://mock.url/movies/tt001/download?token=test",
+			expectedErr:  nil,
+			withToken:    true,
+		},
+		{
+			name:         "empty movie",
+			downloadable: &Movie{},
+			expectedErr:  ErrMissingMovie,
+		},
+		{
+			name:         "empty movie with token",
+			downloadable: &Movie{},
+			expectedErr:  ErrMissingMovie,
+			withToken:    true,
 		},
 	} {
-		got, err := c.DownloadURL(test.Downloadable)
-		if err != test.ExpectedErr {
-			t.Fatalf("expected err %q, got %q", test.ExpectedErr, err)
-		}
+		t.Run(test.name, func(t *testing.T) {
+			var f func(Downloadable) (string, error) = c.DownloadURL
+			if test.withToken {
+				f = c.DownloadURLWithToken
+			}
 
-		if got != test.ExpectedURL {
-			t.Fatalf("expected %q, got %q", test.ExpectedURL, got)
-		}
+			got, err := f(test.downloadable)
+			if err != test.expectedErr {
+				t.Fatalf("expected err %q, got %q", test.expectedErr, err)
+			}
+
+			if got != test.expectedURL {
+				t.Fatalf("expected %q, got %q", test.expectedURL, got)
+			}
+		})
 	}
 }
 
