@@ -76,6 +76,20 @@ func (c *Client) DownloadURL(target Downloadable) (string, error) {
 	return c.endpoint + "/" + url, nil
 }
 
+// DownloadURLWithToken returns the url with the token
+func (c *Client) DownloadURLWithToken(target Downloadable) (string, error) {
+	url, err := c.DownloadURL(target)
+	if err != nil {
+		return "", err
+	}
+
+	if c.token != "" {
+		url += "?token=" + c.token
+	}
+
+	return url, nil
+}
+
 // Delete deletes a ressource
 func (c *Client) Delete(target Resource) error {
 	url, err := target.uri()
