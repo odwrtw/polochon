@@ -9,7 +9,6 @@ import (
 	"time"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
 var showByIDsResponse = `
@@ -60,6 +59,25 @@ func TestGetShows(t *testing.T) {
 	}))
 	defer ts.Close()
 
+	expectedShowEpisode := &polochon.ShowEpisode{
+		BaseVideo: polochon.BaseVideo{
+			File: polochon.File{
+				Size: 546325850,
+				Path: "Chefs.table.S01E01.mkv",
+			},
+			VideoMetadata: polochon.VideoMetadata{
+				Quality:      polochon.Quality720p,
+				ReleaseGroup: "R1",
+				AudioCodec:   "AAC",
+				VideoCodec:   "H.264",
+				Container:    "mkv",
+			},
+		},
+		ShowImdbID: "tt4295140",
+		Season:     1,
+		Episode:    1,
+	}
+
 	expected := &ShowCollection{
 		shows: map[string]*Show{
 			"tt4295140": {
@@ -73,33 +91,18 @@ func TestGetShows(t *testing.T) {
 						Season:     1,
 						Episodes: map[int]*Episode{
 							1: {
-								ShowEpisode: &polochon.ShowEpisode{
-									BaseVideo: polochon.BaseVideo{
-										File: polochon.File{
-											Size: 546325850,
-											Path: "Chefs.table.S01E01.mkv",
-										},
-										VideoMetadata: polochon.VideoMetadata{
-											Quality:      polochon.Quality720p,
-											ReleaseGroup: "R1",
-											AudioCodec:   "AAC",
-											VideoCodec:   "H.264",
-											Container:    "mkv",
-										},
-									},
-									ShowImdbID: "tt4295140",
-									Season:     1,
-									Episode:    1,
-								},
-								Subtitles: []*index.Subtitle{
-									{
-										Lang: polochon.FR,
-										Size: 35037,
-									},
-									{
-										Lang: polochon.EN,
-										Size: 39349,
-									},
+								ShowEpisode: expectedShowEpisode,
+								Subtitles: []*Subtitle{
+									{Subtitle: &polochon.Subtitle{
+										Lang:  polochon.FR,
+										File:  polochon.File{Size: 35037},
+										Video: expectedShowEpisode,
+									}},
+									{Subtitle: &polochon.Subtitle{
+										Lang:  polochon.EN,
+										File:  polochon.File{Size: 39349},
+										Video: expectedShowEpisode,
+									}},
 								},
 							},
 						},

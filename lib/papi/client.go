@@ -7,8 +7,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-
-	polochon "github.com/odwrtw/polochon/lib"
 )
 
 // Resource is an interface to identify a resource
@@ -21,7 +19,6 @@ type Resource interface {
 type Downloadable interface {
 	Resource
 	downloadURL() (string, error)
-	subtitleURL(lang polochon.Language) (string, error)
 }
 
 type basicAuth struct {

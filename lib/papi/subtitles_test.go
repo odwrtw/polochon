@@ -7,36 +7,52 @@ import (
 	"testing"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
-func TestSubtitleURL(t *testing.T) {
-	c, err := New("http://mock.url")
+func TestSubtitleDownloadURL(t *testing.T) {
+	baseURL := "http://mock.url"
+	c, err := New(baseURL)
 	if err != nil {
 		t.Fatalf("invalid endpoint: %q", err)
 	}
 
+	se := &polochon.ShowEpisode{ShowImdbID: "tt2357547", Season: 1, Episode: 6}
+	episodeSub := &Subtitle{
+		Subtitle: &polochon.Subtitle{Video: se, Lang: polochon.FR},
+	}
+
+	m := &polochon.Movie{ImdbID: "tt001"}
+	movieSub := &Subtitle{
+		Subtitle: &polochon.Subtitle{Video: m, Lang: polochon.FR},
+	}
+
 	for _, test := range []struct {
-		Downloadable Downloadable
-		lang         polochon.Language
-		ExpectedURL  string
-		ExpectedErr  error
+		sub         Downloadable
+		name        string
+		expectedURL string
+		expectedErr error
 	}{
 		{
-			Downloadable: &Movie{Movie: &polochon.Movie{ImdbID: "tt001"}},
-			lang:         polochon.FR,
-			ExpectedURL:  "http://mock.url/movies/tt001/subtitles/fr_FR/download",
-			ExpectedErr:  nil,
+			name:        "valid movie subtitle",
+			sub:         movieSub,
+			expectedURL: baseURL + "/movies/tt001/subtitles/fr_FR/download",
+		},
+		{
+			name:        "valid espisode subtitle",
+			sub:         episodeSub,
+			expectedURL: baseURL + "/shows/tt2357547/seasons/1/episodes/6/subtitles/fr_FR/download",
 		},
 	} {
-		got, err := c.SubtitleURL(test.Downloadable, test.lang)
-		if err != test.ExpectedErr {
-			t.Fatalf("expected err %q, got %q", test.ExpectedErr, err)
-		}
+		t.Run(test.name, func(t *testing.T) {
+			got, err := c.DownloadURL(test.sub)
+			if err != test.expectedErr {
+				t.Fatalf("expected err %q, got %q", test.expectedErr, err)
+			}
 
-		if got != test.ExpectedURL {
-			t.Fatalf("expected %q, got %q", test.ExpectedURL, got)
-		}
+			if got != test.expectedURL {
+				t.Fatalf("expected %q, got %q", test.expectedURL, got)
+			}
+		})
 	}
 }
 
@@ -48,9 +64,15 @@ func TestUpdateSubtitles(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	expectedSubs := []*index.Subtitle{
-		{Lang: polochon.FR, Size: 1000},
-		{Lang: polochon.EN, Size: 2000},
+	expectedSubs := []*Subtitle{
+		{Subtitle: &polochon.Subtitle{
+			File: polochon.File{Size: 1000},
+			Lang: polochon.FR,
+		}},
+		{Subtitle: &polochon.Subtitle{
+			File: polochon.File{Size: 2000},
+			Lang: polochon.EN,
+		}},
 	}
 
 	client, err := New(ts.URL)
