@@ -4,19 +4,18 @@ import (
 	"fmt"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
 // Episode struct returned by papi
 type Episode struct {
 	*polochon.ShowEpisode
 
-	Subtitles []*index.Subtitle `json:"subtitles"`
+	Subtitles []*Subtitle `json:"subtitles"`
 }
 
 // uri implements the Resource interface
 func (e *Episode) uri() (string, error) {
-	if e.ShowEpisode == nil || e.ShowImdbID == "" {
+	if e.ShowImdbID == "" {
 		return "", ErrMissingShowEpisodeInformations
 	}
 
@@ -35,16 +34,6 @@ func (e *Episode) downloadURL() (string, error) {
 	}
 
 	return fmt.Sprintf("%s/download", uri), nil
-}
-
-// subtitleURL implements the Downloadable interface
-func (e *Episode) subtitleURL(lang polochon.Language) (string, error) {
-	uri, err := e.uri()
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%s/subtitles/%s/download", uri, lang), nil
 }
 
 // getDetails implements the resource interface

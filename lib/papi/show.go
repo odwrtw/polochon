@@ -60,9 +60,24 @@ func extractSeasons(imdbID string, input map[string]map[string]*index.Episode) (
 			})
 			pe.SetMetadata(&e.VideoMetadata)
 
+			subs := []*Subtitle{}
+			for _, s := range e.Subtitles {
+				subs = append(subs, &Subtitle{
+					Subtitle: &polochon.Subtitle{
+						File:  polochon.File{Size: s.Size},
+						Lang:  s.Lang,
+						Video: pe,
+					},
+				})
+			}
+
+			if len(subs) == 0 {
+				subs = nil
+			}
+
 			s.Episodes[en] = &Episode{
 				ShowEpisode: pe,
-				Subtitles:   e.Subtitles,
+				Subtitles:   subs,
 			}
 		}
 
