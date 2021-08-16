@@ -14,6 +14,7 @@ require (
 	github.com/gorilla/rpc v1.2.0 // indirect
 	github.com/gregdel/argo v0.0.0-20190104143955-4ac365771987
 	github.com/gregdel/pushover v0.0.0-20190217183207-15d3fef40636
+	github.com/hanwen/go-fuse v1.0.0
 	github.com/kolo/xmlrpc v0.0.0-20190417161013-de6d879202d7 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kylelemons/go-gypsy v0.0.0-20160905020020-08cad365cd28 // indirect
