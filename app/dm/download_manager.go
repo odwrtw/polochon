@@ -157,8 +157,10 @@ func (dm *DownloadManager) run(log *logrus.Entry) {
 		}
 
 		// Get the video subtitles
-		if err := polochon.GetSubtitles(video, dm.config.SubtitleLanguages, tlog); err != nil {
-			errors.LogErrors(tlog, err)
+		for _, lang := range dm.config.SubtitleLanguages {
+			if _, err := polochon.GetSubtitle(video, lang, tlog); err != nil {
+				errors.LogErrors(tlog, err)
+			}
 		}
 
 		// Store the video

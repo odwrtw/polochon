@@ -44,3 +44,17 @@ func (l *Library) SaveSubtitles(video polochon.Video, log *logrus.Entry) error {
 
 	return nil
 }
+
+// UpdateSubtitleIndex updates the media index with the new subtitle
+// TODO: create a video index to avoid this shit
+func (l *Library) UpdateSubtitleIndex(video polochon.Video, s *polochon.Subtitle) error {
+	var err error
+	switch v := video.(type) {
+	case *polochon.Movie:
+		err = l.movieIndex.UpsertSubtitle(v, s)
+	case *polochon.ShowEpisode:
+		err = l.showIndex.UpsertSubtitle(v, s)
+	}
+
+	return err
+}
