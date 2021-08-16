@@ -10,6 +10,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/gregdel/argo v0.0.0-20190104143955-4ac365771987
 	github.com/gregdel/pushover v1.3.0
+	github.com/hanwen/go-fuse/v2 v2.5.1
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/odwrtw/addicted v0.0.0-20231023211155-d92e1eb251c5
 	github.com/odwrtw/eztv v0.0.0-20231026192001-039613c81a8e
