@@ -52,13 +52,13 @@ func (s *Subtitle) downloadURL() (string, error) {
 	return uri + "/download", nil
 }
 
-// UpdateSubtitles updates the subtitles of a ressource
-func (c *Client) UpdateSubtitles(target Resource) ([]*Subtitle, error) {
+// UpdateSubtitle updates the subtitles of a ressource
+func (c *Client) UpdateSubtitle(target Resource) (*Subtitle, error) {
 	url, err := target.uri()
 	if err != nil {
 		return nil, err
 	}
 
-	var subtitles []*Subtitle
+	var subtitles *Subtitle
 	return subtitles, c.post(fmt.Sprintf("%s/%s/subtitles", c.endpoint, url), nil, &subtitles)
 }

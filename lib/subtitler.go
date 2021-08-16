@@ -20,41 +20,56 @@ type Subtitlable interface {
 	GetSubtitlers() []Subtitler
 }
 
-// GetSubtitles gets the subtitles of a video in the given languages
-func GetSubtitles(video Video, languages []Language, log *logrus.Entry) error {
+// GetSubtitle gets the subtitles of a video in the given languages
+func GetSubtitle(video Video, lang Language, log *logrus.Entry) (*Subtitle, error) {
 	c := errors.NewCollector()
 
-	subtitles := []*Subtitle{}
+	var found *Subtitle
 
-	// We're going to ask subtitles in each language for each subtitles
-	for _, lang := range languages {
-		subtitlerLog := log.WithField("lang", lang)
-		// Ask all the subtitlers
-		for _, subtitler := range video.GetSubtitlers() {
-			subtitlerLog = subtitlerLog.WithField("subtitler", subtitler.Name())
-			subtitle, err := subtitler.GetSubtitle(video, lang, subtitlerLog)
-			if err != nil {
-				// If there was no errors, add the subtitle to the map of
-				// subtitles
-				c.Push(errors.Wrap(err).Ctx("Subtitler", subtitler.Name()).Ctx("lang", lang))
-				continue
-			}
+	// Ask all the subtitlers
+	for _, subtitler := range video.GetSubtitlers() {
+		l := log.WithFields(logrus.Fields{
+			"subtitler": subtitler.Name(),
+			"lang":      lang,
+		})
+		l.Debugf("searching subtitle")
 
-			subtitles = append(subtitles, subtitle)
-			break
+		subtitle, err := subtitler.GetSubtitle(video, lang, l)
+		if err != nil {
+			c.Push(errors.Wrap(err).Ctx("subtitler", subtitler.Name()).Ctx("lang", lang))
+			continue
 		}
+
+		found = subtitle
 	}
 
 	if c.HasErrors() {
 		if c.IsFatal() {
-			return c
+			return nil, c
 		}
-		log.Warnf("Got non fatal errors while getting subtitles: %s", c)
+		log.Warnf("got non fatal errors while getting subtitles: %s", c)
 	}
 
-	if len(subtitles) != 0 {
-		video.SetSubtitles(subtitles)
+	if found == nil {
+		return nil, ErrNoSubtitleFound
 	}
 
-	return nil
+	idx := -1
+	subtitles := video.GetSubtitles()
+	for i, s := range subtitles {
+		if s.Lang == lang {
+			idx = i
+			break
+		}
+	}
+
+	// Add or replace the subtitle
+	if idx >= 0 {
+		subtitles[idx] = found
+	} else {
+		subtitles = append(subtitles, found)
+	}
+
+	video.SetSubtitles(subtitles)
+	return found, nil
 }

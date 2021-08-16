@@ -36,16 +36,6 @@ func (m *Movie) downloadURL() (string, error) {
 	return fmt.Sprintf("%s/download", uri), nil
 }
 
-// subtitleURL implements the Downloadable interface
-func (m *Movie) subtitleURL(lang polochon.Language) (string, error) {
-	uri, err := m.uri()
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%s/subtitles/%s/download", uri, lang), nil
-}
-
 // GetMovies returns all the movies in the polochon library
 func (c *Client) GetMovies() (*MovieCollection, error) {
 	url := fmt.Sprintf("%s/%s", c.endpoint, "movies")

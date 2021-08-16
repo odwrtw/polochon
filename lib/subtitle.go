@@ -11,13 +11,14 @@ import (
 var (
 	ErrMissingSubtitleLang = errors.New("polochon: no subtitle lang")
 	ErrMissingSubtitlePath = errors.New("polochon: no subtitle path")
+	ErrMissingSubtitleData = errors.New("polochon: no subtitle data")
 )
 
 // Subtitle represents a subtitle
 type Subtitle struct {
 	File
 
-	Data []byte
+	Data []byte `json:"-"`
 
 	Lang  Language `json:"lang"`
 	Video Video    `json:"-"`
@@ -47,6 +48,10 @@ func (s *Subtitle) Save() error {
 
 	if s.Path == "" {
 		return ErrMissingSubtitlePath
+	}
+
+	if len(s.Data) == 0 {
+		return ErrMissingSubtitleData
 	}
 
 	file, err := os.Create(s.Path)

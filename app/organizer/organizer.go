@@ -173,9 +173,11 @@ func (o *Organizer) organizeFile(filePath string, log *logrus.Entry) error {
 		}
 	}
 
-	// Get subtitles
-	if err := polochon.GetSubtitles(video, o.config.SubtitleLanguages, log); err != nil {
-		errors.LogErrors(log, err)
+	// Get the video subtitles
+	for _, lang := range o.config.SubtitleLanguages {
+		if _, err := polochon.GetSubtitle(video, lang, log); err != nil {
+			errors.LogErrors(log, err)
+		}
 	}
 
 	// Store the video

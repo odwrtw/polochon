@@ -21,7 +21,7 @@ type FileConfig struct {
 // File handles polochon files
 type File struct {
 	FileConfig `json:"-"`
-	Path       string `json:"path"`
+	Path       string `json:"-"`
 	Size       int64  `json:"size"`
 }
 

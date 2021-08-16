@@ -249,6 +249,20 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 	return nil
 }
 
+// UpsertSubtitle updates or insert a subtitle
+func (si *ShowIndex) UpsertSubtitle(e *polochon.ShowEpisode, s *polochon.Subtitle) error {
+	episode, err := si.Episode(e.ShowImdbID, e.Season, e.Episode)
+	if err != nil {
+		return err
+	}
+
+	si.Lock()
+	episode.Subtitles = upsertSubtitle(episode.Subtitles, NewSubtitle(s))
+	si.Unlock()
+
+	return nil
+}
+
 // IsShowEmpty returns true if the episode is the only episode in the
 // whole show
 func (si *ShowIndex) IsShowEmpty(imdbID string) (bool, error) {

@@ -19,10 +19,10 @@
   allowed:
     - DownloadMovie
     - DownloadMovieSubtitle
-    - UpdateMovieSubtitles
+    - UpdateMovieSubtitle
     - DownloadEpisode
     - DownloadEpisodeSubtitle
-    - UpdateEpisodeSubtitles
+    - UpdateEpisodeSubtitle
     - Wishlist
     - AddTorrent
     - ListTorrents

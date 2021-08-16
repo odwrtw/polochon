@@ -31,8 +31,10 @@ func (m *mockLibrary) mockMovie(name string) (*polochon.Movie, error) {
 		return nil, err
 	}
 
-	if err := polochon.GetSubtitles(movie, m.SubtitleLanguages, mockLogEntry); err != nil {
-		return nil, err
+	for _, lang := range m.SubtitleLanguages {
+		if _, err := polochon.GetSubtitle(movie, lang, mockLogEntry); err != nil {
+			return nil, err
+		}
 	}
 
 	return movie, nil
