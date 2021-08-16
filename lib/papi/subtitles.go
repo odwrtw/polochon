@@ -22,6 +22,10 @@ func (s *Subtitle) uri() (string, error) {
 
 	var r Resource
 	switch v := s.Video.(type) {
+	case *Movie:
+		r = v
+	case *Episode:
+		r = v
 	case *polochon.Movie:
 		r = &Movie{Movie: v}
 	case *polochon.ShowEpisode:
@@ -52,13 +56,18 @@ func (s *Subtitle) downloadURL() (string, error) {
 	return uri + "/download", nil
 }
 
-// UpdateSubtitles updates the subtitles of a ressource
-func (c *Client) UpdateSubtitles(target Resource) ([]*Subtitle, error) {
-	url, err := target.uri()
+// UpdateSubtitle updates the subtitles of a ressource
+func (c *Client) UpdateSubtitle(video polochon.Video, lang polochon.Language) (*Subtitle, error) {
+	s := &Subtitle{Subtitle: &polochon.Subtitle{
+		Video: video,
+		Lang:  lang,
+	}}
+
+	uri, err := s.uri()
 	if err != nil {
 		return nil, err
 	}
 
-	var subtitles []*Subtitle
-	return subtitles, c.post(fmt.Sprintf("%s/%s/subtitles", c.endpoint, url), nil, &subtitles)
+	url := fmt.Sprintf("%s/%s", c.endpoint, uri)
+	return s, c.post(url, nil, &s)
 }

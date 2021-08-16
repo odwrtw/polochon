@@ -7,53 +7,71 @@ import (
 	polochon "github.com/odwrtw/polochon/lib"
 )
 
-func getLanguage(w http.ResponseWriter, req *http.Request) polochon.Language {
-	vars := mux.Vars(req)
-	lang := vars["lang"]
-
-	return polochon.Language(lang)
+func getLanguage(r *http.Request) polochon.Language {
+	vars := mux.Vars(r)
+	return polochon.Language(vars["lang"])
 }
 
-func (s *Server) updateSubtitles(w http.ResponseWriter, req *http.Request, v polochon.Video) {
-	log := s.logEntry(req)
+func (s *Server) updateMovieSubtitle(w http.ResponseWriter, r *http.Request) {
+	s.logEntry(r).Infof("updating movie subtitles")
 
-	err := polochon.GetSubtitles(v, s.config.SubtitleLanguages, log)
-	if err != nil {
-		s.renderError(w, req, err)
-		return
-	}
-
-	err = s.library.SaveSubtitles(v, log)
-	if err != nil {
-		s.renderError(w, req, err)
-		return
-	}
-
-	s.renderOK(w, v.GetSubtitles())
-}
-
-func (s *Server) updateMovieSubtitles(w http.ResponseWriter, req *http.Request) {
-	log := s.logEntry(req)
-	log.Infof("updating movie subtitles")
-
-	m := s.getMovie(w, req)
+	m := s.getMovie(w, r)
 	if m == nil {
 		return
 	}
 
-	s.updateSubtitles(w, req, m)
+	s.updateSubtitle(m, w, r)
 }
 
-func (s *Server) updateEpisodeSubtitles(w http.ResponseWriter, req *http.Request) {
-	log := s.logEntry(req)
-	log.Infof("updating episode subtitles")
+func (s *Server) updateEpisodeSubtitle(w http.ResponseWriter, r *http.Request) {
+	s.logEntry(r).Infof("updating episode subtitles")
 
-	e := s.getEpisode(w, req)
+	e := s.getEpisode(w, r)
 	if e == nil {
 		return
 	}
 
-	s.updateSubtitles(w, req, e)
+	s.updateSubtitle(e, w, r)
+}
+
+func (s *Server) updateSubtitle(v polochon.Video, w http.ResponseWriter, r *http.Request) {
+	if v == nil {
+		return
+	}
+	v.SetSubtitles(nil)
+
+	log := s.logEntry(r)
+
+	sub, err := polochon.GetSubtitle(v, getLanguage(r), log)
+	if err != nil {
+		if err != polochon.ErrNoSubtitleFound {
+			s.renderError(w, r, err)
+		}
+		return
+	}
+
+	// Save in the library
+	if err := s.library.SaveSubtitles(v, log); err != nil {
+		s.renderError(w, r, err)
+		return
+	}
+
+	// Save in the media index
+	if err := s.library.UpdateSubtitleIndex(v, sub); err != nil {
+		s.renderError(w, r, err)
+		return
+	}
+
+	s.renderOK(w, sub)
+}
+
+func (s *Server) serveSubtitle(v polochon.Video, w http.ResponseWriter, r *http.Request) {
+	if v == nil {
+		return
+	}
+
+	sub := polochon.NewSubtitleFromVideo(v, getLanguage(r))
+	s.serveFile(w, r, &sub.File)
 }
 
 func (s *Server) serveMovieSubtitle(w http.ResponseWriter, req *http.Request) {
@@ -61,15 +79,7 @@ func (s *Server) serveMovieSubtitle(w http.ResponseWriter, req *http.Request) {
 	if m == nil {
 		return
 	}
-
-	lang := getLanguage(w, req)
-	path := m.SubtitlePath(polochon.Language(lang))
-
-	file := &polochon.File{
-		Path: path,
-	}
-
-	s.serveFile(w, req, file)
+	s.serveSubtitle(m, w, req)
 }
 
 func (s *Server) serveEpisodeSubtitle(w http.ResponseWriter, req *http.Request) {
@@ -78,12 +88,5 @@ func (s *Server) serveEpisodeSubtitle(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	lang := getLanguage(w, req)
-	path := e.SubtitlePath(polochon.Language(lang))
-
-	file := &polochon.File{
-		Path: path,
-	}
-
-	s.serveFile(w, req, file)
+	s.serveSubtitle(e, w, req)
 }

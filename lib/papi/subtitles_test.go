@@ -58,33 +58,28 @@ func TestSubtitleDownloadURL(t *testing.T) {
 
 func TestUpdateSubtitles(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`
-			[{"lang":"fr_FR", "size": 1000}, {"lang":"en_US", "size": 2000}]
-		`))
+		w.Write([]byte(`{"lang":"fr_FR", "size": 1000}`))
 	}))
 	defer ts.Close()
 
-	expectedSubs := []*Subtitle{
-		{Subtitle: &polochon.Subtitle{
-			File: polochon.File{Size: 1000},
-			Lang: polochon.FR,
-		}},
-		{Subtitle: &polochon.Subtitle{
-			File: polochon.File{Size: 2000},
-			Lang: polochon.EN,
-		}},
-	}
+	video := &Movie{Movie: &polochon.Movie{ImdbID: "fake_id"}}
+	expectedSubs := &Subtitle{Subtitle: &polochon.Subtitle{
+		File:  polochon.File{Size: 1000},
+		Lang:  polochon.FR,
+		Video: video,
+	}}
 
 	client, err := New(ts.URL)
 	if err != nil {
 		t.Fatalf("expected no error doing new client, got %q", err)
 	}
 
-	subs, err := client.UpdateSubtitles(&Movie{Movie: &polochon.Movie{ImdbID: "fake_id"}})
+	sub, err := client.UpdateSubtitle(video, polochon.FR)
 	if err != nil {
 		t.Fatalf("Expected no error, got %+v", err)
 	}
-	if !reflect.DeepEqual(subs, expectedSubs) {
-		t.Fatalf("expected: %+v, got %+v", expectedSubs, subs)
+
+	if !reflect.DeepEqual(sub, expectedSubs) {
+		t.Fatalf("expected: %+v, got %+v", expectedSubs, sub)
 	}
 }

@@ -64,6 +64,7 @@ func (mi *MovieIndex) Add(movie *polochon.Movie) error {
 		Year:          movie.Year,
 		Size:          movie.Size,
 		VideoMetadata: movie.VideoMetadata,
+		Subtitles:     []*Subtitle{},
 	}
 
 	for _, s := range movie.Subtitles {
@@ -72,6 +73,20 @@ func (mi *MovieIndex) Add(movie *polochon.Movie) error {
 
 	mi.Lock()
 	mi.ids[movie.ImdbID] = m
+	mi.Unlock()
+
+	return nil
+}
+
+// UpsertSubtitle updates or insert a subtitle
+func (mi *MovieIndex) UpsertSubtitle(m *polochon.Movie, s *polochon.Subtitle) error {
+	movie, err := mi.Movie(m.ImdbID)
+	if err != nil {
+		return err
+	}
+
+	mi.Lock()
+	movie.Subtitles = upsertSubtitle(movie.Subtitles, NewSubtitle(s))
 	mi.Unlock()
 
 	return nil
