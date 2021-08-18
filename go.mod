@@ -1,6 +1,6 @@
 module github.com/odwrtw/polochon
 
-go 1.14
+go 1.17
 
 require (
 	github.com/PuerkitoBio/goquery v1.5.1 // indirect
@@ -41,4 +41,18 @@ require (
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/unrolled/render.v1 v1.0.0
 	gopkg.in/yaml.v2 v2.2.2
+)
+
+require (
+	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/cespare/xxhash/v2 v2.1.1 // indirect
+	github.com/gorilla/websocket v1.4.0 // indirect
+	github.com/jpillora/scraper v0.0.0-20190930150335-f06f890eb841 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
+	github.com/prometheus/client_model v0.1.0 // indirect
+	github.com/prometheus/common v0.7.0 // indirect
+	github.com/prometheus/procfs v0.0.8 // indirect
+	golang.org/x/net v0.0.0-20200506145744-7e3656a0809f // indirect
+	golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd // indirect
+	gopkg.in/xmlpath.v2 v2.0.0-20150820204837-860cbeca3ebc // indirect
 )
