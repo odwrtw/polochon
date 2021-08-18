@@ -115,7 +115,7 @@ func loadConfig(cf *configFile, conf *Config) error {
 		ExcludeFileContaining:     cf.Video.ExcludeFileContaining,
 		VideoExtensions:           cf.Video.VideoExtensions,
 		AllowedExtensionsToDelete: cf.Video.AllowedExtensionsToDelete,
-		Guesser:                   cf.Video.guesser,
+		Guessers:                  cf.Video.guessers,
 	}
 	conf.Library = LibraryConfig{}
 	conf.Notifiers = cf.Video.notifiers

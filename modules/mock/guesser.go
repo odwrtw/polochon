@@ -12,6 +12,6 @@ func (mock *Mock) Guess(polochon.File, polochon.MovieConfig,
 }
 
 // GuessMetadata implements the guesser interface
-func (mock *Mock) GuessMetadata(*polochon.File) (*polochon.VideoMetadata, error) {
+func (mock *Mock) GuessMetadata(*polochon.File, *logrus.Entry) (*polochon.VideoMetadata, error) {
 	return nil, nil
 }

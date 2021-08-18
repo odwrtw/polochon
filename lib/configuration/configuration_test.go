@@ -46,7 +46,8 @@ wishlist:
   - 1080p
   - 720p
 video:
-  guesser: mock
+  guessers:
+  - mock
   notifiers:
   - mock
   exclude_file_containing:
@@ -150,7 +151,7 @@ func TestReadConfig(t *testing.T) {
 			ExcludeFileContaining:     []string{"sample"},
 			VideoExtensions:           []string{".avi", ".mkv", ".mp4"},
 			AllowedExtensionsToDelete: []string{".srt", ".nfo", ".txt", ".jpg", ".jpeg"},
-			Guesser:                   mock,
+			Guessers:                  []polochon.Guesser{mock},
 		},
 		Library: LibraryConfig{
 			MovieDir: "/tmp",

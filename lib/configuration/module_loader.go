@@ -24,9 +24,9 @@ type ModuleLoader struct {
 	ExplorerNames   []string `yaml:"explorers"`
 	NotifierNames   []string `yaml:"notifiers"`
 	WishlisterNames []string `yaml:"wishlisters"`
+	GuesserNames    []string `yaml:"guessers"`
 	CalendarName    string   `yaml:"calendar"`
 	FsNotifierName  string   `yaml:"fsnotifier"`
-	GuesserName     string   `yaml:"guesser"`
 	DownloaderName  string   `yaml:"client"` // TODO: fix the name
 
 	detailers   []polochon.Detailer
@@ -36,9 +36,9 @@ type ModuleLoader struct {
 	searchers   []polochon.Searcher
 	notifiers   []polochon.Notifier
 	wishlisters []polochon.Wishlister
+	guessers    []polochon.Guesser
 	calendar    polochon.Calendar
 	fsNotifier  polochon.FsNotifier
-	guesser     polochon.Guesser
 	downloader  polochon.Downloader
 }
 
@@ -97,6 +97,13 @@ func (ml *ModuleLoader) load() error {
 		}
 	}
 
+	if len(ml.GuesserNames) != 0 {
+		ml.guessers, err = ml.modulesParams.getGuessers(ml.GuesserNames)
+		if err != nil {
+			return err
+		}
+	}
+
 	if ml.CalendarName != "" {
 		ml.calendar, err = ml.modulesParams.getCalendar(ml.CalendarName)
 		if err != nil {
@@ -106,13 +113,6 @@ func (ml *ModuleLoader) load() error {
 
 	if ml.FsNotifierName != "" {
 		ml.fsNotifier, err = ml.modulesParams.getFsNotifier(ml.FsNotifierName)
-		if err != nil {
-			return err
-		}
-	}
-
-	if ml.GuesserName != "" {
-		ml.guesser, err = ml.modulesParams.getGuesser(ml.GuesserName)
 		if err != nil {
 			return err
 		}
