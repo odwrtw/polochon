@@ -1,4 +1,4 @@
-package openguessit
+package guessit
 
 import (
 	"fmt"
@@ -11,44 +11,44 @@ import (
 )
 
 // Make sure that the module is a guesser
-var _ polochon.Guesser = (*OpenGuessit)(nil)
+var _ polochon.Guesser = (*Guessit)(nil)
 
-// Register openguessit as a Guesser
+// Register guessit as a Guesser
 func init() {
-	polochon.RegisterModule(&OpenGuessit{
+	polochon.RegisterModule(&Guessit{
 		GuessitClient: guessit.New("http://guessit.quimbo.fr/guess"),
 	})
 }
 
 // Module constants
 const (
-	moduleName = "openguessit"
+	moduleName = "guessit"
 )
 
-// OpenGuessit is a mix of opensubtitle and guessit
-type OpenGuessit struct {
+// Guessit is a mix of opensubtitle and guessit
+type Guessit struct {
 	GuessitClient *guessit.Client
 }
 
 // Init implements the module interface
-func (og *OpenGuessit) Init(p []byte) error {
+func (g *Guessit) Init(p []byte) error {
 	return nil
 }
 
 // Name implements the Module interface
-func (og *OpenGuessit) Name() string {
+func (g *Guessit) Name() string {
 	return moduleName
 }
 
 // Status implements the Module interface
-func (og *OpenGuessit) Status() (polochon.ModuleStatus, error) {
+func (g *Guessit) Status() (polochon.ModuleStatus, error) {
 	return polochon.StatusNotImplemented, nil
 }
 
 // GuessMetadata guess the metadata of a file
-func (og *OpenGuessit) GuessMetadata(file *polochon.File) (*polochon.VideoMetadata, error) {
+func (g *Guessit) GuessMetadata(file *polochon.File) (*polochon.VideoMetadata, error) {
 	filePath := filepath.Base(file.Path)
-	guess, err := og.GuessitClient.Guess(filePath)
+	guess, err := g.GuessitClient.Guess(filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -63,9 +63,9 @@ func (og *OpenGuessit) GuessMetadata(file *polochon.File) (*polochon.VideoMetada
 }
 
 // Guess implements the Guesser interface
-func (og *OpenGuessit) Guess(file polochon.File, movieConf polochon.MovieConfig, showConf polochon.ShowConfig, log *logrus.Entry) (polochon.Video, error) {
+func (g *Guessit) Guess(file polochon.File, movieConf polochon.MovieConfig, showConf polochon.ShowConfig, log *logrus.Entry) (polochon.Video, error) {
 	filename := filepath.Base(file.Path)
-	guess, err := og.GuessitClient.Guess(filename)
+	guess, err := g.GuessitClient.Guess(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (og *OpenGuessit) Guess(file polochon.File, movieConf polochon.MovieConfig,
 			Season:     guess.Season,
 		}
 	default:
-		return nil, fmt.Errorf("openguessit: invalid guess type: %s", guess.Type)
+		return nil, fmt.Errorf("guessit: invalid guess type: %s", guess.Type)
 	}
 
 	video.SetFile(file)
