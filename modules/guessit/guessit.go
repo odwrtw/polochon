@@ -8,6 +8,7 @@ import (
 	"github.com/odwrtw/guessit"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 )
 
 // Make sure that the module is a guesser
@@ -15,9 +16,7 @@ var _ polochon.Guesser = (*Guessit)(nil)
 
 // Register guessit as a Guesser
 func init() {
-	polochon.RegisterModule(&Guessit{
-		GuessitClient: guessit.New("http://guessit.quimbo.fr/guess"),
-	})
+	polochon.RegisterModule(&Guessit{})
 }
 
 // Module constants
@@ -25,13 +24,35 @@ const (
 	moduleName = "guessit"
 )
 
+// Params represents the module params
+type Params struct {
+	Endpoint string `yaml:"endpoint"`
+}
+
 // Guessit is a mix of opensubtitle and guessit
 type Guessit struct {
-	GuessitClient *guessit.Client
+	client     *guessit.Client
+	configured bool
 }
 
 // Init implements the module interface
 func (g *Guessit) Init(p []byte) error {
+	if g.configured {
+		return nil
+	}
+
+	params := &Params{}
+	if err := yaml.Unmarshal(p, params); err != nil {
+		return err
+	}
+
+	return g.InitWithParams(params)
+}
+
+// InitWithParams configures the module
+func (g *Guessit) InitWithParams(params *Params) error {
+	g.client = guessit.New(params.Endpoint)
+	g.configured = true
 	return nil
 }
 
@@ -48,7 +69,7 @@ func (g *Guessit) Status() (polochon.ModuleStatus, error) {
 // GuessMetadata guess the metadata of a file
 func (g *Guessit) GuessMetadata(file *polochon.File, log *logrus.Entry) (*polochon.VideoMetadata, error) {
 	filePath := filepath.Base(file.Path)
-	guess, err := g.GuessitClient.Guess(filePath)
+	guess, err := g.client.Guess(filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +86,7 @@ func (g *Guessit) GuessMetadata(file *polochon.File, log *logrus.Entry) (*poloch
 // Guess implements the Guesser interface
 func (g *Guessit) Guess(file polochon.File, movieConf polochon.MovieConfig, showConf polochon.ShowConfig, log *logrus.Entry) (polochon.Video, error) {
 	filename := filepath.Base(file.Path)
-	guess, err := g.GuessitClient.Guess(filename)
+	guess, err := g.client.Guess(filename)
 	if err != nil {
 		return nil, err
 	}

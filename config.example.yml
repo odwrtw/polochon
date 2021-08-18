@@ -71,7 +71,7 @@ wishlist:
 # Video files configuration
 video:
   # A guesser is used to guess the name and type of the video file.
-  # Only guessit is available and requires not further configuration.
+  # It is also used to guess the metadata of a video.
   guessers:
   - guessit
   # Notification methods when a file is added to the library.
@@ -194,3 +194,8 @@ modules_params:
     hooks:
     - url: http://urlhook/new_movie
       method: POST
+    # Guessit is a wrapper for the guessit python program answering over http.
+    # A container is available for self hosting the service:
+    # https://github.com/odwrtw/docker-guessit
+  - name: guessit
+    endpoint: "http://guessit.quimbo.fr/guess"
