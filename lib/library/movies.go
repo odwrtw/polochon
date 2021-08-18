@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	polochon "github.com/odwrtw/polochon/lib"
 	index "github.com/odwrtw/polochon/lib/media_index"
@@ -27,10 +28,13 @@ func (l *Library) HasMovie(imdbID string) (bool, error) {
 }
 
 func (l *Library) getMovieDir(movie *polochon.Movie) string {
+	title := movie.Title
 	if movie.Year != 0 {
-		return filepath.Join(l.MovieDir, fmt.Sprintf("%s (%d)", movie.Title, movie.Year))
+		title += fmt.Sprintf(" (%d)", movie.Year)
 	}
-	return filepath.Join(l.MovieDir, movie.Title)
+	title = strings.ReplaceAll(title, "/", "-")
+
+	return filepath.Join(l.MovieDir, title)
 }
 
 // AddMovie adds a movie to the store
