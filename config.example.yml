@@ -72,7 +72,8 @@ wishlist:
 video:
   # A guesser is used to guess the name and type of the video file.
   # Only guessit is available and requires not further configuration.
-  guesser: guessit
+  guessers:
+  - guessit
   # Notification methods when a file is added to the library.
   # Available notifiers:
   # pushover: notifiy using the pushover API, requires configuration

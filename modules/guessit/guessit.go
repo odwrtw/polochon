@@ -46,7 +46,7 @@ func (g *Guessit) Status() (polochon.ModuleStatus, error) {
 }
 
 // GuessMetadata guess the metadata of a file
-func (g *Guessit) GuessMetadata(file *polochon.File) (*polochon.VideoMetadata, error) {
+func (g *Guessit) GuessMetadata(file *polochon.File, log *logrus.Entry) (*polochon.VideoMetadata, error) {
 	filePath := filepath.Base(file.Path)
 	guess, err := g.GuessitClient.Guess(filePath)
 	if err != nil {

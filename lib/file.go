@@ -15,7 +15,7 @@ type FileConfig struct {
 	ExcludeFileContaining     []string
 	VideoExtensions           []string
 	AllowedExtensionsToDelete []string
-	Guesser                   Guesser
+	Guessers                  []Guesser
 }
 
 // File handles polochon files
@@ -114,12 +114,34 @@ func (f *File) Ignore() error {
 
 // Guess video information from file
 func (f *File) Guess(movieConf MovieConfig, showConf ShowConfig, log *logrus.Entry) (Video, error) {
-	return f.Guesser.Guess(*f, movieConf, showConf, log)
+	for _, guesser := range f.Guessers {
+		v, err := guesser.Guess(*f, movieConf, showConf, log)
+		if err == nil {
+			return v, err
+		}
+		log.WithField("guesser", guesser.Name()).Debugf("failed to guess video")
+	}
+	return nil, ErrGuessingVideo
 }
 
 // GuessMetadata guesses the metadata of a file
-func (f *File) GuessMetadata() (*VideoMetadata, error) {
-	return f.Guesser.GuessMetadata(f)
+func (f *File) GuessMetadata(log *logrus.Entry) (*VideoMetadata, error) {
+	var updated bool
+	m := &VideoMetadata{}
+	for _, guesser := range f.Guessers {
+		metadata, err := guesser.GuessMetadata(f, log)
+		if err == nil {
+			updated = true
+			m.Update(metadata)
+		}
+		log.WithField("guesser", guesser.Name()).Debugf("failed to guess metadata")
+	}
+
+	if updated {
+		return m, nil
+	}
+
+	return nil, ErrGuessingMetadata
 }
 
 // NfoPath is an helper to get the nfo filename from the video filename

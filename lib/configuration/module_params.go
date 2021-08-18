@@ -191,13 +191,17 @@ func (mp ModulesParams) getFsNotifier(name string) (polochon.FsNotifier, error) 
 	return module.(polochon.FsNotifier), nil
 }
 
-func (mp ModulesParams) getGuesser(name string) (polochon.Guesser, error) {
-	module, err := mp.getModule(polochon.TypeGuesser, name)
+func (mp ModulesParams) getGuessers(names []string) ([]polochon.Guesser, error) {
+	modules, err := mp.getModules(polochon.TypeGuesser, names...)
 	if err != nil {
 		return nil, err
 	}
 
-	return module.(polochon.Guesser), nil
+	res := []polochon.Guesser{}
+	for _, m := range modules {
+		res = append(res, m.(polochon.Guesser))
+	}
+	return res, nil
 }
 
 func (mp ModulesParams) getDownloader(name string) (polochon.Downloader, error) {

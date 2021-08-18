@@ -130,7 +130,7 @@ func (dm *DownloadManager) run(log *logrus.Entry) {
 			continue
 		}
 
-		metadata, err := file.GuessMetadata()
+		metadata, err := file.GuessMetadata(tlog)
 		if err != nil {
 			tlog.Warnf("failed to guess metadata: %s", err.Error())
 		}
