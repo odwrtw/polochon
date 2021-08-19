@@ -3,7 +3,6 @@ package polochon
 import (
 	"time"
 
-	"github.com/odwrtw/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -33,17 +32,12 @@ func NewShow(showConf ShowConfig) *Show {
 
 // GetCalendar gets the calendar for the show
 // If there is an error, it will be of type *errors.Error
-func (s *Show) GetCalendar(log *logrus.Entry) (*ShowCalendar, *errors.Error) {
+func (s *Show) GetCalendar(log *logrus.Entry) (*ShowCalendar, error) {
 	if s.Calendar == nil {
-		return nil, errors.Wrap("no show calendar fetcher configured").Fatal()
+		return nil, ErrCalendarModuleNotFound
 	}
 
-	calendar, err := s.Calendar.GetShowCalendar(s, log)
-	if err != nil {
-		return nil, errors.Wrap(err).Fatal()
-	}
-
-	return calendar, nil
+	return s.Calendar.GetShowCalendar(s, log)
 }
 
 // NewShowFromEpisode will return a show from an episode

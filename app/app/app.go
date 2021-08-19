@@ -6,7 +6,6 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/odwrtw/errors"
 	"github.com/odwrtw/polochon/app/auth"
 	"github.com/odwrtw/polochon/app/dm"
 	"github.com/odwrtw/polochon/app/downloader"
@@ -134,7 +133,7 @@ func (a *App) Run() {
 	// Panic loop safeguard
 	go func() {
 		if err := a.safeguard.Run(log); err != nil {
-			errors.LogErrors(log, err)
+			log.Error(err)
 			go a.Stop(log)
 		}
 	}()
@@ -227,11 +226,10 @@ func (a *App) subAppStart(app subapp.App, log *logrus.Entry) {
 		defer a.wg.Done()
 
 		if err := app.Run(log); err != nil {
-			// Check the error type, if it comes from a panic recovery
-			// reload the app
-			switch e := err.(type) {
-			case *errors.Error:
-				errors.LogErrors(log.WithField("app", app.Name()), e)
+			// Check the error, if it comes from a panic recovery reload the
+			// app
+			if err == subapp.ErrPanicRecovered {
+				log.WithField("app", app.Name()).Error(err)
 
 				// Notify the safeguard of the error
 				a.safeguard.Event()
@@ -240,8 +238,8 @@ func (a *App) subAppStart(app subapp.App, log *logrus.Entry) {
 				go func() {
 					a.reload <- app
 				}()
-			// Only log the error
-			default:
+			} else {
+				// Only log the error
 				log.Error(err)
 				go a.Stop(log)
 			}

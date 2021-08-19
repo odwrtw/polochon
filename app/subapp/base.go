@@ -1,10 +1,14 @@
 package subapp
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/sirupsen/logrus"
 )
+
+// ErrPanicRecovered is returned if the app paniced and recovered
+var ErrPanicRecovered = errors.New("subapp: panic recovered")
 
 // Base represents the base of a sub app
 type Base struct {

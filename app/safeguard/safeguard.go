@@ -1,10 +1,10 @@
 package safeguard
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
-	"github.com/odwrtw/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -58,13 +58,9 @@ func (s *Safeguard) Run(log *logrus.Entry) error {
 			s.count++
 
 			if s.count >= MaxEventCount {
-				ctx := errors.Context{
-					"current_count": s.count,
-					"max_count":     MaxEventCount,
-				}
-
-				return errors.New("got %d safeguard events in less than %s",
-					s.count, MaxEventDelay).Fatal().AddContext(ctx)
+				return fmt.Errorf(
+					"got %d safeguard events in less than %s",
+					s.count, MaxEventDelay)
 			}
 		case <-time.After(MaxEventDelay):
 			// Reset the panic count is there was not panic during the

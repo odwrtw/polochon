@@ -1,7 +1,6 @@
 package downloader
 
 import (
-	"github.com/odwrtw/errors"
 	"github.com/odwrtw/polochon/app/subapp"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
@@ -64,9 +63,7 @@ func (d *Downloader) Run(log *logrus.Entry) error {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				err = errors.New("panic recovered").Fatal().AddContext(errors.Context{
-					"sub_app": AppName,
-				})
+				err = subapp.ErrPanicRecovered
 				d.Stop(log)
 			}
 
@@ -141,19 +138,20 @@ func (d *Downloader) downloadMissingMovies(wl *polochon.Wishlist, log *logrus.En
 		m.ImdbID = wantedMovie.ImdbID
 
 		if err := polochon.GetDetails(m, log); err != nil {
-			errors.LogErrors(log, err)
-			if errors.IsFatal(err) {
-				continue
+			if err != polochon.ErrGettingDetails {
+				log.Error(err)
 			}
+			continue
 		}
 
 		log = log.WithField("title", m.Title)
 
-		if err := polochon.GetTorrents(m, log); err != nil && err != polochon.ErrMovieTorrentNotFound {
-			errors.LogErrors(log, err)
-			if errors.IsFatal(err) {
+		if err := polochon.GetTorrents(m, log); err != nil {
+			if err == polochon.ErrTorrentNotFound {
 				continue
 			}
+
+			log.Error(err)
 		}
 
 		torrent := polochon.ChooseTorrentFromQualities(m.Torrents, wantedMovie.Qualities)
@@ -181,18 +179,21 @@ func (d *Downloader) downloadMissingShows(wl *polochon.Wishlist, log *logrus.Ent
 		s.ImdbID = wishedShow.ImdbID
 
 		if err := polochon.GetDetails(s, log); err != nil {
-			errors.LogErrors(log, err)
-			if errors.IsFatal(err) {
-				continue
+			if err != polochon.ErrGettingDetails {
+				log.Error(err)
 			}
+
+			continue
 		}
 
 		calendar, err := s.GetCalendar(log)
 		if err != nil {
-			errors.LogErrors(log, err)
-			if errors.IsFatal(err) {
-				continue
+			if err == polochon.ErrCalendarNotFound {
+				log.Info("calendar not found")
+			} else {
+				log.Error(err)
 			}
+			continue
 		}
 
 		for _, calEpisode := range calendar.Episodes {
@@ -230,11 +231,13 @@ func (d *Downloader) downloadMissingShows(wl *polochon.Wishlist, log *logrus.Ent
 				"episode":      e.Episode,
 			})
 
-			if err := polochon.GetTorrents(e, log); err != nil && err != polochon.ErrShowEpisodeTorrentNotFound {
-				errors.LogErrors(log, err)
-				if errors.IsFatal(err) {
-					continue
+			err = polochon.GetTorrents(e, log)
+			if err != nil {
+				if err != polochon.ErrTorrentNotFound {
+					log.Error(err)
 				}
+
+				continue
 			}
 
 			torrent := polochon.ChooseTorrentFromQualities(e.Torrents, wishedShow.Qualities)

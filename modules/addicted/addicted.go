@@ -143,7 +143,7 @@ func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang p
 		}
 
 		subtitle.Data = data.Bytes()
-		return subtitle, err
+		return subtitle, nil
 	}
 
 	subDist := 1000
@@ -163,7 +163,10 @@ func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang p
 		return nil, nil
 	}
 
-	log.Info("Subtitle chosen ", release, " whit distance ", subDist)
+	log.WithFields(logrus.Fields{
+		"release":  release,
+		"distance": subDist,
+	}).Info("subtitle chosen")
 
 	_, err = data.ReadFrom(&filteredSubs[0])
 	if err != nil {
@@ -171,7 +174,7 @@ func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang p
 	}
 
 	subtitle.Data = data.Bytes()
-	return subtitle, err
+	return subtitle, nil
 }
 
 // GetSubtitle implements the Subtitler interface

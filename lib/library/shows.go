@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/odwrtw/errors"
 	polochon "github.com/odwrtw/polochon/lib"
 	index "github.com/odwrtw/polochon/lib/media_index"
 	"github.com/sirupsen/logrus"
@@ -68,10 +67,7 @@ func (l *Library) addShow(ep *polochon.ShowEpisode, log *logrus.Entry) error {
 	if s == nil {
 		s = polochon.NewShowFromEpisode(ep)
 		if err := polochon.GetDetails(s, log); err != nil {
-			errors.LogErrors(log, err)
-			if errors.IsFatal(err) {
-				return err
-			}
+			return err
 		}
 	}
 

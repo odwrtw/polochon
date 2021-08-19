@@ -1,7 +1,8 @@
 package library
 
 import (
-	"github.com/odwrtw/errors"
+	"errors"
+
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
 	index "github.com/odwrtw/polochon/lib/media_index"

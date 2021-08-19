@@ -35,11 +35,14 @@ func GetSubtitle(video Video, lang Language, log *logrus.Entry) (*Subtitle, erro
 
 		subtitle, err := subtitler.GetSubtitle(video, lang, l)
 		if err != nil {
-			if err == ErrNoSubtitleFound || err == ErrNotAvailable {
-				continue
+			switch err {
+			case ErrNotAvailable:
+				// nothing to log
+			case ErrNoSubtitleFound:
+				l.Debug("no subtitle found")
+			default:
+				l.Warn(err)
 			}
-
-			log.Warn(err)
 			continue
 		}
 
@@ -50,6 +53,7 @@ func GetSubtitle(video Video, lang Language, log *logrus.Entry) (*Subtitle, erro
 	}
 
 	if found == nil {
+		log.Debug("all subtitlers failed to find a subtitle")
 		return nil, ErrNoSubtitleFound
 	}
 
