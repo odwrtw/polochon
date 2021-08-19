@@ -169,6 +169,11 @@ func (f *File) PathWithoutExt() string {
 	return removeExt(f.Path)
 }
 
+// Ext returns the file extension
+func (f *File) Ext() string {
+	return path.Ext(f.Path)
+}
+
 // MovieFanartPath returns the movie fanart path
 func (f *File) MovieFanartPath() string {
 	return f.PathWithoutExt() + "-fanart.jpg"
