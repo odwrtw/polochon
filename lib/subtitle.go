@@ -18,7 +18,9 @@ var (
 type Subtitle struct {
 	File
 
-	Data []byte `json:"-"`
+	// Embedded is true if the subtitle is embedded in the video file
+	Embedded bool   `json:"embedded"`
+	Data     []byte `json:"-"`
 
 	Lang  Language `json:"lang"`
 	Video Video    `json:"-"`
@@ -36,6 +38,10 @@ func NewSubtitleFromVideo(v Video, l Language) *Subtitle {
 
 // Save saves the subtitle to its path
 func (s *Subtitle) Save() error {
+	if s.Embedded {
+		return nil
+	}
+
 	if s.Lang == "" {
 		return ErrMissingSubtitleLang
 	}

@@ -41,7 +41,10 @@ func (e *Episode) MarshalXML(enc *xml.Encoder, start xml.StartElement) error {
 	start.Name = xml.Name{Space: "", Local: "episodedetails"}
 
 	nfo := &episodeFields{
-		Metadata:      Metadata{&e.VideoMetadata},
+		Metadata: Metadata{
+			VideoMetadata:     &e.VideoMetadata,
+			EmbeddedSubtitles: subToLang(e.Subtitles),
+		},
 		Title:         e.Title,
 		ShowTitle:     e.ShowTitle,
 		Season:        e.Season,
@@ -63,12 +66,16 @@ func (e *Episode) MarshalXML(enc *xml.Encoder, start xml.StartElement) error {
 
 // UnmarshalXML implements the XML Unmarshaler interface
 func (e *Episode) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	nfo := episodeFields{Metadata: Metadata{&polochon.VideoMetadata{}}}
+	metadata := polochon.VideoMetadata{}
+	nfo := episodeFields{
+		Metadata: Metadata{VideoMetadata: &metadata},
+	}
 	if err := d.DecodeElement(&nfo, &start); err != nil {
 		return err
 	}
 
 	e.VideoMetadata = *nfo.Metadata.VideoMetadata
+	e.Subtitles = langToSub(e.ShowEpisode, nfo.Metadata.EmbeddedSubtitles)
 	e.Title = nfo.Title
 	e.ShowTitle = nfo.ShowTitle
 	e.Season = nfo.Season

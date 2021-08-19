@@ -44,7 +44,9 @@ func (s *Server) updateSubtitle(v polochon.Video, w http.ResponseWriter, r *http
 
 	sub, err := polochon.GetSubtitle(v, getLanguage(r), log)
 	if err != nil {
-		if err != polochon.ErrNoSubtitleFound {
+		if err == polochon.ErrNoSubtitleFound {
+			s.renderOK(w, nil)
+		} else {
 			s.renderError(w, r, err)
 		}
 		return

@@ -40,7 +40,10 @@ func (m *Movie) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	start.Name = xml.Name{Space: "", Local: "movie"}
 
 	nfo := &movieFields{
-		Metadata:      Metadata{&m.VideoMetadata},
+		Metadata: Metadata{
+			VideoMetadata:     &m.VideoMetadata,
+			EmbeddedSubtitles: subToLang(m.Subtitles),
+		},
 		ImdbID:        m.ImdbID,
 		OriginalTitle: m.OriginalTitle,
 		Plot:          m.Plot,
@@ -62,12 +65,16 @@ func (m *Movie) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 
 // UnmarshalXML implements the XML Unmarshaler interface
 func (m *Movie) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	nfo := movieFields{Metadata: Metadata{&polochon.VideoMetadata{}}}
+	metadata := polochon.VideoMetadata{}
+	nfo := movieFields{
+		Metadata: Metadata{VideoMetadata: &metadata},
+	}
 	if err := d.DecodeElement(&nfo, &start); err != nil {
 		return err
 	}
 
-	m.VideoMetadata = *nfo.Metadata.VideoMetadata
+	m.VideoMetadata = metadata
+	m.Subtitles = langToSub(m.Movie, nfo.Metadata.EmbeddedSubtitles)
 	m.ImdbID = nfo.ImdbID
 	m.OriginalTitle = nfo.OriginalTitle
 	m.Plot = nfo.Plot

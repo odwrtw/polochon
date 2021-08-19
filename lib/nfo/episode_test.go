@@ -9,7 +9,8 @@ import (
 )
 
 func mockEpisode() *polochon.ShowEpisode {
-	s := polochon.NewShowEpisode(polochon.ShowConfig{})
+	s := &polochon.ShowEpisode{}
+
 	s.VideoMetadata = polochon.VideoMetadata{
 		DateAdded:    now(),
 		Quality:      polochon.Quality720p,
@@ -31,6 +32,14 @@ func mockEpisode() *polochon.ShowEpisode {
 	s.ShowImdbID = "tt0397306"
 	s.ShowTvdbID = 73141
 
+	s.Subtitles = []*polochon.Subtitle{
+		{
+			Lang:     polochon.FR,
+			Embedded: true,
+			Video:    s,
+		},
+	}
+
 	return s
 }
 
@@ -42,6 +51,7 @@ var episodeNFOContent = []byte(`<episodedetails>
     <audio_codec>Dolby Digital Plus</audio_codec>
     <video_codec>H.264</video_codec>
     <container>mp4</container>
+    <embedded_subtitles>fr_FR</embedded_subtitles>
   </polochon>
   <title>Lost in Space</title>
   <showtitle>American Dad!</showtitle>
@@ -69,7 +79,7 @@ func TestEpisodeWriteNFO(t *testing.T) {
 	}
 
 	if !bytes.Equal(episodeNFOContent, b.Bytes()) {
-		t.Errorf("Failed to serialize show episode NFO")
+		t.Fatalf("Failed to serialize show episode NFO")
 	}
 }
 
@@ -81,7 +91,7 @@ func TestEpisodeReadNFO(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(got, expected) {
-		t.Errorf("Failed to deserialize show episode NFO.\nGot: %#v\nExpected: %#v", got, expected)
+		t.Fatalf("Failed to deserialize show episode NFO.\nGot: %#v\nExpected: %#v", got, expected)
 	}
 }
 

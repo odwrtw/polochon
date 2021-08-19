@@ -1,7 +1,8 @@
 package polochon
 
 import (
-	"github.com/odwrtw/errors"
+	"errors"
+
 	"github.com/sirupsen/logrus"
 )
 

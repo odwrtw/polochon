@@ -13,17 +13,19 @@ var now = func() time.Time {
 }
 
 type metadataFields struct {
-	DateAdded    string `xml:"date_added"`
-	Quality      string `xml:"quality"`
-	ReleaseGroup string `xml:"release_group"`
-	AudioCodec   string `xml:"audio_codec"`
-	VideoCodec   string `xml:"video_codec"`
-	Container    string `xml:"container"`
+	DateAdded         string              `xml:"date_added"`
+	Quality           string              `xml:"quality"`
+	ReleaseGroup      string              `xml:"release_group"`
+	AudioCodec        string              `xml:"audio_codec"`
+	VideoCodec        string              `xml:"video_codec"`
+	Container         string              `xml:"container"`
+	EmbeddedSubtitles []polochon.Language `xml:"embedded_subtitles"`
 }
 
 // Metadata represents polochon's metadata
 type Metadata struct {
 	*polochon.VideoMetadata
+	EmbeddedSubtitles []polochon.Language
 }
 
 // MarshalXML implements the XML Marshaler interface
@@ -37,12 +39,13 @@ func (m *Metadata) MarshalXML(enc *xml.Encoder, start xml.StartElement) error {
 	}
 
 	nfo := &metadataFields{
-		DateAdded:    now().UTC().Format(time.RFC3339),
-		Quality:      string(m.Quality),
-		ReleaseGroup: m.ReleaseGroup,
-		AudioCodec:   m.AudioCodec,
-		VideoCodec:   m.VideoCodec,
-		Container:    m.Container,
+		DateAdded:         now().UTC().Format(time.RFC3339),
+		Quality:           string(m.Quality),
+		ReleaseGroup:      m.ReleaseGroup,
+		AudioCodec:        m.AudioCodec,
+		VideoCodec:        m.VideoCodec,
+		Container:         m.Container,
+		EmbeddedSubtitles: m.EmbeddedSubtitles,
 	}
 
 	return enc.EncodeElement(nfo, start)
@@ -74,6 +77,7 @@ func (m *Metadata) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	m.AudioCodec = nfo.AudioCodec
 	m.VideoCodec = nfo.VideoCodec
 	m.Container = nfo.Container
+	m.EmbeddedSubtitles = nfo.EmbeddedSubtitles
 
 	return nil
 }

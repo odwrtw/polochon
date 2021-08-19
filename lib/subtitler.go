@@ -1,7 +1,8 @@
 package polochon
 
 import (
-	errors "github.com/odwrtw/errors"
+	"errors"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -22,8 +23,6 @@ type Subtitlable interface {
 
 // GetSubtitle gets the subtitles of a video in the given languages
 func GetSubtitle(video Video, lang Language, log *logrus.Entry) (*Subtitle, error) {
-	c := errors.NewCollector()
-
 	var found *Subtitle
 
 	// Ask all the subtitlers
@@ -32,22 +31,22 @@ func GetSubtitle(video Video, lang Language, log *logrus.Entry) (*Subtitle, erro
 			"subtitler": subtitler.Name(),
 			"lang":      lang,
 		})
-		l.Debugf("searching subtitle")
+		l.Debug("searching subtitle")
 
 		subtitle, err := subtitler.GetSubtitle(video, lang, l)
 		if err != nil {
-			c.Push(errors.Wrap(err).Ctx("subtitler", subtitler.Name()).Ctx("lang", lang))
+			if err == ErrNoSubtitleFound || err == ErrNotAvailable {
+				continue
+			}
+
+			log.Warn(err)
 			continue
 		}
 
-		found = subtitle
-	}
-
-	if c.HasErrors() {
-		if c.IsFatal() {
-			return nil, c
+		if subtitle != nil {
+			found = subtitle
+			break
 		}
-		log.Warnf("got non fatal errors while getting subtitles: %s", c)
 	}
 
 	if found == nil {
