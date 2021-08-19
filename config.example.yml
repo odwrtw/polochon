@@ -74,6 +74,7 @@ video:
   # It is also used to guess the metadata of a video.
   guessers:
   - guessit
+  - mkvinfo
   # Notification methods when a file is added to the library.
   # Available notifiers:
   # pushover: notifiy using the pushover API, requires configuration
@@ -118,6 +119,7 @@ show:
     - tvdb
   # Where to download the subtitles.
   subtitlers:
+    - mkvinfo
     - addicted
 movie:
   # Where the movies are stored.
@@ -128,6 +130,7 @@ movie:
   detailers:
     - tmdb
   subtitlers:
+    - mkvinfo
     - yifysubs
     - opensubtitles
 

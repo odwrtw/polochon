@@ -9,6 +9,7 @@ import (
 	_ "github.com/odwrtw/polochon/modules/fsnotify"
 	_ "github.com/odwrtw/polochon/modules/guessit"
 	_ "github.com/odwrtw/polochon/modules/imdb"
+	_ "github.com/odwrtw/polochon/modules/mkvinfo"
 	_ "github.com/odwrtw/polochon/modules/mock"
 	_ "github.com/odwrtw/polochon/modules/opensubtitles"
 	_ "github.com/odwrtw/polochon/modules/pushover"
