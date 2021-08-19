@@ -64,9 +64,10 @@ func extractSeasons(imdbID string, input map[string]map[string]*index.Episode) (
 			for _, s := range e.Subtitles {
 				subs = append(subs, &Subtitle{
 					Subtitle: &polochon.Subtitle{
-						File:  polochon.File{Size: s.Size},
-						Lang:  s.Lang,
-						Video: pe,
+						File:     polochon.File{Size: s.Size},
+						Lang:     s.Lang,
+						Embedded: s.Embedded,
+						Video:    pe,
 					},
 				})
 			}

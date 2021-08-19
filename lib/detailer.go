@@ -1,9 +1,13 @@
 package polochon
 
 import (
-	"github.com/odwrtw/errors"
+	"errors"
+
 	"github.com/sirupsen/logrus"
 )
+
+// ErrGettingDetails is returned if polochon failed to get details of the video
+var ErrGettingDetails = errors.New("polochon: failed to get details")
 
 // Detailer is the interface to get details on a video or a show
 type Detailer interface {
@@ -19,12 +23,10 @@ type Detailable interface {
 // GetDetails helps getting infos for a Detailable object
 // If there is an error, it will be of type *errors.Collector
 func GetDetails(v Detailable, log *logrus.Entry) error {
-	c := errors.NewCollector()
-
 	detailers := v.GetDetailers()
 	if len(detailers) == 0 {
-		c.Push(errors.Wrap("No detailer available").Fatal())
-		return c
+		log.Warn("No detailer available")
+		return ErrGettingDetails
 	}
 
 	var done bool
@@ -35,14 +37,12 @@ func GetDetails(v Detailable, log *logrus.Entry) error {
 			done = true
 			break
 		}
-		c.Push(errors.Wrap(err).Ctx("Detailer", d.Name()))
+
+		log.Warn(err)
 	}
 	if !done {
-		c.Push(errors.Wrap("All detailers failed").Fatal())
-	}
-
-	if c.HasErrors() {
-		return c
+		log.Info("All detailers failed")
+		return ErrGettingDetails
 	}
 
 	return nil

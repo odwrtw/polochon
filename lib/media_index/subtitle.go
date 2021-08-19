@@ -6,8 +6,9 @@ import (
 
 // Subtitle represents a subtitle
 type Subtitle struct {
-	Size int64             `json:"size"`
-	Lang polochon.Language `json:"lang"`
+	Embedded bool              `json:"embedded"`
+	Size     int64             `json:"size"`
+	Lang     polochon.Language `json:"lang"`
 }
 
 // NewSubtitle returns a new subtitle from a polochon subtitle
@@ -17,8 +18,9 @@ func NewSubtitle(s *polochon.Subtitle) *Subtitle {
 	}
 
 	return &Subtitle{
-		Lang: s.Lang,
-		Size: s.Size,
+		Embedded: s.Embedded,
+		Lang:     s.Lang,
+		Size:     s.Size,
 	}
 }
 
