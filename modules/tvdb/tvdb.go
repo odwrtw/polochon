@@ -474,7 +474,7 @@ func (t *TvDB) GetShowCalendar(show *polochon.Show, log *logrus.Entry) (*polocho
 	}
 
 	if show == nil || show.ImdbID == "" {
-		return nil, ErrShowNotFound
+		return nil, polochon.ErrCalendarNotFound
 	}
 	calendar := polochon.NewShowCalendar(show.ImdbID)
 

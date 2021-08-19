@@ -20,7 +20,7 @@ func (y *Yts) GetTorrents(i interface{}, log *logrus.Entry) error {
 	}
 
 	if len(matches) == 0 {
-		return polochon.ErrMovieTorrentNotFound
+		return polochon.ErrTorrentNotFound
 	}
 
 	// since we searched by id, there should be only one movie in the list
@@ -28,7 +28,7 @@ func (y *Yts) GetTorrents(i interface{}, log *logrus.Entry) error {
 
 	// Check the torrent
 	if len(ytsMovie.Torrents) == 0 {
-		return polochon.ErrMovieTorrentNotFound
+		return polochon.ErrTorrentNotFound
 	}
 
 	m.Torrents = polochonTorrents(&ytsMovie)

@@ -30,8 +30,8 @@ func TestYtsNoResults(t *testing.T) {
 	}
 
 	err := y.GetTorrents(m, fakeLogEntry)
-	if err != polochon.ErrMovieTorrentNotFound {
-		t.Errorf("Got %q, expected %q", err, polochon.ErrMovieTorrentNotFound)
+	if err != polochon.ErrTorrentNotFound {
+		t.Errorf("Got %q, expected %q", err, polochon.ErrTorrentNotFound)
 	}
 }
 
@@ -46,8 +46,8 @@ func TestYtsNoTorrent(t *testing.T) {
 	}
 
 	err := y.GetTorrents(m, fakeLogEntry)
-	if err != polochon.ErrMovieTorrentNotFound {
-		t.Errorf("Got %q, expected %q", err, polochon.ErrMovieTorrentNotFound)
+	if err != polochon.ErrTorrentNotFound {
+		t.Errorf("Got %q, expected %q", err, polochon.ErrTorrentNotFound)
 	}
 }
 

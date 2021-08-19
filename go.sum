@@ -89,8 +89,6 @@ github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWb
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/odwrtw/addicted v0.0.0-20200509145452-a5d36bf9d0f8 h1:Urlj8ZMuBIOQyweZ4c0vkM9DBo5Sjxr+yHlOPvjaP9Y=
 github.com/odwrtw/addicted v0.0.0-20200509145452-a5d36bf9d0f8/go.mod h1:330AeCGPQuyCBQzOCetLtMotSao0LH0+3FJcEAkq5dg=
-github.com/odwrtw/errors v0.0.0-20170604160533-c747b9d17833 h1:JbimDtyFaekFnqCkv3goowabwGNeDfWZk8aCnmRJvT4=
-github.com/odwrtw/errors v0.0.0-20170604160533-c747b9d17833/go.mod h1:KwBfTZvOQqi/hpk4jq8SKmKlf4yoxW8yap93PEvhs0c=
 github.com/odwrtw/eztv v0.0.0-20201119092300-1cf1c95b0e34 h1:SXRmy0NRvXr5CvUtRAyuJuyNuwULC+DJQGI733xtnzw=
 github.com/odwrtw/eztv v0.0.0-20201119092300-1cf1c95b0e34/go.mod h1:fAKpKPEs8in5Mela1ImVeaaLETZ8zejDV05GCEtJ5Rk=
 github.com/odwrtw/fanarttv v0.0.0-20170412122542-9f67d3cf0188 h1:mjAgidPA3aNSZU6EgB2iSu1yxxNU2tw9U14n57Gk7ZQ=

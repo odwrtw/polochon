@@ -59,7 +59,7 @@ func (e *Eztv) getShowEpisodeDetails(s *polochon.ShowEpisode) error {
 	case nil:
 		// continue
 	case eztv.ErrEpisodeNotFound:
-		return polochon.ErrShowEpisodeTorrentNotFound
+		return polochon.ErrTorrentNotFound
 	default:
 		return err
 	}
@@ -107,7 +107,7 @@ func (e *Eztv) Status() (polochon.ModuleStatus, error) {
 
 	// Check if there is any results
 	if len(torrents) == 0 {
-		return polochon.StatusFail, polochon.ErrShowEpisodeTorrentNotFound
+		return polochon.StatusFail, polochon.ErrTorrentNotFound
 	}
 
 	return status, err

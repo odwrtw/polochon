@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/odwrtw/errors"
 	"github.com/odwrtw/polochon/app/subapp"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
@@ -49,9 +48,7 @@ func (dm *DownloadManager) Run(log *logrus.Entry) error {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				err = errors.New("panic recovered").Fatal().AddContext(errors.Context{
-					"sub_app": AppName,
-				})
+				err = subapp.ErrPanicRecovered
 				dm.Stop(log)
 			}
 
@@ -149,23 +146,25 @@ func (dm *DownloadManager) run(log *logrus.Entry) {
 
 		// Get the video details
 		if err := polochon.GetDetails(video, tlog); err != nil {
-			errors.LogErrors(tlog, err)
-			if errors.IsFatal(err) {
-				dm.moveToWatcherDirectory(torrent, tlog)
-				continue
+			if err != polochon.ErrGettingDetails {
+				tlog.Error(err)
 			}
+
+			dm.moveToWatcherDirectory(torrent, tlog)
+			continue
 		}
 
 		// Get the video subtitles
 		for _, lang := range dm.config.SubtitleLanguages {
-			if _, err := polochon.GetSubtitle(video, lang, tlog); err != nil {
-				errors.LogErrors(tlog, err)
+			_, err := polochon.GetSubtitle(video, lang, tlog)
+			if err != nil && err != polochon.ErrNoSubtitleFound {
+				tlog.Error(err)
 			}
 		}
 
 		// Store the video
 		if err := dm.library.Add(video, tlog); err != nil {
-			errors.LogErrors(tlog, err)
+			tlog.Error(err)
 			dm.moveToWatcherDirectory(torrent, tlog)
 			continue
 		}

@@ -1,9 +1,16 @@
 package polochon
 
 import (
+	"errors"
 	"time"
 
 	"github.com/sirupsen/logrus"
+)
+
+// Calendar error
+var (
+	ErrCalendarNotFound       = errors.New("polochon: calendar not found")
+	ErrCalendarModuleNotFound = errors.New("polochon: calendar module not found")
 )
 
 // Calendar is an interface to get the calendar for movies and shows

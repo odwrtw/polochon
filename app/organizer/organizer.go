@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/odwrtw/errors"
 	"github.com/odwrtw/polochon/app/subapp"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
@@ -71,9 +70,7 @@ func (o *Organizer) startFsNotifier(log *logrus.Entry) error {
 		defer func() {
 			o.Wg.Done()
 			if r := recover(); r != nil {
-				err = errors.New("panic recovered").Fatal().AddContext(errors.Context{
-					"sub_app": AppName,
-				})
+				err = subapp.ErrPanicRecovered
 				o.Stop(log)
 			}
 		}()
@@ -157,32 +154,35 @@ func (o *Organizer) organizeFile(filePath string, log *logrus.Entry) error {
 	// Guess the video inforamtion
 	video, err := file.Guess(o.config.Movie, o.config.Show, log)
 	if err != nil {
-		errors.LogErrors(log, err)
+		if err != polochon.ErrGuessingVideo {
+			log.Error(err)
+		}
 		return file.Ignore()
 	}
 	if video == nil {
-		errors.LogErrors(log, errors.New("invalid guess"))
+		log.Error("invalid guess")
 		return file.Ignore()
 	}
 
 	// Get video details
 	if err := polochon.GetDetails(video, log); err != nil {
-		errors.LogErrors(log, err)
-		if errors.IsFatal(err) {
-			return file.Ignore()
+		if err != polochon.ErrGettingDetails {
+			log.Error(err)
 		}
+		return file.Ignore()
 	}
 
 	// Get the video subtitles
 	for _, lang := range o.config.SubtitleLanguages {
-		if _, err := polochon.GetSubtitle(video, lang, log); err != nil {
-			errors.LogErrors(log, err)
+		_, err := polochon.GetSubtitle(video, lang, log)
+		if err != nil && err != polochon.ErrNoSubtitleFound {
+			log.Error(err)
 		}
 	}
 
 	// Store the video
 	if err := o.library.Add(video, log); err != nil {
-		errors.LogErrors(log, err)
+		log.Error(err)
 		return file.Ignore()
 	}
 
