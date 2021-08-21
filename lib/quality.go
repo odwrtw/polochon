@@ -10,6 +10,7 @@ const (
 	Quality480p  Quality = "480p"
 	Quality720p  Quality = "720p"
 	Quality1080p Quality = "1080p"
+	Quality2160p Quality = "2160p"
 	Quality3D    Quality = "3D"
 )
 
@@ -34,6 +35,7 @@ func (q *Quality) IsAllowed() bool {
 		Quality480p,
 		Quality720p,
 		Quality1080p,
+		Quality2160p,
 		Quality3D,
 	} {
 		if *q == quality {
