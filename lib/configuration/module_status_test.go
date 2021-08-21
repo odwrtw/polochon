@@ -28,35 +28,35 @@ func TestModulesStatus(t *testing.T) {
 	modulesStatus := c.ModulesStatus()
 	expectedModulesStatus := ModulesStatuses{
 		"movie": {
-			"searcher": []ModuleStatus{
+			"searcher": []*ModuleStatus{
 				{
 					Name:   "mock",
 					Status: polochon.StatusOK,
 					Error:  "",
 				},
 			},
-			"detailer": []ModuleStatus{
+			"detailer": []*ModuleStatus{
 				{
 					Name:   "mock",
 					Status: polochon.StatusOK,
 					Error:  "",
 				},
 			},
-			"explorer": []ModuleStatus{
+			"explorer": []*ModuleStatus{
 				{
 					Name:   "mock",
 					Status: polochon.StatusOK,
 					Error:  "",
 				},
 			},
-			"torrenter": []ModuleStatus{
+			"torrenter": []*ModuleStatus{
 				{
 					Name:   "mock",
 					Status: polochon.StatusOK,
 					Error:  "",
 				},
 			},
-			"subtitler": []ModuleStatus{
+			"subtitler": []*ModuleStatus{
 				{
 					Name:   "mock",
 					Status: polochon.StatusOK,
@@ -65,7 +65,7 @@ func TestModulesStatus(t *testing.T) {
 			},
 		},
 		"show": {
-			"torrenter": []ModuleStatus{
+			"torrenter": []*ModuleStatus{
 				{
 					Name:   "mock",
 					Status: polochon.StatusOK,
