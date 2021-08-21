@@ -7,6 +7,7 @@ func TestIsAllowedQuality(t *testing.T) {
 		Quality480p,
 		Quality720p,
 		Quality1080p,
+		Quality2160p,
 		Quality3D,
 	} {
 		if !allowedQuality.IsAllowed() {
