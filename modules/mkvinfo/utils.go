@@ -33,24 +33,20 @@ func Metadata(tracks []*TrackEntry) *polochon.VideoMetadata {
 	}
 
 	for _, track := range tracks {
-		if track.Type == TrackTypeSubtitle {
-			continue
-		}
-
-		if track.Type == TrackTypeVideo {
+		switch track.Type {
+		case TrackTypeSubtitle:
+			lang, ok := track.Lang()
+			if ok {
+				m.EmbeddedSubtitles = append(m.EmbeddedSubtitles, lang)
+			}
+		case TrackTypeVideo:
 			m.VideoCodec = track.PrettyCodec()
-		}
-
-		if track.Type == TrackTypeAudio {
+		case TrackTypeAudio:
 			m.AudioCodec = track.PrettyCodec()
-		}
-
-		if m.VideoCodec != "" && m.AudioCodec != "" {
-			break
 		}
 	}
 
-	if m.VideoCodec == "" && m.AudioCodec == "" {
+	if m.VideoCodec == "" && m.AudioCodec == "" && len(m.EmbeddedSubtitles) == 0 {
 		return nil
 	}
 

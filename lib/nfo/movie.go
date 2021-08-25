@@ -41,8 +41,7 @@ func (m *Movie) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 
 	nfo := &movieFields{
 		Metadata: Metadata{
-			VideoMetadata:     &m.VideoMetadata,
-			EmbeddedSubtitles: subToLang(m.Subtitles),
+			VideoMetadata: &m.VideoMetadata,
 		},
 		ImdbID:        m.ImdbID,
 		OriginalTitle: m.OriginalTitle,
@@ -74,7 +73,7 @@ func (m *Movie) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	}
 
 	m.VideoMetadata = metadata
-	m.Subtitles = langToSub(m.Movie, nfo.Metadata.EmbeddedSubtitles)
+	m.Subtitles = subFromMetadata(m.Movie, nfo.Metadata.EmbeddedSubtitles)
 	m.ImdbID = nfo.ImdbID
 	m.OriginalTitle = nfo.OriginalTitle
 	m.Plot = nfo.Plot
