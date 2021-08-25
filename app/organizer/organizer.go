@@ -164,6 +164,12 @@ func (o *Organizer) organizeFile(filePath string, log *logrus.Entry) error {
 		return file.Ignore()
 	}
 
+	metadata, err := file.GuessMetadata(log)
+	if err != nil {
+		log.Warnf("failed to guess metadata: %s", err.Error())
+	}
+	video.SetMetadata(metadata)
+
 	// Get video details
 	if err := polochon.GetDetails(video, log); err != nil {
 		if err != polochon.ErrGettingDetails {

@@ -42,8 +42,7 @@ func (e *Episode) MarshalXML(enc *xml.Encoder, start xml.StartElement) error {
 
 	nfo := &episodeFields{
 		Metadata: Metadata{
-			VideoMetadata:     &e.VideoMetadata,
-			EmbeddedSubtitles: subToLang(e.Subtitles),
+			VideoMetadata: &e.VideoMetadata,
 		},
 		Title:         e.Title,
 		ShowTitle:     e.ShowTitle,
@@ -75,7 +74,7 @@ func (e *Episode) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	}
 
 	e.VideoMetadata = *nfo.Metadata.VideoMetadata
-	e.Subtitles = langToSub(e.ShowEpisode, nfo.Metadata.EmbeddedSubtitles)
+	e.Subtitles = subFromMetadata(e.ShowEpisode, nfo.Metadata.EmbeddedSubtitles)
 	e.Title = nfo.Title
 	e.ShowTitle = nfo.ShowTitle
 	e.Season = nfo.Season

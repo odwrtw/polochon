@@ -12,12 +12,13 @@ func mockEpisode() *polochon.ShowEpisode {
 	s := &polochon.ShowEpisode{}
 
 	s.VideoMetadata = polochon.VideoMetadata{
-		DateAdded:    now(),
-		Quality:      polochon.Quality720p,
-		ReleaseGroup: "GoT[TGx]",
-		AudioCodec:   "Dolby Digital Plus",
-		VideoCodec:   "H.264",
-		Container:    "mp4",
+		DateAdded:         now(),
+		Quality:           polochon.Quality720p,
+		ReleaseGroup:      "GoT[TGx]",
+		AudioCodec:        "Dolby Digital Plus",
+		VideoCodec:        "H.264",
+		Container:         "mp4",
+		EmbeddedSubtitles: []polochon.Language{polochon.FR},
 	}
 	s.Title = "Lost in Space"
 	s.ShowTitle = "American Dad!"

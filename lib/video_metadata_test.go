@@ -8,12 +8,13 @@ import (
 
 func TestVideoMetatdataUpdate(t *testing.T) {
 	vm := VideoMetadata{
-		DateAdded:    time.Now(),
-		Quality:      Quality1080p,
-		ReleaseGroup: "YTS",
-		AudioCodec:   "AAC",
-		VideoCodec:   "h264",
-		Container:    "mkv",
+		DateAdded:         time.Now(),
+		Quality:           Quality1080p,
+		ReleaseGroup:      "YTS",
+		AudioCodec:        "AAC",
+		VideoCodec:        "h264",
+		Container:         "mkv",
+		EmbeddedSubtitles: []Language{FR, EN},
 	}
 
 	newTime := time.Now().Add(1 * time.Second)
@@ -35,20 +36,22 @@ func TestVideoMetatdataUpdate(t *testing.T) {
 		{
 			name: "everything new",
 			expected: VideoMetadata{
-				DateAdded:    newTime,
-				Quality:      Quality3D,
-				ReleaseGroup: "YGG",
-				AudioCodec:   "AAC-HD",
-				VideoCodec:   "mp4",
-				Container:    "new",
+				DateAdded:         newTime,
+				Quality:           Quality3D,
+				ReleaseGroup:      "YGG",
+				AudioCodec:        "AAC-HD",
+				VideoCodec:        "mp4",
+				Container:         "new",
+				EmbeddedSubtitles: []Language{FR},
 			},
 			metadata: &VideoMetadata{
-				DateAdded:    newTime,
-				Quality:      Quality3D,
-				ReleaseGroup: "YGG",
-				AudioCodec:   "AAC-HD",
-				VideoCodec:   "mp4",
-				Container:    "new",
+				DateAdded:         newTime,
+				Quality:           Quality3D,
+				ReleaseGroup:      "YGG",
+				AudioCodec:        "AAC-HD",
+				VideoCodec:        "mp4",
+				Container:         "new",
+				EmbeddedSubtitles: []Language{FR},
 			},
 		},
 	}

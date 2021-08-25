@@ -25,7 +25,6 @@ type metadataFields struct {
 // Metadata represents polochon's metadata
 type Metadata struct {
 	*polochon.VideoMetadata
-	EmbeddedSubtitles []polochon.Language
 }
 
 // MarshalXML implements the XML Marshaler interface

@@ -53,7 +53,7 @@ func GetSubtitle(video Video, lang Language, log *logrus.Entry) (*Subtitle, erro
 	}
 
 	if found == nil {
-		log.Debug("all subtitlers failed to find a subtitle")
+		log.WithField("lang", lang).Debug("all subtitlers failed to find a subtitle")
 		return nil, ErrNoSubtitleFound
 	}
 
