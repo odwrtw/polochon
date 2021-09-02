@@ -60,7 +60,7 @@ func (t *TrackEntry) Lang() (polochon.Language, bool) {
 	}
 
 	for _, prefix := range subtitlePrefixEnglish {
-		if strings.HasPrefix(t.Language, prefix) {
+		if strings.HasPrefix(t.Name, prefix) {
 			return polochon.EN, true
 		}
 	}
