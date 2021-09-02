@@ -136,6 +136,7 @@ func (f *File) GuessMetadata(log *logrus.Entry) (*VideoMetadata, error) {
 		if err == nil {
 			updated = true
 			m.Update(metadata)
+			continue
 		}
 
 		if err != ErrNotAvailable {
