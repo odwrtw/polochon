@@ -32,17 +32,29 @@ func Metadata(tracks []*TrackEntry) *polochon.VideoMetadata {
 		Container:  "mkv",
 	}
 
+	subtitles := map[polochon.Language]struct{}{}
+
 	for _, track := range tracks {
 		switch track.Type {
 		case TrackTypeSubtitle:
 			lang, ok := track.Lang()
 			if ok {
-				m.EmbeddedSubtitles = append(m.EmbeddedSubtitles, lang)
+				subtitles[lang] = struct{}{}
 			}
 		case TrackTypeVideo:
 			m.VideoCodec = track.PrettyCodec()
 		case TrackTypeAudio:
 			m.AudioCodec = track.PrettyCodec()
+		}
+	}
+
+	c := len(subtitles)
+	if c > 0 {
+		m.EmbeddedSubtitles = make([]polochon.Language, c)
+		i := 0
+		for lang := range subtitles {
+			m.EmbeddedSubtitles[i] = lang
+			i++
 		}
 	}
 
