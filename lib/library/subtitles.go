@@ -17,7 +17,11 @@ func (l *Library) GetSubtitle(v polochon.Video, lang polochon.Language) *polocho
 
 // UpdateSubtitles adds the subtitles to the video if the files are found
 func (l *Library) UpdateSubtitles(v polochon.Video) {
-	subs := []*polochon.Subtitle{}
+	subs := v.GetSubtitles()
+	if subs == nil {
+		subs = []*polochon.Subtitle{}
+	}
+
 	for _, lang := range l.SubtitleLanguages {
 		if s := l.GetSubtitle(v, lang); s != nil {
 			subs = append(subs, s)
