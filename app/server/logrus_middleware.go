@@ -9,6 +9,8 @@ import (
 	"github.com/urfave/negroni"
 )
 
+var logExcludedPath = []string{"/metrics"}
+
 func logFieldsFromRequest(r *http.Request) logrus.Fields {
 	// Try to get the real IP
 	remoteAddr := r.RemoteAddr
@@ -33,7 +35,22 @@ func newLogrusMiddleware(logger *logrus.Logger) *logrusMiddleware {
 	}
 }
 
+func shouldLog(r *http.Request) bool {
+	for _, excluded := range logExcludedPath {
+		if r.URL.Path == excluded {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (lm *logrusMiddleware) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	if !shouldLog(r) {
+		next(rw, r)
+		return
+	}
+
 	start := time.Now()
 
 	entry := logrus.NewEntry(lm.logger)
