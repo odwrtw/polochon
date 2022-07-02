@@ -15,8 +15,9 @@ type Logger struct {
 // UnmarshalYAML implements the Unmarshaler interface
 func (l *Logger) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	params := struct {
-		Level string `yaml:"level"`
-		File  string `yaml:"file"`
+		Level            string `yaml:"level"`
+		File             string `yaml:"file"`
+		DisableTimestamp bool   `yaml:"disable_timestamp"`
 	}{}
 
 	if err := unmarshal(&params); err != nil {
@@ -26,7 +27,8 @@ func (l *Logger) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// Create a new logger
 	logger := logrus.New()
 	logger.Formatter = &logrus.TextFormatter{
-		FullTimestamp: true,
+		FullTimestamp:    true,
+		DisableTimestamp: params.DisableTimestamp,
 	}
 
 	// Get the log level

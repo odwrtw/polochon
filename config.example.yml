@@ -2,6 +2,9 @@
 logs:
   # Log level available log levels: debug, info, warn, error, fatal, panic
   level: debug
+  # Disable timestamp logging. useful when output is redirected to logging
+  # system that already adds timestamps.
+  disable_timestamp: true
   # Log to file, if no file is specified the logs will be printed to stdout
   file: /var/log/polochon.log
 
