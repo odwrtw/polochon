@@ -31,7 +31,8 @@ chmod +x polochon
 #### From source
 
 ```sh
-make build
+cd app
+go build *.go
 ```
 
 #### From a docker image
