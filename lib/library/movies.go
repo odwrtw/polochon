@@ -101,7 +101,7 @@ func (l *Library) AddMovie(movie *polochon.Movie, logEntry *logrus.Entry) error 
 		"old_path": movie.Path,
 		"new_path": newPath,
 	}).Debugf("moving movie file")
-	if err := os.Rename(movie.Path, newPath); err != nil {
+	if err := MoveFile(movie.Path, newPath); err != nil {
 		return err
 	}
 

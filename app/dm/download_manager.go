@@ -1,7 +1,6 @@
 package dm
 
 import (
-	"os"
 	"path/filepath"
 	"time"
 
@@ -210,7 +209,7 @@ func (dm *DownloadManager) moveToWatcherDirectory(torrent *polochon.Torrent, log
 		oldPath := filepath.Join(dm.config.DownloadManager.Dir, p)
 		newPath := filepath.Join(dm.config.Watcher.Dir, p)
 		log.Debugf("moving %s to %s", oldPath, newPath)
-		if err := os.Rename(oldPath, newPath); err != nil {
+		if err := library.MoveFile(oldPath, newPath); err != nil {
 			log.Errorf("error while moving torrent file: %s", err.Error())
 		}
 	}
