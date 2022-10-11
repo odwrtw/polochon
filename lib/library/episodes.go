@@ -74,7 +74,7 @@ func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode, logEntry *logrus.Entr
 		"old_path": ep.Path,
 		"new_path": newPath,
 	}).Debugf("moving episode")
-	if err := os.Rename(ep.Path, newPath); err != nil {
+	if err := MoveFile(ep.Path, newPath); err != nil {
 		return err
 	}
 

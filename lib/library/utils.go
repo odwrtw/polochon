@@ -64,3 +64,36 @@ func exists(path string) bool {
 	}
 	return false
 }
+
+// MoveFile is a small function that tries to rename a file, and if it fails,
+// tries to manually move a file by copying + deleting it
+func MoveFile(from string, to string) error {
+	// First try to rename
+	err := os.Rename(from, to)
+	switch err.(type) {
+	case nil:
+		return nil
+	case *os.LinkError:
+		// Rename failed, and it's a LinkError, try to copy and delete the file
+		source, err := os.Open(from)
+		if err != nil {
+			return err
+		}
+		defer source.Close()
+
+		destination, err := os.Create(to)
+		if err != nil {
+			return err
+		}
+		defer destination.Close()
+
+		_, err = io.Copy(destination, source)
+		if err != nil {
+			return err
+		}
+		return os.Remove(from)
+	default:
+		// If it's not a LinkError, return it
+		return err
+	}
+}
