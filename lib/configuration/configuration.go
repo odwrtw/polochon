@@ -79,13 +79,14 @@ type DownloadManagerConfig struct {
 // HTTPServer represents the configuration for the HTTP Server
 type HTTPServer struct {
 	// TODO: enable => enabled
-	Enable            bool   `yaml:"enable"`
-	Port              int    `yaml:"port"`
-	Host              string `yaml:"host"`
-	ServeFiles        bool   `yaml:"serve_files"`
-	BasicAuth         bool   `yaml:"basic_auth"`
-	BasicAuthUser     string `yaml:"basic_auth_user"`
-	BasicAuthPassword string `yaml:"basic_auth_password"`
+	Enable            bool     `yaml:"enable"`
+	Port              int      `yaml:"port"`
+	Host              string   `yaml:"host"`
+	ServeFiles        bool     `yaml:"serve_files"`
+	BasicAuth         bool     `yaml:"basic_auth"`
+	BasicAuthUser     string   `yaml:"basic_auth_user"`
+	BasicAuthPassword string   `yaml:"basic_auth_password"`
+	LogExcludePaths   []string `yaml:"log_exclude_paths"`
 }
 
 // LoadConfig loads the configuration from a reader
