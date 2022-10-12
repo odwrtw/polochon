@@ -53,7 +53,7 @@ func (s *Server) addTorrent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) getTorrents(w http.ResponseWriter, r *http.Request) {
-	s.logEntry(r).Infof("getting torrents")
+	s.logEntry(r).Debugf("getting torrents")
 
 	// Check that the downloader is enabled
 	if !s.config.Downloader.Enabled {
