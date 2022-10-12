@@ -9,8 +9,6 @@ import (
 	"github.com/urfave/negroni"
 )
 
-var logExcludedPath = []string{"/metrics"}
-
 func logFieldsFromRequest(r *http.Request) logrus.Fields {
 	// Try to get the real IP
 	remoteAddr := r.RemoteAddr
@@ -26,17 +24,19 @@ func logFieldsFromRequest(r *http.Request) logrus.Fields {
 }
 
 type logrusMiddleware struct {
-	logger *logrus.Logger
+	logger       *logrus.Logger
+	excludePaths []string
 }
 
-func newLogrusMiddleware(logger *logrus.Logger) *logrusMiddleware {
+func newLogrusMiddleware(logger *logrus.Logger, excludePaths []string) *logrusMiddleware {
 	return &logrusMiddleware{
-		logger: logger,
+		logger:       logger,
+		excludePaths: excludePaths,
 	}
 }
 
-func shouldLog(r *http.Request) bool {
-	for _, excluded := range logExcludedPath {
+func (lm *logrusMiddleware) shouldLog(r *http.Request) bool {
+	for _, excluded := range lm.excludePaths {
 		if r.URL.Path == excluded {
 			return false
 		}
@@ -46,7 +46,7 @@ func shouldLog(r *http.Request) bool {
 }
 
 func (lm *logrusMiddleware) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	if !shouldLog(r) {
+	if !lm.shouldLog(r) {
 		next(rw, r)
 		return
 	}

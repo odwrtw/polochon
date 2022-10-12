@@ -237,7 +237,7 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 	n.Use(negroni.NewRecovery())
 
 	// Use logrus as logger
-	n.Use(newLogrusMiddleware(s.log.Logger))
+	n.Use(newLogrusMiddleware(s.log.Logger, s.config.HTTPServer.LogExcludePaths))
 
 	// Add basic auth if configured
 	if s.config.HTTPServer.BasicAuth {

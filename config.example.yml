@@ -51,6 +51,10 @@ http_server:
   basic_auth: false
   basic_auth_user: toto
   basic_auth_password: tata
+  # Specify which HTTP path to exclude from the logs
+  log_exclude_paths:
+  - /metrics
+  - /torrents
 
 # Wishlists are the way to add new videos to your library automatically.
 wishlist:
