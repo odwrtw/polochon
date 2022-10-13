@@ -7,11 +7,11 @@ _log() {
 }
 
 _log_err() {
-	echo "$1"
+	printf "$(tput setaf 5)-->$(tput setaf 1) %s$(tput setaf 7)\n" "$@"
 	exit 1
 }
 
-ARTIFACTS_PATH="artifacts"
+ARTIFACTS_PATH="${ARTIFACTS_PATH:-artifacts}"
 
 [ -d "$ARTIFACTS_PATH" ] || _log_err "Artifact directory not found"
 [ "$GH_TOKEN" ]          || _log_err "Missing github token"
@@ -25,7 +25,8 @@ _api_call() {
 	curl \
 		--silent \
 		--show-error \
-		-H "Authorization: token $GH_TOKEN" \
+		-H "Accept: application/vnd.github+json" \
+		-H "Authorization: Bearer $GH_TOKEN" \
 		"$@" \
 		"https://api.github.com/repos/$GH_REPO/$path"
 }
@@ -37,7 +38,8 @@ _upload_file() {
 	curl \
 		--silent \
 		--show-error \
-		-H "Authorization: token $GH_TOKEN" \
+		-H "Accept: application/vnd.github+json" \
+		-H "Authorization: Bearer $GH_TOKEN" \
 		-H "Content-Type: $(file -b --mime-type "$file")" \
 		--data-binary "@$file" \
 		"https://uploads.github.com/repos/$GH_REPO/releases/$release_id/assets?name=$(basename "$file")"
@@ -52,7 +54,7 @@ fi
 _log "Deleting the latest tag"
 _api_call "git/refs/tags/latest" -X DELETE
 
-_log "Create the latest tag"
+_log "Creating the latest tag"
 ref_data=$(jq -n -c \
 	--arg commit "$GH_COMMIT" \
 	'{
@@ -62,7 +64,7 @@ ref_data=$(jq -n -c \
 )
 _api_call "git/refs" -X POST --data "$ref_data"
 
-_log "Create the latest release"
+_log "Creating the latest release"
 release_data=$(jq -n -c \
 	--arg body "Created by github action https://github.com/$GH_REPO/actions/runs/$GH_ACTION_ID" \
 	'{
@@ -74,6 +76,9 @@ release_data=$(jq -n -c \
 	}'
 )
 _api_call "releases" -X POST --data "$release_data"
+
+_log "Waiting 5s for the release to be ready for upload..."
+sleep 5
 
 _log "Uploading artifacts"
 release_id=$(_api_call releases/latest | jq .id)
