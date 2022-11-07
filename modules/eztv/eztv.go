@@ -7,6 +7,7 @@ import (
 	"github.com/odwrtw/eztv"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 )
 
 // Make sure that the module is a torrenter, an explorer and a searcher
@@ -32,11 +33,13 @@ const (
 )
 
 // Eztv is a source for show episode torrents
-type Eztv struct{}
+type Eztv struct {
+	ExcludeTorrentsContaining []string `yaml:"exclude_torrents_containing"`
+}
 
 // Init implements the Module interface
 func (e *Eztv) Init(p []byte) error {
-	return nil
+	return yaml.Unmarshal(p, e)
 }
 
 // Function to be overwritten during the tests
@@ -70,6 +73,10 @@ func (e *Eztv) getShowEpisodeDetails(s *polochon.ShowEpisode) error {
 
 	torrents := []*polochon.Torrent{}
 	for _, t := range episodeTorrents {
+		if e.isTorrentExcluded(t.Filename) {
+			continue
+		}
+
 		quality := getQuality(t.Filename)
 
 		torrents = append(torrents, &polochon.Torrent{
@@ -88,6 +95,18 @@ func (e *Eztv) getShowEpisodeDetails(s *polochon.ShowEpisode) error {
 	s.Torrents = torrents
 
 	return nil
+}
+
+// isTorrentExcluded returns true if the file contains an excluded word
+func (e *Eztv) isTorrentExcluded(torrentFilename string) bool {
+	fileName := strings.ToLower(torrentFilename)
+
+	for _, excluded := range e.ExcludeTorrentsContaining {
+		if strings.Contains(fileName, excluded) {
+			return true
+		}
+	}
+	return false
 }
 
 // Name implements the Module interface
