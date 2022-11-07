@@ -2,6 +2,7 @@ package eztv
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/odwrtw/eztv"
@@ -153,5 +154,87 @@ func TestEztvGetTorrents(t *testing.T) {
 
 	if !reflect.DeepEqual(expected, s.Torrents) {
 		t.Errorf("failed to get torrents from eztv\nexpected %+v\ngot %+v", expected, s.Torrents)
+	}
+}
+
+func TestEztvInit(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		params   []byte
+		expected []string
+	}{
+		{
+			name: "single item",
+			params: []byte(strings.Join([]string{
+				"exclude_torrents_containing:",
+				"- x265",
+			}, "\n")),
+			expected: []string{"x265"},
+		},
+		{
+			name:     "no data",
+			params:   []byte{},
+			expected: nil,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			e := &Eztv{}
+			err := e.Init(test.params)
+			if err != nil {
+				t.Fatalf("unexpected error on init %+v", err)
+			}
+			if !reflect.DeepEqual(test.expected, e.ExcludeTorrentsContaining) {
+				t.Fatalf("expected %+v, got %+v", test.expected, e.ExcludeTorrentsContaining)
+			}
+		})
+	}
+}
+
+func TestEztvExcludedTorrents(t *testing.T) {
+	eztvNOx265 := &Eztv{
+		ExcludeTorrentsContaining: []string{"x265"},
+	}
+	eztvNOsubbed := &Eztv{
+		ExcludeTorrentsContaining: []string{"subbed"},
+	}
+	eztvNOcam := &Eztv{
+		ExcludeTorrentsContaining: []string{"cam"},
+	}
+	eztvNOfrench := &Eztv{
+		ExcludeTorrentsContaining: []string{
+			"[fr]", "french", "canada", "canadian",
+		},
+	}
+
+	for _, test := range []struct {
+		filename string
+		x265     bool
+		subbed   bool
+		french   bool
+		cam      bool
+	}{
+		{"pwet-[CAM].avi", false, false, false, true},
+		{"pwet-x265.avi", true, false, false, false},
+		{"pwet-x265-CANADIAN-CAMHD.avi", true, false, true, true},
+		{"pwet-SUBBED-[FR].avi", false, true, true, false},
+	} {
+		t.Run(test.filename, func(t *testing.T) {
+			got := eztvNOx265.isTorrentExcluded(test.filename)
+			if test.x265 != got {
+				t.Fatalf("x265? expected %+v, got %+v", test.x265, got)
+			}
+			got = eztvNOsubbed.isTorrentExcluded(test.filename)
+			if test.subbed != got {
+				t.Fatalf("subbed? expected %+v, got %+v", test.subbed, got)
+			}
+			got = eztvNOfrench.isTorrentExcluded(test.filename)
+			if test.french != got {
+				t.Fatalf("french? expected %+v, got %+v", test.french, got)
+			}
+			got = eztvNOcam.isTorrentExcluded(test.filename)
+			if test.cam != got {
+				t.Fatalf("cam? expected %+v, got %+v", test.cam, got)
+			}
+		})
 	}
 }
