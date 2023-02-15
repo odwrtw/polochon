@@ -30,7 +30,7 @@ require (
 	github.com/odwrtw/yts v0.0.0-20201028142644-53d9b43c6cf5
 	github.com/oz/osdb v0.0.0-20190204162748-da06ada9cdc1
 	github.com/pioz/tvdb v0.0.0-20200804122320-6d5b1ef61c13
-	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/client_golang v1.11.1
 	github.com/remko/go-mkvparse v0.1.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/ryanbradynd05/go-tmdb v0.0.0-20201006144520-c0566c3d1506
