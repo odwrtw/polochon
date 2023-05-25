@@ -1,9 +1,12 @@
 package library
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -12,25 +15,27 @@ import (
 
 // RebuildIndex rebuilds both the movie and show index
 func (l *Library) RebuildIndex(log *logrus.Entry) error {
-	// Create a goroutine for each index
+	videoExtensions := make(map[string]struct{}, len(l.fileConfig.VideoExtensions))
+	for _, ext := range l.fileConfig.VideoExtensions {
+		videoExtensions[ext] = struct{}{}
+	}
+
 	var wg sync.WaitGroup
 	errc := make(chan error, 2)
 	wg.Add(2)
 
 	// Build the movie index
-	l.movieIndex.Clear()
 	go func() {
 		defer wg.Done()
-		if err := l.buildMovieIndex(log); err != nil {
+		if err := l.buildMovieIndex(log, videoExtensions); err != nil {
 			errc <- err
 		}
 	}()
 
 	// Build the show index
-	l.showIndex.Clear()
 	go func() {
 		defer wg.Done()
-		if err := l.buildShowIndex(log); err != nil {
+		if err := l.buildShowIndex(log, videoExtensions); err != nil {
 			errc <- err
 		}
 	}()
@@ -48,158 +53,171 @@ func (l *Library) RebuildIndex(log *logrus.Entry) error {
 	return nil
 }
 
-func (l *Library) buildMovieIndex(log *logrus.Entry) error {
+func (l *Library) buildMovieIndex(log *logrus.Entry, allowedExt map[string]struct{}) error {
 	start := time.Now()
-	err := filepath.Walk(l.MovieDir, func(filePath string, file os.FileInfo, err error) error {
-		walkLog := log.WithField("path", filePath)
-		// Check err
-		if err != nil {
-			walkLog.Errorf("library: failed to walk %q", err)
-			return nil
-		}
+	defer func() {
+		log.Infof("movie index built in %s", time.Since(start))
+	}()
+	l.movieIndex.Clear()
 
-		// Nothing to do on dir
-		if file.IsDir() {
-			return nil
-		}
+	root, err := os.Open(l.MovieDir)
+	if err != nil {
+		return err
+	}
+	defer root.Close()
 
-		// search for movie type
-		ext := path.Ext(filePath)
-
-		var moviePath string
-		for _, mext := range l.fileConfig.VideoExtensions {
-			if ext == mext {
-				moviePath = filePath
-				break
-			}
-		}
-
-		if moviePath == "" {
-			return nil
-		}
-
-		// Read the movie informations
-		movie, err := l.newMovieFromPath(moviePath)
-		if err != nil {
-			walkLog.Errorf("library: failed to read movie NFO: %q", err)
-			return nil
-		}
-
-		// Add the movie to the index
-		err = l.movieIndex.Add(movie)
-		if err != nil {
-			walkLog.Errorf("library: failed to add movie to the Library: %q", err)
-			return nil
-		}
-
-		return nil
-	})
-
-	log.Infof("movie index built in %s", time.Since(start))
-
-	return err
-}
-
-func (l *Library) buildShowIndex(log *logrus.Entry) error {
-	start := time.Now()
-
-	// used to catch if the first root folder has been walked
-	var rootWalked bool
-	// Get only the parent folders
-	err := filepath.Walk(l.ShowDir, func(filePath string, file os.FileInfo, err error) error {
-		walkLog := log.WithField("path", filePath)
-		if err != nil {
-			walkLog.Errorf("library: failed to access path: %q", filePath)
-			return err
-		}
-
-		// Only check directories
-		if !file.IsDir() {
-			return nil
-		}
-
-		// The root folder is only walked once
-		if !rootWalked {
-			rootWalked = true
-			return nil
-		}
-
-		// Check if we can find the tvshow.nfo file
-		nfoPath := l.showNFOPath(filePath)
-		show, err := l.newShowFromPath(nfoPath)
-		if err != nil {
-			walkLog.Errorf("library: failed to read tv show NFO: %q", err)
-			return nil
-		}
-
-		// Scan the path for the episodes
-		err = l.scanEpisodes(show.ImdbID, filePath, walkLog)
-		if err != nil {
-			return err
-		}
-
-		// No need to go deeper, the tvshow.nfo is in the second root folder
-		return filepath.SkipDir
-	})
+	dirs, err := root.Readdirnames(-1)
 	if err != nil {
 		return err
 	}
 
-	log.Infof("show index built in %s", time.Since(start))
+	reg := regexp.MustCompile(`.*\(\d{4}\)$`)
+
+	for _, d := range dirs {
+		if !reg.MatchString(d) {
+			log.WithField("dir", d).Warn("invalid movie dir")
+			continue
+		}
+
+		if err := l.searchInMovieDir(d, allowedExt); err != nil {
+			log.WithField("dir", d).Error(err)
+		}
+	}
 
 	return nil
-
 }
 
-func (l *Library) scanEpisodes(imdbID, showRootPath string, log *logrus.Entry) error {
-	// Walk the files of a show
-	err := filepath.Walk(showRootPath, func(filePath string, file os.FileInfo, err error) error {
-		walkLog := log.WithField("path", filePath)
-		// Check err
+func (l *Library) searchInMovieDir(d string, allowedExt map[string]struct{}) error {
+	movieDir := filepath.Join(l.MovieDir, d)
+
+	dir, err := os.Open(movieDir)
+	if err != nil {
+		return fmt.Errorf("failed to read movie dir %w", err)
+	}
+	defer dir.Close()
+
+	files, err := dir.Readdirnames(-1)
+	if err != nil {
+		return err
+	}
+
+	var moviePath string
+	for _, file := range files {
+		if _, ok := allowedExt[path.Ext(file)]; ok {
+			moviePath = filepath.Join(movieDir, file)
+			break
+		}
+	}
+
+	if moviePath == "" {
+		return fmt.Errorf("no video file found")
+	}
+
+	// Read the movie informations
+	movie, err := l.newMovieFromPath(moviePath)
+	if err != nil {
+		return fmt.Errorf("library: failed to read movie NFO: %w", err)
+	}
+
+	return l.movieIndex.Add(movie)
+}
+
+func (l *Library) buildShowIndex(log *logrus.Entry, allowedExt map[string]struct{}) error {
+	start := time.Now()
+	defer func() {
+		log.Infof("show index built in %s", time.Since(start))
+	}()
+
+	l.showIndex.Clear()
+
+	root, err := os.Open(l.ShowDir)
+	if err != nil {
+		return err
+	}
+	defer root.Close()
+
+	dirs, err := root.Readdirnames(-1)
+	if err != nil {
+		return err
+	}
+
+	for _, d := range dirs {
+		showDir := filepath.Join(l.ShowDir, d)
+		nfoPath := l.showNFOPath(showDir)
+
+		show, err := l.newShowFromPath(nfoPath)
 		if err != nil {
-			walkLog.Errorf("library: failed to walk %q", err)
-			return nil
+			log.Errorf("library: failed to read tv show NFO: %q", err)
+			continue
 		}
 
-		// Nothing to do on dir
-		if file.IsDir() {
-			return nil
+		if err := l.searchInShowDir(show.ImdbID, showDir, log, allowedExt); err != nil {
+			log.WithField("dir", d).Error(err)
+		}
+	}
+
+	return nil
+}
+
+func (l *Library) searchInShowDir(imdbID, showDir string, log *logrus.Entry, allowedExt map[string]struct{}) error {
+	dir, err := os.Open(showDir)
+	if err != nil {
+		return fmt.Errorf("failed to read movie dir %w", err)
+	}
+	defer dir.Close()
+
+	files, err := dir.Readdirnames(-1)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		if !strings.Contains(file, "Season") {
+			continue
 		}
 
-		// search for show type
-		ext := path.Ext(filePath)
+		seasonDir := filepath.Join(showDir, file)
+		if err := l.searchInShowSeasonDir(imdbID, seasonDir, log, allowedExt); err != nil {
+			log.WithField("path", seasonDir).Error(err)
+			continue
+		}
+	}
 
-		var epPath string
-		for _, mext := range l.fileConfig.VideoExtensions {
-			if ext == mext {
-				epPath = filePath
-				break
-			}
+	return nil
+}
+
+func (l *Library) searchInShowSeasonDir(imdbID, seasonDir string, log *logrus.Entry, allowedExt map[string]struct{}) error {
+	dir, err := os.Open(seasonDir)
+	if err != nil {
+		return fmt.Errorf("failed to read movie dir %w", err)
+	}
+	defer dir.Close()
+
+	files, err := dir.Readdirnames(-1)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		if _, ok := allowedExt[path.Ext(file)]; !ok {
+			continue
 		}
 
-		if epPath == "" {
-			return nil
-		}
+		episodePath := filepath.Join(seasonDir, file)
 
-		// Read the nfo file
-		episode, err := l.newEpisodeFromPath(epPath)
+		episode, err := l.newEpisodeFromPath(episodePath)
 		if err != nil {
-			walkLog.Errorf("library: failed to read episode NFO: %q", err)
-			return nil
+			log.Errorf("library: failed to read episode NFO: %q", err)
+			continue
 		}
 
 		episode.ShowImdbID = imdbID
 		episode.ShowConfig = l.showConfig
 		err = l.showIndex.Add(episode)
 		if err != nil {
-			walkLog.Errorf("library: failed to add movie to the Library: %q", err)
-			return nil
+			log.Errorf("library: failed to add episode to the library: %q", err)
+			continue
 		}
-
-		return nil
-	})
-	if err != nil {
-		return err
 	}
 
 	return nil
