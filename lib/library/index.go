@@ -3,7 +3,6 @@ package library
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -15,11 +14,6 @@ import (
 
 // RebuildIndex rebuilds both the movie and show index
 func (l *Library) RebuildIndex(log *logrus.Entry) error {
-	videoExtensions := make(map[string]struct{}, len(l.fileConfig.VideoExtensions))
-	for _, ext := range l.fileConfig.VideoExtensions {
-		videoExtensions[ext] = struct{}{}
-	}
-
 	var wg sync.WaitGroup
 	errc := make(chan error, 2)
 	wg.Add(2)
@@ -27,7 +21,7 @@ func (l *Library) RebuildIndex(log *logrus.Entry) error {
 	// Build the movie index
 	go func() {
 		defer wg.Done()
-		if err := l.buildMovieIndex(log, videoExtensions); err != nil {
+		if err := l.buildMovieIndex(log); err != nil {
 			errc <- err
 		}
 	}()
@@ -35,7 +29,7 @@ func (l *Library) RebuildIndex(log *logrus.Entry) error {
 	// Build the show index
 	go func() {
 		defer wg.Done()
-		if err := l.buildShowIndex(log, videoExtensions); err != nil {
+		if err := l.buildShowIndex(log); err != nil {
 			errc <- err
 		}
 	}()
@@ -53,7 +47,7 @@ func (l *Library) RebuildIndex(log *logrus.Entry) error {
 	return nil
 }
 
-func (l *Library) buildMovieIndex(log *logrus.Entry, allowedExt map[string]struct{}) error {
+func (l *Library) buildMovieIndex(log *logrus.Entry) error {
 	start := time.Now()
 	defer func() {
 		log.Infof("movie index built in %s", time.Since(start))
@@ -79,7 +73,7 @@ func (l *Library) buildMovieIndex(log *logrus.Entry, allowedExt map[string]struc
 			continue
 		}
 
-		if err := l.searchInMovieDir(d, allowedExt); err != nil {
+		if err := l.buildFromMovieDir(d); err != nil {
 			log.WithField("dir", d).Error(err)
 		}
 	}
@@ -87,7 +81,7 @@ func (l *Library) buildMovieIndex(log *logrus.Entry, allowedExt map[string]struc
 	return nil
 }
 
-func (l *Library) searchInMovieDir(d string, allowedExt map[string]struct{}) error {
+func (l *Library) buildFromMovieDir(d string) error {
 	movieDir := filepath.Join(l.MovieDir, d)
 
 	dir, err := os.Open(movieDir)
@@ -103,7 +97,7 @@ func (l *Library) searchInMovieDir(d string, allowedExt map[string]struct{}) err
 
 	var moviePath string
 	for _, file := range files {
-		if _, ok := allowedExt[path.Ext(file)]; ok {
+		if l.fileConfig.IsVideo(file) {
 			moviePath = filepath.Join(movieDir, file)
 			break
 		}
@@ -122,7 +116,7 @@ func (l *Library) searchInMovieDir(d string, allowedExt map[string]struct{}) err
 	return l.movieIndex.Add(movie)
 }
 
-func (l *Library) buildShowIndex(log *logrus.Entry, allowedExt map[string]struct{}) error {
+func (l *Library) buildShowIndex(log *logrus.Entry) error {
 	start := time.Now()
 	defer func() {
 		log.Infof("show index built in %s", time.Since(start))
@@ -151,7 +145,7 @@ func (l *Library) buildShowIndex(log *logrus.Entry, allowedExt map[string]struct
 			continue
 		}
 
-		if err := l.searchInShowDir(show.ImdbID, showDir, log, allowedExt); err != nil {
+		if err := l.buildFromShowDir(show.ImdbID, showDir, log); err != nil {
 			log.WithField("dir", d).Error(err)
 		}
 	}
@@ -159,7 +153,7 @@ func (l *Library) buildShowIndex(log *logrus.Entry, allowedExt map[string]struct
 	return nil
 }
 
-func (l *Library) searchInShowDir(imdbID, showDir string, log *logrus.Entry, allowedExt map[string]struct{}) error {
+func (l *Library) buildFromShowDir(imdbID, showDir string, log *logrus.Entry) error {
 	dir, err := os.Open(showDir)
 	if err != nil {
 		return fmt.Errorf("failed to read movie dir %w", err)
@@ -177,7 +171,7 @@ func (l *Library) searchInShowDir(imdbID, showDir string, log *logrus.Entry, all
 		}
 
 		seasonDir := filepath.Join(showDir, file)
-		if err := l.searchInShowSeasonDir(imdbID, seasonDir, log, allowedExt); err != nil {
+		if err := l.buildFromShowSeasonDir(imdbID, seasonDir, log); err != nil {
 			log.WithField("path", seasonDir).Error(err)
 			continue
 		}
@@ -186,7 +180,7 @@ func (l *Library) searchInShowDir(imdbID, showDir string, log *logrus.Entry, all
 	return nil
 }
 
-func (l *Library) searchInShowSeasonDir(imdbID, seasonDir string, log *logrus.Entry, allowedExt map[string]struct{}) error {
+func (l *Library) buildFromShowSeasonDir(imdbID, seasonDir string, log *logrus.Entry) error {
 	dir, err := os.Open(seasonDir)
 	if err != nil {
 		return fmt.Errorf("failed to read movie dir %w", err)
@@ -199,7 +193,7 @@ func (l *Library) searchInShowSeasonDir(imdbID, seasonDir string, log *logrus.En
 	}
 
 	for _, file := range files {
-		if _, ok := allowedExt[path.Ext(file)]; !ok {
+		if !l.fileConfig.IsVideo(file) {
 			continue
 		}
 

@@ -16,6 +16,23 @@ type FileConfig struct {
 	VideoExtensions           []string
 	AllowedExtensionsToDelete []string
 	Guessers                  []Guesser
+
+	allowedVideoExt map[string]struct{}
+}
+
+// IsVideo returns true if the file is considered a video based on the extension of the file
+func (fc *FileConfig) IsVideo(filename string) bool {
+	if len(fc.allowedVideoExt) == 0 {
+		fc.allowedVideoExt = make(map[string]struct{}, len(fc.VideoExtensions))
+		for _, ext := range fc.VideoExtensions {
+			fc.allowedVideoExt[ext] = struct{}{}
+		}
+	}
+
+	// Get the lower case extension
+	ext := path.Ext(strings.ToLower(filename))
+	_, ok := fc.allowedVideoExt[ext]
+	return ok
 }
 
 // File handles polochon files
@@ -52,19 +69,9 @@ func (f *File) Exists() bool {
 	return exists(f.Path)
 }
 
-// IsVideo returns true is the file is considered as a video, using the
-// allowed extensions in the configuration
+// IsVideo returns true is the file is considered to be a video
 func (f *File) IsVideo() bool {
-	// Get the lower case extension
-	ext := path.Ext(strings.ToLower(f.Path))
-
-	// Check in the video extensions
-	for _, e := range f.VideoExtensions {
-		if e == ext {
-			return true
-		}
-	}
-	return false
+	return f.FileConfig.IsVideo(f.Path)
 }
 
 // IsIgnored returns true if the file has a ".ignore" file with the same name
