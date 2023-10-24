@@ -34,13 +34,3 @@ chmod +x polochon
 cd app
 go build *.go
 ```
-
-#### From a docker image
-
-The docker images is built on the docker hub and can be downloaded using the following command:
-
-```sh
-docker pull odwrtw/polochon
-```
-
-A `docker-compose` file example is available [here](./docker/docker-compose.yml.example) and the readme for this file [here](./docker/README.md).
