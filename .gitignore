@@ -2,7 +2,6 @@ config.yaml
 config.yml
 token.yml
 ./polochon
-docker/docker-compose.yml
 
 *.coverprofile
 coverage.html
