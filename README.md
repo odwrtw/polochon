@@ -1,5 +1,6 @@
 # polochon
 
+[![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://pkg.go.dev/github.com/odwrtw/polochon/lib)
 [![Build Status](https://github.com/odwrtw/polochon/workflows/Build/badge.svg)](https://github.com/odwrtw/polochon/actions)
 [![Coverage Status](https://coveralls.io/repos/odwrtw/polochon/badge.svg?branch=master&service=github)](https://coveralls.io/github/odwrtw/polochon?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/odwrtw/polochon)](https://goreportcard.com/report/github.com/odwrtw/polochon)
