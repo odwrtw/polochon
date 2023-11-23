@@ -46,10 +46,6 @@ func (sS *showSearcher) imdbID() string {
 }
 
 func (sS *showSearcher) isValidGuess(guess *guessit.Response, log *logrus.Entry) bool {
-	if guess.VideoCodec == "h265" {
-		log.Debugf("skipping h265 codec")
-		return false
-	}
 	// Check the video type
 	if guess.Type != "episode" {
 		log.Debugf("tpb: is not an episode but a %s", guess.Type)
