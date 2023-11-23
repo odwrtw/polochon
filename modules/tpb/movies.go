@@ -38,11 +38,6 @@ func (mS *movieSearcher) imdbID() string {
 }
 
 func (mS *movieSearcher) isValidGuess(guess *guessit.Response, log *logrus.Entry) bool {
-	if guess.VideoCodec == "h265" {
-		log.Debugf("skipping h265 codec")
-		return false
-	}
-
 	if !strings.EqualFold(guess.Title, mS.Movie.Title) {
 		log.Debugf("skipping bad movie title %s != %s", guess.Title, mS.Movie.Title)
 		return false
