@@ -19,7 +19,7 @@ require (
 	github.com/odwrtw/tpb v0.0.0-20200507114501-df19547bbff1
 	github.com/odwrtw/trakttv v0.0.0-20221028215455-20d7593d411d
 	github.com/odwrtw/transmission v0.0.0-20221028215408-b11d7d55c759
-	github.com/odwrtw/yifysubs v0.0.0-20231023211121-594c55930caf
+	github.com/odwrtw/yifysubs v0.0.0-20240207155719-c57d8c244477
 	github.com/odwrtw/yts v0.0.0-20231024130053-dfa826fee7b6
 	github.com/oz/osdb v0.0.0-20221214175751-f169057712ec
 	github.com/pioz/tvdb v0.0.0-20221212235421-03519fb7a0e2
@@ -35,27 +35,36 @@ require (
 )
 
 require (
-	github.com/PuerkitoBio/goquery v1.6.1 // indirect
-	github.com/andybalholm/cascadia v1.1.0 // indirect
+	github.com/PuerkitoBio/goquery v1.8.1 // indirect
+	github.com/andybalholm/cascadia v1.3.2 // indirect
+	github.com/antchfx/htmlquery v1.3.0 // indirect
+	github.com/antchfx/xmlquery v1.3.18 // indirect
+	github.com/antchfx/xpath v1.2.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/gobwas/glob v0.2.3 // indirect
+	github.com/gocolly/colly/v2 v2.1.0 // indirect
+	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/gorilla/rpc v1.1.0 // indirect
 	github.com/gorilla/websocket v1.4.0 // indirect
-	github.com/jpillora/scraper v0.2.4 // indirect
+	github.com/jpillora/scraper v0.3.0 // indirect
+	github.com/kennygrant/sanitize v1.2.4 // indirect
 	github.com/kolo/xmlrpc v0.0.0-20220921171641-a4b6fa1dd06b // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/kylelemons/go-gypsy v1.0.0 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
-	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/prometheus/client_model v0.4.1-0.20230718164431-9a2bf3000d16 // indirect
 	github.com/prometheus/common v0.44.0 // indirect
 	github.com/prometheus/procfs v0.11.1 // indirect
-	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
-	google.golang.org/protobuf v1.31.0 // indirect
+	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
+	github.com/temoto/robotstxt v1.1.2 // indirect
+	golang.org/x/net v0.20.0 // indirect
+	golang.org/x/sys v0.16.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
+	google.golang.org/appengine v1.6.8 // indirect
+	google.golang.org/protobuf v1.32.0 // indirect
 	gopkg.in/xmlpath.v2 v2.0.0-20150820204837-860cbeca3ebc // indirect
 )

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/yifysubs"
@@ -38,8 +39,6 @@ type Searcher interface {
 	SearchByLang(imdbID, lang string) ([]*yifysubs.Subtitle, error)
 }
 
-const endpoint = "https://yifysubtitles.com"
-
 // Errors
 var (
 	ErrInvalidSubtitleLang = errors.New("yifysub: invalid subtitle language")
@@ -52,7 +51,7 @@ func (y *YifySubs) Init(p []byte) error {
 		return nil
 	}
 
-	y.Client = yifysubs.New(endpoint)
+	y.Client = yifysubs.NewDefault()
 	y.configured = true
 	return nil
 }
@@ -64,13 +63,11 @@ func (y *YifySubs) Name() string {
 
 // Status implements the Module interface
 func (y *YifySubs) Status() (polochon.ModuleStatus, error) {
-	results, err := y.Client.SearchByLang("tt0133093", "English")
+	_, err := y.Client.SearchByLang("tt0133093", "English")
 	if err != nil {
 		return polochon.StatusFail, err
 	}
-	if len(results) == 0 {
-		return polochon.StatusFail, fmt.Errorf("failed to find subtitles")
-	}
+
 	return polochon.StatusOK, nil
 }
 
@@ -86,21 +83,24 @@ func (y *YifySubs) getMovieSubtitle(m *polochon.Movie, lang polochon.Language, l
 
 	// Get the subs for this movie
 	subs, err := y.Client.SearchByLang(m.ImdbID, subLang)
-	switch err {
-	case nil:
-		//continue
-	case yifysubs.ErrNoSubtitleFound:
-		return nil, polochon.ErrNoSubtitleFound
-	default:
+	if err != nil {
+		if err == yifysubs.ErrNoSubtitleFound {
+			return nil, polochon.ErrNoSubtitleFound
+		}
+
 		return nil, err
 	}
 
-	// No sub found ?
-	if len(subs) == 0 {
-		return nil, polochon.ErrNoSubtitleFound
+	release := filepath.Base(m.PathWithoutExt())
+	for _, sub := range subs {
+		for _, subRelease := range sub.Releases {
+			if release == subRelease {
+				return sub, nil
+			}
+		}
 	}
 
-	return subs[0], nil
+	return nil, polochon.ErrNoSubtitleFound
 }
 
 // GetMovieSubtitle will get a movie subtitle
@@ -127,6 +127,6 @@ func (y *YifySubs) GetSubtitle(i interface{}, lang polochon.Language, log *logru
 	case *polochon.Movie:
 		return y.GetMovieSubtitle(v, lang, log)
 	default:
-		return nil, fmt.Errorf("opensub: invalid argument")
+		return nil, fmt.Errorf("yifysubs: can only search for movie subtitles")
 	}
 }
