@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/agnivade/levenshtein"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/yifysubs"
 	"github.com/sirupsen/logrus"
@@ -91,16 +92,25 @@ func (y *YifySubs) getMovieSubtitle(m *polochon.Movie, lang polochon.Language, l
 		return nil, err
 	}
 
+	var selected *yifysubs.Subtitle
+	minScore := 1000
+
 	release := filepath.Base(m.PathWithoutExt())
 	for _, sub := range subs {
 		for _, subRelease := range sub.Releases {
-			if release == subRelease {
-				return sub, nil
+			dist := levenshtein.ComputeDistance(release, subRelease)
+			if dist < minScore {
+				selected = sub
+				minScore = dist
 			}
 		}
 	}
 
-	return nil, polochon.ErrNoSubtitleFound
+	if selected == nil {
+		return nil, polochon.ErrNoSubtitleFound
+	}
+
+	return selected, nil
 }
 
 // GetMovieSubtitle will get a movie subtitle
