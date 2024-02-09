@@ -120,6 +120,8 @@ github.com/odwrtw/tpb v0.0.0-20200507114501-df19547bbff1 h1:ZxN8n11Muc25mS/wmqbl
 github.com/odwrtw/tpb v0.0.0-20200507114501-df19547bbff1/go.mod h1:sIHKrrfBBSG6KO92wfgWmYq8yYf3hBnnNyFx2nTCOmU=
 github.com/odwrtw/trakttv v0.0.0-20221028215455-20d7593d411d h1:Kd1hwx/YzUt47UIWhhvFzEfbZR94PUjxkTs0ByfylGo=
 github.com/odwrtw/trakttv v0.0.0-20221028215455-20d7593d411d/go.mod h1:qniDMuPCtH3a9gr8MwYLdIHkw+xyK9XVslQG6pFSVNU=
+github.com/odwrtw/trakttv v0.0.0-20240209094722-243ee0386b1a h1:/NG+5swnU+aKYpNmVmojk5IxERbgXIZUt1pemrILt4M=
+github.com/odwrtw/trakttv v0.0.0-20240209094722-243ee0386b1a/go.mod h1:qniDMuPCtH3a9gr8MwYLdIHkw+xyK9XVslQG6pFSVNU=
 github.com/odwrtw/transmission v0.0.0-20221028215408-b11d7d55c759 h1:r3iRIEQq8R+uCW0PY+ude4yerchKyYhO003kQk0g4pE=
 github.com/odwrtw/transmission v0.0.0-20221028215408-b11d7d55c759/go.mod h1:GdV2H0+oYNNdo/vgsMbDBQ9CFrNJkJtpM0CbU/gbdls=
 github.com/odwrtw/yifysubs v0.0.0-20240207155719-c57d8c244477 h1:kIJk5/pPv1DzDUa4SBVtzzn/lmkWkldKix6nZ2svo+Q=
