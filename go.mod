@@ -17,7 +17,7 @@ require (
 	github.com/odwrtw/guessit v0.0.0-20221028215709-d4336685bdaa
 	github.com/odwrtw/imdb-watchlist v0.0.0-20190417175016-b7a9f7503d69
 	github.com/odwrtw/tpb v0.0.0-20200507114501-df19547bbff1
-	github.com/odwrtw/trakttv v0.0.0-20221028215455-20d7593d411d
+	github.com/odwrtw/trakttv v0.0.0-20240209094722-243ee0386b1a
 	github.com/odwrtw/transmission v0.0.0-20221028215408-b11d7d55c759
 	github.com/odwrtw/yifysubs v0.0.0-20240207155719-c57d8c244477
 	github.com/odwrtw/yts v0.0.0-20231024130053-dfa826fee7b6
