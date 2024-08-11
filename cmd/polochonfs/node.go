@@ -87,6 +87,13 @@ func (n *node) getChild(name string) *node {
 	return n.childs[name]
 }
 
+func (n *node) rmAllChilds() {
+	n.mu.Lock()
+	n.childs = map[string]*node{}
+	n.mu.Unlock()
+	n.RmAllChildren()
+}
+
 func (n *node) Readdir(ctx context.Context) (fs.DirStream, syscall.Errno) {
 	if !n.isDir {
 		return nil, syscall.ENOTDIR
@@ -149,7 +156,7 @@ func (n *node) Open(ctx context.Context, flags uint32) (fh fs.FileHandle, fuseFl
 
 func (n *node) Read(ctx context.Context, dest []byte, off int64) (fuse.ReadResult, syscall.Errno) {
 	fmt.Printf("Reading node %s at offset %d\n", n.name, off)
-	client := &http.Client{}
+	client := &http.Client{Timeout: defaultTimeout}
 	defaultErr := syscall.ENETUNREACH // Network unreachable
 
 	fmt.Printf("Fetching URL: %s\n", n.url)
