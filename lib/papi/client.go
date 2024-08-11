@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 // Resource is an interface to identify a resource
@@ -31,6 +32,7 @@ type Client struct {
 	endpoint  string
 	token     string
 	basicAuth *basicAuth
+	timeout   time.Duration
 }
 
 // New returns a new Client, url is the base url of
@@ -48,6 +50,11 @@ func New(endpoint string) (*Client, error) {
 // SetToken sets the token
 func (c *Client) SetToken(token string) {
 	c.token = token
+}
+
+// SetTimeout sets the HTTP timeout
+func (c *Client) SetTimeout(timeout time.Duration) {
+	c.timeout = timeout
 }
 
 // SetBasicAuth set the basic auth details
@@ -129,7 +136,8 @@ func (c *Client) request(httpType, url string, data io.Reader, result interface{
 		req.SetBasicAuth(c.basicAuth.username, c.basicAuth.password)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	httpClient := &http.Client{Timeout: c.timeout}
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err
 	}

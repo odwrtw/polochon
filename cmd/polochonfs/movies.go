@@ -21,9 +21,18 @@ func movieDirTitle(m *papi.Movie) string {
 }
 
 func (pfs *polochonfs) updateMovies(ctx context.Context) {
-	dir := pfs.root.getChild("movies")
+	dir := pfs.root.getChild(defaultMoviesDir)
 
-	for _, m := range pfs.movies {
+	fmt.Println("Fecthing movies")
+	movies, err := pfs.client.GetMovies()
+	if err != nil {
+		fmt.Println("Failed to get movies: ", err)
+		dir.rmAllChilds()
+		return
+	}
+
+	dir.rmAllChilds()
+	for _, m := range movies.List() {
 		title := movieDirTitle(m)
 		url, err := pfs.client.DownloadURL(m)
 		if err != nil {

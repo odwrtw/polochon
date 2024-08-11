@@ -8,9 +8,18 @@ import (
 )
 
 func (pfs *polochonfs) updateShows(ctx context.Context) {
-	dir := pfs.root.getChild("shows")
+	dir := pfs.root.getChild(defaultShowsDir)
 
-	for _, s := range pfs.shows {
+	fmt.Println("Fecthing shows")
+	shows, err := pfs.client.GetShows()
+	if err != nil {
+		fmt.Println("Failed to get shows: ", err)
+		dir.rmAllChilds()
+		return
+	}
+
+	dir.rmAllChilds()
+	for _, s := range shows.List() {
 		showDirNode := newNodeDir(s.Title)
 		showDirNode.times = pfs.root.times
 		dir.addChild(showDirNode)

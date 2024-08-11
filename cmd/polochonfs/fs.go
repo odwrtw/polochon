@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/hanwen/go-fuse/v2/fs"
@@ -10,14 +13,17 @@ import (
 	"github.com/odwrtw/polochon/lib/papi"
 )
 
+var (
+	defaultMoviesDir = "movies"
+	defaultShowsDir  = "shows"
+	defaultTimeout   = 3 * time.Second
+)
+
 type polochonfs struct {
 	debug bool
 	ctx   context.Context
 
 	root *node
-
-	movies []*papi.Movie
-	shows  []*papi.Show
 
 	mountPoint, url, token string
 	client                 *papi.Client
@@ -50,35 +56,49 @@ func (pfs *polochonfs) init() error {
 		return err
 	}
 	pfs.client.SetToken(pfs.token)
+	pfs.client.SetTimeout(defaultTimeout)
 
 	return nil
 }
 
 func (pfs *polochonfs) buildFS(ctx context.Context) {
-	fmt.Println("Fecthing movies")
-	movies, err := pfs.client.GetMovies()
-	if err != nil {
-		fmt.Println("Failed to get movies: ", err)
-		return
-	}
-	pfs.movies = movies.List()
-
-	fmt.Println("Fecthing shows")
-	shows, err := pfs.client.GetShows()
-	if err != nil {
-		fmt.Println("Failed to get shows: ", err)
-		return
-	}
-	pfs.shows = shows.List()
-
 	fmt.Println("Adding persistent nodes")
-	pfs.root.addChild(newPersistentNodeDir("movies"))
-	pfs.root.addChild(newPersistentNodeDir("shows"))
+	pfs.root.addChild(newPersistentNodeDir(defaultMoviesDir))
+	pfs.root.addChild(newPersistentNodeDir(defaultShowsDir))
 
 	pfs.updateMovies(ctx)
 	pfs.updateShows(ctx)
 
 	fmt.Println("All done")
+}
+
+func (pfs *polochonfs) handleUpdates() {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGUSR1, syscall.SIGUSR2)
+
+	ticker := time.NewTicker(1 * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case s := <-sigs:
+			switch s {
+			case syscall.SIGUSR1:
+				fmt.Println("Updating movies from signal")
+				pfs.updateMovies(pfs.ctx)
+			case syscall.SIGUSR2:
+				fmt.Println("Updating shows from signal")
+				pfs.updateShows(pfs.ctx)
+			}
+		case <-ticker.C:
+			fmt.Println("Handle updates from ticker")
+			pfs.updateMovies(pfs.ctx)
+			pfs.updateShows(pfs.ctx)
+		case <-pfs.ctx.Done():
+			fmt.Println("Handle updates done")
+			return
+		}
+	}
 }
 
 func (pfs *polochonfs) mount() (*fuse.Server, error) {
