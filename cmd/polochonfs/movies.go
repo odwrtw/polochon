@@ -21,7 +21,7 @@ func movieDirTitle(m *papi.Movie) string {
 }
 
 func (pfs *polochonfs) updateMovies(ctx context.Context) {
-	dir := pfs.root.getChild(defaultMoviesDir)
+	dir := pfs.root.getChild(movieDirName)
 
 	fmt.Println("Fecthing movies")
 	movies, err := pfs.client.GetMovies()

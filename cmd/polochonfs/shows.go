@@ -8,7 +8,7 @@ import (
 )
 
 func (pfs *polochonfs) updateShows(ctx context.Context) {
-	dir := pfs.root.getChild(defaultShowsDir)
+	dir := pfs.root.getChild(showDirName)
 
 	fmt.Println("Fecthing shows")
 	shows, err := pfs.client.GetShows()
