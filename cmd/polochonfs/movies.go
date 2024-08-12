@@ -7,6 +7,7 @@ import (
 
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/papi"
+	log "github.com/sirupsen/logrus"
 )
 
 func movieDirTitle(m *papi.Movie) string {
@@ -23,10 +24,10 @@ func movieDirTitle(m *papi.Movie) string {
 func (pfs *polochonfs) updateMovies(ctx context.Context) {
 	dir := pfs.root.getChild(movieDirName)
 
-	fmt.Println("Fecthing movies")
+	log.Debug("Fecthing movies")
 	movies, err := pfs.client.GetMovies()
 	if err != nil {
-		fmt.Println("Failed to get movies: ", err)
+		log.WithField("error", err).Error("Failed to get movies")
 		dir.rmAllChilds()
 		return
 	}
@@ -36,7 +37,10 @@ func (pfs *polochonfs) updateMovies(ctx context.Context) {
 		title := movieDirTitle(m)
 		url, err := pfs.client.DownloadURL(m)
 		if err != nil {
-			fmt.Printf("Failed to get url for %s\n", m.Title)
+			log.WithFields(log.Fields{
+				"error": err,
+				"title": m.Title,
+			}).Error("Failed to get movie URL")
 			continue
 		}
 
@@ -50,7 +54,11 @@ func (pfs *polochonfs) updateMovies(ctx context.Context) {
 		for _, sub := range m.Subtitles {
 			url, err := pfs.client.DownloadURL(sub)
 			if err != nil {
-				fmt.Printf("Failed to get url for %s sub:%s\n", m.Title, sub.Lang)
+				log.WithFields(log.Fields{
+					"error": err,
+					"title": m.Title,
+					"lang":  sub.Lang,
+				}).Error("Failed to get movie subtitle URL")
 				continue
 			}
 
@@ -59,4 +67,6 @@ func (pfs *polochonfs) updateMovies(ctx context.Context) {
 			movieDirNode.addChild(subNode)
 		}
 	}
+
+	log.Debug("Movies updated")
 }

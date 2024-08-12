@@ -5,15 +5,16 @@ import (
 	"fmt"
 
 	polochon "github.com/odwrtw/polochon/lib"
+	log "github.com/sirupsen/logrus"
 )
 
 func (pfs *polochonfs) updateShows(ctx context.Context) {
 	dir := pfs.root.getChild(showDirName)
 
-	fmt.Println("Fecthing shows")
+	log.Debug("Fecthing shows")
 	shows, err := pfs.client.GetShows()
 	if err != nil {
-		fmt.Println("Failed to get shows: ", err)
+		log.WithField("error", err).Error("Failed to get shows")
 		dir.rmAllChilds()
 		return
 	}
@@ -32,7 +33,12 @@ func (pfs *polochonfs) updateShows(ctx context.Context) {
 			for _, episode := range season.Episodes {
 				url, err := pfs.client.DownloadURL(episode)
 				if err != nil {
-					fmt.Println("Failed to get episode URL:", err)
+					log.WithFields(log.Fields{
+						"error":   err,
+						"show":    s.Title,
+						"season":  episode.Season,
+						"episode": episode.Episode,
+					}).Error("Failed to get episode URL")
 					continue
 				}
 
@@ -42,7 +48,13 @@ func (pfs *polochonfs) updateShows(ctx context.Context) {
 				for _, sub := range episode.Subtitles {
 					url, err = pfs.client.DownloadURL(sub)
 					if err != nil {
-						fmt.Println("Failed to get episode sub URL:", err)
+						log.WithFields(log.Fields{
+							"error":   err,
+							"show":    s.Title,
+							"season":  episode.Season,
+							"episode": episode.Episode,
+							"lang":    sub.Lang,
+						}).Error("Failed to get episode subtitle URL")
 						continue
 					}
 
@@ -53,4 +65,6 @@ func (pfs *polochonfs) updateShows(ctx context.Context) {
 			}
 		}
 	}
+
+	log.Debug("Shows updated")
 }
