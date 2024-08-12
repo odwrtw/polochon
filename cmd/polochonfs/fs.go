@@ -11,11 +11,12 @@ import (
 	"github.com/hanwen/go-fuse/v2/fs"
 	"github.com/hanwen/go-fuse/v2/fuse"
 	"github.com/odwrtw/polochon/lib/papi"
+	log "github.com/sirupsen/logrus"
 )
 
 type polochonfs struct {
-	debug bool
-	ctx   context.Context
+	debug, fuseDebug bool
+	ctx              context.Context
 
 	root *node
 
@@ -56,14 +57,12 @@ func (pfs *polochonfs) init() error {
 }
 
 func (pfs *polochonfs) buildFS(ctx context.Context) {
-	fmt.Println("Adding persistent nodes")
+	log.Debug("Adding persistent nodes\n")
 	pfs.root.addChild(newPersistentNodeDir(movieDirName))
 	pfs.root.addChild(newPersistentNodeDir(showDirName))
 
 	pfs.updateMovies(ctx)
 	pfs.updateShows(ctx)
-
-	fmt.Println("All done")
 }
 
 func (pfs *polochonfs) handleUpdates() {
@@ -78,18 +77,18 @@ func (pfs *polochonfs) handleUpdates() {
 		case s := <-sigs:
 			switch s {
 			case syscall.SIGUSR1:
-				fmt.Println("Updating movies from signal")
+				log.Debug("Updating movies from signal")
 				pfs.updateMovies(pfs.ctx)
 			case syscall.SIGUSR2:
-				fmt.Println("Updating shows from signal")
+				log.Debug("Updating shows from signal")
 				pfs.updateShows(pfs.ctx)
 			}
 		case <-ticker.C:
-			fmt.Println("Handle updates from ticker")
+			log.Debug("Handle updates from ticker")
 			pfs.updateMovies(pfs.ctx)
 			pfs.updateShows(pfs.ctx)
 		case <-pfs.ctx.Done():
-			fmt.Println("Handle updates done")
+			log.Debug("Handle updates done")
 			return
 		}
 	}
@@ -99,9 +98,9 @@ func (pfs *polochonfs) mount() (*fuse.Server, error) {
 	return fs.Mount(pfs.mountPoint, pfs.root, &fs.Options{
 		MountOptions: fuse.MountOptions{
 			Options: []string{"ro"},
-			Name:    "polochonfs",
+			Name:    "polochon",
 			FsName:  "polochonfs",
-			Debug:   pfs.debug,
+			Debug:   pfs.fuseDebug,
 			// Try to enable direct mount to avoid fusermount
 			// DirectMount: true,
 			// Disable extended attributes
@@ -118,7 +117,7 @@ func (pfs *polochonfs) mount() (*fuse.Server, error) {
 func (pfs *polochonfs) unmount(server *fuse.Server) {
 	var err error
 
-	fmt.Println("Waiting for unmount...")
+	log.Info("Waiting for unmount...")
 	start := time.Now()
 	for {
 		err = server.Unmount()
@@ -127,13 +126,13 @@ func (pfs *polochonfs) unmount(server *fuse.Server) {
 		}
 
 		if time.Since(start) > umountLogTimeout {
-			fmt.Println("Still waiting for unmount...")
+			log.Debug("Still waiting for unmount...")
 			start = time.Now()
 		}
 
-		fmt.Println("Failed to unmount: ", err)
+		log.Error("Failed to unmount: ", err)
 		time.Sleep(1 * time.Second)
 	}
 
-	fmt.Println("Unmount successfull")
+	log.Info("polochonfs unmounted successfully")
 }

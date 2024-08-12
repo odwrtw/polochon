@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
 	"os/user"
@@ -11,6 +10,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -31,7 +32,7 @@ var (
 
 func main() {
 	if err := run(); err != nil {
-		fmt.Println(err)
+		log.Error(err)
 		os.Exit(1)
 	}
 }
@@ -67,11 +68,24 @@ func run() error {
 	flag.DurationVar(&libraryRefresh, "libraryRefresh", libraryRefresh, "library refresh timer")
 	flag.Uint64Var(&uid64, "uid", uid64, "UID of the mounted files")
 	flag.Uint64Var(&gid64, "gid", uid64, "GID of the mounted files")
-	flag.BoolVar(&pfs.debug, "debug", false, "debug")
+	flag.BoolVar(&pfs.debug, "debug", false, "show debug logs")
+	flag.BoolVar(&pfs.fuseDebug, "fuseDebug", false, "debug fuse events")
 	flag.Parse()
 
 	uid = uint32(uid64)
 	gid = uint32(gid64)
+
+	// Setup logger
+	log.SetFormatter(&log.TextFormatter{
+		FullTimestamp:   true,
+		TimestampFormat: "2006/01/02 15:04:05",
+	})
+	log.SetOutput(os.Stdout)
+	if pfs.debug {
+		log.SetLevel(log.DebugLevel)
+	} else {
+		log.SetLevel(log.InfoLevel)
+	}
 
 	err = pfs.init()
 	if err != nil {
@@ -79,7 +93,7 @@ func run() error {
 		return err
 	}
 
-	fmt.Printf("Mouting polochon fs in %s\n", pfs.mountPoint)
+	log.WithField("mountpoint", pfs.mountPoint).Info("Mouting polochonfs")
 	server, err := pfs.mount()
 	if err != nil {
 		return err
@@ -92,7 +106,7 @@ func run() error {
 		pfs.handleUpdates()
 	}()
 
-	fmt.Println("FUSE daemon started")
+	log.Info("FUSE daemon started")
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	<-sigs
