@@ -1,10 +1,8 @@
 #!/bin/sh
-
 set -e
 
 BASE_PATH=$(git rev-parse --show-toplevel)
 BUILD_DIR="$BASE_PATH/builds"
-BIN_NAME=polochon
 
 mkdir -p "$BUILD_DIR"
 
@@ -30,6 +28,24 @@ _checksum() {
 	done
 }
 
+_build_bin() {
+	os=$1
+	arch=$2
+	app=$3
+	name=$4
+
+	_log "Building $name for $os/$arch"
+	(
+		GOOS=$os \
+		GOARCH=$arch \
+		CGO_ENABLED=0 \
+		go build \
+			-ldflags="-extldflags=-static" \
+			-o "$BUILD_DIR/${name}_${os}_${arch}" \
+			"$BASE_PATH/$app/."
+	)
+}
+
 _build() {
 	_clean
 	to_build="$(go env GOOS) $(go env GOARCH)"
@@ -39,19 +55,13 @@ _build() {
 		darwin amd64
 	"
 
-	echo "$to_build" | while read -r os arch; do
-		[ "$os" ] || continue
-		_log "Building $BIN_NAME for $os/$arch"
-		(
-			GOOS=$os \
-			GOARCH=$arch \
-			CGO_ENABLED=0 \
-			go build \
-				-ldflags="-extldflags=-static" \
-				-o "$BUILD_DIR/${BIN_NAME}_${os}_${arch}" \
-				"$BASE_PATH/app/."
-		)
-	done
+	while read -r os arch; do
+		[ -z "$os" ] && continue
+		_build_bin "$os" "$arch" "app" "polochon"
+		_build_bin "$os" "$arch" "cmd/polochonfs" "polochonfs"
+	done <<-EOF
+	$to_build
+	EOF
 
 	_checksum
 }
