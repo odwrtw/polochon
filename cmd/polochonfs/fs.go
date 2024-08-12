@@ -13,20 +13,14 @@ import (
 	"github.com/odwrtw/polochon/lib/papi"
 )
 
-var (
-	defaultMoviesDir = "movies"
-	defaultShowsDir  = "shows"
-	defaultTimeout   = 3 * time.Second
-)
-
 type polochonfs struct {
 	debug bool
 	ctx   context.Context
 
 	root *node
 
-	mountPoint, url, token string
-	client                 *papi.Client
+	mountPoint string
+	client     *papi.Client
 }
 
 func newPolochonFs(ctx context.Context) (*polochonfs, error) {
@@ -42,8 +36,8 @@ func (pfs *polochonfs) init() error {
 		value, errMsg string
 	}{
 		{value: pfs.mountPoint, errMsg: "missing mountpoint"},
-		{value: pfs.url, errMsg: "missing url"},
-		{value: pfs.token, errMsg: "missing token"},
+		{value: polochonURL, errMsg: "missing url"},
+		{value: polochonToken, errMsg: "missing token"},
 	} {
 		if field.value == "" {
 			return fmt.Errorf(field.errMsg)
@@ -51,20 +45,20 @@ func (pfs *polochonfs) init() error {
 	}
 
 	var err error
-	pfs.client, err = papi.New(pfs.url)
+	pfs.client, err = papi.New(polochonURL)
 	if err != nil {
 		return err
 	}
-	pfs.client.SetToken(pfs.token)
-	pfs.client.SetTimeout(defaultTimeout)
+	pfs.client.SetToken(polochonToken)
+	pfs.client.SetTimeout(httpTimeout)
 
 	return nil
 }
 
 func (pfs *polochonfs) buildFS(ctx context.Context) {
 	fmt.Println("Adding persistent nodes")
-	pfs.root.addChild(newPersistentNodeDir(defaultMoviesDir))
-	pfs.root.addChild(newPersistentNodeDir(defaultShowsDir))
+	pfs.root.addChild(newPersistentNodeDir(movieDirName))
+	pfs.root.addChild(newPersistentNodeDir(showDirName))
 
 	pfs.updateMovies(ctx)
 	pfs.updateShows(ctx)
@@ -76,7 +70,7 @@ func (pfs *polochonfs) handleUpdates() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGUSR1, syscall.SIGUSR2)
 
-	ticker := time.NewTicker(1 * time.Minute)
+	ticker := time.NewTicker(libraryRefresh)
 	defer ticker.Stop()
 
 	for {

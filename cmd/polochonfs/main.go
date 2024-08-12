@@ -13,9 +13,21 @@ import (
 	"time"
 )
 
-var umountLogTimeout = 1 * time.Minute
+var (
+	// Default config
+	movieDirName     = "movies"
+	showDirName      = "shows"
+	httpTimeout      = 3 * time.Second
+	libraryRefresh   = 1 * time.Minute
+	umountLogTimeout = 1 * time.Minute
 
-var uid, gid uint32
+	// Polochon URL / Token configs
+	polochonURL   string
+	polochonToken string
+
+	// User rights
+	uid, gid uint32
+)
 
 func main() {
 	if err := run(); err != nil {
@@ -47,8 +59,12 @@ func run() error {
 	}
 
 	flag.StringVar(&pfs.mountPoint, "mountPoint", "", "path to mount the filesystem")
-	flag.StringVar(&pfs.url, "url", os.Getenv("POLOCHON_URL"), "polochon API URL")
-	flag.StringVar(&pfs.token, "token", os.Getenv("POLOCHON_TOKEN"), "polochon API token")
+	flag.StringVar(&polochonURL, "url", os.Getenv("POLOCHON_URL"), "polochon API URL")
+	flag.StringVar(&polochonToken, "token", os.Getenv("POLOCHON_TOKEN"), "polochon API token")
+	flag.StringVar(&showDirName, "showDirName", showDirName, "show directory name")
+	flag.StringVar(&movieDirName, "movieDirName", movieDirName, "movie directory name")
+	flag.DurationVar(&httpTimeout, "timeout", httpTimeout, "HTTP requests timeout")
+	flag.DurationVar(&libraryRefresh, "libraryRefresh", libraryRefresh, "library refresh timer")
 	flag.Uint64Var(&uid64, "uid", uid64, "UID of the mounted files")
 	flag.Uint64Var(&gid64, "gid", uid64, "GID of the mounted files")
 	flag.BoolVar(&pfs.debug, "debug", false, "debug")

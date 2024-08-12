@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"sort"
 	"sync"
 	"syscall"
@@ -156,17 +155,15 @@ func (n *node) Open(ctx context.Context, flags uint32) (fh fs.FileHandle, fuseFl
 
 func (n *node) Read(ctx context.Context, dest []byte, off int64) (fuse.ReadResult, syscall.Errno) {
 	fmt.Printf("Reading node %s at offset %d\n", n.name, off)
-	client := &http.Client{Timeout: defaultTimeout}
+	client := &http.Client{Timeout: httpTimeout}
 	defaultErr := syscall.ENETUNREACH // Network unreachable
 
 	fmt.Printf("Fetching URL: %s\n", n.url)
-	req, err := http.NewRequest("GET", n.url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", n.url, nil)
 	if err != nil {
 		return fuse.ReadResultData(dest), defaultErr
 	}
-
-	// TODO: get the token properly
-	req.Header.Add("X-Auth-Token", os.Getenv("POLOCHON_TOKEN"))
+	req.Header.Add("X-Auth-Token", polochonToken)
 
 	if off != 0 {
 		req.Header.Add("Range", fmt.Sprintf("bytes=%d-", off))
