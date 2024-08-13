@@ -51,8 +51,7 @@ _build() {
 	to_build="$(go env GOOS) $(go env GOARCH)"
 	[ "$2" = "all" ] && to_build="
 		linux amd64
-		linux arm
-		darwin amd64
+		linux arm64
 	"
 
 	while read -r os arch; do
