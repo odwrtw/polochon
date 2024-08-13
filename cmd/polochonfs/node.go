@@ -3,9 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"hash/crc32"
 	"io"
 	"net/http"
 	"sort"
+	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -25,6 +28,8 @@ type node struct {
 
 	mu     sync.Mutex
 	childs map[string]*node
+
+	inode uint64
 }
 
 func newNodeDir(name string) *node {
@@ -58,10 +63,40 @@ func newNode(name, url string, size uint64, times time.Time) *node {
 	}
 }
 
+func (n *node) getInode() uint64 {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	if n.inode != 0 {
+		return n.inode
+	}
+
+	var h strings.Builder
+	if !n.isPersistent {
+		h.WriteString(n.times.String())
+	}
+	h.WriteString(strconv.FormatUint(n.size, 10))
+	h.WriteString(n.name)
+
+	n.inode = 2 ^ 63 + uint64(crc32.ChecksumIEEE([]byte(h.String())))
+
+	return n.inode
+}
+
 func (n *node) addChildNode(c *node) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	n.childs[c.name] = c
+}
+
+func checkInodeExist(i uint64) bool {
+	if _, ok := movieInodes[i]; ok {
+		return true
+	}
+	if _, ok := showInodes[i]; ok {
+		return true
+	}
+	return false
 }
 
 func (n *node) addChild(child *node) {
@@ -74,6 +109,13 @@ func (n *node) addChild(child *node) {
 		child.times = n.times
 		n.NewPersistentInode(context.Background(), child, attr)
 	} else {
+		attr.Ino = child.getInode()
+		if checkInodeExist(attr.Ino) {
+			log.WithFields(log.Fields{
+				"file":  n.name,
+				"inode": attr.Ino,
+			}).Error("Inode already exists")
+		}
 		n.NewInode(context.Background(), child, attr)
 	}
 
