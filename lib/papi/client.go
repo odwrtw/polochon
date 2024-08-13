@@ -70,6 +70,16 @@ func (c *Client) GetDetails(resource Resource) error {
 	return resource.getDetails(c)
 }
 
+// URI returns a resource URI
+func (c *Client) URI(resource Resource) (string, error) {
+	uri, err := resource.uri()
+	if err != nil {
+		return "", err
+	}
+
+	return c.endpoint + "/" + uri, nil
+}
+
 // DownloadURL returns the download URL of a downloadable content
 func (c *Client) DownloadURL(target Downloadable) (string, error) {
 	url, err := target.downloadURL()

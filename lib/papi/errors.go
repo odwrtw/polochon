@@ -17,4 +17,6 @@ var (
 	ErrMissingTorrentURL              = errors.New("papi: missing torrent url")
 	ErrMissingSubtitle                = errors.New("papi: missing subtitle")
 	ErrMissingSubtitleVideo           = errors.New("papi: missing subtitle video")
+	ErrMissingFile                    = errors.New("papi: missing file")
+	ErrMissingFileResource            = errors.New("papi: missing file resource")
 )

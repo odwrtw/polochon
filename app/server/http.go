@@ -13,6 +13,7 @@ import (
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/library"
+	index "github.com/odwrtw/polochon/lib/media_index"
 	"github.com/sirupsen/logrus"
 )
 
@@ -77,6 +78,11 @@ func (s *Server) wishlist(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) serveFile(w http.ResponseWriter, r *http.Request, file *polochon.File) {
+	if file == nil || file.Size == 0 {
+		s.renderError(w, r, index.ErrNotFound)
+		return
+	}
+
 	filename := filepath.Base(file.Path)
 	s.logEntry(r).Infof("serving file %q", filename)
 	// Set the header so that when downloading, the real filename will be given

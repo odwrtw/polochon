@@ -159,6 +159,7 @@ func TestAddEpisode(t *testing.T) {
 				Path:          filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1/episodeTest.mp4"),
 				Filename:      "episodeTest.mp4",
 				VideoMetadata: episode.VideoMetadata,
+				NFO:           &index.File{Name: "episodeTest.nfo", Size: 742},
 				Subtitles: []*index.Subtitle{
 					{Lang: polochon.FR, Size: 17},
 					{Lang: polochon.EN, Size: 17},
@@ -169,7 +170,11 @@ func TestAddEpisode(t *testing.T) {
 
 	// Expected indexed show
 	expectedIndexedShow := &index.Show{
-		Path: filepath.Join(lib.tmpDir, "shows/Show tt12345"),
+		Path:   filepath.Join(lib.tmpDir, "shows/Show tt12345"),
+		Fanart: &index.File{Name: "fanart.jpg", Size: 11},
+		Banner: &index.File{Name: "banner.jpg", Size: 11},
+		Poster: &index.File{Name: "poster.jpg", Size: 11},
+		NFO:    &index.File{Name: "tvshow.nfo", Size: 349},
 		Seasons: map[int]*index.Season{
 			1: expectedIndexedSeason,
 		},

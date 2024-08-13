@@ -10,7 +10,21 @@ import (
 type Movie struct {
 	*polochon.Movie
 
-	Subtitles []*Subtitle
+	Subtitles []*Subtitle `json:"subtitles"`
+
+	Fanart *File `json:"fanart_file"`
+	Thumb  *File `json:"thumb_file"`
+	NFO    *File `json:"nfo_file"`
+}
+
+func (m *Movie) linkFiles() {
+	for _, file := range []*File{m.Fanart, m.Thumb, m.NFO} {
+		if file == nil {
+			continue
+		}
+
+		file.resource = m
+	}
 }
 
 // uri implements the Resource interface
@@ -41,9 +55,8 @@ func (c *Client) GetMovies() (*MovieCollection, error) {
 	url := fmt.Sprintf("%s/%s", c.endpoint, "movies")
 
 	index := map[string]*struct {
-		*polochon.Movie
-		Subtitles []*Subtitle `json:"subtitles"`
-		Filename  string      `json:"filename"`
+		*Movie
+		Filename string `json:"filename"`
 	}{}
 	if err := c.get(url, &index); err != nil {
 		return nil, err
@@ -53,16 +66,13 @@ func (c *Client) GetMovies() (*MovieCollection, error) {
 	for id, m := range index {
 		m.ImdbID = id
 		m.Path = m.Filename
-		movie := &Movie{
-			Movie:     m.Movie,
-			Subtitles: m.Subtitles,
-		}
 
+		m.linkFiles()
 		for _, s := range m.Subtitles {
-			s.Video = movie.Movie
+			s.Video = m.Movie
 		}
 
-		mc.Add(movie)
+		mc.Add(m.Movie)
 	}
 
 	return mc, nil

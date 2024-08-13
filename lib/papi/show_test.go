@@ -9,12 +9,29 @@ import (
 	"time"
 
 	polochon "github.com/odwrtw/polochon/lib"
+	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
 var showByIDsResponse = `
 {
 	"tt4295140": {
 		"title": "Chef's table",
+		"fanart_file": {
+		  "name": "fanart.jpg",
+		  "size": 111
+		},
+		"banner_file": {
+		  "name": "banner.jpg",
+		  "size": 222
+		},
+		"poster_file": {
+		  "name": "poster.jpg",
+		  "size": 333
+		},
+		"nfo_file": {
+		  "name": "tvshow.nfo",
+		  "size": 444
+		},
 		"seasons": {
 			"01": {
 				"01": {
@@ -25,6 +42,10 @@ var showByIDsResponse = `
 					"container": "mkv",
 					"filename": "Chefs.table.S01E01.mkv",
 					"size": 546325850,
+					"nfo_file": {
+					  "name": "Chefs.table.S01E01.nfo",
+					  "size": 555
+					},
 					"subtitles": [
 					  {
 						"size": 35037,
@@ -85,6 +106,10 @@ func TestGetShows(t *testing.T) {
 					ImdbID: "tt4295140",
 					Title:  "Chef's table",
 				},
+				Fanart: &File{File: &index.File{Name: "fanart.jpg", Size: 111}},
+				Banner: &File{File: &index.File{Name: "banner.jpg", Size: 222}},
+				Poster: &File{File: &index.File{Name: "poster.jpg", Size: 333}},
+				NFO:    &File{File: &index.File{Name: "tvshow.nfo", Size: 444}},
 				Seasons: map[int]*Season{
 					1: {
 						ShowImdbID: "tt4295140",
@@ -92,6 +117,12 @@ func TestGetShows(t *testing.T) {
 						Episodes: map[int]*Episode{
 							1: {
 								ShowEpisode: expectedShowEpisode,
+								NFO: &File{
+									File: &index.File{
+										Name: "Chefs.table.S01E01.nfo",
+										Size: 555,
+									},
+								},
 								Subtitles: []*Subtitle{
 									{Subtitle: &polochon.Subtitle{
 										Lang:  polochon.FR,
@@ -135,6 +166,15 @@ func TestGetShows(t *testing.T) {
 			},
 		},
 	}
+
+	// Files hacks
+	show := expected.shows["tt4295140"]
+	show.Banner.resource = show
+	show.Poster.resource = show
+	show.Fanart.resource = show
+	show.NFO.resource = show
+	episode := show.Seasons[1].Episodes[1]
+	episode.NFO.resource = episode
 
 	c, err := New(ts.URL)
 	if err != nil {

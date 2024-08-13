@@ -122,11 +122,6 @@ func (l *Library) AddMovie(movie *polochon.Movie, logEntry *logrus.Entry) error 
 		return err
 	}
 
-	// At this point the video is stored
-	if err := l.movieIndex.Add(movie); err != nil {
-		return err
-	}
-
 	// Save the subtitles here
 	if err := l.SaveSubtitles(movie, log); err != nil {
 		return err
@@ -157,6 +152,11 @@ func (l *Library) AddMovie(movie *polochon.Movie, logEntry *logrus.Entry) error 
 		if err := download(img.url, img.savePath); err != nil {
 			return err
 		}
+	}
+
+	// At this point the video is stored
+	if err := l.movieIndex.Add(movie); err != nil {
+		return err
 	}
 
 	return nil

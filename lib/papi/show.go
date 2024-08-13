@@ -12,7 +12,22 @@ import (
 type Show struct {
 	*polochon.Show
 
-	Seasons map[int]*Season
+	Fanart *File `json:"fanart_file"`
+	Banner *File `json:"banner_file"`
+	Poster *File `json:"poster_file"`
+	NFO    *File `json:"nfo_file"`
+
+	Seasons map[int]*Season `json:"-"`
+}
+
+func (s *Show) linkFiles() {
+	for _, file := range []*File{s.Fanart, s.Banner, s.NFO, s.Poster} {
+		if file == nil {
+			continue
+		}
+
+		file.resource = s
+	}
 }
 
 // uri implements the Resource interface
@@ -76,10 +91,13 @@ func extractSeasons(imdbID string, input map[string]map[string]*index.Episode) (
 				subs = nil
 			}
 
-			s.Episodes[en] = &Episode{
+			newEpisode := &Episode{
 				ShowEpisode: pe,
 				Subtitles:   subs,
 			}
+
+			s.Episodes[en] = newEpisode
+			newEpisode.NFO = NewFile(e.NFO, newEpisode)
 		}
 
 		ret[sn] = s
@@ -93,28 +111,26 @@ func (c *Client) GetShows() (*ShowCollection, error) {
 	url := fmt.Sprintf("%s/%s", c.endpoint, "shows")
 
 	ids := map[string]struct {
-		Title   string
-		Seasons map[string]map[string]*index.Episode
+		*Show
+		Seasons map[string]map[string]*index.Episode `json:"seasons"`
 	}{}
 
-	if err := c.get(url, &ids); err != nil {
+	var err error
+	if err = c.get(url, &ids); err != nil {
 		return nil, err
 	}
 
 	showCollection := NewShowCollection()
-	for imdbID, show := range ids {
-		seasons, err := extractSeasons(imdbID, show.Seasons)
+	for imdbID, data := range ids {
+		data.ImdbID = imdbID
+		data.linkFiles()
+
+		data.Show.Seasons, err = extractSeasons(imdbID, data.Seasons)
 		if err != nil {
 			return nil, err
 		}
 
-		showCollection.Add(&Show{
-			Show: &polochon.Show{
-				ImdbID: imdbID,
-				Title:  show.Title,
-			},
-			Seasons: seasons,
-		})
+		showCollection.Add(data.Show)
 	}
 
 	return showCollection, nil

@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -22,6 +23,38 @@ func NewSeason(season *polochon.ShowSeason, indexed *index.Season) *Season {
 		ShowSeason: season,
 		Episodes:   indexed.Episodes,
 	}
+}
+
+func (s *Server) getShowFiles(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	imdbID := vars["id"]
+	name := vars["name"]
+
+	show, err := s.library.GetIndexedShow(imdbID)
+	if err != nil {
+		s.renderError(w, req, err)
+		return
+	}
+
+	var path string
+	for _, file := range []string{
+		"tvshow.nfo",
+		"poster.jpg",
+		"fanart.jpg",
+		"banner.jpg",
+	} {
+		if name == file {
+			path = filepath.Join(show.Path, file)
+			break
+		}
+	}
+
+	if path == "" {
+		s.renderError(w, req, index.ErrNotFound)
+		return
+	}
+
+	s.serveFile(w, req, polochon.NewFile(path))
 }
 
 func (s *Server) getSeasonDetails(w http.ResponseWriter, req *http.Request) {
