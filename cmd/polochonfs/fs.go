@@ -14,6 +14,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var (
+	movieInodes = map[uint64]struct{}{}
+	showInodes  = map[uint64]struct{}{}
+)
+
 type polochonfs struct {
 	debug, fuseDebug bool
 	ctx              context.Context

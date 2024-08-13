@@ -32,6 +32,7 @@ func (pfs *polochonfs) updateMovies(ctx context.Context) {
 		return
 	}
 
+	clear(movieInodes)
 	dir.rmAllChilds()
 	for _, m := range movies.List() {
 		title := movieDirTitle(m)

@@ -19,6 +19,7 @@ func (pfs *polochonfs) updateShows(ctx context.Context) {
 		return
 	}
 
+	clear(showInodes)
 	dir.rmAllChilds()
 	for _, s := range shows.List() {
 		showDirNode := newNodeDir(s.Title)
