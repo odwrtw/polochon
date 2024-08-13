@@ -15,6 +15,7 @@ import (
 
 	"github.com/hanwen/go-fuse/v2/fs"
 	"github.com/hanwen/go-fuse/v2/fuse"
+	log "github.com/sirupsen/logrus"
 )
 
 type node struct {
@@ -174,13 +175,17 @@ func (n *node) updateAttr(out *fuse.Attr) {
 }
 
 func (n *node) Getattr(ctx context.Context, _ fs.FileHandle, out *fuse.AttrOut) syscall.Errno {
-	fmt.Println("Getattr on file:", n.name)
+	log.WithField("node", n.name).Debug("Getattr called")
 	n.updateAttr(&out.Attr)
 	return 0
 }
 
 func (n *node) Lookup(ctx context.Context, name string, out *fuse.EntryOut) (*fs.Inode, syscall.Errno) {
-	fmt.Printf("Looking up %q on node %q\n", name, n.name)
+	log.WithFields(log.Fields{
+		"node":   n.name,
+		"lookup": name,
+	}).Debug("Looking up node")
+
 	child := n.getChild(name)
 	if child == nil {
 		return nil, syscall.ENOENT
@@ -191,18 +196,23 @@ func (n *node) Lookup(ctx context.Context, name string, out *fuse.EntryOut) (*fs
 }
 
 func (n *node) Open(ctx context.Context, flags uint32) (fh fs.FileHandle, fuseFlags uint32, errno syscall.Errno) {
-	fmt.Printf("Open called on %s with flags %d\n", n.name, flags)
+	log.WithFields(log.Fields{
+		"node":  n.name,
+		"flags": flags,
+	}).Debug("Open called on node")
 	return n, 0, 0
 }
 
 func (n *node) Read(ctx context.Context, dest []byte, off int64) (fuse.ReadResult, syscall.Errno) {
-	fmt.Printf("Reading node %s at offset %d\n", n.name, off)
+	l := log.WithFields(log.Fields{"node": n.name, "url": n.url})
+	l.WithField("offset", off).Debug("Reading node")
+
 	client := &http.Client{Timeout: httpTimeout}
 	defaultErr := syscall.ENETUNREACH // Network unreachable
 
-	fmt.Printf("Fetching URL: %s\n", n.url)
 	req, err := http.NewRequestWithContext(ctx, "GET", n.url, nil)
 	if err != nil {
+		l.WithField("error", err).Error("Failed to create request")
 		return fuse.ReadResultData(dest), defaultErr
 	}
 	req.Header.Add("X-Auth-Token", polochonToken)
@@ -213,18 +223,18 @@ func (n *node) Read(ctx context.Context, dest []byte, off int64) (fuse.ReadResul
 
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("Failed to do http request: ", err)
+		l.WithField("error", err).Error("HTTP request error")
 		return fuse.ReadResultData(dest), defaultErr
 	}
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
-		fmt.Println("Invalid HTTP response code: ", resp.Status)
+		l.WithField("error", err).Error("Invalid HTTP response code")
 		return fuse.ReadResultData(dest), defaultErr
 	}
 
 	_, err = io.ReadFull(resp.Body, dest)
 	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
-		fmt.Println("Failed to read response body: ", err)
+		l.WithField("error", err).Error("Failed to read response body")
 		return fuse.ReadResultData(dest), defaultErr
 	}
 
