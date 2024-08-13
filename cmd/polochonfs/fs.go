@@ -62,7 +62,7 @@ func (pfs *polochonfs) init() error {
 }
 
 func (pfs *polochonfs) buildFS(ctx context.Context) {
-	log.Debug("Adding persistent nodes\n")
+	log.Debug("Adding persistent nodes")
 	pfs.root.addChild(newPersistentNodeDir(movieDirName))
 	pfs.root.addChild(newPersistentNodeDir(showDirName))
 
@@ -82,10 +82,10 @@ func (pfs *polochonfs) handleUpdates() {
 		case s := <-sigs:
 			switch s {
 			case syscall.SIGUSR1:
-				log.Debug("Updating movies from signal")
+				log.Info("Updating movies from signal")
 				pfs.updateMovies(pfs.ctx)
 			case syscall.SIGUSR2:
-				log.Debug("Updating shows from signal")
+				log.Info("Updating shows from signal")
 				pfs.updateShows(pfs.ctx)
 			}
 		case <-ticker.C:
@@ -93,7 +93,7 @@ func (pfs *polochonfs) handleUpdates() {
 			pfs.updateMovies(pfs.ctx)
 			pfs.updateShows(pfs.ctx)
 		case <-pfs.ctx.Done():
-			log.Debug("Handle updates done")
+			log.Info("Handle updates done")
 			return
 		}
 	}
