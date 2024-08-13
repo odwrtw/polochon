@@ -135,7 +135,7 @@ func (pfs *polochonfs) unmount(server *fuse.Server) {
 			start = time.Now()
 		}
 
-		log.Error("Failed to unmount: ", err)
+		log.WithField("error", err).Error("Failed to unmount")
 		time.Sleep(1 * time.Second)
 	}
 

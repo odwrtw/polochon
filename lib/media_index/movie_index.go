@@ -24,6 +24,9 @@ type Movie struct {
 	Year      int         `json:"year"`
 	Size      int64       `json:"size"`
 	Subtitles []*Subtitle `json:"subtitles"`
+	Fanart    *File       `json:"fanart_file"`
+	Thumb     *File       `json:"thumb_file"`
+	NFO       *File       `json:"nfo_file"`
 }
 
 // NewMovieIndex returns a new movie index
@@ -69,6 +72,17 @@ func (mi *MovieIndex) Add(movie *polochon.Movie) error {
 
 	for _, s := range movie.Subtitles {
 		m.Subtitles = append(m.Subtitles, NewSubtitle(s))
+	}
+
+	for _, e := range []struct {
+		path string
+		file **File
+	}{
+		{path: movie.MovieFanartPath(), file: &m.Fanart},
+		{path: movie.MovieThumbPath(), file: &m.Thumb},
+		{path: movie.NfoPath(), file: &m.NFO},
+	} {
+		*e.file = newFile(e.path)
 	}
 
 	mi.Lock()

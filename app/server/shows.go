@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 	polochon "github.com/odwrtw/polochon/lib"
@@ -32,14 +33,14 @@ func (s *Server) showIds(w http.ResponseWriter, req *http.Request) {
 	s.logEntry(req).Infof("listing shows")
 
 	type formatedShow struct {
-		Title   string                               `json:"title"`
+		*index.Show
 		Seasons map[string]map[string]*index.Episode `json:"seasons"`
 	}
 	ret := map[string]formatedShow{}
 	for id, show := range s.library.ShowIDs() {
 		ret[id] = formatedShow{
-			show.Title,
-			formatSeasons(show),
+			Show:    show,
+			Seasons: formatSeasons(show),
 		}
 	}
 
@@ -77,12 +78,6 @@ func (s *Server) getShowDetails(w http.ResponseWriter, req *http.Request) {
 	s.logEntry(req).Infof("getting show details")
 	vars := mux.Vars(req)
 
-	show, err := s.library.GetShow(vars["id"])
-	if err != nil {
-		s.renderError(w, req, err)
-		return
-	}
-
 	indexedShow, err := s.library.GetIndexedShow(vars["id"])
 	if err != nil {
 		s.renderError(w, req, err)
@@ -90,10 +85,10 @@ func (s *Server) getShowDetails(w http.ResponseWriter, req *http.Request) {
 	}
 
 	out := struct {
-		*polochon.Show
+		*index.Show
 		Seasons map[string]map[string]*index.Episode `json:"seasons"`
 	}{
-		show,
+		indexedShow,
 		formatSeasons(indexedShow),
 	}
 
@@ -126,15 +121,21 @@ func (s *Server) getShowEpisodeIDDetails(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	episode := struct {
-		*polochon.ShowEpisode
-		Subtitles []*index.Subtitle `json:"subtitles"`
-	}{
-		ShowEpisode: e,
-		Subtitles:   idxEpisode.Subtitles,
+	s.renderOK(w, idxEpisode)
+}
+
+func (s *Server) getShowEpisodeFiles(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	if !strings.HasSuffix(vars["name"], ".nfo") {
+		s.renderError(w, req, index.ErrNotFound)
 	}
 
-	s.renderOK(w, episode)
+	e := s.getEpisode(w, req)
+	if e == nil {
+		return
+	}
+
+	s.serveFile(w, req, polochon.NewFile(e.NfoPath()))
 }
 
 func (s *Server) deleteEpisode(w http.ResponseWriter, req *http.Request) {

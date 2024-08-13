@@ -18,9 +18,37 @@ type ShowIndex struct {
 
 // Show represents an indexed show
 type Show struct {
-	Path    string
-	Seasons map[int]*Season
-	Title   string
+	Path    string          `json:"-"`
+	Seasons map[int]*Season `json:"-"`
+	Title   string          `json:"title"`
+
+	Fanart *File `json:"fanart_file"`
+	Banner *File `json:"banner_file"`
+	Poster *File `json:"poster_file"`
+	NFO    *File `json:"nfo_file"`
+}
+
+// NewShow returns a new show
+func NewShow(title, path string) *Show {
+	s := &Show{
+		Title:   title,
+		Path:    path,
+		Seasons: map[int]*Season{},
+	}
+
+	for _, e := range []struct {
+		name string
+		file **File
+	}{
+		{name: "fanart.jpg", file: &s.Fanart},
+		{name: "banner.jpg", file: &s.Banner},
+		{name: "poster.jpg", file: &s.Poster},
+		{name: "tvshow.nfo", file: &s.NFO},
+	} {
+		*e.file = newFile(filepath.Join(path, e.name))
+	}
+
+	return s
 }
 
 // Season represents an indexed season
@@ -36,6 +64,8 @@ type Episode struct {
 	Filename  string      `json:"filename"`
 	Size      int64       `json:"size"`
 	Subtitles []*Subtitle `json:"subtitles"`
+
+	NFO *File `json:"nfo_file"`
 }
 
 // SeasonList returns the season numbers of the indexed show
@@ -207,11 +237,7 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 	if !hasShow {
 		// Add a whole new show
 		si.Lock()
-		si.shows[episode.ShowImdbID] = &Show{
-			Title:   episode.ShowTitle,
-			Path:    showPath,
-			Seasons: map[int]*Season{},
-		}
+		si.shows[episode.ShowImdbID] = NewShow(episode.ShowTitle, showPath)
 		si.Unlock()
 	}
 
@@ -236,6 +262,7 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 		Filename:      episode.Filename(),
 		Size:          episode.Size,
 		VideoMetadata: episode.VideoMetadata,
+		NFO:           newFile(episode.NfoPath()),
 	}
 
 	for _, s := range episode.Subtitles {

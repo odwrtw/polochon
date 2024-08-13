@@ -67,6 +67,25 @@ func (pfs *polochonfs) updateMovies(ctx context.Context) {
 			subNode := newNode(path, url, uint64(sub.Size), m.DateAdded)
 			movieDirNode.addChild(subNode)
 		}
+
+		for _, file := range []*papi.File{m.Fanart, m.Thumb, m.NFO} {
+			if file == nil {
+				continue
+			}
+
+			url, err := pfs.client.DownloadURL(file)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"error": err,
+					"title": m.Title,
+				}).Error("Failed to get movie meta URL")
+				continue
+			}
+
+			fileNode := newNode(file.Name, url,
+				uint64(file.Size), m.DateAdded)
+			movieDirNode.addChild(fileNode)
+		}
 	}
 
 	log.Debug("Movies updated")

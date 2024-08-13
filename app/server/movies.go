@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"path/filepath"
 
 	"github.com/gorilla/mux"
 	polochon "github.com/odwrtw/polochon/lib"
@@ -44,15 +45,7 @@ func (s *Server) getMovieDetails(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	movie := struct {
-		*polochon.Movie
-		Subtitles []*index.Subtitle `json:"subtitles"`
-	}{
-		Movie:     m,
-		Subtitles: idxMovie.Subtitles,
-	}
-
-	s.renderOK(w, movie)
+	s.renderOK(w, idxMovie)
 }
 
 func (s *Server) serveMovie(w http.ResponseWriter, req *http.Request) {
@@ -62,6 +55,37 @@ func (s *Server) serveMovie(w http.ResponseWriter, req *http.Request) {
 	}
 
 	s.serveFile(w, req, m.GetFile())
+}
+
+func (s *Server) serveMovieFile(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	id := vars["id"]
+	name := vars["name"]
+
+	movie, err := s.library.GetMovie(id)
+	if err != nil {
+		s.renderError(w, req, err)
+		return
+	}
+
+	var path string
+	for _, p := range []string{
+		movie.NfoPath(),
+		movie.MovieThumbPath(),
+		movie.MovieFanartPath(),
+	} {
+		if name == filepath.Base(p) {
+			path = p
+			break
+		}
+	}
+
+	if path == "" {
+		s.renderError(w, req, index.ErrNotFound)
+		return
+	}
+
+	s.serveFile(w, req, polochon.NewFile(path))
 }
 
 func (s *Server) deleteMovie(w http.ResponseWriter, req *http.Request) {

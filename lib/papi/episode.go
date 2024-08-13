@@ -10,6 +10,7 @@ import (
 type Episode struct {
 	*polochon.ShowEpisode
 
+	NFO       *File       `json:"nfo_file"`
 	Subtitles []*Subtitle `json:"subtitles"`
 }
 
@@ -23,7 +24,10 @@ func (e *Episode) uri() (string, error) {
 		return "", ErrMissingShowEpisodeInformations
 	}
 
-	return fmt.Sprintf("shows/%s/seasons/%d/episodes/%d", e.ShowImdbID, e.Season, e.Episode), nil
+	return fmt.Sprintf(
+		"shows/%s/seasons/%d/episodes/%d",
+		e.ShowImdbID, e.Season, e.Episode,
+	), nil
 }
 
 // downloadURL implements the Downloadable interface
@@ -54,6 +58,10 @@ func (c *Client) getEpisodeDetails(e *Episode) error {
 
 // GetEpisode returns a new show episode with detailed informations
 func (c *Client) GetEpisode(id string, season, episode int) (*Episode, error) {
-	e := &Episode{ShowEpisode: &polochon.ShowEpisode{ShowImdbID: id, Season: season, Episode: episode}}
+	e := &Episode{ShowEpisode: &polochon.ShowEpisode{
+		ShowImdbID: id,
+		Season:     season,
+		Episode:    episode,
+	}}
 	return e, c.getEpisodeDetails(e)
 }

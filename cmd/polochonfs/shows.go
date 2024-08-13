@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	polochon "github.com/odwrtw/polochon/lib"
+	"github.com/odwrtw/polochon/lib/papi"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -26,6 +27,25 @@ func (pfs *polochonfs) updateShows(ctx context.Context) {
 		showDirNode.times = pfs.root.times
 		dir.addChild(showDirNode)
 
+		for _, file := range []*papi.File{s.Fanart, s.Banner, s.Poster, s.NFO} {
+			if file == nil {
+				continue
+			}
+
+			url, err := pfs.client.URI(file)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"error": err,
+					"title": s.Title,
+				}).Error("Failed to get file URL")
+				continue
+			}
+
+			fileNode := newNode(file.Name, url,
+				uint64(file.Size), showDirNode.times)
+			showDirNode.addChild(fileNode)
+		}
+
 		for _, season := range s.Seasons {
 			seasonDir := newNodeDir(fmt.Sprintf("Season %d", season.Season))
 			seasonDir.times = pfs.root.times
@@ -45,6 +65,22 @@ func (pfs *polochonfs) updateShows(ctx context.Context) {
 
 				episodeNode := newNode(episode.Path, url, uint64(episode.Size), episode.DateAdded)
 				seasonDir.addChild(episodeNode)
+
+				if episode.NFO != nil {
+					uri, err := pfs.client.URI(episode.NFO)
+					if err != nil {
+						log.WithFields(log.Fields{
+							"error":   err,
+							"show":    s.Title,
+							"season":  episode.Season,
+							"episode": episode.Episode,
+						}).Error("Failed to get NFO URL")
+					}
+
+					fileNode := newNode(episode.NFO.Name, uri,
+						uint64(episode.NFO.Size), episode.DateAdded)
+					seasonDir.addChild(fileNode)
+				}
 
 				for _, sub := range episode.Subtitles {
 					url, err = pfs.client.DownloadURL(sub)
