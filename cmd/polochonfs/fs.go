@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	logger "log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,8 +16,9 @@ import (
 )
 
 var (
-	movieInodes = map[uint64]struct{}{}
-	showInodes  = map[uint64]struct{}{}
+	baseInode   uint64 = 0xFFFFFFFF00000000
+	movieInodes        = map[uint64]struct{}{}
+	showInodes         = map[uint64]struct{}{}
 )
 
 type polochonfs struct {
@@ -100,21 +102,26 @@ func (pfs *polochonfs) handleUpdates() {
 }
 
 func (pfs *polochonfs) mount() (*fuse.Server, error) {
+	customLogger := logger.New(os.Stdout,
+		"\033[33mFUSE\033[0m ", // Yellow prefix
+		logger.Ldate|logger.Ltime,
+	)
 	return fs.Mount(pfs.mountPoint, pfs.root, &fs.Options{
+		RootStableAttr: &fs.StableAttr{Ino: baseInode},
+		UID:            uid,
+		GID:            gid,
+		Logger:         customLogger,
 		MountOptions: fuse.MountOptions{
+			// Enforce sequential read, one read at a time. This is useful to
+			// read from the http body directly.
+			SyncRead: true,
+			// Mount in read only mode
 			Options: []string{"ro"},
-			Name:    "polochon",
+			Name:    "polochonfs",
 			FsName:  "polochonfs",
 			Debug:   pfs.fuseDebug,
-			// Try to enable direct mount to avoid fusermount
-			// DirectMount: true,
-			// Disable extended attributes
-			DisableXAttrs: true,
-			// FUSE will wait for one callback to return before calling another
-			SingleThreaded: true,
-			// DisableReadDirPlus: true,
+			Logger:  customLogger,
 		},
-
 		OnAdd: pfs.buildFS,
 	})
 }

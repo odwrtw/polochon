@@ -17,7 +17,7 @@ import (
 var (
 	// Default config
 	movieDirName     = "movies"
-	showDirName      = "shows"
+	showDirName      = "tvshows"
 	httpTimeout      = 3 * time.Second
 	libraryRefresh   = 1 * time.Minute
 	umountLogTimeout = 1 * time.Minute

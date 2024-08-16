@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"hash/crc32"
@@ -8,7 +9,6 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -18,14 +18,22 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var (
+	_ = (fs.NodeOpener)((*node)(nil))
+	_ = (fs.NodeLookuper)((*node)(nil))
+
+	_ = (fs.FileReader)((*fileHandle)(nil))
+	_ = (fs.FileFlusher)((*fileHandle)(nil))
+)
+
 type node struct {
 	fs.Inode
 	isDir, isPersistent bool
 	url                 string
 
-	times time.Time
-	name  string
-	size  uint64
+	times    time.Time
+	id, name string
+	size     uint64
 
 	mu     sync.Mutex
 	childs map[string]*node
@@ -33,8 +41,9 @@ type node struct {
 	inode uint64
 }
 
-func newNodeDir(name string) *node {
+func newNodeDir(id, name string) *node {
 	return &node{
+		id:     id,
 		name:   name,
 		isDir:  true,
 		childs: map[string]*node{},
@@ -42,18 +51,18 @@ func newNodeDir(name string) *node {
 }
 
 func newPersistentNodeDir(name string) *node {
-	n := newNodeDir(name)
+	n := newNodeDir(name, name)
 	n.isPersistent = true
 	return n
 }
 
 func newRootNode() *node {
-	n := newNodeDir("root")
+	n := newNodeDir("root", "root")
 	n.times = time.Now()
 	return n
 }
 
-func newNode(name, url string, size uint64, times time.Time) *node {
+func newNode(id, name, url string, size uint64, times time.Time) *node {
 	return &node{
 		isDir:  false,
 		name:   name,
@@ -72,14 +81,16 @@ func (n *node) getInode() uint64 {
 		return n.inode
 	}
 
-	var h strings.Builder
+	var b bytes.Buffer
 	if !n.isPersistent {
-		h.WriteString(n.times.String())
+		b.WriteString(n.times.String())
 	}
-	h.WriteString(strconv.FormatUint(n.size, 10))
-	h.WriteString(n.name)
 
-	n.inode = 2 ^ 63 + uint64(crc32.ChecksumIEEE([]byte(h.String())))
+	b.WriteString(n.id)
+	b.WriteString(strconv.FormatUint(n.size, 10))
+	b.WriteString(n.name)
+
+	n.inode = baseInode | uint64(crc32.ChecksumIEEE(b.Bytes()))
 
 	return n.inode
 }
@@ -142,8 +153,6 @@ func (n *node) Readdir(ctx context.Context) (fs.DirStream, syscall.Errno) {
 	}
 
 	n.mu.Lock()
-	defer n.mu.Unlock()
-
 	entries := make([]fuse.DirEntry, 0, len(n.childs))
 	for _, c := range n.childs {
 		entry := fuse.DirEntry{
@@ -154,6 +163,7 @@ func (n *node) Readdir(ctx context.Context) (fs.DirStream, syscall.Errno) {
 
 		entries = append(entries, entry)
 	}
+	n.mu.Unlock()
 
 	sort.Slice(entries, func(i, j int) bool {
 		return entries[i].Name < entries[j].Name
@@ -162,15 +172,21 @@ func (n *node) Readdir(ctx context.Context) (fs.DirStream, syscall.Errno) {
 	return fs.NewListDirStream(entries), 0
 }
 
+func (n *node) childCount() uint32 {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	return uint32(len(n.childs))
+}
+
 func (n *node) updateAttr(out *fuse.Attr) {
-	out.Uid = uid
-	out.Gid = gid
 	out.SetTimes(&n.times, &n.times, &n.times)
 
 	if n.isDir {
 		out.Size = 4096
+		out.Nlink = n.childCount()
 	} else {
 		out.Size = n.size
+		out.Blksize = 4096 * 4
 	}
 }
 
@@ -200,43 +216,91 @@ func (n *node) Open(ctx context.Context, flags uint32) (fh fs.FileHandle, fuseFl
 		"node":  n.name,
 		"flags": flags,
 	}).Debug("Open called on node")
-	return n, 0, 0
+	return newFileHandle(n.name, n.url), 0, 0
 }
 
-func (n *node) Read(ctx context.Context, dest []byte, off int64) (fuse.ReadResult, syscall.Errno) {
-	l := log.WithFields(log.Fields{"node": n.name, "url": n.url})
-	l.WithField("offset", off).Debug("Reading node")
+type fileHandle struct {
+	name, url  string
+	lastOffset int64
+	buffer     io.ReadCloser
+}
 
-	client := &http.Client{Timeout: httpTimeout}
-	defaultErr := syscall.ENETUNREACH // Network unreachable
+func newFileHandle(name, url string) *fileHandle {
+	return &fileHandle{name: name, url: url}
+}
 
-	req, err := http.NewRequestWithContext(ctx, "GET", n.url, nil)
+func (fh *fileHandle) Flush(ctx context.Context) syscall.Errno {
+	log.WithField("name", fh.name).Debug("Flush called")
+	fh.close()
+	return 0
+}
+
+func (fh *fileHandle) close() {
+	if fh.buffer == nil {
+		return
+	}
+
+	fh.buffer.Close()
+	fh.buffer = nil
+}
+
+func (fh *fileHandle) setup(ctx context.Context, offset int64) error {
+	log.WithFields(log.Fields{
+		"name":   fh.name,
+		"offset": offset,
+	}).Debug("Setting up filehandle")
+
+	client := http.DefaultClient
+	req, err := http.NewRequestWithContext(ctx, "GET", fh.url, nil)
 	if err != nil {
-		l.WithField("error", err).Error("Failed to create request")
-		return fuse.ReadResultData(dest), defaultErr
+		return err
 	}
 	req.Header.Add("X-Auth-Token", polochonToken)
+	req.Header.Add("User-Agent", "polochonfs")
 
-	if off != 0 {
-		req.Header.Add("Range", fmt.Sprintf("bytes=%d-", off))
+	if offset != 0 {
+		req.Header.Add("Range", fmt.Sprintf("bytes=%d-", offset))
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		l.WithField("error", err).Error("HTTP request error")
-		return fuse.ReadResultData(dest), defaultErr
+		return err
 	}
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
-		l.WithField("error", err).Error("Invalid HTTP response code")
-		return fuse.ReadResultData(dest), defaultErr
+		return fmt.Errorf("Invalid HTTP response code")
 	}
 
-	_, err = io.ReadFull(resp.Body, dest)
+	fh.buffer = resp.Body
+	return nil
+}
+
+func (fh *fileHandle) Read(ctx context.Context, dest []byte, offset int64) (fuse.ReadResult, syscall.Errno) {
+	defaultErr := syscall.ENETUNREACH // Network unreachable
+
+	l := log.WithFields(log.Fields{
+		"name":             fh.name,
+		"buffer_len":       len(dest),
+		"requested_offset": offset,
+		"last_offset":      fh.lastOffset,
+	})
+
+	if fh.buffer == nil || offset != fh.lastOffset {
+		if err := fh.setup(ctx, offset); err != nil {
+			fh.close()
+			l.WithField("error", err).Error("Failed to setup file handle")
+			return fuse.ReadResultData(dest), defaultErr
+		}
+	}
+
+	read, err := io.ReadFull(fh.buffer, dest)
 	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
 		l.WithField("error", err).Error("Failed to read response body")
+		fh.close()
 		return fuse.ReadResultData(dest), defaultErr
 	}
 
+	l.WithField("read", read).Debug("Read from file handle")
+	fh.lastOffset += int64(read)
 	return fuse.ReadResultData(dest), 0
 }

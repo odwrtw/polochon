@@ -35,6 +35,7 @@ func (pfs *polochonfs) updateMovies(ctx context.Context) {
 	clear(movieInodes)
 	dir.rmAllChilds()
 	for _, m := range movies.List() {
+		imdbID := m.ImdbID
 		title := movieDirTitle(m)
 		url, err := pfs.client.DownloadURL(m)
 		if err != nil {
@@ -45,11 +46,11 @@ func (pfs *polochonfs) updateMovies(ctx context.Context) {
 			continue
 		}
 
-		movieDirNode := newNodeDir(title)
+		movieDirNode := newNodeDir(imdbID, title)
 		movieDirNode.times = m.DateAdded
 		dir.addChild(movieDirNode)
 
-		movieNode := newNode(m.Path, url, uint64(m.Size), m.DateAdded)
+		movieNode := newNode(imdbID, m.Path, url, uint64(m.Size), m.DateAdded)
 		movieDirNode.addChild(movieNode)
 
 		for _, sub := range m.Subtitles {
@@ -64,7 +65,7 @@ func (pfs *polochonfs) updateMovies(ctx context.Context) {
 			}
 
 			path := polochon.NewFile(m.Path).SubtitlePath(sub.Lang)
-			subNode := newNode(path, url, uint64(sub.Size), m.DateAdded)
+			subNode := newNode(imdbID, path, url, uint64(sub.Size), m.DateAdded)
 			movieDirNode.addChild(subNode)
 		}
 
@@ -82,7 +83,8 @@ func (pfs *polochonfs) updateMovies(ctx context.Context) {
 				continue
 			}
 
-			fileNode := newNode(file.Name, url,
+			fileNode := newNode(
+				imdbID, file.Name, url,
 				uint64(file.Size), m.DateAdded)
 			movieDirNode.addChild(fileNode)
 		}

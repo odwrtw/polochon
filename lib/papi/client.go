@@ -137,6 +137,7 @@ func (c *Client) request(httpType, url string, data io.Reader, result interface{
 	if err != nil {
 		return err
 	}
+	req.Header.Add("User-Agent", "papi")
 
 	if c.token != "" {
 		req.Header.Add("X-Auth-Token", c.token)

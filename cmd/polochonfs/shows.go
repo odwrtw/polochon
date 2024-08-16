@@ -23,7 +23,8 @@ func (pfs *polochonfs) updateShows(ctx context.Context) {
 	clear(showInodes)
 	dir.rmAllChilds()
 	for _, s := range shows.List() {
-		showDirNode := newNodeDir(s.Title)
+		imdbID := s.ImdbID
+		showDirNode := newNodeDir(imdbID, s.Title)
 		showDirNode.times = pfs.root.times
 		dir.addChild(showDirNode)
 
@@ -41,13 +42,13 @@ func (pfs *polochonfs) updateShows(ctx context.Context) {
 				continue
 			}
 
-			fileNode := newNode(file.Name, url,
+			fileNode := newNode(imdbID, file.Name, url,
 				uint64(file.Size), showDirNode.times)
 			showDirNode.addChild(fileNode)
 		}
 
 		for _, season := range s.Seasons {
-			seasonDir := newNodeDir(fmt.Sprintf("Season %d", season.Season))
+			seasonDir := newNodeDir(season.ShowImdbID, fmt.Sprintf("Season %d", season.Season))
 			seasonDir.times = pfs.root.times
 			showDirNode.addChild(seasonDir)
 
@@ -63,7 +64,9 @@ func (pfs *polochonfs) updateShows(ctx context.Context) {
 					continue
 				}
 
-				episodeNode := newNode(episode.Path, url, uint64(episode.Size), episode.DateAdded)
+				episodeNode := newNode(
+					imdbID, episode.Path, url,
+					uint64(episode.Size), episode.DateAdded)
 				seasonDir.addChild(episodeNode)
 
 				if episode.NFO != nil {
@@ -77,7 +80,8 @@ func (pfs *polochonfs) updateShows(ctx context.Context) {
 						}).Error("Failed to get NFO URL")
 					}
 
-					fileNode := newNode(episode.NFO.Name, uri,
+					fileNode := newNode(
+						imdbID, episode.NFO.Name, uri,
 						uint64(episode.NFO.Size), episode.DateAdded)
 					seasonDir.addChild(fileNode)
 				}
@@ -96,7 +100,9 @@ func (pfs *polochonfs) updateShows(ctx context.Context) {
 					}
 
 					path := polochon.NewFile(episode.Path).SubtitlePath(sub.Lang)
-					subNode := newNode(path, url, uint64(sub.Size), episode.DateAdded)
+					subNode := newNode(
+						imdbID, path, url,
+						uint64(sub.Size), episode.DateAdded)
 					seasonDir.addChild(subNode)
 				}
 			}
