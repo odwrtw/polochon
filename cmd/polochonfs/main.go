@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -20,6 +21,7 @@ var (
 	movieDirName     = "movies"
 	showDirName      = "tvshows"
 	defaultCacheSize = "10MB"
+	logLevel         = "info"
 	cacheSize        = 10_000_000
 	defaultTimeout   = 3 * time.Second
 	libraryRefresh   = 1 * time.Minute
@@ -68,11 +70,11 @@ func run() error {
 	flag.StringVar(&showDirName, "showDirName", showDirName, "show directory name")
 	flag.StringVar(&movieDirName, "movieDirName", movieDirName, "movie directory name")
 	flag.StringVar(&defaultCacheSize, "cache", defaultCacheSize, "cache size (e.g. 10MB)")
+	flag.StringVar(&logLevel, "logLevel", logLevel, "log level (warn, error, info, debug, trace)")
 	flag.DurationVar(&defaultTimeout, "timeout", defaultTimeout, "HTTP requests timeout")
 	flag.DurationVar(&libraryRefresh, "libraryRefresh", libraryRefresh, "library refresh timer")
 	flag.Uint64Var(&uid64, "uid", uid64, "UID of the mounted files")
 	flag.Uint64Var(&gid64, "gid", uid64, "GID of the mounted files")
-	flag.BoolVar(&pfs.debug, "debug", false, "show debug logs")
 	flag.BoolVar(&pfs.fuseDebug, "fuseDebug", false, "debug fuse events")
 	flag.Parse()
 
@@ -90,12 +92,13 @@ func run() error {
 		FullTimestamp:   true,
 		TimestampFormat: "2006/01/02 15:04:05",
 	})
-	log.SetOutput(os.Stdout)
-	if pfs.debug {
-		log.SetLevel(log.DebugLevel)
-	} else {
-		log.SetLevel(log.InfoLevel)
+
+	lvl, err := logrus.ParseLevel(logLevel)
+	if err != nil {
+		return err
 	}
+	log.SetOutput(os.Stdout)
+	log.SetLevel(lvl)
 
 	err = pfs.init()
 	if err != nil {
