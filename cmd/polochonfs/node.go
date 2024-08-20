@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/hanwen/go-fuse/v2/fs"
 	"github.com/hanwen/go-fuse/v2/fuse"
 	log "github.com/sirupsen/logrus"
@@ -216,17 +217,21 @@ func (n *node) Open(ctx context.Context, flags uint32) (fh fs.FileHandle, fuseFl
 		"node":  n.name,
 		"flags": flags,
 	}).Debug("Open called on node")
-	return newFileHandle(n.name, n.url), 0, 0
+	return newFileHandle(n.name, n.url, int64(n.size)), 0, 0
 }
 
 type fileHandle struct {
-	name, url  string
-	lastOffset int64
-	buffer     io.ReadCloser
+	name, url        string
+	size, lastOffset int64
+	buffer           io.ReadCloser
 }
 
-func newFileHandle(name, url string) *fileHandle {
-	return &fileHandle{name: name, url: url}
+func newFileHandle(name, url string, size int64) *fileHandle {
+	return &fileHandle{
+		name: name,
+		url:  url,
+		size: size,
+	}
 }
 
 func (fh *fileHandle) Flush(ctx context.Context) syscall.Errno {
@@ -239,7 +244,6 @@ func (fh *fileHandle) close() {
 	if fh.buffer == nil {
 		return
 	}
-
 	fh.buffer.Close()
 	fh.buffer = nil
 }
@@ -271,36 +275,58 @@ func (fh *fileHandle) setup(ctx context.Context, offset int64) error {
 		return fmt.Errorf("Invalid HTTP response code")
 	}
 
-	fh.buffer = resp.Body
+	if fh.buffer != nil {
+		log.WithField("name", fh.name).Debug("Closing old buffer")
+		fh.buffer.Close()
+		log.WithField("name", fh.name).Debug("Done closing old buffer")
+	}
+
+	fh.lastOffset = offset
+	fh.buffer = newAsyncReader(ctx, fh.name, resp.Body, offset, fh.size)
 	return nil
 }
 
 func (fh *fileHandle) Read(ctx context.Context, dest []byte, offset int64) (fuse.ReadResult, syscall.Errno) {
 	defaultErr := syscall.ENETUNREACH // Network unreachable
+	readSize := int64(len(dest))
 
 	l := log.WithFields(log.Fields{
 		"name":             fh.name,
-		"buffer_len":       len(dest),
 		"requested_offset": offset,
-		"last_offset":      fh.lastOffset,
 	})
+
+	err := ctx.Err()
+	if err != nil {
+		l.WithField("error", err).Error("Read failed")
+		return fuse.ReadResultData(dest), defaultErr
+	}
 
 	if fh.buffer == nil || offset != fh.lastOffset {
 		if err := fh.setup(ctx, offset); err != nil {
-			fh.close()
 			l.WithField("error", err).Error("Failed to setup file handle")
 			return fuse.ReadResultData(dest), defaultErr
 		}
 	}
 
-	read, err := io.ReadFull(fh.buffer, dest)
-	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
-		l.WithField("error", err).Error("Failed to read response body")
-		fh.close()
-		return fuse.ReadResultData(dest), defaultErr
+	read, err := fh.buffer.Read(dest)
+	fh.lastOffset += int64(read)
+	l = l.WithFields(log.Fields{
+		"read":        humanize.SI(float64(readSize), "B"),
+		"last_offset": fh.lastOffset,
+	})
+	switch err {
+	case nil:
+		l.Debug("Read from async reader")
+		return fuse.ReadResultData(dest), 0
+	case io.EOF:
+		l.Debug("Read from async reader until EOF")
+		return fuse.ReadResultData(dest), 0
+	case context.Canceled:
+		l.Debug("Context cancelled")
+	default:
+		l.WithField("error", err).Error("Failed to read from async reader")
 	}
 
-	l.WithField("read", read).Debug("Read from file handle")
-	fh.lastOffset += int64(read)
-	return fuse.ReadResultData(dest), 0
+	fh.close()
+	return fuse.ReadResultData(dest), defaultErr
 }

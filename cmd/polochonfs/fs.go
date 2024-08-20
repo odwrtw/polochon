@@ -58,7 +58,7 @@ func (pfs *polochonfs) init() error {
 		return err
 	}
 	pfs.client.SetToken(polochonToken)
-	pfs.client.SetTimeout(httpTimeout)
+	pfs.client.SetTimeout(defaultTimeout)
 
 	return nil
 }
@@ -114,7 +114,8 @@ func (pfs *polochonfs) mount() (*fuse.Server, error) {
 		MountOptions: fuse.MountOptions{
 			// Enforce sequential read, one read at a time. This is useful to
 			// read from the http body directly.
-			SyncRead: true,
+			SyncRead:      true,
+			MaxBackground: 1,
 			// Mount in read only mode
 			Options: []string{"ro"},
 			Name:    "polochonfs",
