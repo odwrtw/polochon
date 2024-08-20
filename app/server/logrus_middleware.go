@@ -61,11 +61,18 @@ func (lm *logrusMiddleware) ServeHTTP(rw http.ResponseWriter, r *http.Request, n
 	next(rw, r)
 
 	res := rw.(negroni.ResponseWriter)
+
+	encoding := res.Header().Get("Content-Encoding")
+	if encoding == "" {
+		encoding = "none"
+	}
+
 	entry = entry.WithFields(logrus.Fields{
 		"status":      res.Status(),
 		"text_status": http.StatusText(res.Status()),
 		"took":        time.Since(start),
 		"size_byte":   res.Size(),
+		"encoding":    encoding,
 	})
 
 	tokenName, ok := r.Context().Value(auth.TokenName).(string)
