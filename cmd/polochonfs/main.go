@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -18,7 +19,9 @@ var (
 	// Default config
 	movieDirName     = "movies"
 	showDirName      = "tvshows"
-	httpTimeout      = 3 * time.Second
+	defaultCacheSize = "10MB"
+	cacheSize        = 10_000_000
+	defaultTimeout   = 3 * time.Second
 	libraryRefresh   = 1 * time.Minute
 	umountLogTimeout = 1 * time.Minute
 
@@ -64,7 +67,8 @@ func run() error {
 	flag.StringVar(&polochonToken, "token", os.Getenv("POLOCHON_TOKEN"), "polochon API token")
 	flag.StringVar(&showDirName, "showDirName", showDirName, "show directory name")
 	flag.StringVar(&movieDirName, "movieDirName", movieDirName, "movie directory name")
-	flag.DurationVar(&httpTimeout, "timeout", httpTimeout, "HTTP requests timeout")
+	flag.StringVar(&defaultCacheSize, "cache", defaultCacheSize, "cache size (e.g. 10MB)")
+	flag.DurationVar(&defaultTimeout, "timeout", defaultTimeout, "HTTP requests timeout")
 	flag.DurationVar(&libraryRefresh, "libraryRefresh", libraryRefresh, "library refresh timer")
 	flag.Uint64Var(&uid64, "uid", uid64, "UID of the mounted files")
 	flag.Uint64Var(&gid64, "gid", uid64, "GID of the mounted files")
@@ -74,6 +78,12 @@ func run() error {
 
 	uid = uint32(uid64)
 	gid = uint32(gid64)
+
+	cacheBytes, err := humanize.ParseBytes(defaultCacheSize)
+	if err != nil {
+		return err
+	}
+	cacheSize = int(cacheBytes)
 
 	// Setup logger
 	log.SetFormatter(&log.TextFormatter{
