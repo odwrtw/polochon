@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/odwrtw/polochon/app/auth"
+	"github.com/phyber/negroni-gzip/gzip"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
@@ -257,6 +258,9 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 
 	// Use logrus as logger
 	n.Use(newLogrusMiddleware(s.log.Logger, s.config.HTTPServer.LogExcludePaths))
+
+	// Allow gzip requests
+	n.Use(gzip.Gzip(gzip.DefaultCompression))
 
 	// Add basic auth if configured
 	if s.config.HTTPServer.BasicAuth {

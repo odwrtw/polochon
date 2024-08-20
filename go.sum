@@ -135,6 +135,8 @@ github.com/odwrtw/yts v0.0.0-20231024130053-dfa826fee7b6 h1:gxnFA91mK8/KdOOfgnQq
 github.com/odwrtw/yts v0.0.0-20231024130053-dfa826fee7b6/go.mod h1:AnDs7BMR4LH3PFIqBWprZMb23uec9B9Dvc1tlxD8vZs=
 github.com/oz/osdb v0.0.0-20221214175751-f169057712ec h1:f8lyw/LhyahrVYXwK5HQt9KWT0y6zf69Z8XV8McmNWQ=
 github.com/oz/osdb v0.0.0-20221214175751-f169057712ec/go.mod h1:xIvcOs03IPml6sU+k9o/mEAm8aJhvGTSpDNlUs8RoOQ=
+github.com/phyber/negroni-gzip v1.0.0 h1:ru1uBeaUeoAXYgZRE7RsH7ftj/t5v/hkufXv1OYbNK8=
+github.com/phyber/negroni-gzip v1.0.0/go.mod h1:poOYjiFVKpeib8SnUpOgfQGStKNGLKsM8l09lOTNeyw=
 github.com/pioz/tvdb v0.0.0-20221212235421-03519fb7a0e2 h1:yIKFkxT0Que0D6APKDEltO7Vuq/4lb2za/VpnZlG/IA=
 github.com/pioz/tvdb v0.0.0-20221212235421-03519fb7a0e2/go.mod h1:nhHRTrbEzdp4lXtiozX4Yuvo4AHi29nOvM1J7H/XJMM=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
