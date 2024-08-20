@@ -54,7 +54,7 @@ func (r *asyncReader) readBlockFromSource() error {
 		"offset":     r.sourcePos,
 		"cache_size": humanize.SI(float64(r.cacheSize()), "B"),
 		"read":       read,
-	}).Debug("Async read block from source")
+	}).Trace("Async read block from source")
 
 	r.sourcePos += read
 
@@ -92,7 +92,7 @@ func (r *asyncReader) Read(p []byte) (int, error) {
 				"cache_size": humanize.SI(float64(r.cacheSize()), "B"),
 				"requested":  requested,
 				"tries":      try,
-			}).Debug("Async read not enough bytes to read")
+			}).Trace("Async read not enough bytes to read")
 		}
 
 		// Wait until the buffer has enough bytes to read.
@@ -113,7 +113,7 @@ func (r *asyncReader) Close() error {
 	r.wg.Wait()
 	r.source.Close()
 
-	log.WithField("name", r.name).Debug("Async buffer closed")
+	log.WithField("name", r.name).Trace("Async buffer closed")
 	return nil
 }
 
@@ -167,9 +167,9 @@ func newAsyncReader(ctx context.Context, name string, s io.ReadCloser, start, en
 		"name":       r.name,
 		"start":      start,
 		"end":        end,
-		"total_size": humanize.SI(float64(start-end), "B"),
+		"total_size": humanize.SI(float64(end-start), "B"),
 		"block_size": humanize.SI(float64(blockSize), "B"),
 		"cache_size": humanize.SI(float64(cacheSize), "B"),
-	}).Debug("Async buffer created")
+	}).Trace("Async buffer created")
 	return r
 }

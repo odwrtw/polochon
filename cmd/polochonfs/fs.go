@@ -22,8 +22,8 @@ var (
 )
 
 type polochonfs struct {
-	debug, fuseDebug bool
-	ctx              context.Context
+	fuseDebug bool
+	ctx       context.Context
 
 	root *node
 
@@ -33,9 +33,8 @@ type polochonfs struct {
 
 func newPolochonFs(ctx context.Context) (*polochonfs, error) {
 	return &polochonfs{
-		ctx:   ctx,
-		root:  newRootNode(),
-		debug: true,
+		ctx:  ctx,
+		root: newRootNode(),
 	}, nil
 }
 
@@ -114,8 +113,7 @@ func (pfs *polochonfs) mount() (*fuse.Server, error) {
 		MountOptions: fuse.MountOptions{
 			// Enforce sequential read, one read at a time. This is useful to
 			// read from the http body directly.
-			SyncRead:      true,
-			MaxBackground: 1,
+			SyncRead: true,
 			// Mount in read only mode
 			Options: []string{"ro"},
 			Name:    "polochonfs",

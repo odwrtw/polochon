@@ -20,6 +20,7 @@ import (
 )
 
 var (
+	_ = (fs.NodeGetattrer)((*node)(nil))
 	_ = (fs.NodeOpener)((*node)(nil))
 	_ = (fs.NodeLookuper)((*node)(nil))
 
@@ -253,7 +254,7 @@ func (fh *fileHandle) setup(ctx context.Context, offset int64) error {
 	log.WithFields(log.Fields{
 		"name":   fh.name,
 		"offset": offset,
-	}).Debug("Setting up filehandle")
+	}).Trace("Setting up filehandle")
 
 	client := http.DefaultClient
 	req, err := http.NewRequestWithContext(ctx, "GET", fh.url, nil)
@@ -277,9 +278,9 @@ func (fh *fileHandle) setup(ctx context.Context, offset int64) error {
 	}
 
 	if fh.buffer != nil {
-		log.WithField("name", fh.name).Debug("Closing old buffer")
+		log.WithField("name", fh.name).Trace("Closing old buffer")
 		fh.buffer.Close()
-		log.WithField("name", fh.name).Debug("Done closing old buffer")
+		log.WithField("name", fh.name).Trace("Done closing old buffer")
 	}
 
 	fh.lastOffset = offset
@@ -317,10 +318,10 @@ func (fh *fileHandle) Read(ctx context.Context, dest []byte, offset int64) (fuse
 	})
 	switch err {
 	case nil:
-		l.Debug("Read from async reader")
+		l.Trace("Read from async reader")
 		return fuse.ReadResultData(dest), 0
 	case io.EOF:
-		l.Debug("Read from async reader until EOF")
+		l.Trace("Read from async reader until EOF")
 		return fuse.ReadResultData(dest), 0
 	case context.Canceled:
 		l.Debug("Context cancelled")
