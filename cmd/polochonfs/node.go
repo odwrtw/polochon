@@ -193,6 +193,7 @@ func (n *node) updateAttr(out *fuse.Attr) {
 
 func (n *node) Getattr(ctx context.Context, _ fs.FileHandle, out *fuse.AttrOut) syscall.Errno {
 	log.WithField("node", n.name).Debug("Getattr called")
+	out.SetTimeout(libraryRefresh)
 	n.updateAttr(&out.Attr)
 	return 0
 }
