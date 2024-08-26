@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -21,7 +20,7 @@ func movieDirTitle(m *papi.Movie) string {
 	return strings.ReplaceAll(dirTitle, "/", "-")
 }
 
-func (pfs *polochonfs) updateMovies(ctx context.Context) {
+func (pfs *polochonfs) updateMovies() {
 	dir := pfs.root.getChild(movieDirName)
 
 	log.Debug("Fecthing movies")
