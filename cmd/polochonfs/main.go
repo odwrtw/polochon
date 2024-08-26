@@ -26,6 +26,7 @@ var (
 	defaultTimeout   = 3 * time.Second
 	libraryRefresh   = 1 * time.Minute
 	umountLogTimeout = 1 * time.Minute
+	globalCtx        context.Context
 
 	// Polochon URL / Token configs
 	polochonURL   string
@@ -43,8 +44,9 @@ func main() {
 }
 
 func run() error {
-	ctx, cancel := context.WithCancel(context.Background())
-	pfs, err := newPolochonFs(ctx)
+	var cancel context.CancelFunc
+	globalCtx, cancel = context.WithCancel(context.Background())
+	pfs, err := newPolochonFs(globalCtx)
 	if err != nil {
 		return err
 	}

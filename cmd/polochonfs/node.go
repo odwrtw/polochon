@@ -225,6 +225,7 @@ func (n *node) Open(ctx context.Context, flags uint32) (fh fs.FileHandle, fuseFl
 type fileHandle struct {
 	name, url        string
 	size, lastOffset int64
+	cancel           context.CancelFunc
 	buffer           io.ReadCloser
 }
 
@@ -246,6 +247,7 @@ func (fh *fileHandle) close() {
 	if fh.buffer == nil {
 		return
 	}
+	fh.cancel()
 	fh.buffer.Close()
 	fh.buffer = nil
 }
@@ -256,8 +258,11 @@ func (fh *fileHandle) setup(ctx context.Context, offset int64) error {
 		"offset": offset,
 	}).Trace("Setting up filehandle")
 
+	cancelCtx, cancelFunc := context.WithCancel(globalCtx)
+	fh.cancel = cancelFunc
+
 	client := http.DefaultClient
-	req, err := http.NewRequestWithContext(ctx, "GET", fh.url, nil)
+	req, err := http.NewRequestWithContext(cancelCtx, "GET", fh.url, nil)
 	if err != nil {
 		return err
 	}
@@ -268,12 +273,19 @@ func (fh *fileHandle) setup(ctx context.Context, offset int64) error {
 		req.Header.Add("Range", fmt.Sprintf("bytes=%d-", offset))
 	}
 
+	timeout := time.AfterFunc(defaultTimeout, func() {
+		log.WithField("name", fh.name).Error("Request timeout")
+		fh.cancel()
+	})
+
 	resp, err := client.Do(req)
+	timeout.Stop()
 	if err != nil {
 		return err
 	}
 
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
+	if resp.StatusCode != http.StatusOK &&
+		resp.StatusCode != http.StatusPartialContent {
 		return fmt.Errorf("Invalid HTTP response code")
 	}
 
@@ -284,12 +296,11 @@ func (fh *fileHandle) setup(ctx context.Context, offset int64) error {
 	}
 
 	fh.lastOffset = offset
-	fh.buffer = newAsyncReader(ctx, fh.name, resp.Body, offset, fh.size)
+	fh.buffer = newAsyncReader(cancelCtx, fh.name, resp.Body, offset, fh.size)
 	return nil
 }
 
 func (fh *fileHandle) Read(ctx context.Context, dest []byte, offset int64) (fuse.ReadResult, syscall.Errno) {
-	defaultErr := syscall.ENETUNREACH // Network unreachable
 	readSize := int64(len(dest))
 
 	l := log.WithFields(log.Fields{
@@ -297,12 +308,28 @@ func (fh *fileHandle) Read(ctx context.Context, dest []byte, offset int64) (fuse
 		"requested_offset": offset,
 	})
 
+	// Handle context cancelled from the given fuse.Context
 	err := ctx.Err()
 	if err != nil {
-		l.WithField("error", err).Error("Read failed")
-		return fuse.ReadResultData(dest), defaultErr
+		if err == context.Canceled {
+			// go-fuse advises to return EINTR on canceled context.
+			return fuse.ReadResultData(dest), syscall.EINTR
+		}
+
+		l.WithField("error", err).Error("Read failed from fuse context")
+		return fuse.ReadResultData(dest), syscall.EIO
 	}
 
+	// Handle the global context
+	err = globalCtx.Err()
+	if err != nil {
+		if err != context.Canceled {
+			l.WithField("error", err).Error("Read failed from global context")
+		}
+		return fuse.ReadResultData(dest), syscall.EIO
+	}
+
+	defaultErr := syscall.ENETUNREACH // Network unreachable
 	if fh.buffer == nil || offset != fh.lastOffset {
 		if err := fh.setup(ctx, offset); err != nil {
 			l.WithField("error", err).Error("Failed to setup file handle")
@@ -310,12 +337,24 @@ func (fh *fileHandle) Read(ctx context.Context, dest []byte, offset int64) (fuse
 		}
 	}
 
+	timedOut := false
+	timeout := time.AfterFunc(defaultTimeout, func() {
+		timedOut = true
+		fh.cancel()
+	})
 	read, err := fh.buffer.Read(dest)
+	timeout.Stop()
+
 	fh.lastOffset += int64(read)
 	l = l.WithFields(log.Fields{
 		"read":        humanize.SI(float64(readSize), "B"),
 		"last_offset": fh.lastOffset,
 	})
+
+	if timedOut {
+		err = fmt.Errorf("timeout after " + defaultTimeout.String())
+	}
+
 	switch err {
 	case nil:
 		l.Trace("Read from async reader")

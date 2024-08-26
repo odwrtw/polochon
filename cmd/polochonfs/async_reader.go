@@ -120,14 +120,21 @@ func (r *asyncReader) Close() error {
 // asyncRead reads data until the cache reaches `cacheSize`.
 func (r *asyncReader) asyncRead() {
 	defer r.wg.Done()
+
+	var err error
 	for {
 		select {
 		case <-r.ctx.Done():
-			return
+			err = r.ctx.Err()
+			if err == context.Canceled {
+				return
+			}
+			break
 		default:
 		}
 
 		if r.sourcePos == r.end {
+			// All good
 			return
 		}
 
@@ -136,14 +143,15 @@ func (r *asyncReader) asyncRead() {
 			continue
 		}
 
-		if err := r.readBlockFromSource(); err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-				"name":  r.name,
-			}).Error("Async read error")
-			return
+		if err = r.readBlockFromSource(); err != nil {
+			break
 		}
 	}
+
+	log.WithFields(log.Fields{
+		"error": err,
+		"name":  r.name,
+	}).Error("Async read error")
 }
 
 // newAsyncReader creates a new asyncReader and starts a goroutine to read the

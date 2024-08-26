@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 
 	polochon "github.com/odwrtw/polochon/lib"
@@ -9,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (pfs *polochonfs) updateShows(ctx context.Context) {
+func (pfs *polochonfs) updateShows() {
 	dir := pfs.root.getChild(showDirName)
 
 	log.Debug("Fecthing shows")
