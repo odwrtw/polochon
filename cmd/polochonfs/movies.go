@@ -53,6 +53,10 @@ func (pfs *polochonfs) updateMovies() {
 		movieDirNode.addChild(movieNode)
 
 		for _, sub := range m.Subtitles {
+			if sub.Embedded {
+				continue
+			}
+
 			url, err := pfs.client.DownloadURL(sub)
 			if err != nil {
 				log.WithFields(log.Fields{
