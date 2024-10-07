@@ -23,16 +23,21 @@ func movieDirTitle(m *papi.Movie) string {
 func (pfs *polochonfs) updateMovies() {
 	dir := pfs.root.getChild(movieDirName)
 
+	defer func() {
+		pfs.root.addChild(dir)
+		_ = pfs.root.NotifyEntry(showDirName)
+	}()
+
 	log.Debug("Fecthing movies")
 	movies, err := pfs.client.GetMovies()
 	if err != nil {
 		log.WithField("error", err).Error("Failed to get movies")
-		dir.rmAllChilds()
+		dir.rmAllChildren()
 		return
 	}
 
 	clear(movieInodes)
-	dir.rmAllChilds()
+	dir.rmAllChildren()
 	for _, m := range movies.List() {
 		imdbID := m.ImdbID
 		title := movieDirTitle(m)
@@ -45,8 +50,7 @@ func (pfs *polochonfs) updateMovies() {
 			continue
 		}
 
-		movieDirNode := newNodeDir(imdbID, title)
-		movieDirNode.times = m.DateAdded
+		movieDirNode := newNodeDir(imdbID, title, m.DateAdded)
 		dir.addChild(movieDirNode)
 
 		movieNode := newNode(imdbID, m.Path, url, uint64(m.Size), m.DateAdded)
