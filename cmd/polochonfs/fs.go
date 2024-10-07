@@ -6,6 +6,7 @@ import (
 	logger "log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -24,6 +25,7 @@ var (
 type polochonfs struct {
 	fuseDebug bool
 	ctx       context.Context
+	wg        sync.WaitGroup
 
 	root *node
 
@@ -47,9 +49,11 @@ func (pfs *polochonfs) init() error {
 		{value: polochonToken, errMsg: "missing token"},
 	} {
 		if field.value == "" {
-			return fmt.Errorf(field.errMsg)
+			return fmt.Errorf("%s", field.errMsg)
 		}
 	}
+
+	pfs.wg = sync.WaitGroup{}
 
 	var err error
 	pfs.client, err = papi.New(polochonURL)
@@ -62,18 +66,26 @@ func (pfs *polochonfs) init() error {
 	return nil
 }
 
-func (pfs *polochonfs) buildFS(_ context.Context) {
-	log.Debug("Adding persistent nodes")
-	pfs.root.addChild(newPersistentNodeDir(movieDirName))
-	pfs.root.addChild(newPersistentNodeDir(showDirName))
+func (pfs *polochonfs) wait() {
+	pfs.wg.Wait()
+}
 
-	pfs.updateMovies()
-	pfs.updateShows()
+func (pfs *polochonfs) buildFS(_ context.Context) {
+	pfs.root.addChild(newNodeDir(movieDirName, movieDirName, pfs.root.times))
+	pfs.root.addChild(newNodeDir(showDirName, showDirName, pfs.root.times))
+
+	go pfs.handleUpdates()
 }
 
 func (pfs *polochonfs) handleUpdates() {
+	pfs.wg.Add(1)
+	defer pfs.wg.Done()
+
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGUSR1, syscall.SIGUSR2)
+
+	pfs.updateMovies()
+	pfs.updateShows()
 
 	ticker := time.NewTicker(libraryRefresh)
 	defer ticker.Stop()
@@ -84,9 +96,11 @@ func (pfs *polochonfs) handleUpdates() {
 			switch s {
 			case syscall.SIGUSR1:
 				log.Info("Updating movies from signal")
+				ticker.Reset(libraryRefresh)
 				pfs.updateMovies()
 			case syscall.SIGUSR2:
 				log.Info("Updating shows from signal")
+				ticker.Reset(libraryRefresh)
 				pfs.updateShows()
 			}
 		case <-ticker.C:

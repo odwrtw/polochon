@@ -11,20 +11,24 @@ import (
 func (pfs *polochonfs) updateShows() {
 	dir := pfs.root.getChild(showDirName)
 
+	defer func() {
+		pfs.root.addChild(dir)
+		_ = pfs.root.NotifyEntry(showDirName)
+	}()
+
 	log.Debug("Fecthing shows")
 	shows, err := pfs.client.GetShows()
 	if err != nil {
 		log.WithField("error", err).Error("Failed to get shows")
-		dir.rmAllChilds()
+		dir.rmAllChildren()
 		return
 	}
 
 	clear(showInodes)
-	dir.rmAllChilds()
+	dir.rmAllChildren()
 	for _, s := range shows.List() {
 		imdbID := s.ImdbID
-		showDirNode := newNodeDir(imdbID, s.Title)
-		showDirNode.times = pfs.root.times
+		showDirNode := newNodeDir(imdbID, s.Title, pfs.root.times)
 		dir.addChild(showDirNode)
 
 		for _, file := range []*papi.File{s.Fanart, s.Banner, s.Poster, s.NFO} {
@@ -47,8 +51,9 @@ func (pfs *polochonfs) updateShows() {
 		}
 
 		for _, season := range s.Seasons {
-			seasonDir := newNodeDir(season.ShowImdbID, fmt.Sprintf("Season %d", season.Season))
-			seasonDir.times = pfs.root.times
+			seasonDir := newNodeDir(season.ShowImdbID,
+				fmt.Sprintf("Season %d", season.Season),
+				pfs.root.times)
 			showDirNode.addChild(seasonDir)
 
 			for _, episode := range season.Episodes {

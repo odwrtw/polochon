@@ -7,7 +7,6 @@ import (
 	"hash/crc32"
 	"io"
 	"net/http"
-	"sort"
 	"strconv"
 	"sync"
 	"syscall"
@@ -22,7 +21,6 @@ import (
 var (
 	_ = (fs.NodeGetattrer)((*node)(nil))
 	_ = (fs.NodeOpener)((*node)(nil))
-	_ = (fs.NodeLookuper)((*node)(nil))
 
 	_ = (fs.FileReader)((*fileHandle)(nil))
 	_ = (fs.FileFlusher)((*fileHandle)(nil))
@@ -30,48 +28,42 @@ var (
 
 type node struct {
 	fs.Inode
-	isDir, isPersistent bool
-	url                 string
+	isDir bool
+	url   string
 
 	times    time.Time
 	id, name string
 	size     uint64
 
-	mu     sync.Mutex
-	childs map[string]*node
+	mu       sync.Mutex
+	children map[string]*node
 
 	inode uint64
 }
 
-func newNodeDir(id, name string) *node {
+func newNodeDir(id, name string, times time.Time) *node {
 	return &node{
-		id:     id,
-		name:   name,
-		isDir:  true,
-		childs: map[string]*node{},
+		id:       id,
+		name:     name,
+		isDir:    true,
+		times:    times,
+		children: map[string]*node{},
 	}
 }
 
-func newPersistentNodeDir(name string) *node {
-	n := newNodeDir(name, name)
-	n.isPersistent = true
-	return n
-}
-
 func newRootNode() *node {
-	n := newNodeDir("root", "root")
-	n.times = time.Now()
-	return n
+	return newNodeDir("root", "root", time.Now())
 }
 
 func newNode(id, name, url string, size uint64, times time.Time) *node {
 	return &node{
-		isDir:  false,
-		name:   name,
-		url:    url,
-		size:   size,
-		times:  times,
-		childs: map[string]*node{},
+		id:       id,
+		isDir:    false,
+		name:     name,
+		url:      url,
+		size:     size,
+		times:    times,
+		children: map[string]*node{},
 	}
 }
 
@@ -84,7 +76,7 @@ func (n *node) getInode() uint64 {
 	}
 
 	var b bytes.Buffer
-	if !n.isPersistent {
+	if !n.isDir {
 		b.WriteString(n.times.String())
 	}
 
@@ -100,10 +92,10 @@ func (n *node) getInode() uint64 {
 func (n *node) addChildNode(c *node) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
-	n.childs[c.name] = c
+	n.children[c.name] = c
 }
 
-func checkInodeExist(i uint64) bool {
+func inodeExists(i uint64) bool {
 	if _, ok := movieInodes[i]; ok {
 		return true
 	}
@@ -114,70 +106,43 @@ func checkInodeExist(i uint64) bool {
 }
 
 func (n *node) addChild(child *node) {
-	attr := fs.StableAttr{}
+	attr := fs.StableAttr{
+		Ino: child.getInode(),
+	}
 	if child.isDir {
 		attr.Mode = syscall.S_IFDIR
 	}
 
-	if child.isPersistent {
-		child.times = n.times
-		n.NewPersistentInode(context.Background(), child, attr)
-	} else {
-		attr.Ino = child.getInode()
-		if checkInodeExist(attr.Ino) {
-			log.WithFields(log.Fields{
-				"file":  n.name,
-				"inode": attr.Ino,
-			}).Error("Inode already exists")
-		}
-		n.NewInode(context.Background(), child, attr)
+	// Check for inode collision.
+	if inodeExists(attr.Ino) {
+		log.WithFields(log.Fields{
+			"file":  n.name,
+			"inode": attr.Ino,
+		}).Error("Inode already exists")
 	}
+	inode := n.NewInode(context.Background(), child, attr)
 
 	n.addChildNode(child)
+	n.AddChild(child.name, inode, true)
 }
 
 func (n *node) getChild(name string) *node {
 	n.mu.Lock()
 	defer n.mu.Unlock()
-	return n.childs[name]
+	return n.children[name]
 }
 
-func (n *node) rmAllChilds() {
+func (n *node) rmAllChildren() {
 	n.mu.Lock()
-	n.childs = map[string]*node{}
+	n.children = map[string]*node{}
 	n.mu.Unlock()
 	n.RmAllChildren()
-}
-
-func (n *node) Readdir(ctx context.Context) (fs.DirStream, syscall.Errno) {
-	if !n.isDir {
-		return nil, syscall.ENOTDIR
-	}
-
-	n.mu.Lock()
-	entries := make([]fuse.DirEntry, 0, len(n.childs))
-	for _, c := range n.childs {
-		entry := fuse.DirEntry{
-			Mode: c.Mode(),
-			Name: c.name,
-			Ino:  c.StableAttr().Ino,
-		}
-
-		entries = append(entries, entry)
-	}
-	n.mu.Unlock()
-
-	sort.Slice(entries, func(i, j int) bool {
-		return entries[i].Name < entries[j].Name
-	})
-
-	return fs.NewListDirStream(entries), 0
 }
 
 func (n *node) childCount() uint32 {
 	n.mu.Lock()
 	defer n.mu.Unlock()
-	return uint32(len(n.childs))
+	return uint32(len(n.children))
 }
 
 func (n *node) updateAttr(out *fuse.Attr) {
@@ -192,29 +157,14 @@ func (n *node) updateAttr(out *fuse.Attr) {
 	}
 }
 
-func (n *node) Getattr(ctx context.Context, _ fs.FileHandle, out *fuse.AttrOut) syscall.Errno {
+func (n *node) Getattr(_ context.Context, _ fs.FileHandle, out *fuse.AttrOut) syscall.Errno {
 	log.WithField("node", n.name).Debug("Getattr called")
 	out.SetTimeout(libraryRefresh)
 	n.updateAttr(&out.Attr)
 	return 0
 }
 
-func (n *node) Lookup(ctx context.Context, name string, out *fuse.EntryOut) (*fs.Inode, syscall.Errno) {
-	log.WithFields(log.Fields{
-		"node":   n.name,
-		"lookup": name,
-	}).Debug("Looking up node")
-
-	child := n.getChild(name)
-	if child == nil {
-		return nil, syscall.ENOENT
-	}
-
-	child.updateAttr(&out.Attr)
-	return &child.Inode, 0
-}
-
-func (n *node) Open(ctx context.Context, flags uint32) (fh fs.FileHandle, fuseFlags uint32, errno syscall.Errno) {
+func (n *node) Open(_ context.Context, flags uint32) (fh fs.FileHandle, fuseFlags uint32, errno syscall.Errno) {
 	log.WithFields(log.Fields{
 		"node":  n.name,
 		"flags": flags,
@@ -237,7 +187,7 @@ func newFileHandle(name, url string, size int64) *fileHandle {
 	}
 }
 
-func (fh *fileHandle) Flush(ctx context.Context) syscall.Errno {
+func (fh *fileHandle) Flush(_ context.Context) syscall.Errno {
 	log.WithField("name", fh.name).Debug("Flush called")
 	fh.close()
 	return 0
@@ -248,11 +198,11 @@ func (fh *fileHandle) close() {
 		return
 	}
 	fh.cancel()
-	fh.buffer.Close()
+	_ = fh.buffer.Close()
 	fh.buffer = nil
 }
 
-func (fh *fileHandle) setup(ctx context.Context, offset int64) error {
+func (fh *fileHandle) setup(_ context.Context, offset int64) error {
 	log.WithFields(log.Fields{
 		"name":   fh.name,
 		"offset": offset,
@@ -291,7 +241,7 @@ func (fh *fileHandle) setup(ctx context.Context, offset int64) error {
 
 	if fh.buffer != nil {
 		log.WithField("name", fh.name).Trace("Closing old buffer")
-		fh.buffer.Close()
+		_ = fh.buffer.Close()
 		log.WithField("name", fh.name).Trace("Done closing old buffer")
 	}
 
@@ -352,7 +302,7 @@ func (fh *fileHandle) Read(ctx context.Context, dest []byte, offset int64) (fuse
 	})
 
 	if timedOut {
-		err = fmt.Errorf("timeout after " + defaultTimeout.String())
+		err = fmt.Errorf("timeout after %s", defaultTimeout.String())
 	}
 
 	switch err {

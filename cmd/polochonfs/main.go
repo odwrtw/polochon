@@ -7,7 +7,6 @@ import (
 	"os/signal"
 	"os/user"
 	"strconv"
-	"sync"
 	"syscall"
 	"time"
 
@@ -114,20 +113,14 @@ func run() error {
 		return err
 	}
 
-	wg := sync.WaitGroup{}
-	go func() {
-		wg.Add(1)
-		defer wg.Done()
-		pfs.handleUpdates()
-	}()
-
 	log.Info("FUSE daemon started")
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	<-sigs
 	cancel()
 
-	wg.Wait()
+	pfs.wait()
+
 	pfs.unmount(server)
 	return nil
 }
