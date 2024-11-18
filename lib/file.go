@@ -1,6 +1,7 @@
 package polochon
 
 import (
+	"encoding/binary"
 	"fmt"
 	"os"
 	"path"
@@ -196,6 +197,49 @@ func (f *File) MovieFanartPath() string {
 // MovieThumbPath returns the movie thumb path
 func (f *File) MovieThumbPath() string {
 	return filepath.Join(path.Dir(f.Path), "/poster.jpg")
+}
+
+// OpensubHash implements the opensubtitles hash functions:
+// https://trac.opensubtitles.org/projects/opensubtitles/wiki/HashSourceCodes
+func (f *File) OpensubHash() (uint64, error) {
+	const hashChunkSize = 65536 // 64k
+	const hashBufSize = 8       // 8 bytes
+
+	if f.Size < hashChunkSize {
+		return 0, fmt.Errorf("polochon: file to small to be hashed")
+	}
+
+	file, err := os.Open(f.Path)
+	if err != nil {
+		return 0, err
+	}
+	defer file.Close()
+
+	hash := uint64(f.Size)
+
+	buf := make([]byte, hashBufSize)
+	parts := hashChunkSize / 8
+	for _, offset := range []int64{0, f.Size - hashChunkSize} {
+		_, err := file.Seek(offset, 0)
+		if err != nil {
+			return 0, err
+		}
+
+		for i := 0; i < parts; i++ {
+			n, err := file.Read(buf)
+			if err != nil {
+				return 0, err
+			}
+
+			if n != hashBufSize {
+				return 0, fmt.Errorf("polochon: failed to read all bytes %d/%d", n, hashBufSize)
+			}
+
+			hash += binary.LittleEndian.Uint64(buf)
+		}
+	}
+
+	return hash, nil
 }
 
 // removeExt returns file path without the extension
