@@ -140,6 +140,7 @@ movie:
     - mkvinfo
     - yifysubs
     - opensubtitles
+    - bsplayer
 
 modules_params:
     # Required for the transmission client, if the downloader is enabled.
