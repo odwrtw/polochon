@@ -177,6 +177,12 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 			handler: s.removeTorrent,
 		},
 		{
+			name:    "LibraryRefresh",
+			path:    "/library/refresh",
+			methods: "POST",
+			handler: s.libraryRefresh,
+		},
+		{
 			name:    "GetModulesStatus",
 			path:    "/modules/status",
 			methods: "GET",

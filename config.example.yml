@@ -40,6 +40,10 @@ download_manager:
   # soon as the torrent is downloaded.
   ratio: 0
 
+# The organizer manages the way the library is updated
+organizer:
+  enabled: true
+
 # The HTTP server exposes an API to polochon
 http_server:
   enable: true
