@@ -10,7 +10,8 @@ import (
 type configFile struct {
 	modulesParams *ModulesParams
 
-	Logs Logger `yaml:"logs"`
+	Logs      Logger          `yaml:"logs"`
+	Organizer OrganizerConfig `yaml:"organizer"`
 
 	Watcher struct {
 		ModuleLoader `yaml:",inline"`
@@ -78,6 +79,7 @@ func loadConfig(cf *configFile, conf *Config) error {
 		}
 	}
 
+	conf.Organizer = cf.Organizer
 	conf.Logger = cf.Logs.logger
 	conf.Watcher = WatcherConfig{
 		Dir:        cf.Watcher.Dir,

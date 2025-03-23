@@ -15,6 +15,7 @@ import (
 type Config struct {
 	Logger            *logrus.Logger
 	Watcher           WatcherConfig
+	Organizer         OrganizerConfig
 	Downloader        DownloaderConfig
 	DownloadManager   DownloadManagerConfig
 	HTTPServer        HTTPServer
@@ -74,6 +75,11 @@ type DownloadManagerConfig struct {
 	Dir     string        `yaml:"dir"`
 	Timer   time.Duration `yaml:"timer"`
 	Ratio   float32       `yaml:"ratio"`
+}
+
+// OrganizerConfig represents the configuration for the organizer
+type OrganizerConfig struct {
+	Enabled bool `yaml:"enabled"`
 }
 
 // HTTPServer represents the configuration for the HTTP Server

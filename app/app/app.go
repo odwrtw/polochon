@@ -79,8 +79,11 @@ func (a *App) init() error {
 		log.WithField("function", "rebuild_index").Error(err)
 	}
 
-	// Add the organizer
-	a.subApps = []subapp.App{organizer.New(config, library)}
+	a.subApps = []subapp.App{}
+	if config.Organizer.Enabled {
+		// Add the organizer
+		a.subApps = append(a.subApps, organizer.New(config, library))
+	}
 
 	if config.Downloader.Enabled {
 		// Add the downloader
