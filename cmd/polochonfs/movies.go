@@ -25,7 +25,7 @@ func (pfs *polochonfs) updateMovies() {
 
 	defer func() {
 		pfs.root.addChild(dir)
-		_ = pfs.root.NotifyEntry(showDirName)
+		_ = pfs.root.NotifyEntry(movieDirName)
 	}()
 
 	log.Debug("Fecthing movies")
