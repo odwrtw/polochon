@@ -111,7 +111,7 @@ func (w *WebHook) Notify(i interface{}, log *logrus.Entry) error {
 	for _, h := range w.hooks {
 		err := w.notify(h, video, videoType)
 		if err != nil {
-			log.Warnf(err.Error())
+			log.Warn(err.Error())
 		}
 	}
 
