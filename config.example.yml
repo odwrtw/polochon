@@ -214,3 +214,6 @@ modules_params:
     # https://github.com/odwrtw/docker-guessit
   - name: guessit
     endpoint: "http://guessit.quimbo.fr/guess"
+  - name: subtitlor
+    endpoint: "https://subs.pwet.com"
+    token: "token"

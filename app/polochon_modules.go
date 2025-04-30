@@ -14,6 +14,7 @@ import (
 	_ "github.com/odwrtw/polochon/modules/mock"
 	_ "github.com/odwrtw/polochon/modules/opensubtitles"
 	_ "github.com/odwrtw/polochon/modules/pushover"
+	_ "github.com/odwrtw/polochon/modules/subtitlor"
 	_ "github.com/odwrtw/polochon/modules/tmdb"
 	_ "github.com/odwrtw/polochon/modules/tpb"
 	_ "github.com/odwrtw/polochon/modules/trakttv"
