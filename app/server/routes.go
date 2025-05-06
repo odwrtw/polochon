@@ -79,6 +79,12 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 			handler: s.updateMovieSubtitle,
 		},
 		{
+			name:    "UploadMovieSubtitle",
+			path:    "/movies/{id}/subtitles/{lang}",
+			methods: "PUT",
+			handler: s.uploadMovieSubtitle,
+		},
+		{
 			name:    "GetShows",
 			path:    "/shows",
 			methods: "GET",
@@ -131,6 +137,12 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 			path:    "/shows/{id}/seasons/{season:[0-9]+}/episodes/{episode:[0-9]+}/subtitles/{lang}",
 			methods: "POST",
 			handler: s.updateEpisodeSubtitle,
+		},
+		{
+			name:    "UploadEpisodeSubtitle",
+			path:    "/shows/{id}/seasons/{season:[0-9]+}/episodes/{episode:[0-9]+}/subtitles/{lang}",
+			methods: "PUT",
+			handler: s.uploadEpisodeSubtitle,
 		},
 		{
 			name:     "DownloadEpisode",

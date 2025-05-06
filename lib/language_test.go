@@ -6,25 +6,36 @@ import (
 
 func TestShortForm(t *testing.T) {
 	for _, l := range []struct {
-		expected string
-		lang     Language
+		lang      Language
+		longForm  string
+		shortForm string
+		err       error
 	}{
 		{
-			expected: "en",
-			lang:     EN,
+			longForm:  "en_US",
+			shortForm: "en",
+			lang:      EN,
 		},
 		{
-			expected: "fr",
-			lang:     FR,
+			longForm:  "fr_FR",
+			shortForm: "fr",
+			lang:      FR,
 		},
 		{
-			expected: "pwet",
-			lang:     Language("pwet"),
+			longForm: "pwet",
+			err:      ErrInvalidLanguage,
 		},
 	} {
-		short := l.lang.ShortForm()
-		if short != l.expected {
-			t.Errorf("Expected %#v, got %#v", l.expected, short)
+		lang, err := NewLanguage(l.longForm)
+		if err != l.err {
+			t.Errorf("Expected error %#v, got %#v", l.err, err)
+		}
+		if lang != l.lang {
+			t.Errorf("Expected lang %#v, got %#v", l.lang, lang)
+		}
+		short := lang.ShortForm()
+		if short != l.shortForm {
+			t.Errorf("Expected %#v, got %#v", l.shortForm, short)
 		}
 	}
 }
