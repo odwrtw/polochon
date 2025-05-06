@@ -21,11 +21,13 @@
     - DownloadMovieFiles
     - DownloadMovieSubtitle
     - UpdateMovieSubtitle
+    - UploadMovieSubtitle
     - DownloadShowFiles
     - DownloadEpisode
     - DownloadEpisodeFiles
     - DownloadEpisodeSubtitle
     - UpdateEpisodeSubtitle
+    - UploadEpisodeSubtitle
     - Wishlist
     - AddTorrent
     - ListTorrents

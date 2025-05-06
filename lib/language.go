@@ -1,7 +1,11 @@
 package polochon
 
+import "errors"
+
 // Language type
 type Language string
+
+var ErrInvalidLanguage = errors.New("polochon: invalid lang")
 
 // Based on unix locale
 const (
@@ -26,4 +30,12 @@ func (l Language) ShortForm() string {
 	}
 	// If there is no LangInfo for this lang, return its string form
 	return string(l)
+}
+
+func NewLanguage(l string) (Language, error) {
+	if _, ok := langInfo[Language(l)]; ok {
+		return Language(l), nil
+	}
+	// If there is no LangInfo for this lang, return its string form
+	return "", ErrInvalidLanguage
 }

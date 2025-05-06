@@ -36,6 +36,10 @@ func upsertSubtitle(subs []*Subtitle, sub *Subtitle) []*Subtitle {
 	idx := -1
 	newSubs := subs
 	for i, oldSub := range subs {
+		if oldSub.Embedded {
+			continue
+		}
+
 		if sub.Lang == oldSub.Lang {
 			idx = i
 			break
