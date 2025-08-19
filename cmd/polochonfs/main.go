@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	// Default config
+	// Default config.
 	movieDirName     = "movies"
 	showDirName      = "tvshows"
 	defaultCacheSize = "10MB"
@@ -27,11 +27,11 @@ var (
 	umountLogTimeout = 1 * time.Minute
 	globalCtx        context.Context
 
-	// Polochon URL / Token configs
+	// Polochon URL / Token configs.
 	polochonURL   string
 	polochonToken string
 
-	// User rights
+	// User and group IDs.
 	uid, gid uint32
 )
 
@@ -45,6 +45,8 @@ func main() {
 func run() error {
 	var cancel context.CancelFunc
 	globalCtx, cancel = context.WithCancel(context.Background())
+	defer cancel()
+
 	pfs, err := newPolochonFs(globalCtx)
 	if err != nil {
 		return err
