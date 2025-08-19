@@ -59,13 +59,13 @@ func (r *asyncReader) readBlockFromSource() error {
 	r.sourcePos += read
 
 	if r.sourcePos == r.end {
-		r.source.Close()
+		err = r.source.Close()
 	}
 
 	return err
 }
 
-// Read implements the io.Reader interface
+// Read implements the io.Reader interface.
 func (r *asyncReader) Read(p []byte) (int, error) {
 	if r.bufferPos == r.end {
 		return 0, io.EOF
@@ -73,7 +73,9 @@ func (r *asyncReader) Read(p []byte) (int, error) {
 
 	requested := min(len(p), int(r.end-r.bufferPos))
 
-	ctx, _ := context.WithTimeout(r.ctx, defaultTimeout)
+	ctx, cancel := context.WithTimeout(r.ctx, defaultTimeout)
+	defer cancel()
+
 	try := 0
 	for {
 		select {
@@ -107,14 +109,24 @@ func (r *asyncReader) Read(p []byte) (int, error) {
 	return read, err
 }
 
-// Close implements the io.Closer interface
+// Close implements the io.Closer interface.
 func (r *asyncReader) Close() error {
 	r.cancel()
-	r.wg.Wait()
-	r.source.Close()
 
-	log.WithField("name", r.name).Trace("Async buffer closed")
-	return nil
+	// Use a timeout to prevent indefinite waiting
+	done := make(chan struct{})
+	go func() {
+		r.wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		log.WithField("name", r.name).Warn("Timeout waiting for async reader to close")
+	}
+
+	return r.source.Close()
 }
 
 // asyncRead reads data until the cache reaches `cacheSize`.
@@ -126,11 +138,11 @@ func (r *asyncReader) asyncRead() {
 		select {
 		case <-r.ctx.Done():
 			err = r.ctx.Err()
-			if err == context.Canceled {
-				return
-			}
-			break
 		default:
+		}
+
+		if err != nil {
+			break
 		}
 
 		if r.sourcePos == r.end {
@@ -146,6 +158,10 @@ func (r *asyncReader) asyncRead() {
 		if err = r.readBlockFromSource(); err != nil {
 			break
 		}
+	}
+
+	if err == context.Canceled {
+		return
 	}
 
 	log.WithFields(log.Fields{
