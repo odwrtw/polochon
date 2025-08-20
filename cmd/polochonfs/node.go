@@ -1,13 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"hash/crc32"
 	"io"
 	"net/http"
-	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -28,65 +25,92 @@ var (
 
 type node struct {
 	fs.Inode
-	isDir bool
-	url   string
 
-	times    time.Time
-	id, name string
-	size     uint64
+	times time.Time
+	name  string
+	size  uint64
+	url   string
+	isDir bool
 
 	mu       sync.Mutex
 	children map[string]*node
-
-	inode uint64
+	valid    bool
 }
 
-func newNodeDir(id, name string, times time.Time) *node {
-	return &node{
-		id:       id,
+func newNode(name string, isDir bool) *node {
+	n := &node{
 		name:     name,
-		isDir:    true,
-		times:    times,
 		children: map[string]*node{},
+		isDir:    isDir,
 	}
+
+	return n
+}
+
+func newNodeDir(name string, times time.Time) *node {
+	node := newNode(name, true)
+	node.times = times
+	return node
 }
 
 func newRootNode() *node {
-	return newNodeDir("root", "root", time.Now())
-}
-
-func newNode(id, name, url string, size uint64, times time.Time) *node {
 	return &node{
-		id:       id,
-		isDir:    false,
-		name:     name,
-		url:      url,
-		size:     size,
-		times:    times,
+		name:     "root",
+		times:    time.Now(),
 		children: map[string]*node{},
 	}
 }
 
-func (n *node) getInode() uint64 {
+func newNodeFile(name string) *node {
+	return newNode(name, false)
+}
+
+func (n *node) setURL(url string) {
+	n.url = url
+}
+
+func (n *node) invalidate() {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
-	if n.inode != 0 {
-		return n.inode
+	for _, child := range n.children {
+		child.invalidate()
 	}
 
-	var b bytes.Buffer
-	if !n.isDir {
-		b.WriteString(n.times.String())
+	n.valid = false
+}
+
+func (n *node) clear() {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	for name, child := range n.children {
+		child.clear()
+		if child.valid {
+			continue
+		}
+
+		log.WithFields(log.Fields{
+			"parent": n.name,
+			"child":  name,
+		}).Debug("Removing child")
+
+		ok, _ := n.Inode.RmChild(name)
+		if !ok {
+			log.WithFields(log.Fields{
+				"parent": n.name,
+				"child":  name,
+				"ok":     ok,
+			}).Error("Failed to remove inode child")
+			continue
+		}
+
+		if ret := n.NotifyDelete(name, &child.Inode); ret != 0 {
+			log.WithField("file", child.name).Error("Failed to notify delete")
+		}
+
+		delete(n.children, name)
 	}
-
-	b.WriteString(n.id)
-	b.WriteString(strconv.FormatUint(n.size, 10))
-	b.WriteString(n.name)
-
-	n.inode = baseInode | uint64(crc32.ChecksumIEEE(b.Bytes()))
-
-	return n.inode
 }
 
 func (n *node) addChildNode(c *node) {
@@ -95,33 +119,13 @@ func (n *node) addChildNode(c *node) {
 	n.children[c.name] = c
 }
 
-func inodeExists(i uint64) bool {
-	if _, ok := movieInodes[i]; ok {
-		return true
-	}
-	if _, ok := showInodes[i]; ok {
-		return true
-	}
-	return false
-}
-
 func (n *node) addChild(child *node) {
-	attr := fs.StableAttr{
-		Ino: child.getInode(),
-	}
+	attr := fs.StableAttr{Mode: syscall.S_IFREG}
 	if child.isDir {
 		attr.Mode = syscall.S_IFDIR
 	}
 
-	// Check for inode collision.
-	if inodeExists(attr.Ino) {
-		log.WithFields(log.Fields{
-			"file":  n.name,
-			"inode": attr.Ino,
-		}).Error("Inode already exists")
-	}
 	inode := n.NewInode(context.Background(), child, attr)
-
 	n.addChildNode(child)
 	n.AddChild(child.name, inode, true)
 }
@@ -130,13 +134,6 @@ func (n *node) getChild(name string) *node {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	return n.children[name]
-}
-
-func (n *node) rmAllChildren() {
-	n.mu.Lock()
-	n.children = map[string]*node{}
-	n.mu.Unlock()
-	n.RmAllChildren()
 }
 
 func (n *node) childCount() uint32 {
@@ -148,7 +145,7 @@ func (n *node) childCount() uint32 {
 func (n *node) updateAttr(out *fuse.Attr) {
 	out.SetTimes(&n.times, &n.times, &n.times)
 
-	if n.isDir {
+	if n.IsDir() {
 		out.Size = 4096
 		out.Nlink = n.childCount()
 	} else {
