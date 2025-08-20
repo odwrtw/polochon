@@ -16,12 +16,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	baseInode   uint64 = 0xFFFFFFFF00000000
-	movieInodes        = map[uint64]struct{}{}
-	showInodes         = map[uint64]struct{}{}
-)
-
 type polochonfs struct {
 	fuseDebug bool
 	ctx       context.Context
@@ -70,13 +64,6 @@ func (pfs *polochonfs) wait() {
 	pfs.wg.Wait()
 }
 
-func (pfs *polochonfs) buildFS(_ context.Context) {
-	pfs.root.addChild(newNodeDir(movieDirName, movieDirName, pfs.root.times))
-	pfs.root.addChild(newNodeDir(showDirName, showDirName, pfs.root.times))
-
-	go pfs.handleUpdates()
-}
-
 func (pfs *polochonfs) handleUpdates() {
 	pfs.wg.Add(1)
 	defer pfs.wg.Done()
@@ -120,10 +107,9 @@ func (pfs *polochonfs) mount() (*fuse.Server, error) {
 		logger.Ldate|logger.Ltime,
 	)
 	return fs.Mount(pfs.mountPoint, pfs.root, &fs.Options{
-		RootStableAttr: &fs.StableAttr{Ino: baseInode},
-		UID:            uid,
-		GID:            gid,
-		Logger:         customLogger,
+		UID:    uid,
+		GID:    gid,
+		Logger: customLogger,
 		MountOptions: fuse.MountOptions{
 			// Enforce sequential read, one read at a time. This is useful to
 			// read from the http body directly.
@@ -135,7 +121,9 @@ func (pfs *polochonfs) mount() (*fuse.Server, error) {
 			Debug:   pfs.fuseDebug,
 			Logger:  customLogger,
 		},
-		OnAdd: pfs.buildFS,
+		OnAdd: func(_ context.Context) {
+			go pfs.handleUpdates()
+		},
 	})
 }
 
