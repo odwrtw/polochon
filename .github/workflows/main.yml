@@ -11,17 +11,15 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    env:
-      TERM: xterm
     steps:
-    - name: Check out code into the Go module directory
+    - name: Check out code
       uses: actions/checkout@v4
 
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: 1.21.4
-      id: go
+        go-version-file: go.mod
+        cache: true
 
     - name: Test
       shell: sh
@@ -37,21 +35,19 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    env:
-      TERM: xterm
     steps:
-    - name: Check out code into the Go module directory
+    - name: Check out code
       uses: actions/checkout@v4
 
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: 1.21.4
-      id: go
+        go-version-file: go.mod
+        cache: true
 
     - name: Build
-      run: scripts/build.sh build all
       shell: sh
+      run: scripts/build.sh build all
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -62,25 +58,21 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    env:
-      TERM: xterm
+    permissions:
+      contents: write
     if: github.ref == 'refs/heads/master'
     needs: build
     steps:
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v4
-
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
         name: artifacts
         path: artifacts
 
-    - name: Upload release
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GH_REPO: ${{ github.repository }}
-        GH_COMMIT: ${{ github.sha }}
-        GH_ACTION_ID: ${{ github.run_id }}
-      run: .github/scripts/release
-      shell: sh
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: latest
+        name: latest
+        make_latest: true
+        files: artifacts/*

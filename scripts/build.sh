@@ -7,7 +7,11 @@ BUILD_DIR="$BASE_PATH/builds"
 mkdir -p "$BUILD_DIR"
 
 _log() {
-	printf "$(tput setaf 5)-->$(tput setaf 2) %s$(tput setaf 7)\n" "$@"
+	if [ -t 1 ]; then
+		printf "%s --> %s%s\n" "$(tput setaf 5)$(tput setaf 2)" "$*" "$(tput setaf 7)"
+	else
+		printf " --> %s\n" "$*"
+	fi
 }
 
 _clean() {
