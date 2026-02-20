@@ -111,6 +111,7 @@ func (pfs *polochonfs) mount() (*fuse.Server, error) {
 		GID:    gid,
 		Logger: customLogger,
 		MountOptions: fuse.MountOptions{
+			DirectMount: true,
 			// Enforce sequential read, one read at a time. This is useful to
 			// read from the http body directly.
 			SyncRead: true,
