@@ -59,6 +59,13 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 			excluded: !s.config.HTTPServer.ServeFiles,
 		},
 		{
+			name:     "DownloadMovieWithName",
+			path:     "/movies/{id}/download/{filename}",
+			methods:  "GET",
+			handler:  s.serveMovie,
+			excluded: !s.config.HTTPServer.ServeFiles,
+		},
+		{
 			name:     "DownloadMovieFiles",
 			path:     "/movies/{id}/files/{name}",
 			methods:  "GET",
@@ -68,6 +75,13 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 		{
 			name:     "DownloadMovieSubtitle",
 			path:     "/movies/{id}/subtitles/{lang}/download",
+			methods:  "GET",
+			handler:  s.serveMovieSubtitle,
+			excluded: !s.config.HTTPServer.ServeFiles,
+		},
+		{
+			name:     "DownloadMovieSubtitleWithName",
+			path:     "/movies/{id}/subtitles/{lang}/download/{filename}",
 			methods:  "GET",
 			handler:  s.serveMovieSubtitle,
 			excluded: !s.config.HTTPServer.ServeFiles,
@@ -152,6 +166,13 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 			excluded: !s.config.HTTPServer.ServeFiles,
 		},
 		{
+			name:     "DownloadEpisodeWithName",
+			path:     "/shows/{id}/seasons/{season:[0-9]+}/episodes/{episode:[0-9]+}/download/{filename}",
+			methods:  "GET",
+			handler:  s.serveEpisode,
+			excluded: !s.config.HTTPServer.ServeFiles,
+		},
+		{
 			name:    "DownloadEpisodeFiles",
 			path:    "/shows/{id}/seasons/{season:[0-9]+}/episodes/{episode:[0-9]+}/files/{name}",
 			methods: "GET",
@@ -160,6 +181,13 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 		{
 			name:     "DownloadEpisodeSubtitle",
 			path:     "/shows/{id}/seasons/{season:[0-9]+}/episodes/{episode:[0-9]+}/subtitles/{lang}/download",
+			methods:  "GET",
+			handler:  s.serveEpisodeSubtitle,
+			excluded: !s.config.HTTPServer.ServeFiles,
+		},
+		{
+			name:     "DownloadEpisodeSubtitleWithName",
+			path:     "/shows/{id}/seasons/{season:[0-9]+}/episodes/{episode:[0-9]+}/subtitles/{lang}/download/{filename}",
 			methods:  "GET",
 			handler:  s.serveEpisodeSubtitle,
 			excluded: !s.config.HTTPServer.ServeFiles,

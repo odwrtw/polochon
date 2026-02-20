@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"path/filepath"
 
+	"github.com/gorilla/mux"
 	"gopkg.in/unrolled/render.v1"
 
 	"github.com/odwrtw/polochon/app/auth"
@@ -86,6 +87,13 @@ func (s *Server) serveFile(w http.ResponseWriter, r *http.Request, file *polocho
 	}
 
 	filename := filepath.Base(file.Path)
+
+	// If a name was provided in the URL, ensure it matches the actual filename
+	if name := mux.Vars(r)["filename"]; name != "" && name != filename {
+		s.renderError(w, r, index.ErrNotFound)
+		return
+	}
+
 	s.logEntry(r).Infof("serving file %q", filename)
 	// Set the header so that when downloading, the real filename will be given
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
