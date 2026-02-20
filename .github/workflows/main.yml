@@ -22,15 +22,7 @@ jobs:
         cache: true
 
     - name: Test
-      shell: sh
-      run: go test -coverprofile=/tmp/code.coverage ./...
-
-    - name: Upload coverage
-      env:
-        COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        go install github.com/mattn/goveralls@latest
-        goveralls -coverprofile=/tmp/code.coverage -service=github
+      run: go test -cover ./... | tee $GITHUB_STEP_SUMMARY
 
   build:
     name: Build
