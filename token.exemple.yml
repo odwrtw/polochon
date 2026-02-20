@@ -18,14 +18,18 @@
     - guest
   allowed:
     - DownloadMovie
+    - DownloadMovieWithName
     - DownloadMovieFiles
     - DownloadMovieSubtitle
+    - DownloadMovieSubtitleWithName
     - UpdateMovieSubtitle
     - UploadMovieSubtitle
     - DownloadShowFiles
     - DownloadEpisode
+    - DownloadEpisodeWithName
     - DownloadEpisodeFiles
     - DownloadEpisodeSubtitle
+    - DownloadEpisodeSubtitleWithName
     - UpdateEpisodeSubtitle
     - UploadEpisodeSubtitle
     - Wishlist
