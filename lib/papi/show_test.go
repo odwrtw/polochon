@@ -76,7 +76,7 @@ func TestGetShows(t *testing.T) {
 	var requestURI string
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestURI = r.RequestURI
-		fmt.Fprintf(w, "%s", showByIDsResponse)
+		_, _ = fmt.Fprintf(w, "%s", showByIDsResponse)
 	}))
 	defer ts.Close()
 
@@ -257,7 +257,7 @@ func TestGetShow(t *testing.T) {
 	var requestURI string
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestURI = r.RequestURI
-		fmt.Fprintf(w, "%s", showResponse)
+		_, _ = fmt.Fprintf(w, "%s", showResponse)
 	}))
 	defer ts.Close()
 

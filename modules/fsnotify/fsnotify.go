@@ -74,7 +74,7 @@ func (fs *FsNotify) eventHandler(ctx polochon.FsNotifierCtx, log *logrus.Entry) 
 	defer ctx.Wg.Done()
 
 	// Close the watcher when done
-	defer fs.watcher.Close()
+	defer func() { _ = fs.watcher.Close() }()
 
 	for {
 		select {

@@ -122,7 +122,7 @@ func (p *Pushover) notifyMovie(movie *polochon.Movie) error {
 		if err != nil {
 			return err
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		img, err := jpeg.Decode(resp.Body)
 		if err != nil {
@@ -137,7 +137,7 @@ func (p *Pushover) notifyMovie(movie *polochon.Movie) error {
 				pw.CloseWithError(err)
 				return
 			}
-			pw.Close()
+			_ = pw.Close()
 		}()
 
 		if err := message.AddAttachment(pr); err != nil {

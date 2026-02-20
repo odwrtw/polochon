@@ -1,7 +1,6 @@
 package polochon
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -44,14 +43,14 @@ func TestFilename(t *testing.T) {
 
 func TestIgnoreFile(t *testing.T) {
 	// Create a temp dir
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "polochon-file-test")
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "polochon-file-test")
 	if err != nil {
 		t.Fatalf("failed to create temp dir for file tests")
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create temp file in the temp dir
-	f, err := ioutil.TempFile(tmpDir, "polochon-fake-file")
+	f, err := os.CreateTemp(tmpDir, "polochon-fake-file")
 	if err != nil {
 		t.Fatalf("failed to create fake movie file in movie store test")
 	}
@@ -82,18 +81,18 @@ func TestIgnoreFile(t *testing.T) {
 
 func TestIsVideo(t *testing.T) {
 	// Create a temp dir
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "polochon-file-test")
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "polochon-file-test")
 	if err != nil {
 		t.Fatalf("failed to create temp dir for file tests")
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create temp file in the temp dir
 	f, err := os.Create(filepath.Join(tmpDir, "fake.mp4"))
 	if err != nil {
 		t.Fatalf("failed to create fake file: %q", err)
 	}
-	f.Close()
+	_ = f.Close()
 
 	// Create the file to test
 	config := FileConfig{
@@ -113,11 +112,11 @@ func TestIsVideo(t *testing.T) {
 
 func TestExludedFile(t *testing.T) {
 	// Create a temp dir
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "polochon-file-test")
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "polochon-file-test")
 	if err != nil {
 		t.Fatalf("failed to create temp dir for file tests")
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// File to be created
 	fileName := filepath.Join(tmpDir, "sample.avi")
@@ -138,7 +137,7 @@ func TestExludedFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create fake file: %q", err)
 	}
-	f.Close()
+	_ = f.Close()
 
 	if file.IsVideo() {
 		t.Fatalf("the file should not be considered as a video")

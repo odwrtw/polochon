@@ -2,7 +2,6 @@ package library
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -89,7 +88,7 @@ func TestAddEpisode(t *testing.T) {
 		if sub == nil {
 			t.Fatal("should have subtitle")
 		}
-		content, err := ioutil.ReadFile(episode.SubtitlePath(lang))
+		content, err := os.ReadFile(episode.SubtitlePath(lang))
 		if err != nil {
 			t.Fatalf("failed to read the episode's subtitle : %q", err)
 		}
@@ -241,7 +240,7 @@ func testShow(t *testing.T, episode *polochon.ShowEpisode, lib *mockLibrary) {
 		"poster.jpg",
 	} {
 		path := filepath.Join(lib.getShowDir(episode), name)
-		content, err := ioutil.ReadFile(path)
+		content, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatalf("expected no error, got %q", err)
 		}

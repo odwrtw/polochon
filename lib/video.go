@@ -47,7 +47,7 @@ func (bv *BaseVideo) GetFile() *File {
 
 // SetMetadata implements the Video interface
 func (bv *BaseVideo) SetMetadata(metadata *VideoMetadata) {
-	bv.VideoMetadata.Update(metadata)
+	bv.Update(metadata)
 }
 
 // SetSubtitles implements the Video interface

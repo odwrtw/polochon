@@ -282,7 +282,7 @@ func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent, log *logrus.Ent
 func torrentGuessitStr(t *tpb.Torrent) string {
 	// Hack to make the torrent name look like a video name so that guessit
 	// can guess the title, year and quality
-	return strings.Replace(t.Name, " ", ".", -1)
+	return strings.ReplaceAll(t.Name, " ", ".")
 }
 
 func getQuality(s string) polochon.Quality {

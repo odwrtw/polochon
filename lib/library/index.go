@@ -58,7 +58,7 @@ func (l *Library) buildMovieIndex(log *logrus.Entry) error {
 	if err != nil {
 		return err
 	}
-	defer root.Close()
+	defer func() { _ = root.Close() }()
 
 	dirs, err := root.Readdirnames(-1)
 	if err != nil {
@@ -88,7 +88,7 @@ func (l *Library) buildFromMovieDir(d string) error {
 	if err != nil {
 		return fmt.Errorf("failed to read movie dir %w", err)
 	}
-	defer dir.Close()
+	defer func() { _ = dir.Close() }()
 
 	files, err := dir.Readdirnames(-1)
 	if err != nil {
@@ -128,7 +128,7 @@ func (l *Library) buildShowIndex(log *logrus.Entry) error {
 	if err != nil {
 		return err
 	}
-	defer root.Close()
+	defer func() { _ = root.Close() }()
 
 	dirs, err := root.Readdirnames(-1)
 	if err != nil {
@@ -158,7 +158,7 @@ func (l *Library) buildFromShowDir(imdbID, showDir string, log *logrus.Entry) er
 	if err != nil {
 		return fmt.Errorf("failed to read movie dir %w", err)
 	}
-	defer dir.Close()
+	defer func() { _ = dir.Close() }()
 
 	files, err := dir.Readdirnames(-1)
 	if err != nil {
@@ -185,7 +185,7 @@ func (l *Library) buildFromShowSeasonDir(imdbID, seasonDir string, log *logrus.E
 	if err != nil {
 		return fmt.Errorf("failed to read movie dir %w", err)
 	}
-	defer dir.Close()
+	defer func() { _ = dir.Close() }()
 
 	files, err := dir.Readdirnames(-1)
 	if err != nil {

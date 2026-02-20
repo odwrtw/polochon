@@ -14,16 +14,14 @@ func download(URL, savePath string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Create the file
 	file, err := os.Create(savePath)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
-
-	// Write from the net to the file
+	defer func() { _ = file.Close() }()
 	_, err = io.Copy(file, resp.Body)
 	if err != nil {
 		return err
@@ -39,7 +37,7 @@ func readNFOFile(filePath string, i interface{}) error {
 	if err != nil {
 		return err
 	}
-	defer nfoFile.Close()
+	defer func() { _ = nfoFile.Close() }()
 
 	return nfo.Read(nfoFile, i)
 }
@@ -51,7 +49,7 @@ func writeNFOFile(filePath string, i interface{}) error {
 	if err != nil {
 		return err
 	}
-	defer nfoFile.Close()
+	defer func() { _ = nfoFile.Close() }()
 
 	return nfo.Write(nfoFile, i)
 }
@@ -79,13 +77,13 @@ func MoveFile(from string, to string) error {
 		if err != nil {
 			return err
 		}
-		defer source.Close()
+		defer func() { _ = source.Close() }()
 
 		destination, err := os.Create(to)
 		if err != nil {
 			return err
 		}
-		defer destination.Close()
+		defer func() { _ = destination.Close() }()
 
 		_, err = io.Copy(destination, source)
 		if err != nil {

@@ -116,7 +116,7 @@ func (f *File) Ignore() error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 	return nil
 }
 
@@ -213,7 +213,7 @@ func (f *File) OpensubHash() (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	hash := uint64(f.Size)
 

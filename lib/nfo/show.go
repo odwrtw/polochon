@@ -4,7 +4,7 @@ import (
 	"encoding/xml"
 	"time"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 )
 
 // Show represents a show NFO

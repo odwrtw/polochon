@@ -127,7 +127,7 @@ func IsEmpty(name string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	_, err = f.Readdir(1)
 	if err == io.EOF {

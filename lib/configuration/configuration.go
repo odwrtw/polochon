@@ -107,7 +107,7 @@ func LoadConfigFile(path string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	return LoadConfig(file)
 }

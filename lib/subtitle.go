@@ -64,7 +64,7 @@ func (s *Subtitle) Save() error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	i, err := io.Copy(file, bytes.NewReader(s.Data))
 	s.Size = i
