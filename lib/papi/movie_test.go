@@ -53,7 +53,7 @@ func TestGetMovies(t *testing.T) {
 	var requestURI string
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestURI = r.RequestURI
-		fmt.Fprint(w, `
+		_, _ = fmt.Fprint(w, `
 			{
 				"tt001": {
 					"title": "title_1",
@@ -137,7 +137,7 @@ func TestGetMovie(t *testing.T) {
 	var requestURI string
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestURI = r.RequestURI
-		fmt.Fprintf(w, "%s", movieResponse)
+		_, _ = fmt.Fprintf(w, "%s", movieResponse)
 	}))
 	defer ts.Close()
 

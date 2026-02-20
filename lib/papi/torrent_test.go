@@ -68,7 +68,7 @@ func TestAddTorrent(t *testing.T) {
 	} {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(test.serverHeader)
-			fmt.Fprintf(w, "%s", test.polochonError)
+			_, _ = fmt.Fprintf(w, "%s", test.polochonError)
 		}))
 		defer ts.Close()
 
@@ -135,7 +135,7 @@ func TestGetTorrents(t *testing.T) {
 	} {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(test.serverHeader)
-			fmt.Fprintf(w, "%s", test.polochonError)
+			_, _ = fmt.Fprintf(w, "%s", test.polochonError)
 		}))
 		defer ts.Close()
 
@@ -181,7 +181,7 @@ func TestRemoveTorrents(t *testing.T) {
 	} {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(test.serverHeader)
-			fmt.Fprintf(w, "%s", test.polochonError)
+			_, _ = fmt.Fprintf(w, "%s", test.polochonError)
 		}))
 		defer ts.Close()
 

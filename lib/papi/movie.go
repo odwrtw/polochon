@@ -72,7 +72,9 @@ func (c *Client) GetMovies() (*MovieCollection, error) {
 			s.Video = m.Movie
 		}
 
-		mc.Add(m.Movie)
+		if err := mc.Add(m.Movie); err != nil {
+			return nil, err
+		}
 	}
 
 	return mc, nil

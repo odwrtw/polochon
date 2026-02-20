@@ -152,7 +152,7 @@ func (c *Client) request(httpType, url string, data io.Reader, result interface{
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	switch resp.StatusCode {
 	case http.StatusOK:
@@ -173,7 +173,7 @@ func (c *Client) request(httpType, url string, data io.Reader, result interface{
 		}
 		// If the decode returns an error we ignore it, the default "Unknown
 		// error" message will be returned
-		json.NewDecoder(resp.Body).Decode(&polochonErr)
+		_ = json.NewDecoder(resp.Body).Decode(&polochonErr)
 		return fmt.Errorf("papi: HTTP error status %s: %s", resp.Status, polochonErr.Error)
 	}
 }

@@ -2,7 +2,6 @@ package library
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -23,7 +22,7 @@ type mockLibrary struct {
 func (m *mockLibrary) cleanup() {
 	// Remove the tmp directory
 	if strings.HasPrefix(m.tmpDir, os.TempDir()) {
-		os.RemoveAll(m.tmpDir)
+		_ = os.RemoveAll(m.tmpDir)
 	} else {
 		panic("trying to work in a non temporary directory")
 	}
@@ -50,7 +49,7 @@ func newMockLibrary() (*mockLibrary, error) {
 	subtitler := subtitlerModule.(polochon.Subtitler)
 
 	// Create a temp dir
-	tmpDir, err := ioutil.TempDir("", "polochon-library")
+	tmpDir, err := os.MkdirTemp("", "polochon-library")
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +94,7 @@ func newMockLibrary() (*mockLibrary, error) {
 	}
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "mockContent")
+		_, _ = fmt.Fprint(w, "mockContent")
 	}))
 
 	c := &configuration.Config{

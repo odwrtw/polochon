@@ -58,7 +58,7 @@ func TestSubtitleDownloadURL(t *testing.T) {
 
 func TestUpdateSubtitles(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{"lang":"fr_FR", "size": 1000}`))
+		_, _ = w.Write([]byte(`{"lang":"fr_FR", "size": 1000}`))
 	}))
 	defer ts.Close()
 

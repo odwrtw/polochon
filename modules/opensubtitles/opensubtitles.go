@@ -313,7 +313,7 @@ func (osp *osProxy) openSubtitleParams(video polochon.Video) ([]map[string]strin
 func (osp *osProxy) openSubtitleMovieParams(m *polochon.Movie) []map[string]string {
 	return []map[string]string{
 		{
-			"imdbid": strings.Replace(m.ImdbID, "tt", "", -1),
+			"imdbid": strings.ReplaceAll(m.ImdbID, "tt", ""),
 		},
 	}
 }

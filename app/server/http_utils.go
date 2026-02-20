@@ -29,7 +29,7 @@ func (err *Error) Error() string {
 }
 
 func (s *Server) renderOK(w http.ResponseWriter, i interface{}) {
-	s.render.JSON(w, http.StatusOK, i)
+	_ = s.render.JSON(w, http.StatusOK, i)
 }
 
 // renderError renders the errors as JSON
@@ -55,5 +55,5 @@ func (s *Server) renderError(w http.ResponseWriter, r *http.Request, input error
 		}
 	}
 
-	s.render.JSON(w, err.Code, err)
+	_ = s.render.JSON(w, err.Code, err)
 }

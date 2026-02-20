@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -96,7 +95,7 @@ func run() error {
 		TimestampFormat: "2006/01/02 15:04:05",
 	})
 
-	lvl, err := logrus.ParseLevel(logLevel)
+	lvl, err := log.ParseLevel(logLevel)
 	if err != nil {
 		return err
 	}

@@ -126,7 +126,7 @@ func (w *WebHook) notify(hook *Hook, video polochon.Video, videoType string) err
 	}
 
 	b := new(bytes.Buffer)
-	json.NewEncoder(b).Encode(struct {
+	_ = json.NewEncoder(b).Encode(struct {
 		Type string      `json:"type"`
 		Data interface{} `json:"data"`
 	}{
@@ -150,7 +150,7 @@ func (w *WebHook) notify(hook *Hook, video polochon.Video, videoType string) err
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// If status > 400, something's wrong
 	if resp.StatusCode >= http.StatusBadRequest {

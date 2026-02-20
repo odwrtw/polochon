@@ -2,7 +2,6 @@ package library
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -91,7 +90,7 @@ func TestAddMovie(t *testing.T) {
 		m.MovieFanartPath(),
 		m.MovieThumbPath(),
 	} {
-		content, err := ioutil.ReadFile(imgPath)
+		content, err := os.ReadFile(imgPath)
 		if err != nil {
 			t.Fatalf("failed to add the movie: %q", err)
 		}
@@ -108,7 +107,7 @@ func TestAddMovie(t *testing.T) {
 		if sub == nil {
 			t.Fatal("should have subtitle")
 		}
-		content, err := ioutil.ReadFile(m.SubtitlePath(lang))
+		content, err := os.ReadFile(m.SubtitlePath(lang))
 		if err != nil {
 			t.Fatalf("failed to read the movie's subtitle : %q", err)
 		}

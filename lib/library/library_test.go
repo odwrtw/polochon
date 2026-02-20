@@ -1,7 +1,7 @@
 package library
 
 import (
-	"io/ioutil"
+	"io"
 	"testing"
 
 	polochon "github.com/odwrtw/polochon/lib"
@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var mockLogEntry = logrus.NewEntry(&logrus.Logger{Out: ioutil.Discard})
+var mockLogEntry = logrus.NewEntry(&logrus.Logger{Out: io.Discard})
 
 func TestStoreMovieNoPath(t *testing.T) {
 	library := New(&configuration.Config{})

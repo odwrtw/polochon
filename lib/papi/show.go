@@ -130,7 +130,9 @@ func (c *Client) GetShows() (*ShowCollection, error) {
 			return nil, err
 		}
 
-		showCollection.Add(data.Show)
+		if err = showCollection.Add(data.Show); err != nil {
+			return nil, err
+		}
 	}
 
 	return showCollection, nil

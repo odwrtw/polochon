@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/odwrtw/polochon/lib"
+	polochon "github.com/odwrtw/polochon/lib"
 )
 
 // Content of a show nfo file

@@ -106,7 +106,7 @@ func (a *App) init() error {
 			if err != nil {
 				return err
 			}
-			defer file.Close()
+			defer func() { _ = file.Close() }()
 
 			authManager, err = auth.New(file)
 			if err != nil {

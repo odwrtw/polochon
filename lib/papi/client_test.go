@@ -25,7 +25,7 @@ func TestTokenAuth(t *testing.T) {
 
 	// Don't need to check the result of this call, the point is to get the
 	// header
-	c.GetMovies()
+	_, _ = c.GetMovies()
 	if foundToken != "token1" {
 		t.Fatalf("token not set in the header")
 	}
@@ -71,7 +71,7 @@ func TestDownloadURL(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			var f func(Downloadable) (string, error) = c.DownloadURL
+			f := c.DownloadURL
 			if test.withToken {
 				f = c.DownloadURLWithToken
 			}
@@ -112,7 +112,7 @@ func TestGet(t *testing.T) {
 	} {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(test.serverHeader)
-			w.Write([]byte("[1,2]"))
+			_, _ = w.Write([]byte("[1,2]"))
 		}))
 		defer ts.Close()
 
@@ -165,7 +165,7 @@ func TestPost(t *testing.T) {
 	} {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(test.serverHeader)
-			w.Write([]byte("[1,2]"))
+			_, _ = w.Write([]byte("[1,2]"))
 		}))
 		defer ts.Close()
 
@@ -215,7 +215,7 @@ func TestBasicAuth(t *testing.T) {
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		username, password, useBasicAuth = r.BasicAuth()
-		w.Write([]byte("[1,2]"))
+		_, _ = w.Write([]byte("[1,2]"))
 	}))
 	defer ts.Close()
 

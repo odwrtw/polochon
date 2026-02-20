@@ -50,9 +50,7 @@ func (y *Yts) SearchTorrents(s string) ([]*polochon.Torrent, error) {
 			continue
 		}
 
-		for i := range pt {
-			torrents = append(torrents, pt[i])
-		}
+		torrents = append(torrents, pt...)
 	}
 
 	return torrents, nil

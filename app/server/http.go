@@ -60,7 +60,9 @@ func (s *Server) Run(log *logrus.Entry) error {
 
 // Stop stops the http server
 func (s *Server) Stop(log *logrus.Entry) {
-	s.gracefulServer.Shutdown(context.Background())
+	if err := s.gracefulServer.Shutdown(context.Background()); err != nil {
+		log.WithError(err).Error("failed to shutdown http server")
+	}
 }
 
 func (s *Server) wishlist(w http.ResponseWriter, r *http.Request) {

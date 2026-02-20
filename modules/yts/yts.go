@@ -68,7 +68,7 @@ var searchByImdbID = func(imdbID string) ([]yts.Movie, error) {
 }
 
 func polochonTorrents(m *yts.Movie) []*polochon.Torrent {
-	if m.Torrents == nil || len(m.Torrents) == 0 {
+	if len(m.Torrents) == 0 {
 		return nil
 	}
 

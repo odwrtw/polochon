@@ -95,7 +95,7 @@ func (n *node) clear() {
 			"child":  name,
 		}).Debug("Removing child")
 
-		ok, _ := n.Inode.RmChild(name)
+		ok, _ := n.RmChild(name)
 		if !ok {
 			log.WithFields(log.Fields{
 				"parent": n.name,
@@ -233,7 +233,7 @@ func (fh *fileHandle) setup(_ context.Context, offset int64) error {
 
 	if resp.StatusCode != http.StatusOK &&
 		resp.StatusCode != http.StatusPartialContent {
-		return fmt.Errorf("Invalid HTTP response code")
+		return fmt.Errorf("invalid HTTP response code")
 	}
 
 	if fh.buffer != nil {
