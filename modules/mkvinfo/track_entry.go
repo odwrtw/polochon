@@ -48,6 +48,16 @@ type TrackEntry struct {
 	Codec    string
 	Type     TrackType
 	Language string
+	Forced   bool
+}
+
+// IsForced returns true if the track is a forced subtitle track.
+// It checks both the MKV FlagForced element and the track name.
+func (t *TrackEntry) IsForced() bool {
+	if t.Forced {
+		return true
+	}
+	return strings.Contains(strings.ToLower(t.Name), "forced")
 }
 
 // Lang tries to return the lang of the track entry

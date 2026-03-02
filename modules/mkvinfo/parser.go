@@ -71,8 +71,11 @@ func (p *parser) HandleInteger(id mkvparse.ElementID, value int64, info mkvparse
 		return nil
 	}
 
-	if id == mkvparse.TrackTypeElement {
+	switch id {
+	case mkvparse.TrackTypeElement:
 		p.current.Type = TrackType(value)
+	case mkvparse.FlagForcedElement:
+		p.current.Forced = value == 1
 	}
 
 	return nil
