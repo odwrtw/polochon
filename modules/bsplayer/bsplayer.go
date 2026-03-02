@@ -11,12 +11,14 @@ import (
 	"strings"
 	"sync/atomic"
 	"text/template"
+	"time"
 
 	polochon "github.com/odwrtw/polochon/lib"
 )
 
 var (
 	domainIndex  atomic.Uint64
+	soapClient   = &http.Client{Timeout: 5 * time.Second}
 	baseURL      = "http://s%d.api.bsplayer-subtitles.com/v1.php"
 	domains      = []int{1, 2, 3, 4, 5, 6, 7, 8, 101, 102, 103, 104, 105, 106, 107, 108, 109}
 	soapTemplate = `<?xml version="1.0" encoding="UTF-8"?>
@@ -38,10 +40,10 @@ var (
 	`
 )
 
-func getEndpoint() string {
+func getEndpoint() (string, int) {
 	idx := domainIndex.Add(1)
 	domain := domains[idx%uint64(len(domains))]
-	return fmt.Sprintf(baseURL, domain)
+	return fmt.Sprintf(baseURL, domain), domain
 }
 
 type soapParams struct {
@@ -105,7 +107,7 @@ func query(endpoint, action, payload string) ([]byte, error) {
 	req.Header.Add("Connection", "close")
 	req.Header.Add("SOAPAction", fmt.Sprintf(`"%s#%s"`, endpoint, action))
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := soapClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -146,16 +148,16 @@ func tryLogin(endpoint string) (string, error) {
 }
 
 func login() (string, string, error) {
-	var err error
+	var errs []string
 	for range 3 {
-		endpoint := getEndpoint()
-		token, e := tryLogin(endpoint)
-		if e == nil {
+		endpoint, domain := getEndpoint()
+		token, err := tryLogin(endpoint)
+		if err == nil {
 			return endpoint, token, nil
 		}
-		err = e
+		errs = append(errs, fmt.Sprintf("s%d: %s", domain, err))
 	}
-	return "", "", err
+	return "", "", fmt.Errorf("bsplayer: all login attempts failed: %s", strings.Join(errs, "; "))
 }
 
 type queryParams struct {
