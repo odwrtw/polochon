@@ -132,6 +132,7 @@ show:
   subtitlers:
     - mkvinfo
     - addicted
+    - podnapisi
 movie:
   # Where the movies are stored.
   dir: /home/user/movies
@@ -145,6 +146,7 @@ movie:
     - yifysubs
     - opensubtitles
     - bsplayer
+    - podnapisi
 
 modules_params:
     # Required for the transmission client, if the downloader is enabled.
