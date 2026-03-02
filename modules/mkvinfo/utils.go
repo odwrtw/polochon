@@ -9,6 +9,10 @@ func HasSubtitle(tracks []*TrackEntry, lang polochon.Language) bool {
 			continue
 		}
 
+		if track.IsForced() {
+			continue
+		}
+
 		found, ok := track.Lang()
 		if !ok {
 			continue
@@ -37,6 +41,9 @@ func Metadata(tracks []*TrackEntry) *polochon.VideoMetadata {
 	for _, track := range tracks {
 		switch track.Type {
 		case TrackTypeSubtitle:
+			if track.IsForced() {
+				continue
+			}
 			lang, ok := track.Lang()
 			if ok {
 				subtitles[lang] = struct{}{}
