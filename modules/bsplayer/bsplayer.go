@@ -6,18 +6,17 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"math/rand"
 	"net/http"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"text/template"
-	"time"
 
 	polochon "github.com/odwrtw/polochon/lib"
 )
 
 var (
-	random       *rand.Rand
+	domainIndex  atomic.Uint64
 	baseURL      = "http://s%d.api.bsplayer-subtitles.com/v1.php"
 	domains      = []int{1, 2, 3, 4, 5, 6, 7, 8, 101, 102, 103, 104, 105, 106, 107, 108, 109}
 	soapTemplate = `<?xml version="1.0" encoding="UTF-8"?>
@@ -39,8 +38,10 @@ var (
 	`
 )
 
-func init() {
-	random = rand.New(rand.NewSource(time.Now().UnixNano()))
+func getEndpoint() string {
+	idx := domainIndex.Add(1)
+	domain := domains[idx%uint64(len(domains))]
+	return fmt.Sprintf(baseURL, domain)
 }
 
 type soapParams struct {
@@ -84,11 +85,6 @@ type searchResponse struct {
 	Subs   []*subtitle `xml:"Body>searchSubtitlesResponse>return>data>item"`
 }
 
-func getEndpoint() string {
-	domain := domains[random.Intn(len(domains))]
-	return fmt.Sprintf(baseURL, domain)
-}
-
 func query(endpoint, action, payload string) ([]byte, error) {
 	params := &bytes.Buffer{}
 	err := soap.Execute(params, &soapParams{
@@ -107,7 +103,7 @@ func query(endpoint, action, payload string) ([]byte, error) {
 	req.Header.Add("User-Agent", "BSPlayer/2.x (1022.12362)")
 	req.Header.Add("Content-Type", "text/xml; charset=utf-8")
 	req.Header.Add("Connection", "close")
-	req.Header.Add("SoapAction", fmt.Sprintf("%s#%s", endpoint, action))
+	req.Header.Add("SOAPAction", fmt.Sprintf(`"%s#%s"`, endpoint, action))
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -127,28 +123,39 @@ func query(endpoint, action, payload string) ([]byte, error) {
 	return data, nil
 }
 
-func login() (string, string, error) {
-	endpoint := getEndpoint()
-
+func tryLogin(endpoint string) (string, error) {
 	body, err := query(endpoint, "logIn", loginPayload)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	data := loginResponse{}
 	if err := xml.Unmarshal(body, &data); err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	if data.Status != http.StatusOK {
-		return "", "", fmt.Errorf("bsplayer: xml login response code %d", data.Status)
+		return "", fmt.Errorf("bsplayer: xml login response code %d", data.Status)
 	}
 
 	if data.Token == "" {
-		return "", "", fmt.Errorf("bsplayer: missing login token")
+		return "", fmt.Errorf("bsplayer: missing login token")
 	}
 
-	return endpoint, data.Token, nil
+	return data.Token, nil
+}
+
+func login() (string, string, error) {
+	var err error
+	for range 3 {
+		endpoint := getEndpoint()
+		token, e := tryLogin(endpoint)
+		if e == nil {
+			return endpoint, token, nil
+		}
+		err = e
+	}
+	return "", "", err
 }
 
 type queryParams struct {
@@ -210,7 +217,7 @@ func search(qp *queryParams) ([]*subtitle, error) {
 	}
 
 	if data.Status != http.StatusOK {
-		return nil, fmt.Errorf("bsplayer: login response code %d", data.Status)
+		return nil, fmt.Errorf("bsplayer: search response code %d", data.Status)
 	}
 
 	return data.Subs, nil
