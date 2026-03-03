@@ -97,7 +97,7 @@ func (p *Pushover) Status() (polochon.ModuleStatus, error) {
 }
 
 // Notify sends a notification to the recipient
-func (p *Pushover) Notify(i interface{}, log *logrus.Entry) error {
+func (p *Pushover) Notify(i any, log *logrus.Entry) error {
 	switch v := i.(type) {
 	case *polochon.ShowEpisode:
 		return p.notifyShowEpisode(v)

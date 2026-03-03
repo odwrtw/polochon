@@ -67,7 +67,7 @@ func (y *YifySubs) Status() (polochon.ModuleStatus, error) {
 	return polochon.StatusOK, nil
 }
 
-func (y *YifySubs) getMovieSubtitle(m *polochon.Movie, lang polochon.Language, log *logrus.Entry) (*yifysubs.Subtitle, error) {
+func (y *YifySubs) getMovieSubtitle(m *polochon.Movie, lang polochon.Language, _ *logrus.Entry) (*yifysubs.Subtitle, error) {
 	if m.ImdbID == "" {
 		return nil, ErrMissingImdbID
 	}
@@ -127,7 +127,7 @@ func (y *YifySubs) GetMovieSubtitle(m *polochon.Movie, lang polochon.Language, l
 }
 
 // GetSubtitle implements the Subtitler interface
-func (y *YifySubs) GetSubtitle(i interface{}, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
+func (y *YifySubs) GetSubtitle(i any, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
 	switch v := i.(type) {
 	case *polochon.Movie:
 		return y.GetMovieSubtitle(v, lang, log)

@@ -142,7 +142,7 @@ func TestGet(t *testing.T) {
 func TestPost(t *testing.T) {
 	for _, test := range []struct {
 		serverHeader   int
-		data           interface{}
+		data           any
 		expectedError  error
 		expectedResult []int
 	}{

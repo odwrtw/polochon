@@ -1,6 +1,9 @@
 package polochon
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 // Quality represents the qualities of a video
 type Quality string
@@ -31,16 +34,11 @@ func StringToQuality(q string) (*Quality, error) {
 
 // IsAllowed checks if the quality is allowed
 func (q *Quality) IsAllowed() bool {
-	for _, quality := range []Quality{
+	return slices.Contains([]Quality{
 		Quality480p,
 		Quality720p,
 		Quality1080p,
 		Quality2160p,
 		Quality3D,
-	} {
-		if *q == quality {
-			return true
-		}
-	}
-	return false
+	}, *q)
 }

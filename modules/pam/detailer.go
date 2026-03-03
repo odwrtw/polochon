@@ -7,7 +7,7 @@ import (
 )
 
 // GetDetails implements the Detailer interface
-func (p *Pam) GetDetails(i interface{}, log *logrus.Entry) error {
+func (p *Pam) GetDetails(i any, log *logrus.Entry) error {
 	switch resource := i.(type) {
 	case *polochon.Movie:
 		m := &papi.Movie{Movie: resource}

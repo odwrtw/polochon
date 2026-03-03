@@ -165,7 +165,7 @@ func (w *UserWishlist) getMovieWishlist() ([]polochon.WishedMovie, error) {
 
 }
 
-func (w *UserWishlist) request(URL string, response interface{}) error {
+func (w *UserWishlist) request(URL string, response any) error {
 	// Create a new request
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s", w.URL, URL), nil)
 	if err != nil {

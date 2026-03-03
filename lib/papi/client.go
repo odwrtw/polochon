@@ -114,11 +114,11 @@ func (c *Client) Delete(target Resource) error {
 	return c.delete(fmt.Sprintf("%s/%s", c.endpoint, url))
 }
 
-func (c *Client) get(url string, result interface{}) error {
+func (c *Client) get(url string, result any) error {
 	return c.request("GET", url, nil, result)
 }
 
-func (c *Client) post(url string, data, result interface{}) error {
+func (c *Client) post(url string, data, result any) error {
 	buf := &bytes.Buffer{}
 	err := json.NewEncoder(buf).Encode(data)
 	if err != nil {
@@ -132,7 +132,7 @@ func (c *Client) delete(url string) error {
 	return c.request("DELETE", url, nil, nil)
 }
 
-func (c *Client) request(httpType, url string, data io.Reader, result interface{}) error {
+func (c *Client) request(httpType, url string, data io.Reader, result any) error {
 	req, err := http.NewRequest(httpType, url, data)
 	if err != nil {
 		return err

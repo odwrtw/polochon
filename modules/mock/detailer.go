@@ -8,7 +8,7 @@ import (
 )
 
 // GetDetails implements the Detailer interface
-func (mock *Mock) GetDetails(i interface{}, log *logrus.Entry) (err error) {
+func (mock *Mock) GetDetails(i any, log *logrus.Entry) (err error) {
 	switch v := i.(type) {
 	case *polochon.Show:
 		mock.getShowDetails(v)
@@ -134,8 +134,8 @@ func (mock *Mock) getShowDetails(s *polochon.Show) {
 
 	nbSeasons := 5
 	nbEpisodes := 10
-	for i := 0; i < nbSeasons; i++ {
-		for j := 0; j < nbEpisodes; j++ {
+	for i := range nbSeasons {
+		for j := range nbEpisodes {
 			// Create the episode
 			episode := &polochon.ShowEpisode{
 				ShowImdbID: s.ImdbID,

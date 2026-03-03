@@ -28,7 +28,7 @@ func (err *Error) Error() string {
 	return err.Message
 }
 
-func (s *Server) renderOK(w http.ResponseWriter, i interface{}) {
+func (s *Server) renderOK(w http.ResponseWriter, i any) {
 	_ = s.render.JSON(w, http.StatusOK, i)
 }
 

@@ -213,7 +213,7 @@ func (t *TvDB) searchByName(query string) (*tvdb.Series, error) {
 }
 
 // GetDetails implements the Detailer interface
-func (t *TvDB) GetDetails(i interface{}, log *logrus.Entry) error {
+func (t *TvDB) GetDetails(i any, log *logrus.Entry) error {
 	switch v := i.(type) {
 	case *polochon.Show:
 		return t.getShowDetails(v, nil)

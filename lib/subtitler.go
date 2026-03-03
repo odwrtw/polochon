@@ -12,7 +12,7 @@ var ErrNoSubtitleFound = errors.New("polochon: no subtitle found")
 // Subtitler all subtitler must implement it
 type Subtitler interface {
 	Module
-	GetSubtitle(interface{}, Language, *logrus.Entry) (*Subtitle, error)
+	GetSubtitle(any, Language, *logrus.Entry) (*Subtitle, error)
 }
 
 // Subtitlable represents a ressource which can be subtitled

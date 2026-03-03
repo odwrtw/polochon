@@ -47,7 +47,7 @@ func New(r io.Reader) (*Manager, error) {
 }
 
 // UnmarshalYAML implements the unmarshaler interface
-func (m *Manager) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (m *Manager) UnmarshalYAML(unmarshal func(any) error) error {
 	data := []struct {
 		Role    string   `yaml:"role"`
 		Allowed []string `yaml:"allowed"`

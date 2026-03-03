@@ -7,7 +7,7 @@ import (
 )
 
 // GetTorrents implements the Torrenter interface
-func (y *Yts) GetTorrents(i interface{}, log *logrus.Entry) error {
+func (y *Yts) GetTorrents(i any, log *logrus.Entry) error {
 	m, err := getMovieArgument(i)
 	if err != nil {
 		return err

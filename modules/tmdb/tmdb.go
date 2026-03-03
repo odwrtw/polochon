@@ -198,7 +198,7 @@ func (t *TmDB) Status() (polochon.ModuleStatus, error) {
 }
 
 // GetDetails implements the Detailer interface
-func (t *TmDB) GetDetails(i interface{}, log *logrus.Entry) error {
+func (t *TmDB) GetDetails(i any, log *logrus.Entry) error {
 	m, ok := i.(*polochon.Movie)
 	if !ok {
 		return ErrInvalidArgument

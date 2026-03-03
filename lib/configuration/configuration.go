@@ -29,7 +29,7 @@ type Config struct {
 }
 
 // UnmarshalYAML implements the Unmarshaler interface
-func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (c *Config) UnmarshalYAML(unmarshal func(any) error) error {
 	// Read the module params to be used later
 	params := struct {
 		ModulesParams *ModulesParams `yaml:"modules_params"`

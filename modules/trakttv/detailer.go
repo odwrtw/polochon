@@ -10,7 +10,7 @@ import (
 )
 
 // GetDetails gets details for the polochon video object
-func (trakt *TraktTV) GetDetails(i interface{}, log *logrus.Entry) error {
+func (trakt *TraktTV) GetDetails(i any, log *logrus.Entry) error {
 	var err error
 	switch v := i.(type) {
 	case *polochon.Show:
@@ -27,7 +27,7 @@ func (trakt *TraktTV) GetDetails(i interface{}, log *logrus.Entry) error {
 }
 
 // getMovieDetails gets details for the polochon movie object
-func (trakt *TraktTV) getMovieDetails(movie *polochon.Movie, log *logrus.Entry) error {
+func (trakt *TraktTV) getMovieDetails(movie *polochon.Movie, _ *logrus.Entry) error {
 	tmovie, err := trakt.client.SearchMovieByID(movie.ImdbID, trakttv.QueryOption{
 		ExtendedInfos: []trakttv.ExtendedInfo{trakttv.ExtendedInfoFull},
 	})
@@ -113,7 +113,7 @@ func (trakt *TraktTV) getShowDetails(show *polochon.Show, log *logrus.Entry) err
 }
 
 // getShowEpisodes gets the list of all the episodes of a polochon Show
-func (trakt *TraktTV) getShowEpisodes(show *polochon.Show, log *logrus.Entry) error {
+func (trakt *TraktTV) getShowEpisodes(show *polochon.Show, _ *logrus.Entry) error {
 	seasons, err := trakt.client.GetShowSeasons(show.ImdbID, trakttv.QueryOption{
 		ExtendedInfos: []trakttv.ExtendedInfo{
 			trakttv.ExtendedInfoFull,
@@ -147,7 +147,7 @@ func (trakt *TraktTV) getShowEpisodes(show *polochon.Show, log *logrus.Entry) er
 }
 
 // getShowEpisodeDetails gets details for the polochon ShowEpisode
-func (trakt *TraktTV) getShowEpisodeDetails(e *polochon.ShowEpisode, log *logrus.Entry) error {
+func (trakt *TraktTV) getShowEpisodeDetails(e *polochon.ShowEpisode, _ *logrus.Entry) error {
 	if e.Season == 0 || e.Episode == 0 {
 		return ErrInvalidArgument
 	}

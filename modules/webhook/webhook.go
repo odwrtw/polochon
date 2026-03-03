@@ -93,7 +93,7 @@ func (w *WebHook) Status() (polochon.ModuleStatus, error) {
 }
 
 // Notify sends a notification to the recipient
-func (w *WebHook) Notify(i interface{}, log *logrus.Entry) error {
+func (w *WebHook) Notify(i any, log *logrus.Entry) error {
 	var videoType string
 	var video polochon.Video
 
@@ -127,8 +127,8 @@ func (w *WebHook) notify(hook *Hook, video polochon.Video, videoType string) err
 
 	b := new(bytes.Buffer)
 	_ = json.NewEncoder(b).Encode(struct {
-		Type string      `json:"type"`
-		Data interface{} `json:"data"`
+		Type string `json:"type"`
+		Data any    `json:"data"`
 	}{
 		Type: videoType,
 		Data: video,

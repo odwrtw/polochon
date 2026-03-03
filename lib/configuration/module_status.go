@@ -79,16 +79,13 @@ func (mc *moduleChecker) check(m polochon.Module) *ModuleStatus {
 	moduleStatus := &ModuleStatus{Name: m.Name()}
 	mc.modules[m.Name()] = moduleStatus
 
-	mc.wg.Add(1)
-	go func() {
-		defer mc.wg.Done()
-
+	mc.wg.Go(func() {
 		status, err := m.Status()
 		if err != nil {
 			moduleStatus.Error = err.Error()
 		}
 		moduleStatus.Status = status
-	}()
+	})
 
 	return moduleStatus
 }

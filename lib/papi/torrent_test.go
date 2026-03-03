@@ -105,7 +105,7 @@ func TestGetTorrents(t *testing.T) {
 			serverHeader:  http.StatusOK,
 			polochonError: torrentList,
 			expectedTorrents: []*polochon.Torrent{
-				&polochon.Torrent{
+				{
 					ImdbID:  "tt001",
 					Type:    polochon.TypeMovie,
 					Quality: polochon.Quality1080p,

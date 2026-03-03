@@ -14,8 +14,8 @@ var (
 )
 
 // Read reads the NFO from a reader
-func Read(r io.Reader, i interface{}) error {
-	var nfo interface{}
+func Read(r io.Reader, i any) error {
+	var nfo any
 
 	switch t := i.(type) {
 	case *polochon.Movie:
@@ -32,8 +32,8 @@ func Read(r io.Reader, i interface{}) error {
 }
 
 // Write writes the NFO into a writer
-func Write(w io.Writer, i interface{}) error {
-	var nfo interface{}
+func Write(w io.Writer, i any) error {
+	var nfo any
 
 	switch t := i.(type) {
 	case *polochon.Movie:

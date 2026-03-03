@@ -52,7 +52,7 @@ func (c *Client) Status() (polochon.ModuleStatus, error) {
 }
 
 // GetSubtitle implements the polochon.Subtitler interface.
-func (c *Client) GetSubtitle(i interface{}, lang polochon.Language, _ *logrus.Entry) (*polochon.Subtitle, error) {
+func (c *Client) GetSubtitle(i any, lang polochon.Language, _ *logrus.Entry) (*polochon.Subtitle, error) {
 	var qp *queryParams
 	var err error
 

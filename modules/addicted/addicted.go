@@ -173,7 +173,7 @@ func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang p
 }
 
 // GetSubtitle implements the Subtitler interface
-func (a *addictedProxy) GetSubtitle(i interface{}, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
+func (a *addictedProxy) GetSubtitle(i any, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
 	switch v := i.(type) {
 	case *polochon.ShowEpisode:
 		return a.getShowSubtitle(v, lang, log)

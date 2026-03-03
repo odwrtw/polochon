@@ -31,7 +31,7 @@ func download(URL, savePath string) error {
 }
 
 // readNFOFile reads the NFO file
-func readNFOFile(filePath string, i interface{}) error {
+func readNFOFile(filePath string, i any) error {
 	// Open the file
 	nfoFile, err := os.Open(filePath)
 	if err != nil {
@@ -43,7 +43,7 @@ func readNFOFile(filePath string, i interface{}) error {
 }
 
 // writeNFOFile write the NFO into a file
-func writeNFOFile(filePath string, i interface{}) error {
+func writeNFOFile(filePath string, i any) error {
 	// Open the file
 	nfoFile, err := os.Create(filePath)
 	if err != nil {

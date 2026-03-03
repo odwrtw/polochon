@@ -26,7 +26,7 @@ func (m *testModule) Status() (ModuleStatus, error) {
 	return StatusOK, nil
 }
 
-func (m *testModule) GetDetails(i interface{}, log *logrus.Entry) error {
+func (m *testModule) GetDetails(i any, log *logrus.Entry) error {
 	return nil
 }
 

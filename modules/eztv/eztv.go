@@ -133,7 +133,7 @@ func (e *Eztv) Status() (polochon.ModuleStatus, error) {
 }
 
 // GetTorrents implements the Torrenter interface
-func (e *Eztv) GetTorrents(i interface{}, log *logrus.Entry) error {
+func (e *Eztv) GetTorrents(i any, log *logrus.Entry) error {
 	switch v := i.(type) {
 	case *polochon.ShowEpisode:
 		return e.getShowEpisodeDetails(v)
