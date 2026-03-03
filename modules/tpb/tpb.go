@@ -22,7 +22,7 @@ var (
 
 var (
 	defaultTimeout         = 30 * time.Second
-	defaultGuessitEndpoint = "http://guessit.quimbo.fr/guess"
+	defaultGuessitEndpoint = "https://guessit.quimbo.fr/guess"
 )
 
 func init() {
