@@ -129,7 +129,7 @@ func (f *File) Guess(movieConf MovieConfig, showConf ShowConfig, log *logrus.Ent
 		}
 
 		if err != ErrNotAvailable {
-			log.WithField("guesser", guesser.Name()).Debugf("failed to guess video")
+			log.WithField("guesser", guesser.Name()).WithError(err).Debugf("failed to guess video")
 		}
 	}
 	return nil, ErrGuessingVideo
@@ -148,7 +148,7 @@ func (f *File) GuessMetadata(log *logrus.Entry) (*VideoMetadata, error) {
 		}
 
 		if err != ErrNotAvailable {
-			log.WithField("guesser", guesser.Name()).Debugf("failed to guess metadata")
+			log.WithField("guesser", guesser.Name()).WithError(err).Debugf("failed to guess metadata")
 		}
 	}
 
