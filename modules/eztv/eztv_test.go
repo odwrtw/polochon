@@ -45,7 +45,7 @@ func TestEztvNoShowEpisodeFound(t *testing.T) {
 	s.Season = 1
 	s.Episode = 1
 
-	eztvGetEpisode = func(imdbID string, season, episode int) ([]*eztv.EpisodeTorrent, error) {
+	eztvGetEpisode = func(_ string, _, _ int) ([]*eztv.EpisodeTorrent, error) {
 		return nil, eztv.ErrEpisodeNotFound
 	}
 
@@ -62,7 +62,7 @@ func TestEztvNoTorrentFound(t *testing.T) {
 	s.Season = 1
 	s.Episode = 1
 
-	eztvGetEpisode = func(imdbID string, season, episode int) ([]*eztv.EpisodeTorrent, error) {
+	eztvGetEpisode = func(_ string, _, _ int) ([]*eztv.EpisodeTorrent, error) {
 		return []*eztv.EpisodeTorrent{}, nil
 	}
 
@@ -79,7 +79,7 @@ func TestEztvGetTorrents(t *testing.T) {
 	s.Season = 1
 	s.Episode = 1
 
-	eztvGetEpisode = func(imdbID string, season, episode int) ([]*eztv.EpisodeTorrent, error) {
+	eztvGetEpisode = func(_ string, _, _ int) ([]*eztv.EpisodeTorrent, error) {
 		return []*eztv.EpisodeTorrent{
 			{
 				ID:        2,

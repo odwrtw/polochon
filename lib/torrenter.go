@@ -14,7 +14,7 @@ var (
 // Torrenter is an interface which allows to get torrent for a movie or a show
 type Torrenter interface {
 	Module
-	GetTorrents(interface{}, *logrus.Entry) error
+	GetTorrents(any, *logrus.Entry) error
 	SearchTorrents(string) ([]*Torrent, error)
 }
 

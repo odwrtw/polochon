@@ -10,7 +10,7 @@ import (
 )
 
 // GetTorrents implements the torrenter interface
-func (mock *Mock) GetTorrents(i interface{}, log *logrus.Entry) error {
+func (mock *Mock) GetTorrents(i any, log *logrus.Entry) error {
 	switch v := i.(type) {
 	case *polochon.ShowEpisode:
 		mock.getShowEpisodeTorrents(v)

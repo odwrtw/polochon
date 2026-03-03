@@ -53,7 +53,7 @@ func (m *MKVInfo) Guess(file polochon.File, movieConf polochon.MovieConfig, show
 }
 
 // GetSubtitle implements the Subtitler interface
-func (m *MKVInfo) GetSubtitle(v interface{}, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
+func (m *MKVInfo) GetSubtitle(v any, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
 	video, ok := v.(polochon.Video)
 	if !ok {
 		return nil, ErrNotAVideo

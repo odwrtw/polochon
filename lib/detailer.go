@@ -12,7 +12,7 @@ var ErrGettingDetails = errors.New("polochon: failed to get details")
 // Detailer is the interface to get details on a video or a show
 type Detailer interface {
 	Module
-	GetDetails(i interface{}, log *logrus.Entry) error
+	GetDetails(i any, log *logrus.Entry) error
 }
 
 // Detailable represents a ressource which can be detailed

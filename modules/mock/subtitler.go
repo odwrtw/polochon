@@ -6,7 +6,7 @@ import (
 )
 
 // GetSubtitle implements the Detailer interface
-func (mock *Mock) GetSubtitle(v interface{}, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
+func (mock *Mock) GetSubtitle(v any, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
 	video, ok := v.(polochon.Video)
 	if !ok {
 		return nil, ErrInvalidArgument

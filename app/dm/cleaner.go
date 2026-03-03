@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
@@ -32,7 +33,7 @@ func (dm *DownloadManager) cleanTorrent(torrent *polochon.Torrent, log *logrus.E
 
 		// Check extension
 		ext := path.Ext(filePath)
-		if !stringInSlice(ext, dm.config.File.AllowedExtensionsToDelete) {
+		if !slices.Contains(dm.config.File.AllowedExtensionsToDelete, ext) {
 			if !file.IsSymlink() {
 				// Not allowed to delete these types of files
 				log.WithFields(logrus.Fields{
@@ -134,14 +135,4 @@ func IsEmpty(name string) (bool, error) {
 		return true, nil
 	}
 	return false, err // Either not empty or error, suits both cases
-}
-
-// Helper to check if a string is included in a slice
-func stringInSlice(s string, slice []string) bool {
-	for _, e := range slice {
-		if e == s {
-			return true
-		}
-	}
-	return false
 }

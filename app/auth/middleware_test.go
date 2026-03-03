@@ -12,7 +12,7 @@ import (
 func TestMiddleWare(t *testing.T) {
 	manager := &Manager{
 		tokens: map[string]*token{
-			"token1": &token{
+			"token1": {
 				name:  "user token 1",
 				value: "token1",
 				routeMap: map[string]struct{}{
@@ -114,7 +114,7 @@ func TestMiddleWare(t *testing.T) {
 func TestMiddlewareCtx(t *testing.T) {
 	manager := &Manager{
 		tokens: map[string]*token{
-			"token1": &token{
+			"token1": {
 				name:  "user 1",
 				value: "token1",
 				routeMap: map[string]struct{}{

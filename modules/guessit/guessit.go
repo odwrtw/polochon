@@ -133,8 +133,7 @@ func (g *Guessit) Guess(file polochon.File, movieConf polochon.MovieConfig, show
 // toUpperCaseFirst is an helper to get the uppercase first of a string
 func toUpperCaseFirst(s string) string {
 	retStr := []string{}
-	strs := strings.Split(s, " ")
-	for _, str := range strs {
+	for str := range strings.SplitSeq(s, " ") {
 		if len(str) > 1 {
 			str = strings.ToUpper(string(str[0])) + str[1:]
 		}

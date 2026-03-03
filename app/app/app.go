@@ -155,12 +155,10 @@ func (a *App) Run() {
 			return
 		case subApp := <-a.reload:
 			log.Infof("reloading sub app %q", subApp.Name())
-			a.wg.Add(1)
-			go func() {
-				defer a.wg.Done()
+			a.wg.Go(func() {
 				subApp.BlockingStop(log)
 				a.subAppStart(subApp, log)
-			}()
+			})
 		case sig := <-osSig:
 			log.WithField("os_event", sig).Info("got an os event")
 			switch sig {
@@ -224,10 +222,7 @@ func (a *App) Stop(log *logrus.Entry) {
 // Start statrs a sub app in its own goroutine
 func (a *App) subAppStart(app subapp.App, log *logrus.Entry) {
 	log.Debugf("starting sub app %q", app.Name())
-	a.wg.Add(1)
-	go func() {
-		defer a.wg.Done()
-
+	a.wg.Go(func() {
 		if err := app.Run(log); err != nil {
 			// Check the error, if it comes from a panic recovery reload the
 			// app
@@ -247,6 +242,6 @@ func (a *App) subAppStart(app subapp.App, log *logrus.Entry) {
 				go a.Stop(log)
 			}
 		}
-	}()
+	})
 	log.Debugf("sub app %q started", app.Name())
 }

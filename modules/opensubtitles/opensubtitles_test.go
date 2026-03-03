@@ -34,13 +34,13 @@ var fakeLogInOsdbClient = func(c *osdb.Client, user, password, language string) 
 var fakeLogInOsdbClientError = func(c *osdb.Client, user, password, language string) error {
 	return errFake
 }
-var fakeSearchOsdbSubtitles = func(c *osdb.Client, params []interface{}) (osdb.Subtitles, error) {
+var fakeSearchOsdbSubtitles = func(c *osdb.Client, params []any) (osdb.Subtitles, error) {
 	return fakeSubtitles, nil
 }
-var fakeSearchOsdbSubtitlesError = func(c *osdb.Client, params []interface{}) (osdb.Subtitles, error) {
+var fakeSearchOsdbSubtitlesError = func(c *osdb.Client, params []any) (osdb.Subtitles, error) {
 	return nil, errFake
 }
-var fakeSearchOsdbSubtitlesPartialError = func(c *osdb.Client, params []interface{}) (osdb.Subtitles, error) {
+var fakeSearchOsdbSubtitlesPartialError = func(c *osdb.Client, params []any) (osdb.Subtitles, error) {
 	// Need to check within the params to see if a imdbid or season is given,
 	// if yes, return results, else return an error
 	for _, p := range params {
@@ -154,14 +154,8 @@ func TestSuccessfulNew(t *testing.T) {
 		log.Fatalf("Got error in New: %q", err)
 	}
 
-	expected := &osProxy{
-		language:   "fre",
-		user:       "userTest",
-		password:   "passTest",
-		configured: true,
-	}
-	if !reflect.DeepEqual(s, expected) {
-		t.Errorf("Failed to get movie details\nGot: %+v\nExpected: %+v", s, expected)
+	if s.language != "fre" || s.user != "userTest" || s.password != "passTest" || !s.configured || s.client != nil {
+		t.Errorf("Failed to get movie details\nGot: %+v", s)
 	}
 }
 
@@ -176,14 +170,8 @@ func TestSuccessfulDefaultLang(t *testing.T) {
 	if err != nil {
 		log.Fatalf("Got error in New: %q", err)
 	}
-	expected := &osProxy{
-		language:   "eng",
-		user:       "userTest",
-		password:   "passTest",
-		configured: true,
-	}
-	if !reflect.DeepEqual(s, expected) {
-		t.Errorf("Failed to get movie details\nGot: %+v\nExpected: %+v", s, expected)
+	if s.language != "eng" || s.user != "userTest" || s.password != "passTest" || !s.configured || s.client != nil {
+		t.Errorf("Failed to get movie details\nGot: %+v", s)
 	}
 }
 
@@ -230,7 +218,7 @@ func TestSearchSubtitles(t *testing.T) {
 		newOsdbClient       func() (*osdb.Client, error)
 		checkOsdbClient     func(c *osdb.Client) error
 		logInOsdbClient     func(c *osdb.Client, user, password, language string) error
-		searchOsdbSubtitles func(c *osdb.Client, params []interface{}) (osdb.Subtitles, error)
+		searchOsdbSubtitles func(c *osdb.Client, params []any) (osdb.Subtitles, error)
 		fileSearchSubtitles func(c *osdb.Client, filePath string, languages []string) (osdb.Subtitles, error)
 		expectedErr         error
 		expectedSubtitle    *osdb.Subtitle

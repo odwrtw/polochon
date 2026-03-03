@@ -21,10 +21,10 @@ type ModulesParams struct {
 }
 
 // UnmarshalYAML implements the Unmarshaler interface
-func (mp *ModulesParams) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (mp *ModulesParams) UnmarshalYAML(unmarshal func(any) error) error {
 	mp.params = map[string][]byte{}
 
-	modules := []map[string]interface{}{}
+	modules := []map[string]any{}
 	if err := unmarshal(&modules); err != nil {
 		return err
 	}

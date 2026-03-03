@@ -54,7 +54,7 @@ func (y *Yts) Status() (polochon.ModuleStatus, error) {
 }
 
 // Ensure that the given interface is an Movie
-func getMovieArgument(i interface{}) (*polochon.Movie, error) {
+func getMovieArgument(i any) (*polochon.Movie, error) {
 	if m, ok := i.(*polochon.Movie); ok {
 		return m, nil
 	}

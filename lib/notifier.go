@@ -7,5 +7,5 @@ import (
 // Notifier is an interface to notify when a video is added
 type Notifier interface {
 	Module
-	Notify(interface{}, *logrus.Entry) error
+	Notify(any, *logrus.Entry) error
 }

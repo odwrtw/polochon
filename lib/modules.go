@@ -62,7 +62,7 @@ func RegisterModule(m Module) {
 	registeredModules[m.Name()] = m
 }
 
-var moduleTypeToInterface = map[ModuleType]interface{}{
+var moduleTypeToInterface = map[ModuleType]any{
 	TypeCalendar:   (*Calendar)(nil),
 	TypeDetailer:   (*Detailer)(nil),
 	TypeDownloader: (*Downloader)(nil),

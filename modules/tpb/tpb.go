@@ -122,7 +122,7 @@ type searcher interface {
 }
 
 // newSearcher will return a new Searcher
-func (t *TPB) newSearcher(i interface{}) (searcher, error) {
+func (t *TPB) newSearcher(i any) (searcher, error) {
 	switch v := i.(type) {
 	case *polochon.ShowEpisode:
 		return &showSearcher{
@@ -150,7 +150,7 @@ func (t *TPB) search(s string) ([]*tpb.Torrent, error) {
 }
 
 // GetTorrents implements the Torrenter interface
-func (t *TPB) GetTorrents(i interface{}, log *logrus.Entry) error {
+func (t *TPB) GetTorrents(i any, log *logrus.Entry) error {
 	// Create a new Searcher
 	searcher, err := t.newSearcher(i)
 	if err != nil {
@@ -178,9 +178,7 @@ func (t *TPB) SearchTorrents(s string) ([]*polochon.Torrent, error) {
 	}
 
 	torrents := make([]*polochon.Torrent, len(results))
-	for i := 0; i < len(results); i++ {
-		t := results[i]
-
+	for i, t := range results {
 		torrents[i] = &polochon.Torrent{
 			Quality: getQuality(t.Name),
 			Result: &polochon.TorrentResult{

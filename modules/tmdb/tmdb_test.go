@@ -34,7 +34,7 @@ func TestTmdbMissingArgument(t *testing.T) {
 func TestTmdbSearchByTitleArguments(t *testing.T) {
 	m := polochon.NewMovie(polochon.MovieConfig{})
 
-	tmdbSearchMovie = func(t *tmdb.TMDb, title string, options map[string]string) (*tmdb.MovieSearchResults, error) {
+	tmdbSearchMovie = func(_ *tmdb.TMDb, _ string, _ map[string]string) (*tmdb.MovieSearchResults, error) {
 		return &tmdb.MovieSearchResults{}, nil
 	}
 
@@ -56,7 +56,7 @@ func TestTmdbSearchByTitleArguments(t *testing.T) {
 func TestTmdbSearchByTitle(t *testing.T) {
 	m := &polochon.Movie{Title: "Matrix"}
 
-	tmdbSearchMovie = func(t *tmdb.TMDb, title string, options map[string]string) (*tmdb.MovieSearchResults, error) {
+	tmdbSearchMovie = func(_ *tmdb.TMDb, _ string, _ map[string]string) (*tmdb.MovieSearchResults, error) {
 		return &tmdb.MovieSearchResults{
 			Results: []tmdb.MovieShort{
 				{Title: "The Simpsons", ID: 1000},
@@ -80,7 +80,7 @@ func TestTmdbSearchByTitle(t *testing.T) {
 func TestTmdbSearchByTitleNoResult(t *testing.T) {
 	m := &polochon.Movie{Title: "Matrix"}
 
-	tmdbSearchMovie = func(t *tmdb.TMDb, title string, options map[string]string) (*tmdb.MovieSearchResults, error) {
+	tmdbSearchMovie = func(_ *tmdb.TMDb, _ string, _ map[string]string) (*tmdb.MovieSearchResults, error) {
 		return &tmdb.MovieSearchResults{Results: []tmdb.MovieShort{}}, nil
 	}
 
@@ -93,7 +93,7 @@ func TestTmdbSearchByTitleNoResult(t *testing.T) {
 func TestTmdbSearchByImdbIDArguments(t *testing.T) {
 	m := polochon.NewMovie(polochon.MovieConfig{})
 
-	tmdbSearchByImdbID = func(t *tmdb.TMDb, id, source string, options map[string]string) (*tmdb.FindResults, error) {
+	tmdbSearchByImdbID = func(_ *tmdb.TMDb, _, _ string, _ map[string]string) (*tmdb.FindResults, error) {
 		return &tmdb.FindResults{}, nil
 	}
 
@@ -115,7 +115,7 @@ func TestTmdbSearchByImdbIDArguments(t *testing.T) {
 func TestTmdbSearchByImdbIDNoResults(t *testing.T) {
 	m := &polochon.Movie{ImdbID: "tt0133093"}
 
-	tmdbSearchByImdbID = func(t *tmdb.TMDb, id, source string, options map[string]string) (*tmdb.FindResults, error) {
+	tmdbSearchByImdbID = func(_ *tmdb.TMDb, _, _ string, _ map[string]string) (*tmdb.FindResults, error) {
 		return &tmdb.FindResults{}, nil
 	}
 
@@ -128,7 +128,7 @@ func TestTmdbSearchByImdbIDNoResults(t *testing.T) {
 func TestTmdbSearchByImdbID(t *testing.T) {
 	m := &polochon.Movie{ImdbID: "tt0133093"}
 
-	tmdbSearchByImdbID = func(t *tmdb.TMDb, id, source string, options map[string]string) (*tmdb.FindResults, error) {
+	tmdbSearchByImdbID = func(_ *tmdb.TMDb, _, _ string, _ map[string]string) (*tmdb.FindResults, error) {
 		return &tmdb.FindResults{
 			MovieResults: []tmdb.MovieShort{
 				{Title: "The Matrix", ID: 1000},
@@ -149,11 +149,11 @@ func TestTmdbSearchByImdbID(t *testing.T) {
 func TestTmdbFailedToGetDetails(t *testing.T) {
 	m := &polochon.Movie{Title: "The Matrix", ImdbID: "tt0133093"}
 
-	tmdbSearchByImdbID = func(t *tmdb.TMDb, id, source string, options map[string]string) (*tmdb.FindResults, error) {
+	tmdbSearchByImdbID = func(_ *tmdb.TMDb, _, _ string, _ map[string]string) (*tmdb.FindResults, error) {
 		return &tmdb.FindResults{}, nil
 	}
 
-	tmdbSearchMovie = func(t *tmdb.TMDb, title string, options map[string]string) (*tmdb.MovieSearchResults, error) {
+	tmdbSearchMovie = func(_ *tmdb.TMDb, _ string, _ map[string]string) (*tmdb.MovieSearchResults, error) {
 		return &tmdb.MovieSearchResults{Results: []tmdb.MovieShort{}}, nil
 	}
 
@@ -169,7 +169,7 @@ func TestTmdbGetDetails(t *testing.T) {
 	m := &polochon.Movie{TmdbID: 603}
 	tm := &TmDB{}
 
-	tmdbGetMovieInfo = func(t *tmdb.TMDb, tmdbID int, options map[string]string) (*tmdb.Movie, error) {
+	tmdbGetMovieInfo = func(_ *tmdb.TMDb, _ int, _ map[string]string) (*tmdb.Movie, error) {
 		return &tmdb.Movie{
 			ID:               603,
 			ImdbID:           "tt0133093",

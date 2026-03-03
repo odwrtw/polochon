@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/odwrtw/polochon/app/auth"
@@ -36,13 +37,7 @@ func newLogrusMiddleware(logger *logrus.Logger, excludePaths []string) *logrusMi
 }
 
 func (lm *logrusMiddleware) shouldLog(r *http.Request) bool {
-	for _, excluded := range lm.excludePaths {
-		if r.URL.Path == excluded {
-			return false
-		}
-	}
-
-	return true
+	return !slices.Contains(lm.excludePaths, r.URL.Path)
 }
 
 func (lm *logrusMiddleware) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {

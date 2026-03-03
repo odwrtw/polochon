@@ -119,7 +119,7 @@ func (osp *osProxy) Status() (polochon.ModuleStatus, error) {
 		},
 	}
 
-	params := []interface{}{
+	params := []any{
 		osp.client.Token,
 		innerParams,
 	}
@@ -147,7 +147,7 @@ var logInOsdbClient = func(c *osdb.Client, user, password, language string) erro
 }
 
 // Function to search subtitles via params
-var searchOsdbSubtitles = func(c *osdb.Client, params []interface{}) (osdb.Subtitles, error) {
+var searchOsdbSubtitles = func(c *osdb.Client, params []any) (osdb.Subtitles, error) {
 	return c.SearchSubtitles(&params)
 }
 
@@ -177,7 +177,7 @@ func (osp *osProxy) getOpenSubtitleClient() error {
 	return logInOsdbClient(osp.client, osp.user, osp.password, osp.language)
 }
 
-func (osp *osProxy) checkSubtitles(i interface{}, subs osdb.Subtitles, log *logrus.Entry) (*osdb.Subtitle, error) {
+func (osp *osProxy) checkSubtitles(i any, subs osdb.Subtitles, log *logrus.Entry) (*osdb.Subtitle, error) {
 	var goodSubs []osdb.Subtitle
 
 	switch v := i.(type) {
@@ -267,7 +267,7 @@ func (osp *osProxy) searchSubtitlesByFilename(_ polochon.Video, lang string, fil
 		},
 	}
 
-	params := []interface{}{
+	params := []any{
 		osp.client.Token,
 		innerParams,
 	}
@@ -284,7 +284,7 @@ func (osp *osProxy) searchSubtitlesByInfos(v polochon.Video, lang string, filePa
 	}
 	innerParams[0]["sublanguageid"] = lang
 
-	params := []interface{}{
+	params := []any{
 		osp.client.Token,
 		innerParams,
 	}
@@ -379,7 +379,7 @@ func (osp *osProxy) getGoodShowEpisodeSubtitles(s *polochon.ShowEpisode, subs os
 	return goodSubs
 }
 
-func (osp *osProxy) GetSubtitle(i interface{}, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
+func (osp *osProxy) GetSubtitle(i any, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
 	opensubtitlesLang, err := lang.ISO6392()
 	if err != nil {
 		return nil, ErrInvalidArgument

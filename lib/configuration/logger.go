@@ -13,7 +13,7 @@ type Logger struct {
 }
 
 // UnmarshalYAML implements the Unmarshaler interface
-func (l *Logger) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (l *Logger) UnmarshalYAML(unmarshal func(any) error) error {
 	params := struct {
 		Level            string `yaml:"level"`
 		File             string `yaml:"file"`

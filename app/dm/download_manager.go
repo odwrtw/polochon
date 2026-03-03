@@ -57,11 +57,9 @@ func (dm *DownloadManager) Run(log *logrus.Entry) error {
 	}()
 
 	// Start the download manager
-	dm.Wg.Add(1)
-	go func() {
-		defer dm.Wg.Done()
+	dm.Wg.Go(func() {
 		dm.ticker(log)
-	}()
+	})
 
 	defer log.Debug("download manager stopped")
 

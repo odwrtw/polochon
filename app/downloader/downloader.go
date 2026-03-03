@@ -51,11 +51,9 @@ func (d *Downloader) Run(log *logrus.Entry) error {
 	}
 
 	// Start the scheduler
-	d.Wg.Add(1)
-	go func() {
-		defer d.Wg.Done()
+	d.Wg.Go(func() {
 		d.scheduler(log)
-	}()
+	})
 
 	// Start the downloader
 	var err error

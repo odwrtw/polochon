@@ -225,7 +225,7 @@ func (f *File) OpensubHash() (uint64, error) {
 			return 0, err
 		}
 
-		for i := 0; i < parts; i++ {
+		for range parts {
 			n, err := file.Read(buf)
 			if err != nil {
 				return 0, err
