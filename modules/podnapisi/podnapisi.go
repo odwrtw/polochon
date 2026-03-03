@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/agnivade/levenshtein"
-	polochon "github.com/odwrtw/polochon/lib"
 )
 
 var baseURL = "https://www.podnapisi.net"
@@ -25,11 +24,6 @@ var (
 	ErrUnexpectedStatus = errors.New("podnapisi: unexpected API status")
 	ErrTooManyRequests  = errors.New("podnapisi: too many requests")
 )
-
-var langMap = map[polochon.Language]string{
-	polochon.EN: "en",
-	polochon.FR: "fr",
-}
 
 var httpClient = &http.Client{Timeout: 10 * time.Second}
 

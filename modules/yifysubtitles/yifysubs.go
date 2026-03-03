@@ -30,11 +30,6 @@ const (
 	moduleName = "yifysubs"
 )
 
-var langTranslate = map[polochon.Language]string{
-	polochon.EN: "English",
-	polochon.FR: "French",
-}
-
 // Searcher is an interface to search subtitles
 type Searcher interface {
 	SearchByLang(imdbID, lang string) ([]*yifysubs.Subtitle, error)
@@ -77,8 +72,8 @@ func (y *YifySubs) getMovieSubtitle(m *polochon.Movie, lang polochon.Language, l
 		return nil, ErrMissingImdbID
 	}
 
-	subLang, ok := langTranslate[lang]
-	if !ok {
+	subLang, err := lang.Name()
+	if err != nil {
 		return nil, ErrInvalidSubtitleLang
 	}
 

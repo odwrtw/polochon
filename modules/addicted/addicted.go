@@ -21,11 +21,6 @@ func init() {
 	polochon.RegisterModule(&addictedProxy{})
 }
 
-var langTranslate = map[polochon.Language]string{
-	polochon.EN: "english",
-	polochon.FR: "french",
-}
-
 // Module constants
 const (
 	moduleName = "addicted"
@@ -99,11 +94,11 @@ func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang p
 	// TODO: add year
 	// TODO: handle release
 
-	// if language not available in addicted
-	addictedLang, ok := langTranslate[lang]
-	if !ok {
+	langName, err := lang.Name()
+	if err != nil {
 		return nil, fmt.Errorf("addicted: language %q no supported", lang)
 	}
+	addictedLang := strings.ToLower(langName)
 
 	shows, err := a.client.GetTvShows()
 	if err != nil {

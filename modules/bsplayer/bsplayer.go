@@ -167,18 +167,13 @@ type queryParams struct {
 	lang   string
 }
 
-var langs = map[polochon.Language]string{
-	polochon.EN: "eng",
-	polochon.FR: "fre",
-}
-
 func newQuery(imdbID string, lang polochon.Language, file *polochon.File) (*queryParams, error) {
 	if file == nil {
 		return nil, fmt.Errorf("bsplayer: missing file")
 	}
 
-	l, ok := langs[lang]
-	if !ok {
+	l, err := lang.ISO6392()
+	if err != nil {
 		return nil, fmt.Errorf("bsplayer: lang %s not handled", lang)
 	}
 
