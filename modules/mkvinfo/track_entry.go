@@ -17,11 +17,6 @@ var audioCodecMap = map[string]string{
 	"A_EAC3": "Dolby Digital Plus",
 }
 
-var subtitleLangMap = map[string]polochon.Language{
-	"fre": polochon.FR,
-	"eng": polochon.EN,
-}
-
 // Sometimes the first tracks don't have a lang but they have a name starting
 // with the lang.
 // I've never seen this behaviour for french, that's why it's only for the
@@ -63,8 +58,8 @@ func (t *TrackEntry) IsForced() bool {
 // Lang tries to return the lang of the track entry
 func (t *TrackEntry) Lang() (polochon.Language, bool) {
 	if t.Language != "" {
-		l, ok := subtitleLangMap[t.Language]
-		if ok {
+		l, err := polochon.NewLanguageFromISO6392(t.Language)
+		if err == nil {
 			return l, true
 		}
 	}

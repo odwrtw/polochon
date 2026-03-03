@@ -1,7 +1,7 @@
 package index
 
 import (
-	"io/ioutil"
+	"io"
 	"reflect"
 	"testing"
 
@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var mockLogEntry = logrus.NewEntry(&logrus.Logger{Out: ioutil.Discard})
+var mockLogEntry = logrus.NewEntry(&logrus.Logger{Out: io.Discard})
 
 func mockShowIndex() *ShowIndex {
 	return &ShowIndex{

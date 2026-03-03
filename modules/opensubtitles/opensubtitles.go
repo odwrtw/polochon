@@ -29,11 +29,6 @@ const (
 	moduleName = "opensubtitles"
 )
 
-var langTranslate = map[polochon.Language]string{
-	polochon.EN: "eng",
-	polochon.FR: "fre",
-}
-
 // Opensubtitles errors
 var (
 	ErrInvalidArgument = errors.New("opensubtitles: invalid argument")
@@ -88,8 +83,8 @@ func (osp *osProxy) InitWithParams(params *Params) error {
 	}
 
 	language := polochon.Language(params.Lang)
-	opensubtitlesLang, ok := langTranslate[language]
-	if !ok {
+	opensubtitlesLang, err := language.ISO6392()
+	if err != nil {
 		return ErrInvalidArgument
 	}
 
@@ -385,8 +380,8 @@ func (osp *osProxy) getGoodShowEpisodeSubtitles(s *polochon.ShowEpisode, subs os
 }
 
 func (osp *osProxy) GetSubtitle(i interface{}, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
-	opensubtitlesLang, ok := langTranslate[lang]
-	if !ok {
+	opensubtitlesLang, err := lang.ISO6392()
+	if err != nil {
 		return nil, ErrInvalidArgument
 	}
 

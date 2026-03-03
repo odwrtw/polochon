@@ -49,10 +49,7 @@ func (c *Client) Status() (polochon.ModuleStatus, error) {
 
 // GetSubtitle implements the polochon.Subtitler interface.
 func (c *Client) GetSubtitle(i any, lang polochon.Language, _ *logrus.Entry) (*polochon.Subtitle, error) {
-	langCode, ok := langMap[lang]
-	if !ok {
-		return nil, polochon.ErrNoSubtitleFound
-	}
+	langCode := lang.ShortForm()
 
 	var params url.Values
 

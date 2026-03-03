@@ -2,7 +2,7 @@ package opensubtitles
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"reflect"
 	"strings"
@@ -13,7 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var fakeLogger = &logrus.Logger{Out: ioutil.Discard}
+var fakeLogger = &logrus.Logger{Out: io.Discard}
 var fakeLoggerEntry = logrus.NewEntry(fakeLogger)
 var errFake = fmt.Errorf("fake error")
 var fakeClient = &osdb.Client{Token: "pwet"}
