@@ -215,4 +215,4 @@ modules_params:
     # A container is available for self hosting the service:
     # https://github.com/odwrtw/docker-guessit
   - name: guessit
-    endpoint: "http://guessit.quimbo.fr/guess"
+    endpoint: "https://guessit.quimbo.fr/guess"
