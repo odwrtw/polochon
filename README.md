@@ -2,7 +2,6 @@
 
 [![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://pkg.go.dev/github.com/odwrtw/polochon/lib)
 [![Build Status](https://github.com/odwrtw/polochon/workflows/Build/badge.svg)](https://github.com/odwrtw/polochon/actions)
-[![Coverage Status](https://coveralls.io/repos/odwrtw/polochon/badge.svg?branch=master&service=github)](https://coveralls.io/github/odwrtw/polochon?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/odwrtw/polochon)](https://goreportcard.com/report/github.com/odwrtw/polochon)
 
 
@@ -24,7 +23,7 @@ cp token.exemple.yml token.yml
 #### From GitHub release
 
 ```sh
-curl -L https://github.com/odwrtw/polochon/releases/download/latest/polochon_$(go env GOOS)_$(go env GOARCH) -o polochon
+curl -L https://github.com/odwrtw/polochon/releases/latest/download/polochon_$(go env GOOS)_$(go env GOARCH) -o polochon
 chmod +x polochon
 ./polochon -configPath=/home/user/config.yml -tokenPath=/home/user/token.yml
 ```

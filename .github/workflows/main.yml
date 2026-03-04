@@ -55,6 +55,18 @@ jobs:
     if: github.ref == 'refs/heads/master'
     needs: build
     steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Create tag
+      id: tag
+      shell: sh
+      run: |
+        TAG=$(date -u '+%Y%m%d-%H%M%S')
+        git tag "$TAG"
+        git push origin "$TAG"
+        echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
@@ -64,7 +76,7 @@ jobs:
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: latest
-        name: latest
+        tag_name: ${{ steps.tag.outputs.tag }}
+        name: ${{ steps.tag.outputs.tag }}
         make_latest: true
         files: artifacts/*
