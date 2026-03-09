@@ -116,7 +116,9 @@ func (a *App) init() error {
 		}
 
 		// Add the http server
-		a.subApps = append(a.subApps, server.New(config, library, authManager))
+		srv := server.New(config, library, authManager)
+		config.Notifiers = append(config.Notifiers, srv.Hub())
+		a.subApps = append(a.subApps, srv)
 	}
 
 	log.Debug("app configuration loaded")

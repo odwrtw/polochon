@@ -102,5 +102,6 @@ func (s *Server) deleteMovie(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	s.hub.broadcast()
 	s.renderOK(w, nil)
 }

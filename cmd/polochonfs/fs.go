@@ -77,8 +77,22 @@ func (pfs *polochonfs) handleUpdates() {
 	ticker := time.NewTicker(libraryRefresh)
 	defer ticker.Stop()
 
+	events := pfs.client.Events(pfs.ctx)
+
 	for {
 		select {
+		case _, ok := <-events:
+			if !ok {
+				// SSE channel closed (server doesn't support /events),
+				// degrade to ticker-only mode.
+				log.Warn("SSE connection closed, falling back to ticker")
+				events = nil
+				continue
+			}
+			log.Info("Updating library from SSE event")
+			ticker.Reset(libraryRefresh)
+			pfs.updateMovies()
+			pfs.updateShows()
 		case s := <-sigs:
 			switch s {
 			case syscall.SIGUSR1:

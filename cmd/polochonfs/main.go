@@ -22,7 +22,7 @@ var (
 	logLevel         = "info"
 	cacheSize        = 10_000_000
 	defaultTimeout   = 3 * time.Second
-	libraryRefresh   = 1 * time.Minute
+	libraryRefresh   = 1 * time.Hour
 	umountLogTimeout = 1 * time.Minute
 	globalCtx        context.Context
 

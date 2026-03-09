@@ -17,6 +17,7 @@
   include:
     - guest
   allowed:
+    - Events
     - DownloadMovie
     - DownloadMovieWithName
     - DownloadMovieFiles

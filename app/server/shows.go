@@ -105,6 +105,7 @@ func (s *Server) deleteShow(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	s.hub.broadcast()
 	s.renderOK(w, nil)
 }
 
@@ -152,6 +153,7 @@ func (s *Server) deleteEpisode(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	s.hub.broadcast()
 	s.renderOK(w, nil)
 }
 

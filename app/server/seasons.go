@@ -98,5 +98,6 @@ func (s *Server) deleteSeason(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	s.hub.broadcast()
 	s.renderOK(w, nil)
 }
