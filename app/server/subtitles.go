@@ -98,6 +98,7 @@ func (s *Server) updateSubtitle(v polochon.Video, w http.ResponseWriter, r *http
 		return
 	}
 
+	s.hub.broadcast()
 	s.renderOK(w, sub)
 }
 
@@ -131,6 +132,7 @@ func (s *Server) uploadSubtitle(v polochon.Video, w http.ResponseWriter, r *http
 		return
 	}
 
+	s.hub.broadcast()
 	s.renderOK(w, sub)
 }
 

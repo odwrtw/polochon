@@ -29,6 +29,7 @@ type Server struct {
 	library        *library.Library
 	authManager    *auth.Manager
 	gracefulServer *http.Server
+	hub            *sseHub
 	log            *logrus.Entry
 	render         *render.Render
 }
@@ -40,6 +41,7 @@ func New(config *configuration.Config, vs *library.Library, auth *auth.Manager) 
 		config:      config,
 		library:     vs,
 		authManager: auth,
+		hub:         newSSEHub(),
 		render:      render.New(),
 	}
 }
@@ -64,6 +66,11 @@ func (s *Server) Stop(log *logrus.Entry) {
 	if err := s.gracefulServer.Shutdown(context.Background()); err != nil {
 		log.WithError(err).Error("failed to shutdown http server")
 	}
+}
+
+// Hub returns the SSE hub as a Notifier
+func (s *Server) Hub() polochon.Notifier {
+	return s.hub
 }
 
 func (s *Server) wishlist(w http.ResponseWriter, r *http.Request) {

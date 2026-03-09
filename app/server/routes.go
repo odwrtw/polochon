@@ -193,6 +193,12 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 			excluded: !s.config.HTTPServer.ServeFiles,
 		},
 		{
+			name:    "Events",
+			path:    "/events",
+			methods: "GET",
+			handler: s.events,
+		},
+		{
 			name:    "Wishlist",
 			path:    "/wishlist",
 			methods: "GET",
