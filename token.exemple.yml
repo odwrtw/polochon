@@ -1,63 +1,28 @@
+# Rights are defined per role and shared by all tokens in that role.
+# read:  access library data (GET endpoints)
+# write: modify the library (POST/PUT/DELETE endpoints)
+# debug: access pprof and metrics endpoints
+
 - role: guest
-  allowed:
-    - GetMovies
-    - GetMovie
-    - GetShows
-    - GetShow
-    - GetSeason
-    - GetEpisode
-    - GetModulesStatus
+  read: true
+  write: false
+  debug: false
   token:
-    # You can chose any name for your token
   - name: guest_token_name
-    # You can also chose the value for the token
     value: secure_guest_token
+
 - role: user
-  # Roles can be nested
-  include:
-    - guest
-  allowed:
-    - Events
-    - DownloadMovie
-    - DownloadMovieWithName
-    - DownloadMovieFiles
-    - DownloadMovieSubtitle
-    - DownloadMovieSubtitleWithName
-    - UpdateMovieSubtitle
-    - UploadMovieSubtitle
-    - DownloadShowFiles
-    - DownloadEpisode
-    - DownloadEpisodeWithName
-    - DownloadEpisodeFiles
-    - DownloadEpisodeSubtitle
-    - DownloadEpisodeSubtitleWithName
-    - UpdateEpisodeSubtitle
-    - UploadEpisodeSubtitle
-    - Wishlist
-    - AddTorrent
-    - ListTorrents
-    - RemoveTorrent
+  read: true
+  write: true
+  debug: false
   token:
   - name: user_token_name
     value: secure_user_token
+
 - role: admin
-  include:
-    - user
-  allowed:
-    - DeleteMovie
-    - DeleteEpisode
-    - DeleteSeason
-    - DeleteShow
-    - PprofIndex
-    - PprofBlock
-    - PprofGoroutine
-    - PprofHeap
-    - PprofMutex
-    - PprofCmdline
-    - PprofProfile
-    - PprofSymbol
-    - PprofTrace
-    - Metrics
+  read: true
+  write: true
+  debug: true
   token:
   - name: admin_token_name
     value: secure_admin_token

@@ -3,58 +3,49 @@ package auth
 import (
 	"context"
 	"net/http"
-
-	"github.com/gorilla/mux"
+	"strings"
 )
 
-// CtxKey is a type of context key
+// CtxKey is a type of context key.
 type CtxKey string
 
-// TokenName is the key used in the context
+// TokenName is the key used in the context to store the token's display name.
 const TokenName CtxKey = "auth-token-name"
 
-// Middleware used for check the token and access rigth
+// Middleware checks token rights for each request.
 type Middleware struct {
 	manager *Manager
-	router  *mux.Router
 }
 
-// NewMiddleware returns a new token middleware
-func NewMiddleware(manager *Manager, router *mux.Router) *Middleware {
-	return &Middleware{
-		manager: manager,
-		router:  router,
+// NewMiddleware returns a new token middleware.
+func NewMiddleware(manager *Manager) *Middleware {
+	return &Middleware{manager: manager}
+}
+
+// rightForRequest determines which right a request requires.
+func rightForRequest(r *http.Request) Right {
+	if strings.HasPrefix(r.URL.Path, "/debug/") || r.URL.Path == "/metrics" {
+		return RightDebug
 	}
+	if r.Method == http.MethodGet {
+		return RightRead
+	}
+	return RightWrite
 }
 
-// ServeHTTP implements the negroni middleware interface
+// ServeHTTP implements the negroni middleware interface.
 func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	token := r.Header.Get("X-Auth-Token")
 	if token == "" {
 		token = r.URL.Query().Get("token")
 	}
 
-	var match mux.RouteMatch
-
-	if !m.router.Match(r, &match) {
-		http.NotFound(w, r)
-		return
-	}
-
-	// Get the route name
-	routeName := match.Route.GetName()
-	if routeName == "" {
-		http.NotFound(w, r)
-		return
-	}
-
-	name, ok := m.manager.IsAllowed(token, routeName)
+	name, ok := m.manager.IsAllowed(token, rightForRequest(r))
 	if !ok {
 		http.NotFound(w, r)
 		return
 	}
 
 	ctx := context.WithValue(r.Context(), TokenName, name)
-
 	next(w, r.WithContext(ctx))
 }
