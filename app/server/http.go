@@ -106,10 +106,3 @@ func (s *Server) serveFile(w http.ResponseWriter, r *http.Request, file *polocho
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
 	http.ServeFile(w, r, file.Path)
 }
-
-func (s *Server) tokenGetAllowed(w http.ResponseWriter, r *http.Request) {
-	s.logEntry(r).Infof("getting tokens")
-	token := r.URL.Query().Get("token")
-	allowed := s.authManager.GetAllowed(token)
-	s.renderOK(w, allowed)
-}

@@ -3,78 +3,88 @@ package auth
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/urfave/negroni"
 )
 
-func TestMiddleWare(t *testing.T) {
-	manager := &Manager{
-		tokens: map[string]*token{
-			"token1": {
-				name:  "user token 1",
-				value: "token1",
-				routeMap: map[string]struct{}{
-					"GetStuff": {},
-				},
-			},
-		},
+func newTestManager(t *testing.T) *Manager {
+	t.Helper()
+	m, err := New(strings.NewReader(`
+- role: reader
+  read: true
+  write: false
+  debug: false
+  token:
+  - name: user token 1
+    value: token1
+`))
+	if err != nil {
+		t.Fatalf("failed to create manager: %s", err)
 	}
+	return m
+}
 
-	router := mux.NewRouter()
-	router.HandleFunc("/stuff", func(w http.ResponseWriter, r *http.Request) {
+func TestMiddleWare(t *testing.T) {
+	manager := newTestManager(t)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/stuff", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-	}).Name("GetStuff").Methods("GET")
-	router.HandleFunc("/private", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusUnauthorized)
-	}).Name("GetPrivateStuff").Methods("GET")
-	router.HandleFunc("/noname", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusTeapot)
-	}).Name("").Methods("GET")
+	})
+	mux.HandleFunc("/private/write", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 
 	n := negroni.New()
-	n.Use(NewMiddleware(manager, router))
-	n.UseHandler(router)
+	n.Use(NewMiddleware(manager))
+	n.UseHandler(mux)
 
 	server := httptest.NewServer(n)
+	defer server.Close()
 
 	tt := []struct {
 		name           string
 		path           string
+		method         string
 		token          string
 		useHeader      bool
 		expectedStatus int
 	}{
 		{
-			name:           "valid token in url and valid path",
-			path:           "/stuff",
-			token:          "token1",
-			useHeader:      false,
+			name: "valid token in url param",
+			path: "/stuff", method: "GET",
+			token: "token1", useHeader: false,
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name:           "valid token in headers and valid path",
-			path:           "/stuff",
-			token:          "token1",
-			useHeader:      true,
+			name: "valid token in header",
+			path: "/stuff", method: "GET",
+			token: "token1", useHeader: true,
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name:           "valid token with invalid path",
-			path:           "/things",
+			name: "invalid token",
+			path: "/stuff", method: "GET",
+			token:          "badtoken",
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name: "reader cannot write",
+			path: "/private/write", method: "POST",
 			token:          "token1",
 			expectedStatus: http.StatusNotFound,
 		},
 		{
-			name:           "unauthorized",
-			path:           "/private",
+			name: "reader cannot debug",
+			path: "/debug/pprof/", method: "GET",
 			token:          "token1",
 			expectedStatus: http.StatusNotFound,
 		},
 		{
-			name:           "no name",
-			path:           "/noname",
+			name: "reader cannot access metrics",
+			path: "/metrics", method: "GET",
 			token:          "token1",
 			expectedStatus: http.StatusNotFound,
 		},
@@ -83,68 +93,47 @@ func TestMiddleWare(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			url := server.URL + tc.path
-			if !tc.useHeader {
-				url = url + "?token=" + tc.token
+			if !tc.useHeader && tc.token != "" {
+				url += "?token=" + tc.token
 			}
 
-			req, err := http.NewRequest("GET", url, nil)
+			req, err := http.NewRequest(tc.method, url, nil)
 			if err != nil {
 				t.Fatal(err)
 			}
-
 			if tc.useHeader {
 				req.Header.Add("X-Auth-Token", tc.token)
 			}
 
-			client := http.DefaultClient
-			resp, err := client.Do(req)
+			resp, err := http.DefaultClient.Do(req)
 			if err != nil {
 				t.Fatal(err)
 			}
 
 			if resp.StatusCode != tc.expectedStatus {
-				t.Fatalf("invalid status code, expected %d got %d",
-					tc.expectedStatus,
-					resp.StatusCode)
+				t.Fatalf("want %d, got %d", tc.expectedStatus, resp.StatusCode)
 			}
 		})
 	}
 }
 
 func TestMiddlewareCtx(t *testing.T) {
-	manager := &Manager{
-		tokens: map[string]*token{
-			"token1": {
-				name:  "user 1",
-				value: "token1",
-				routeMap: map[string]struct{}{
-					"GetStuff": {},
-				},
-			},
-		},
-	}
-
-	router := mux.NewRouter()
-	router.HandleFunc("/stuff", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	}).Name("GetStuff").Methods("GET")
-
-	middleware := NewMiddleware(manager, router)
+	manager := newTestManager(t)
+	middleware := NewMiddleware(manager)
 
 	w := httptest.NewRecorder()
 	r, err := http.NewRequest("GET", "/stuff", nil)
 	if err != nil {
-		t.Fatalf("got an error while creating the request: %s", err)
+		t.Fatalf("creating request: %s", err)
 	}
 	r.Header.Add("X-Auth-Token", "token1")
 
 	middleware.ServeHTTP(w, r, func(w http.ResponseWriter, r *http.Request) {
 		tokenName, ok := r.Context().Value(TokenName).(string)
 		if !ok {
-			t.Fatalf("expected the token name in the context")
+			t.Fatal("expected token name in context")
 		}
-
-		if tokenName != "user 1" {
+		if tokenName != "user token 1" {
 			t.Fatalf("invalid token name: %q", tokenName)
 		}
 	})
