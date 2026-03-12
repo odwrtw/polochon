@@ -106,7 +106,12 @@ func (n *node) clear() {
 		}
 
 		if ret := n.NotifyDelete(name, &child.Inode); ret != 0 {
-			log.WithField("file", child.name).Error("Failed to notify delete")
+			// NotifyDelete requires the kernel to have looked up the child inode.
+			// If it hasn't (ENOENT), fall back to NotifyEntry which invalidates
+			// the directory entry by name.
+			if notifyEntryRet := n.NotifyEntry(name); notifyEntryRet != 0 {
+				log.WithField("file", child.name).Error("Failed to notify delete")
+			}
 		}
 
 		delete(n.children, name)
