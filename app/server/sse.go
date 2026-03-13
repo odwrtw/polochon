@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"sync"
+	"time"
 
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
@@ -78,11 +79,23 @@ func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Connection", "keep-alive")
 	flusher.Flush()
 
+	const keepalive = 30 * time.Second
+	timer := time.NewTimer(keepalive)
+	defer timer.Stop()
+
 	for {
 		select {
 		case <-ch:
 			_, _ = io.WriteString(w, "data:\n\n")
 			flusher.Flush()
+			if !timer.Stop() {
+				<-timer.C
+			}
+			timer.Reset(keepalive)
+		case <-timer.C:
+			_, _ = io.WriteString(w, ": keepalive\n\n")
+			flusher.Flush()
+			timer.Reset(keepalive)
 		case <-r.Context().Done():
 			return
 		}

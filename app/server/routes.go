@@ -267,6 +267,15 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 	// Use logrus as logger
 	n.Use(newLogrusMiddleware(s.log.Logger, s.config.HTTPServer.LogExcludePaths))
 
+	// Strip Accept-Encoding for the SSE endpoint so the gzip middleware
+	// does not wrap the ResponseWriter and break streaming.
+	n.Use(negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+		if r.URL.Path == "/events" {
+			r.Header.Del("Accept-Encoding")
+		}
+		next(w, r)
+	}))
+
 	// Allow gzip requests
 	n.Use(gzip.Gzip(gzip.DefaultCompression))
 
