@@ -13,7 +13,7 @@ type subtitleCacheEntry struct {
 }
 
 type subtitleCache struct {
-	mu      sync.RWMutex
+	mu      sync.Mutex
 	entries map[string]*subtitleCacheEntry
 	ttl     time.Duration
 }
@@ -26,10 +26,16 @@ func newSubtitleCache(ttl time.Duration) *subtitleCache {
 }
 
 func (c *subtitleCache) get(key string) []*polochon.SubtitleEntry {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	now := time.Now()
+	for k, e := range c.entries {
+		if now.After(e.expiresAt) {
+			delete(c.entries, k)
+		}
+	}
 	e, ok := c.entries[key]
-	if !ok || time.Now().After(e.expiresAt) {
+	if !ok {
 		return nil
 	}
 	return e.entries
