@@ -84,9 +84,31 @@ func (c *Client) ListSubtitles(i any, lang polochon.Language, _ *logrus.Entry) (
 			Language: lang,
 			Release:  s.Name,
 			Rating:   s.Rating,
+			Token:    s.URL,
 		})
 	}
 	return entries, nil
+}
+
+// DownloadSubtitle implements the polochon.Subtitler interface.
+func (c *Client) DownloadSubtitle(i any, entry *polochon.SubtitleEntry, _ *logrus.Entry) (*polochon.Subtitle, error) {
+	video, ok := i.(polochon.Video)
+	if !ok {
+		return nil, ErrNotAVideo
+	}
+
+	rc, err := fetch(entry.Token)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rc.Close() }()
+
+	s := polochon.NewSubtitleFromVideo(video, entry.Language)
+	s.Data, err = io.ReadAll(rc)
+	if err != nil {
+		return nil, err
+	}
+	return s, nil
 }
 
 // GetSubtitle implements the polochon.Subtitler interface.

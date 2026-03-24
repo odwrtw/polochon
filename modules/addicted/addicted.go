@@ -214,9 +214,38 @@ func (a *addictedProxy) ListSubtitles(i any, lang polochon.Language, log *logrus
 		entries = append(entries, &polochon.SubtitleEntry{
 			Language: lang,
 			Release:  s.Release,
+			Token:    s.Link,
 		})
 	}
 	return entries, nil
+}
+
+// addictedBaseURL mirrors the base URL used by the addicted library.
+const addictedBaseURL = "https://www.addic7ed.com/"
+
+// DownloadSubtitle implements the Subtitler interface.
+func (a *addictedProxy) DownloadSubtitle(i any, entry *polochon.SubtitleEntry, _ *logrus.Entry) (*polochon.Subtitle, error) {
+	video, ok := i.(polochon.Video)
+	if !ok {
+		return nil, fmt.Errorf("addicted: invalid argument")
+	}
+
+	// entry.Token is the Link field (e.g. "/updated/5/1234/5") — same URL the
+	// addicted library uses in Subtitle.Read() to fetch the file.
+	resp, err := a.client.Get(addictedBaseURL+entry.Token[1:], true)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	data := &bytes.Buffer{}
+	if _, err := data.ReadFrom(resp.Body); err != nil {
+		return nil, err
+	}
+
+	sub := polochon.NewSubtitleFromVideo(video, entry.Language)
+	sub.Data = data.Bytes()
+	return sub, nil
 }
 
 // GetSubtitle implements the Subtitler interface

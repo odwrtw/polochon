@@ -28,6 +28,19 @@ func (mock *Mock) ListSubtitles(v any, lang polochon.Language, log *logrus.Entry
 		{
 			Language: lang,
 			Release:  "mock.release." + string(lang),
+			Token:    "mock-token",
 		},
 	}, nil
+}
+
+// DownloadSubtitle implements the Subtitler interface
+func (mock *Mock) DownloadSubtitle(v any, entry *polochon.SubtitleEntry, log *logrus.Entry) (*polochon.Subtitle, error) {
+	video, ok := v.(polochon.Video)
+	if !ok {
+		return nil, ErrInvalidArgument
+	}
+
+	sub := polochon.NewSubtitleFromVideo(video, entry.Language)
+	sub.Data = []byte("downloaded subtitle in " + string(entry.Language))
+	return sub, nil
 }

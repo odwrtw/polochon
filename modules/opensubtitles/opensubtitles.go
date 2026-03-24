@@ -456,9 +456,36 @@ func (osp *osProxy) ListSubtitles(i any, lang polochon.Language, log *logrus.Ent
 			Language: lang,
 			Release:  s.SubFileName,
 			Rating:   s.SubRating,
+			Token:    s.IDSubtitle,
 		})
 	}
 	return entries, nil
+}
+
+// DownloadSubtitle implements the Subtitler interface.
+func (osp *osProxy) DownloadSubtitle(i any, entry *polochon.SubtitleEntry, _ *logrus.Entry) (*polochon.Subtitle, error) {
+	video, ok := i.(polochon.Video)
+	if !ok {
+		return nil, fmt.Errorf("opensubtitles: invalid argument")
+	}
+
+	if err := osp.getOpenSubtitleClient(); err != nil {
+		return nil, err
+	}
+
+	sub := openSubtitle{
+		os:     &osdb.Subtitle{IDSubtitle: entry.Token},
+		client: osp.client,
+	}
+
+	data := &bytes.Buffer{}
+	if _, err := data.ReadFrom(&sub); err != nil {
+		return nil, err
+	}
+
+	s := polochon.NewSubtitleFromVideo(video, entry.Language)
+	s.Data = data.Bytes()
+	return s, nil
 }
 
 func (osp *osProxy) GetSubtitle(i any, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {

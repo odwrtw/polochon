@@ -72,7 +72,21 @@ func (m *MKVInfo) ListSubtitles(v any, lang polochon.Language, log *logrus.Entry
 		{
 			Language: lang,
 			Embedded: true,
+			Token:    "",
 		},
+	}, nil
+}
+
+// DownloadSubtitle implements the Subtitler interface.
+func (m *MKVInfo) DownloadSubtitle(v any, entry *polochon.SubtitleEntry, _ *logrus.Entry) (*polochon.Subtitle, error) {
+	video, ok := v.(polochon.Video)
+	if !ok {
+		return nil, ErrNotAVideo
+	}
+	return &polochon.Subtitle{
+		Embedded: true,
+		Lang:     entry.Language,
+		Video:    video,
 	}, nil
 }
 

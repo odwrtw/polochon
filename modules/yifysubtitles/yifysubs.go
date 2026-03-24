@@ -156,6 +156,7 @@ func (y *YifySubs) ListSubtitles(i any, lang polochon.Language, log *logrus.Entr
 			entries = append(entries, &polochon.SubtitleEntry{
 				Language: lang,
 				Release:  rel,
+				Token:    sub.URL,
 			})
 		}
 	}
@@ -164,6 +165,25 @@ func (y *YifySubs) ListSubtitles(i any, lang polochon.Language, log *logrus.Entr
 		return nil, polochon.ErrNoSubtitleFound
 	}
 	return entries, nil
+}
+
+// DownloadSubtitle implements the Subtitler interface.
+func (y *YifySubs) DownloadSubtitle(i any, entry *polochon.SubtitleEntry, _ *logrus.Entry) (*polochon.Subtitle, error) {
+	m, ok := i.(*polochon.Movie)
+	if !ok {
+		return nil, polochon.ErrNotAvailable
+	}
+
+	sub := &yifysubs.Subtitle{URL: entry.Token}
+
+	data := &bytes.Buffer{}
+	if _, err := data.ReadFrom(sub); err != nil {
+		return nil, err
+	}
+
+	s := polochon.NewSubtitleFromVideo(m, entry.Language)
+	s.Data = data.Bytes()
+	return s, nil
 }
 
 // GetSubtitle implements the Subtitler interface

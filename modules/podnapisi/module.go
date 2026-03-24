@@ -82,13 +82,31 @@ func (c *Client) ListSubtitles(i any, lang polochon.Language, _ *logrus.Entry) (
 
 	entries := make([]*polochon.SubtitleEntry, 0, len(subs))
 	for _, s := range subs {
-		release := strings.Join(s.CustomReleases, ", ")
 		entries = append(entries, &polochon.SubtitleEntry{
 			Language: lang,
-			Release:  release,
+			Release:  strings.Join(s.CustomReleases, ", "),
+			Token:    s.PublishID,
 		})
 	}
 	return entries, nil
+}
+
+// DownloadSubtitle implements the polochon.Subtitler interface.
+func (c *Client) DownloadSubtitle(i any, entry *polochon.SubtitleEntry, _ *logrus.Entry) (*polochon.Subtitle, error) {
+	video, ok := i.(polochon.Video)
+	if !ok {
+		return nil, ErrNotAVideo
+	}
+
+	release := filepath.Base(video.GetFile().PathWithoutExt())
+	data, err := podnapisiDownload(entry.Token, release)
+	if err != nil {
+		return nil, err
+	}
+
+	s := polochon.NewSubtitleFromVideo(video, entry.Language)
+	s.Data = data
+	return s, nil
 }
 
 // GetSubtitle implements the polochon.Subtitler interface.
