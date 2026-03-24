@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/odwrtw/whatsthis"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/tpb"
 	"github.com/sirupsen/logrus"
@@ -45,14 +46,7 @@ func (t *TPB) GetMovieList(option string, log *logrus.Entry) ([]*polochon.Movie,
 	result := []*polochon.Movie{}
 	for _, torrent := range torrents {
 		torrentStr := torrentGuessitStr(torrent)
-		// Make a guess
-		guess, err := t.GuessClient.Guess(torrentStr)
-		if err != nil {
-			log.WithFields(logrus.Fields{
-				"torrent_string": torrentStr,
-			}).Debugf("tpb: guess failed: %q", err)
-			continue
-		}
+		guess := whatsthis.Video(torrentStr)
 
 		// Create the movie
 		m := polochon.NewMovie(polochon.MovieConfig{})
@@ -61,11 +55,12 @@ func (t *TPB) GetMovieList(option string, log *logrus.Entry) ([]*polochon.Movie,
 		m.ImdbID = torrent.ImdbID
 
 		// Set the default quality if none is defined
-		if guess.Quality == "" {
-			guess.Quality = string(polochon.Quality720p)
+		screenSize := guess.ScreenSize
+		if screenSize == "" {
+			screenSize = string(polochon.Quality720p)
 		}
 
-		torrentQuality := polochon.Quality(guess.Quality)
+		torrentQuality := polochon.Quality(screenSize)
 		if !torrentQuality.IsAllowed() {
 			log.Debugf("tpb: unhandled quality: %q", torrentQuality)
 			continue
@@ -117,14 +112,7 @@ func (t *TPB) GetShowList(option string, log *logrus.Entry) ([]*polochon.Show, e
 	result := []*polochon.Show{}
 	for _, torrent := range torrents {
 		torrentStr := torrentGuessitStr(torrent)
-		// Make a guess
-		guess, err := t.GuessClient.Guess(torrentStr)
-		if err != nil {
-			log.WithFields(logrus.Fields{
-				"torrent_string": torrentStr,
-			}).Debugf("tpb: guess failed: %q", err)
-			continue
-		}
+		guess := whatsthis.Video(torrentStr)
 
 		// Create the show
 		s := polochon.NewShow(polochon.ShowConfig{})

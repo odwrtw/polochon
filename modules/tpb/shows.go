@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/odwrtw/guessit"
+	"github.com/odwrtw/whatsthis"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 )
@@ -45,9 +45,9 @@ func (sS *showSearcher) imdbID() string {
 	return sS.Episode.ShowImdbID
 }
 
-func (sS *showSearcher) isValidGuess(guess *guessit.Response, log *logrus.Entry) bool {
+func (sS *showSearcher) isValidGuess(guess whatsthis.Info, log *logrus.Entry) bool {
 	// Check the video type
-	if guess.Type != "episode" {
+	if guess.Type != whatsthis.Episode {
 		log.Debugf("tpb: is not an episode but a %s", guess.Type)
 		return false
 	}

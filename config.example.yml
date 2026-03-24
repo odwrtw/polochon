@@ -195,8 +195,6 @@ modules_params:
   - name: thepiratebay
     # timeout for the search (optional, default 30s)
     timeout: 30s
-    # guessit endpoint (optional)
-    guessit_endpoint: "https://api.myguessit.mydomain"
     urls:
     - https://thepiratebay.org
     - https://mypirate.cc
@@ -211,8 +209,4 @@ modules_params:
     hooks:
     - url: http://urlhook/new_movie
       method: POST
-    # Guessit is a wrapper for the guessit python program answering over http.
-    # A container is available for self hosting the service:
-    # https://github.com/odwrtw/docker-guessit
   - name: guessit
-    endpoint: "https://guessit.quimbo.fr/guess"
