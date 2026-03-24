@@ -5,10 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/odwrtw/guessit"
+	"github.com/odwrtw/whatsthis"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 )
 
 // Make sure that the module is a guesser
@@ -24,35 +23,11 @@ const (
 	moduleName = "guessit"
 )
 
-// Params represents the module params
-type Params struct {
-	Endpoint string `yaml:"endpoint"`
-}
-
-// Guessit is a mix of opensubtitle and guessit
-type Guessit struct {
-	client     *guessit.Client
-	configured bool
-}
+// Guessit implements the Guesser interface using go-guessit
+type Guessit struct{}
 
 // Init implements the module interface
-func (g *Guessit) Init(p []byte) error {
-	if g.configured {
-		return nil
-	}
-
-	params := &Params{}
-	if err := yaml.Unmarshal(p, params); err != nil {
-		return err
-	}
-
-	return g.InitWithParams(params)
-}
-
-// InitWithParams configures the module
-func (g *Guessit) InitWithParams(params *Params) error {
-	g.client = guessit.New(params.Endpoint)
-	g.configured = true
+func (g *Guessit) Init(_ []byte) error {
 	return nil
 }
 
@@ -67,15 +42,12 @@ func (g *Guessit) Status() (polochon.ModuleStatus, error) {
 }
 
 // GuessMetadata guess the metadata of a file
-func (g *Guessit) GuessMetadata(file *polochon.File, log *logrus.Entry) (*polochon.VideoMetadata, error) {
+func (g *Guessit) GuessMetadata(file *polochon.File, _ *logrus.Entry) (*polochon.VideoMetadata, error) {
 	filePath := filepath.Base(file.Path)
-	guess, err := g.client.Guess(filePath)
-	if err != nil {
-		return nil, err
-	}
+	guess := whatsthis.Video(filePath)
 
 	return &polochon.VideoMetadata{
-		Quality:      polochon.Quality(guess.Quality),
+		Quality:      polochon.Quality(guess.ScreenSize),
 		ReleaseGroup: guess.ReleaseGroup,
 		AudioCodec:   guess.AudioCodec,
 		VideoCodec:   guess.VideoCodec,
@@ -84,33 +56,30 @@ func (g *Guessit) GuessMetadata(file *polochon.File, log *logrus.Entry) (*poloch
 }
 
 // Guess implements the Guesser interface
-func (g *Guessit) Guess(file polochon.File, movieConf polochon.MovieConfig, showConf polochon.ShowConfig, log *logrus.Entry) (polochon.Video, error) {
+func (g *Guessit) Guess(file polochon.File, movieConf polochon.MovieConfig, showConf polochon.ShowConfig, _ *logrus.Entry) (polochon.Video, error) {
 	filename := filepath.Base(file.Path)
-	guess, err := g.client.Guess(filename)
-	if err != nil {
-		return nil, err
-	}
+	guess := whatsthis.Video(filename)
 
 	// Format the title
-	guess.Title = toUpperCaseFirst(guess.Title)
+	title := toUpperCaseFirst(guess.Title)
 
 	var video polochon.Video
 
 	switch guess.Type {
-	case "movie":
+	case whatsthis.Movie:
 		video = &polochon.Movie{
 			MovieConfig: movieConf,
-			Title:       guess.Title,
+			Title:       title,
 			Year:        guess.Year,
 		}
-	case "episode":
+	case whatsthis.Episode:
 		show := polochon.NewShow(showConf)
 		show.Year = guess.Year
-		show.Title = guess.Title
+		show.Title = title
 		video = &polochon.ShowEpisode{
 			ShowConfig: showConf,
 			Show:       show,
-			ShowTitle:  guess.Title,
+			ShowTitle:  title,
 			Episode:    guess.Episode,
 			Season:     guess.Season,
 		}
@@ -120,7 +89,7 @@ func (g *Guessit) Guess(file polochon.File, movieConf polochon.MovieConfig, show
 
 	video.SetFile(file)
 	video.SetMetadata(&polochon.VideoMetadata{
-		Quality:      polochon.Quality(guess.Quality),
+		Quality:      polochon.Quality(guess.ScreenSize),
 		ReleaseGroup: guess.ReleaseGroup,
 		AudioCodec:   guess.AudioCodec,
 		VideoCodec:   guess.VideoCodec,

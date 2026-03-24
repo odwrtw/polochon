@@ -3,7 +3,7 @@ package tpb
 import (
 	"strings"
 
-	"github.com/odwrtw/guessit"
+	"github.com/odwrtw/whatsthis"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 )
@@ -37,14 +37,14 @@ func (mS *movieSearcher) imdbID() string {
 	return mS.Movie.ImdbID
 }
 
-func (mS *movieSearcher) isValidGuess(guess *guessit.Response, log *logrus.Entry) bool {
+func (mS *movieSearcher) isValidGuess(guess whatsthis.Info, log *logrus.Entry) bool {
 	if !strings.EqualFold(guess.Title, mS.Movie.Title) {
 		log.Debugf("skipping bad movie title %s != %s", guess.Title, mS.Movie.Title)
 		return false
 	}
 
 	// Check the video type
-	if guess.Type != "movie" {
+	if guess.Type != whatsthis.Movie {
 		log.Debugf("tpb: is not a movie but a %s", guess.Type)
 		return false
 	}

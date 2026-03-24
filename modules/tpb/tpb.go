@@ -8,7 +8,7 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/odwrtw/guessit"
+	"github.com/odwrtw/whatsthis"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/tpb"
 	"github.com/sirupsen/logrus"
@@ -21,8 +21,7 @@ var (
 )
 
 var (
-	defaultTimeout         = 30 * time.Second
-	defaultGuessitEndpoint = "https://guessit.quimbo.fr/guess"
+	defaultTimeout = 30 * time.Second
 )
 
 func init() {
@@ -36,22 +35,19 @@ const (
 
 // Params represents the module params
 type Params struct {
-	URLs            []string `yaml:"urls"`
-	Timeout         string   `yaml:"timeout"`
-	GuessitEndpoint string   `yaml:"guessit_endpoint"`
-	ShowUsers       []string `yaml:"show_users"`
-	MovieUsers      []string `yaml:"movie_users"`
+	URLs       []string `yaml:"urls"`
+	Timeout    string   `yaml:"timeout"`
+	ShowUsers  []string `yaml:"show_users"`
+	MovieUsers []string `yaml:"movie_users"`
 }
 
 // TPB is a source for torrents
 type TPB struct {
-	Client          *tpb.Client
-	Timeout         time.Duration
-	GuessitEndpoint string
-	MovieUsers      []string
-	ShowUsers       []string
-	configured      bool
-	GuessClient     *guessit.Client
+	Client     *tpb.Client
+	Timeout    time.Duration
+	MovieUsers []string
+	ShowUsers  []string
+	configured bool
 }
 
 // Init implements the module interface
@@ -74,13 +70,6 @@ func (t *TPB) InitWithParams(params *Params) error {
 	t.MovieUsers = params.MovieUsers
 	t.ShowUsers = params.ShowUsers
 	t.configured = true
-	t.GuessitEndpoint = params.GuessitEndpoint
-	if t.GuessitEndpoint == "" {
-		t.GuessitEndpoint = defaultGuessitEndpoint
-	}
-
-	// Use guessit to check the torrents with its infos
-	t.GuessClient = guessit.New(t.GuessitEndpoint)
 
 	var err error
 	if params.Timeout == "" {
@@ -117,7 +106,7 @@ type searcher interface {
 	users() []string
 	defaultQuality() string
 	setTorrents([]*polochon.Torrent)
-	isValidGuess(guess *guessit.Response, log *logrus.Entry) bool
+	isValidGuess(guess whatsthis.Info, log *logrus.Entry) bool
 	imdbID() string
 }
 
@@ -222,14 +211,7 @@ func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent, log *logrus.Ent
 	torrents := []*polochon.Torrent{}
 	for _, torrent := range filterTorrents(list, s.users()) {
 		torrentStr := torrentGuessitStr(torrent)
-		// Make a guess
-		guess, err := t.GuessClient.Guess(torrentStr)
-		if err != nil {
-			log.WithFields(logrus.Fields{
-				"torrent_string": torrentStr,
-			}).Debugf("tpb: guess failed: %q", err)
-			continue
-		}
+		guess := whatsthis.Video(torrentStr)
 
 		// Check the guess validity
 		if !s.isValidGuess(guess, log) {
@@ -243,20 +225,21 @@ func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent, log *logrus.Ent
 		}
 
 		// Set the default quality if none is defined
-		if guess.Quality == "" {
+		screenSize := guess.ScreenSize
+		if screenSize == "" {
 			log.Debugf("tpb: default quality for %s", torrent.Name)
-			guess.Quality = s.defaultQuality()
+			screenSize = s.defaultQuality()
 		}
 
 		// Check that the Quality is valid
-		torrentQuality := polochon.Quality(guess.Quality)
+		torrentQuality := polochon.Quality(screenSize)
 		if !torrentQuality.IsAllowed() {
 			log.Debugf("tpb: unhandled quality: %q", torrentQuality)
 			continue
 		}
 
 		log.WithFields(logrus.Fields{
-			"torrent_quality": guess.Quality,
+			"torrent_quality": screenSize,
 			"torrent_name":    torrentStr,
 		}).Debug("Adding torrent to the list")
 

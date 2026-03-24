@@ -1,6 +1,6 @@
 module github.com/odwrtw/polochon
 
-go 1.26.0
+go 1.26.1
 
 require (
 	github.com/agnivade/levenshtein v1.2.1
@@ -13,7 +13,6 @@ require (
 	github.com/odwrtw/addicted v0.0.0-20231023211155-d92e1eb251c5
 	github.com/odwrtw/eztv v0.0.0-20231026192001-039613c81a8e
 	github.com/odwrtw/fanarttv v0.0.0-20170412122542-9f67d3cf0188
-	github.com/odwrtw/guessit v0.0.0-20221028215709-d4336685bdaa
 	github.com/odwrtw/imdb-watchlist v0.0.0-20190417175016-b7a9f7503d69
 	github.com/odwrtw/tpb v0.0.0-20200507114501-df19547bbff1
 	github.com/odwrtw/trakttv v0.0.0-20260303085205-6da049dbce68
@@ -58,6 +57,7 @@ require (
 	github.com/kylelemons/go-gypsy v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/nlnwa/whatwg-url v0.6.2 // indirect
+	github.com/odwrtw/whatsthis v0.0.0-20260324183316-86994131f0d2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.67.5 // indirect
 	github.com/prometheus/procfs v0.19.2 // indirect

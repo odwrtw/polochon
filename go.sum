@@ -96,8 +96,6 @@ github.com/odwrtw/eztv v0.0.0-20231026192001-039613c81a8e h1:qfTB4d29ziuVym+v5XA
 github.com/odwrtw/eztv v0.0.0-20231026192001-039613c81a8e/go.mod h1:d4WspgGb6fVz1XCUrgjoW3SzLC0Mq5GNFPA09ED9IP0=
 github.com/odwrtw/fanarttv v0.0.0-20170412122542-9f67d3cf0188 h1:mjAgidPA3aNSZU6EgB2iSu1yxxNU2tw9U14n57Gk7ZQ=
 github.com/odwrtw/fanarttv v0.0.0-20170412122542-9f67d3cf0188/go.mod h1:AMkzq9fSbIpWKdWbU4FAsIherygisNEeYglKfmTfq1U=
-github.com/odwrtw/guessit v0.0.0-20221028215709-d4336685bdaa h1:NM16GxadULEwclj2K95cA+ZMqFl5AV4B41Sjc0kyqvA=
-github.com/odwrtw/guessit v0.0.0-20221028215709-d4336685bdaa/go.mod h1:DzI77tN750RiQrJjZDmNUs3DjQi41Qy0cblJ9iJq33k=
 github.com/odwrtw/imdb-watchlist v0.0.0-20190417175016-b7a9f7503d69 h1:ow6b/4Jj7J5iYwU678/rbijvaNUJrYkg13j9Nivkung=
 github.com/odwrtw/imdb-watchlist v0.0.0-20190417175016-b7a9f7503d69/go.mod h1:o2tLH95CtNdqhDb0aS2NbU+1I4PmaNsODpr33Ry0JC0=
 github.com/odwrtw/tpb v0.0.0-20200507114501-df19547bbff1 h1:ZxN8n11Muc25mS/wmqblHMUDl4TSr9ekePAx1xeTcRE=
@@ -106,6 +104,8 @@ github.com/odwrtw/trakttv v0.0.0-20260303085205-6da049dbce68 h1:lhZfXCEGrSg6+vy6
 github.com/odwrtw/trakttv v0.0.0-20260303085205-6da049dbce68/go.mod h1:xYwmhhN8IX50L6wCm9WvmHn2/uI9Ivq4a0HJwJFmueU=
 github.com/odwrtw/transmission v0.0.0-20221028215408-b11d7d55c759 h1:r3iRIEQq8R+uCW0PY+ude4yerchKyYhO003kQk0g4pE=
 github.com/odwrtw/transmission v0.0.0-20221028215408-b11d7d55c759/go.mod h1:GdV2H0+oYNNdo/vgsMbDBQ9CFrNJkJtpM0CbU/gbdls=
+github.com/odwrtw/whatsthis v0.0.0-20260324183316-86994131f0d2 h1:Q0HctPt/55mz7ZjLndmHx5it1KWhyAr36BJP8J8g4Og=
+github.com/odwrtw/whatsthis v0.0.0-20260324183316-86994131f0d2/go.mod h1:WHfKTzSh6ZbmSxotrnY22HfGwpJIl0KABVxlxDtGlX0=
 github.com/odwrtw/yifysubs v0.0.0-20240207155719-c57d8c244477 h1:kIJk5/pPv1DzDUa4SBVtzzn/lmkWkldKix6nZ2svo+Q=
 github.com/odwrtw/yifysubs v0.0.0-20240207155719-c57d8c244477/go.mod h1:9DBYdi5zhQ7JohypgSOzKibVMX57BYVhALg1vrg/SRY=
 github.com/odwrtw/yts v0.0.0-20231024130053-dfa826fee7b6 h1:gxnFA91mK8/KdOOfgnQqTYWQtRAAhJ6sK+5cIDCRyjw=
