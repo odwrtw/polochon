@@ -172,6 +172,53 @@ func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang p
 	return subtitle, nil
 }
 
+// ListSubtitles implements the Subtitler interface.
+func (a *addictedProxy) ListSubtitles(i any, lang polochon.Language, log *logrus.Entry) ([]*polochon.SubtitleEntry, error) {
+	reqEpisode, ok := i.(*polochon.ShowEpisode)
+	if !ok {
+		return nil, polochon.ErrNotAvailable
+	}
+
+	langName, err := lang.Name()
+	if err != nil {
+		return nil, fmt.Errorf("addicted: language %q not supported", lang)
+	}
+	addictedLang := strings.ToLower(langName)
+
+	shows, err := a.client.GetTvShows()
+	if err != nil {
+		return nil, err
+	}
+	var guessID string
+	guessDist := 1000
+	for showName, showID := range shows {
+		dist := levenshtein.ComputeDistance(strings.ToLower(showName), strings.ToLower(reqEpisode.ShowTitle))
+		if dist < guessDist {
+			guessDist = dist
+			guessID = showID
+		}
+	}
+
+	subtitles, err := a.client.GetSubtitles(guessID, reqEpisode.Season, reqEpisode.Episode)
+	if err != nil {
+		return nil, err
+	}
+
+	filteredSubs := subtitles.FilterByLang(addictedLang)
+	if len(filteredSubs) == 0 {
+		return nil, polochon.ErrNoSubtitleFound
+	}
+
+	entries := make([]*polochon.SubtitleEntry, 0, len(filteredSubs))
+	for _, s := range filteredSubs {
+		entries = append(entries, &polochon.SubtitleEntry{
+			Language: lang,
+			Release:  s.Release,
+		})
+	}
+	return entries, nil
+}
+
 // GetSubtitle implements the Subtitler interface
 func (a *addictedProxy) GetSubtitle(i any, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
 	switch v := i.(type) {

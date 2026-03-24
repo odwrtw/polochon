@@ -379,6 +379,88 @@ func (osp *osProxy) getGoodShowEpisodeSubtitles(s *polochon.ShowEpisode, subs os
 	return goodSubs
 }
 
+// filterSubtitles returns all subtitles from subs that match the video (IMDB ID / season / episode).
+func (osp *osProxy) filterSubtitles(i any, subs osdb.Subtitles, log *logrus.Entry) []osdb.Subtitle {
+	switch v := i.(type) {
+	case *polochon.ShowEpisode:
+		return osp.getGoodShowEpisodeSubtitles(v, subs, log)
+	case *polochon.Movie:
+		return osp.getGoodMovieSubtitles(v, subs, log)
+	default:
+		return nil
+	}
+}
+
+// searchAndFilter checks the connection, runs f, and returns all matching subtitles.
+func (osp *osProxy) searchAndFilter(
+	f func(polochon.Video, string, string) (osdb.Subtitles, error),
+	v polochon.Video, lang string, log *logrus.Entry,
+) []osdb.Subtitle {
+	if err := osp.getOpenSubtitleClient(); err != nil {
+		return nil
+	}
+	raw, err := f(v, lang, v.GetFile().Path)
+	if err != nil {
+		return nil
+	}
+	return osp.filterSubtitles(v, raw, log)
+}
+
+// listAllSubtitles runs the 3-tier search and returns all matching osdb.Subtitle entries.
+func (osp *osProxy) listAllSubtitles(v polochon.Video, lang string, log *logrus.Entry) []osdb.Subtitle {
+	seen := map[string]bool{}
+	var all []osdb.Subtitle
+
+	for _, s := range osp.searchAndFilter(osp.searchSubtitlesByHash, v, lang, log) {
+		if !seen[s.IDSubtitle] {
+			seen[s.IDSubtitle] = true
+			all = append(all, s)
+		}
+	}
+	for _, s := range osp.searchAndFilter(osp.searchSubtitlesByFilename, v, lang, log) {
+		if !seen[s.IDSubtitle] {
+			seen[s.IDSubtitle] = true
+			all = append(all, s)
+		}
+	}
+	for _, s := range osp.searchAndFilter(osp.searchSubtitlesByInfos, v, lang, log) {
+		if !seen[s.IDSubtitle] {
+			seen[s.IDSubtitle] = true
+			all = append(all, s)
+		}
+	}
+	return all
+}
+
+// ListSubtitles implements the Subtitler interface.
+func (osp *osProxy) ListSubtitles(i any, lang polochon.Language, log *logrus.Entry) ([]*polochon.SubtitleEntry, error) {
+	opensubtitlesLang, err := lang.ISO6392()
+	if err != nil {
+		return nil, ErrInvalidArgument
+	}
+
+	video, ok := i.(polochon.Video)
+	if !ok {
+		return nil, fmt.Errorf("opensub: invalid argument")
+	}
+
+	subs := osp.listAllSubtitles(video, opensubtitlesLang, log)
+
+	if len(subs) == 0 {
+		return nil, polochon.ErrNoSubtitleFound
+	}
+
+	entries := make([]*polochon.SubtitleEntry, 0, len(subs))
+	for _, s := range subs {
+		entries = append(entries, &polochon.SubtitleEntry{
+			Language: lang,
+			Release:  s.SubFileName,
+			Rating:   s.SubRating,
+		})
+	}
+	return entries, nil
+}
+
 func (osp *osProxy) GetSubtitle(i any, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
 	opensubtitlesLang, err := lang.ISO6392()
 	if err != nil {

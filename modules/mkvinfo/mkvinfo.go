@@ -52,6 +52,30 @@ func (m *MKVInfo) Guess(file polochon.File, movieConf polochon.MovieConfig, show
 	return nil, polochon.ErrNotAvailable
 }
 
+// ListSubtitles implements the Subtitler interface.
+func (m *MKVInfo) ListSubtitles(v any, lang polochon.Language, log *logrus.Entry) ([]*polochon.SubtitleEntry, error) {
+	video, ok := v.(polochon.Video)
+	if !ok {
+		return nil, ErrNotAVideo
+	}
+
+	entries, err := ParseFile(video.GetFile())
+	if err != nil {
+		return nil, err
+	}
+
+	if !HasSubtitle(entries, lang) {
+		return nil, polochon.ErrNoSubtitleFound
+	}
+
+	return []*polochon.SubtitleEntry{
+		{
+			Language: lang,
+			Embedded: true,
+		},
+	}, nil
+}
+
 // GetSubtitle implements the Subtitler interface
 func (m *MKVInfo) GetSubtitle(v any, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
 	video, ok := v.(polochon.Video)

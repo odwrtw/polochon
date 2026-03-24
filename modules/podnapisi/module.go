@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/agnivade/levenshtein"
 	polochon "github.com/odwrtw/polochon/lib"
@@ -45,6 +46,49 @@ func (c *Client) Status() (polochon.ModuleStatus, error) {
 	}
 
 	return polochon.StatusOK, nil
+}
+
+// ListSubtitles implements the polochon.Subtitler interface.
+func (c *Client) ListSubtitles(i any, lang polochon.Language, _ *logrus.Entry) ([]*polochon.SubtitleEntry, error) {
+	langCode := lang.ShortForm()
+
+	var params url.Values
+
+	switch resource := i.(type) {
+	case *polochon.Movie:
+		params = movieParams(resource, langCode)
+	case *polochon.ShowEpisode:
+		params = showEpisodeParams(resource, langCode)
+	default:
+		return nil, ErrNotAVideo
+	}
+
+	subs, err := podnapisiSearch(params)
+	if err != nil {
+		return nil, err
+	}
+
+	filtered := subs[:0]
+	for _, s := range subs {
+		if s.Language == langCode {
+			filtered = append(filtered, s)
+		}
+	}
+	subs = filtered
+
+	if len(subs) == 0 {
+		return nil, polochon.ErrNoSubtitleFound
+	}
+
+	entries := make([]*polochon.SubtitleEntry, 0, len(subs))
+	for _, s := range subs {
+		release := strings.Join(s.CustomReleases, ", ")
+		entries = append(entries, &polochon.SubtitleEntry{
+			Language: lang,
+			Release:  release,
+		})
+	}
+	return entries, nil
 }
 
 // GetSubtitle implements the polochon.Subtitler interface.

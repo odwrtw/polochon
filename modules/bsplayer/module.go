@@ -51,6 +51,44 @@ func (c *Client) Status() (polochon.ModuleStatus, error) {
 	return polochon.StatusOK, nil
 }
 
+// ListSubtitles implements the polochon.Subtitler interface.
+func (c *Client) ListSubtitles(i any, lang polochon.Language, _ *logrus.Entry) ([]*polochon.SubtitleEntry, error) {
+	var qp *queryParams
+	var err error
+
+	switch resource := i.(type) {
+	case *polochon.Movie:
+		qp, err = newQuery(resource.ImdbID, lang, resource.GetFile())
+	case *polochon.ShowEpisode:
+		qp, err = newQuery(resource.ShowImdbID, lang, resource.GetFile())
+	default:
+		return nil, ErrNotAVideo
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	subs, err := search(qp)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(subs) == 0 {
+		return nil, polochon.ErrNoSubtitleFound
+	}
+
+	entries := make([]*polochon.SubtitleEntry, 0, len(subs))
+	for _, s := range subs {
+		entries = append(entries, &polochon.SubtitleEntry{
+			Language: lang,
+			Release:  s.Name,
+			Rating:   s.Rating,
+		})
+	}
+	return entries, nil
+}
+
 // GetSubtitle implements the polochon.Subtitler interface.
 func (c *Client) GetSubtitle(i any, lang polochon.Language, _ *logrus.Entry) (*polochon.Subtitle, error) {
 	var qp *queryParams
