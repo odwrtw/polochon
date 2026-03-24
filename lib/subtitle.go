@@ -14,6 +14,7 @@ type SubtitleEntry struct {
 	Rating   string   `json:"rating"`
 	Embedded bool     `json:"embedded"`
 	Source   string   `json:"source"`
+	Token    string   `json:"-"` // module-specific identifier, not exposed to clients
 }
 
 // Subtitle errors

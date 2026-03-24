@@ -17,7 +17,8 @@ require (
 	github.com/odwrtw/tpb v0.0.0-20260324184152-590534670773
 	github.com/odwrtw/trakttv v0.0.0-20260303085205-6da049dbce68
 	github.com/odwrtw/transmission v0.0.0-20221028215408-b11d7d55c759
-	github.com/odwrtw/yifysubs v0.0.0-20240207155719-c57d8c244477
+	github.com/odwrtw/whatsthis v0.0.0-20260324183316-86994131f0d2
+	github.com/odwrtw/yifysubs v0.0.0-20260324231500-2a22e2158ed9
 	github.com/odwrtw/yts v0.0.0-20231024130053-dfa826fee7b6
 	github.com/oz/osdb v0.0.0-20221214175751-f169057712ec
 	github.com/phyber/negroni-gzip v1.0.0
@@ -34,11 +35,11 @@ require (
 )
 
 require (
-	github.com/PuerkitoBio/goquery v1.11.0 // indirect
+	github.com/PuerkitoBio/goquery v1.12.0 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
-	github.com/antchfx/htmlquery v1.3.5 // indirect
-	github.com/antchfx/xmlquery v1.5.0 // indirect
-	github.com/antchfx/xpath v1.3.5 // indirect
+	github.com/antchfx/htmlquery v1.3.6 // indirect
+	github.com/antchfx/xmlquery v1.5.1 // indirect
+	github.com/antchfx/xpath v1.3.6 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.24.4 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -57,17 +58,15 @@ require (
 	github.com/kylelemons/go-gypsy v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/nlnwa/whatwg-url v0.6.2 // indirect
-	github.com/odwrtw/whatsthis v0.0.0-20260324183316-86994131f0d2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.67.5 // indirect
 	github.com/prometheus/procfs v0.19.2 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
 	github.com/temoto/robotstxt v1.1.2 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
-	golang.org/x/net v0.51.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
-	golang.org/x/text v0.34.0 // indirect
+	golang.org/x/net v0.52.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/text v0.35.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
-	gopkg.in/xmlpath.v2 v2.0.0-20150820204837-860cbeca3ebc // indirect
 )

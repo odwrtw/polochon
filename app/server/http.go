@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"time"
 
 	"github.com/gorilla/mux"
 	"gopkg.in/unrolled/render.v1"
@@ -25,24 +26,26 @@ const AppName = "http_server"
 type Server struct {
 	*subapp.Base
 
-	config         *configuration.Config
-	library        *library.Library
-	authManager    *auth.Manager
-	gracefulServer *http.Server
-	hub            *sseHub
-	log            *logrus.Entry
-	render         *render.Render
+	config          *configuration.Config
+	library         *library.Library
+	authManager     *auth.Manager
+	gracefulServer  *http.Server
+	hub             *sseHub
+	log             *logrus.Entry
+	render          *render.Render
+	subtitleCache   *subtitleCache
 }
 
 // New returns a new server
 func New(config *configuration.Config, vs *library.Library, auth *auth.Manager) *Server {
 	return &Server{
-		Base:        subapp.NewBase(AppName),
-		config:      config,
-		library:     vs,
-		authManager: auth,
-		hub:         newSSEHub(),
-		render:      render.New(),
+		Base:          subapp.NewBase(AppName),
+		config:        config,
+		library:       vs,
+		authManager:   auth,
+		hub:           newSSEHub(),
+		render:        render.New(),
+		subtitleCache: newSubtitleCache(30 * time.Minute),
 	}
 }
 
