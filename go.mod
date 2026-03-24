@@ -10,11 +10,11 @@ require (
 	github.com/gregdel/pushover v1.4.0
 	github.com/hanwen/go-fuse/v2 v2.9.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
-	github.com/odwrtw/addicted v0.0.0-20231023211155-d92e1eb251c5
+	github.com/odwrtw/addicted v0.0.0-20260324184247-15bba5a9b030
 	github.com/odwrtw/eztv v0.0.0-20231026192001-039613c81a8e
 	github.com/odwrtw/fanarttv v0.0.0-20170412122542-9f67d3cf0188
 	github.com/odwrtw/imdb-watchlist v0.0.0-20190417175016-b7a9f7503d69
-	github.com/odwrtw/tpb v0.0.0-20200507114501-df19547bbff1
+	github.com/odwrtw/tpb v0.0.0-20260324184152-590534670773
 	github.com/odwrtw/trakttv v0.0.0-20260303085205-6da049dbce68
 	github.com/odwrtw/transmission v0.0.0-20221028215408-b11d7d55c759
 	github.com/odwrtw/yifysubs v0.0.0-20240207155719-c57d8c244477
@@ -64,7 +64,7 @@ require (
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
 	github.com/temoto/robotstxt v1.1.2 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
-	golang.org/x/net v0.50.0 // indirect
+	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect

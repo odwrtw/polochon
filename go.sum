@@ -92,6 +92,8 @@ github.com/nlnwa/whatwg-url v0.6.2 h1:jU61lU2ig4LANydbEJmA2nPrtCGiKdtgT0rmMd2VZ/
 github.com/nlnwa/whatwg-url v0.6.2/go.mod h1:x0FPXJzzOEieQtsBT/AKvbiBbQ46YlL6Xa7m02M1ECk=
 github.com/odwrtw/addicted v0.0.0-20231023211155-d92e1eb251c5 h1:9pu3BHkV9zYyxNKiEEzactER8X63ac4eFHNZpSNWBSI=
 github.com/odwrtw/addicted v0.0.0-20231023211155-d92e1eb251c5/go.mod h1:/RpB1AXsCYMW5JJ1FTHridPK24XoVF28NH9Yxg8OQ3E=
+github.com/odwrtw/addicted v0.0.0-20260324184247-15bba5a9b030 h1:kymM1yLbTkrL65vM63+huCMaS8+gwdHyZFGCBpULWcA=
+github.com/odwrtw/addicted v0.0.0-20260324184247-15bba5a9b030/go.mod h1:CgMAjmNcYPKFXCkFRGCJEVwXFl6dS10IW+FFQ6kUG0s=
 github.com/odwrtw/eztv v0.0.0-20231026192001-039613c81a8e h1:qfTB4d29ziuVym+v5XAIdp6z41uDGZll43raruxUtok=
 github.com/odwrtw/eztv v0.0.0-20231026192001-039613c81a8e/go.mod h1:d4WspgGb6fVz1XCUrgjoW3SzLC0Mq5GNFPA09ED9IP0=
 github.com/odwrtw/fanarttv v0.0.0-20170412122542-9f67d3cf0188 h1:mjAgidPA3aNSZU6EgB2iSu1yxxNU2tw9U14n57Gk7ZQ=
@@ -100,6 +102,8 @@ github.com/odwrtw/imdb-watchlist v0.0.0-20190417175016-b7a9f7503d69 h1:ow6b/4Jj7
 github.com/odwrtw/imdb-watchlist v0.0.0-20190417175016-b7a9f7503d69/go.mod h1:o2tLH95CtNdqhDb0aS2NbU+1I4PmaNsODpr33Ry0JC0=
 github.com/odwrtw/tpb v0.0.0-20200507114501-df19547bbff1 h1:ZxN8n11Muc25mS/wmqblHMUDl4TSr9ekePAx1xeTcRE=
 github.com/odwrtw/tpb v0.0.0-20200507114501-df19547bbff1/go.mod h1:sIHKrrfBBSG6KO92wfgWmYq8yYf3hBnnNyFx2nTCOmU=
+github.com/odwrtw/tpb v0.0.0-20260324184152-590534670773 h1:NaoDRNcL2ijjfcQDbUyL2dBEcvr1Js7OcGCRz5+0iAg=
+github.com/odwrtw/tpb v0.0.0-20260324184152-590534670773/go.mod h1:Ol6FGMl8+r7nH8QnLdtT8ayylmAzkhXqwcLFQ8akY8s=
 github.com/odwrtw/trakttv v0.0.0-20260303085205-6da049dbce68 h1:lhZfXCEGrSg6+vy671LOagxIxj5TFl/Xr3f6JOHJYnE=
 github.com/odwrtw/trakttv v0.0.0-20260303085205-6da049dbce68/go.mod h1:xYwmhhN8IX50L6wCm9WvmHn2/uI9Ivq4a0HJwJFmueU=
 github.com/odwrtw/transmission v0.0.0-20221028215408-b11d7d55c759 h1:r3iRIEQq8R+uCW0PY+ude4yerchKyYhO003kQk0g4pE=
@@ -179,6 +183,8 @@ golang.org/x/net v0.33.0/go.mod h1:HXLR5J+9DxmrqMwG9qjGCxZ+zKXxBru04zlTvWlWuN4=
 golang.org/x/net v0.34.0/go.mod h1:di0qlW3YNM5oh6GqDGQr92MyTozJPmybPK4Ev/Gm31k=
 golang.org/x/net v0.50.0 h1:ucWh9eiCGyDR3vtzso0WMQinm2Dnt8cFMuQa9K33J60=
 golang.org/x/net v0.50.0/go.mod h1:UgoSli3F/pBgdJBHCTc+tp3gmrU4XswgGRgtnwWTfyM=
+golang.org/x/net v0.51.0 h1:94R/GTO7mt3/4wIKpcR5gkGmRLOuE/2hNGeWq/GBIFo=
+golang.org/x/net v0.51.0/go.mod h1:aamm+2QF5ogm02fjy5Bb7CQ0WMt1/WVM7FtyaTLlA9Y=
 golang.org/x/sync v0.0.0-20190423024810-112230192c58/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.1.0/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
