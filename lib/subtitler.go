@@ -13,12 +13,51 @@ var ErrNoSubtitleFound = errors.New("polochon: no subtitle found")
 type Subtitler interface {
 	Module
 	GetSubtitle(any, Language, *logrus.Entry) (*Subtitle, error)
+	ListSubtitles(any, Language, *logrus.Entry) ([]*SubtitleEntry, error)
 }
 
 // Subtitlable represents a ressource which can be subtitled
 type Subtitlable interface {
 	SubtitlePath(Language) string
 	GetSubtitlers() []Subtitler
+}
+
+// ListSubtitles returns all available subtitles for a video in the given language
+// across all configured subtitlers, without downloading the subtitle data.
+func ListSubtitles(video Video, lang Language, log *logrus.Entry) ([]*SubtitleEntry, error) {
+	var result []*SubtitleEntry
+
+	for _, subtitler := range video.GetSubtitlers() {
+		l := log.WithFields(logrus.Fields{
+			"subtitler": subtitler.Name(),
+			"lang":      lang,
+		})
+		l.Debug("listing subtitles")
+
+		entries, err := subtitler.ListSubtitles(video, lang, l)
+		if err != nil {
+			switch err {
+			case ErrNotAvailable:
+				// nothing to log
+			case ErrNoSubtitleFound:
+				l.Debug("no subtitles found")
+			default:
+				l.Warn(err)
+			}
+			continue
+		}
+
+		for _, e := range entries {
+			e.Source = subtitler.Name()
+		}
+		result = append(result, entries...)
+	}
+
+	if len(result) == 0 {
+		return nil, ErrNoSubtitleFound
+	}
+
+	return result, nil
 }
 
 // GetSubtitle gets the subtitles of a video in the given languages

@@ -126,6 +126,46 @@ func (y *YifySubs) GetMovieSubtitle(m *polochon.Movie, lang polochon.Language, l
 	return sub, nil
 }
 
+// ListSubtitles implements the Subtitler interface.
+func (y *YifySubs) ListSubtitles(i any, lang polochon.Language, log *logrus.Entry) ([]*polochon.SubtitleEntry, error) {
+	m, ok := i.(*polochon.Movie)
+	if !ok {
+		return nil, polochon.ErrNotAvailable
+	}
+
+	if m.ImdbID == "" {
+		return nil, ErrMissingImdbID
+	}
+
+	subLang, err := lang.Name()
+	if err != nil {
+		return nil, ErrInvalidSubtitleLang
+	}
+
+	subs, err := y.Client.SearchByLang(m.ImdbID, subLang)
+	if err != nil {
+		if err == yifysubs.ErrNoSubtitleFound {
+			return nil, polochon.ErrNoSubtitleFound
+		}
+		return nil, err
+	}
+
+	var entries []*polochon.SubtitleEntry
+	for _, sub := range subs {
+		for _, rel := range sub.Releases {
+			entries = append(entries, &polochon.SubtitleEntry{
+				Language: lang,
+				Release:  rel,
+			})
+		}
+	}
+
+	if len(entries) == 0 {
+		return nil, polochon.ErrNoSubtitleFound
+	}
+	return entries, nil
+}
+
 // GetSubtitle implements the Subtitler interface
 func (y *YifySubs) GetSubtitle(i any, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
 	switch v := i.(type) {
