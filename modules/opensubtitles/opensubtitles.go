@@ -2,554 +2,457 @@ package opensubtitles
 
 import (
 	"bytes"
+	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"path"
-	"reflect"
+	"net/http"
+	"net/url"
+	"os"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
-	"gopkg.in/yaml.v2"
+	"github.com/sirupsen/logrus"
+	yaml "gopkg.in/yaml.v2"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/oz/osdb"
-	"github.com/sirupsen/logrus"
 )
 
-// Make sure that the module is a subtitler
-var _ polochon.Subtitler = (*osProxy)(nil)
-
-func init() {
-	polochon.RegisterModule(&osProxy{})
-}
-
-// Module constants
 const (
 	moduleName = "opensubtitles"
+	apiBase    = "https://api.opensubtitles.com/api/v1"
 )
 
-// Opensubtitles errors
+var _ polochon.Subtitler = (*opensubs)(nil)
+
 var (
-	ErrInvalidArgument = errors.New("opensubtitles: invalid argument")
-	ErrMissingArgument = errors.New("opensubtitles: missing argument")
+	ErrQuotaExceeded    = errors.New("opensubtitles: daily download quota exceeded")
+	ErrInvalidVideoType = errors.New("opensubtitles: invalid video type")
 )
 
-// Params represents the module params
+// Params holds the YAML-configurable parameters.
 type Params struct {
-	User     string `yaml:"user"`
+	APIKey   string `yaml:"api_key"`
+	Username string `yaml:"username"`
 	Password string `yaml:"password"`
-	Lang     string `yaml:"lang"`
+	APIBase  string `yaml:"api_base"` // optional; defaults to https://api.opensubtitles.com/api/v1
 }
 
-// IsValid checks if the given params are valid
-func (p *Params) IsValid() bool {
-	if p.User == "" || p.Password == "" {
-		return false
-	}
-	// Set english as the default language
-	if p.Lang == "" {
-		p.Lang = string(polochon.EN)
-	}
-	return true
+// opensubs implements polochon.Subtitler using the OpenSubtitles.com REST API.
+type opensubs struct {
+	apiKey   string
+	username string
+	password string
+	apiBase  string
+
+	mu        sync.Mutex
+	remaining int
+	resetAt   time.Time
 }
 
-type osProxy struct {
-	client     *osdb.Client
-	language   string
-	user       string
-	password   string
-	configured bool
-}
+func init() { polochon.RegisterModule(&opensubs{}) }
 
-// Init implements the module interface
-func (osp *osProxy) Init(p []byte) error {
-	if osp.configured {
-		return nil
-	}
+func (o *opensubs) Name() string { return moduleName }
 
-	params := &Params{}
-	if err := yaml.Unmarshal(p, params); err != nil {
+func (o *opensubs) Init(params []byte) error {
+	p := &Params{}
+	if err := yaml.Unmarshal(params, p); err != nil {
 		return err
 	}
-
-	return osp.InitWithParams(params)
+	return o.InitWithParams(p)
 }
 
-// InitWithParams configures the module
-func (osp *osProxy) InitWithParams(params *Params) error {
-	if !params.IsValid() {
-		return ErrMissingArgument
+func (o *opensubs) InitWithParams(p *Params) error {
+	o.apiKey = p.APIKey
+	o.username = p.Username
+	o.password = p.Password
+	o.apiBase = p.APIBase
+	if o.apiBase == "" {
+		o.apiBase = apiBase
 	}
-
-	language := polochon.Language(params.Lang)
-	opensubtitlesLang, err := language.ISO6392()
-	if err != nil {
-		return ErrInvalidArgument
-	}
-
-	// Create the OpenSubtitles proxy
-	osp.language = opensubtitlesLang
-	osp.user = params.User
-	osp.password = params.Password
-	osp.configured = true
-
 	return nil
 }
 
-// Name implements the Module interface
-func (osp *osProxy) Name() string {
-	return moduleName
-}
-
-// Status implements the Module interface
-func (osp *osProxy) Status() (polochon.ModuleStatus, error) {
-	// Create a new client if needed
-	if osp.client == nil {
-		client, err := newOsdbClient()
-		if err != nil {
-			return polochon.StatusFail, err
-		}
-		osp.client = client
+func (o *opensubs) Status() (polochon.ModuleStatus, error) {
+	if o.apiKey == "" {
+		return polochon.StatusFail, errors.New("opensubtitles: missing api_key")
 	}
-
-	innerParams := []map[string]string{
-		{
-			"imdbid": "0133093",
-		},
-	}
-
-	params := []any{
-		osp.client.Token,
-		innerParams,
-	}
-
-	_, err := searchOsdbSubtitles(osp.client, params)
+	params := url.Values{"imdb_id": {"1254207"}} // Big Buck Bunny (tt1254207)
+	req, err := o.newRequest(http.MethodGet, "/subtitles?"+params.Encode(), nil)
 	if err != nil {
 		return polochon.StatusFail, err
+	}
+	resp, err := doRequest(req)
+	if err != nil {
+		return polochon.StatusFail, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		return polochon.StatusFail, fmt.Errorf("opensubtitles: status check returned %d", resp.StatusCode)
 	}
 	return polochon.StatusOK, nil
 }
 
-// Function to get a new client
-var newOsdbClient = func() (*osdb.Client, error) {
-	return osdb.NewClient()
-}
-
-// Function to check the client
-var checkOsdbClient = func(c *osdb.Client) error {
-	return c.Noop()
-}
-
-// Function to log in the client
-var logInOsdbClient = func(c *osdb.Client, user, password, language string) error {
-	return c.LogIn(user, password, language)
-}
-
-// Function to search subtitles via params
-var searchOsdbSubtitles = func(c *osdb.Client, params []any) (osdb.Subtitles, error) {
-	return c.SearchSubtitles(&params)
-}
-
-// Function to search subtitles via a file
-var fileSearchSubtitles = func(c *osdb.Client, filePath string, languages []string) (osdb.Subtitles, error) {
-	return c.FileSearch(filePath, languages)
-}
-
-// getOpenSubtitleClient will return a configured osdb.Client
-func (osp *osProxy) getOpenSubtitleClient() error {
-	// Create a new client if needed
-	if osp.client == nil {
-		client, err := newOsdbClient()
-		if err != nil {
-			return err
-		}
-		osp.client = client
-	}
-
-	// Test to see if the connexion is still ok
-	if err := checkOsdbClient(osp.client); err == nil {
-		return nil
-	}
-
-	// If we had an error, try to login again
-	// LogIn with the user's configuration
-	return logInOsdbClient(osp.client, osp.user, osp.password, osp.language)
-}
-
-func (osp *osProxy) checkSubtitles(i any, subs osdb.Subtitles, log *logrus.Entry) (*osdb.Subtitle, error) {
-	var goodSubs []osdb.Subtitle
-
-	switch v := i.(type) {
-	case *polochon.ShowEpisode:
-		goodSubs = osp.getGoodShowEpisodeSubtitles(v, subs, log)
-	case *polochon.Movie:
-		goodSubs = osp.getGoodMovieSubtitles(v, subs, log)
-	default:
-		return nil, fmt.Errorf("opensubtitles: error while checking subtitles, invalid type %s", reflect.TypeOf(v))
-	}
-	return osp.getBestSubtitle(goodSubs), nil
-}
-
-// searchSubtitles will search via hash, then filename, then info and return the best subtitle
-func (osp *osProxy) searchSubtitles(v polochon.Video, lang string, log *logrus.Entry) (*openSubtitle, error) {
-	// Look for subtitles with the hash
-	sub, err := osp.checkConnAndExec(osp.searchSubtitlesByHash, v, lang, v.GetFile().Path, log)
-	if err != nil {
-		log.Warnf("Got error looking for subtitle by hash : %q", err)
-	}
-
-	if sub != nil {
-		log.Debug("We got the subtitle by hash")
-		return &openSubtitle{os: sub, client: osp.client}, nil
-	}
-
-	log.Debug("Nothing in the result, need to check again with filename")
-
-	// Look for subtitles with the filename
-	sub, err = osp.checkConnAndExec(osp.searchSubtitlesByFilename, v, lang, v.GetFile().Path, log)
-	if err != nil {
-		log.Warnf("Got error looking for subtitle by filename : %q", err)
-	}
-
-	if sub != nil {
-		log.Debug("We got the subtitle by filename")
-		return &openSubtitle{os: sub, client: osp.client}, nil
-	}
-
-	log.Debug("Still no good, need to check again with imdbID")
-
-	// Look for subtitles with the title and episode and season or by imdbID
-	sub, err = osp.checkConnAndExec(osp.searchSubtitlesByInfos, v, lang, v.GetFile().Path, log)
-	if err != nil {
-		log.Warnf("Got error looking for subtitle by infos : %q", err)
-	}
-
-	if sub != nil {
-		return &openSubtitle{os: sub, client: osp.client}, nil
-	}
-
-	return nil, polochon.ErrNoSubtitleFound
-}
-
-// checkConnAndExec will check the connexion, execute the function and check the subtitles returned
-func (osp *osProxy) checkConnAndExec(
-	f func(v polochon.Video, lang string, filePath string) (osdb.Subtitles, error),
-	v polochon.Video, lang string, filePath string, log *logrus.Entry) (*osdb.Subtitle, error) {
-
-	// Check the opensubtitle client
-	err := osp.getOpenSubtitleClient()
+func (o *opensubs) GetSubtitle(i any, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
+	entries, err := o.ListSubtitles(i, lang, log)
 	if err != nil {
 		return nil, err
 	}
-	res, err := f(v, lang, filePath)
-	if err != nil {
-		return nil, err
-	}
-	// Now that we have a list of subtitles, need to check that we have the good one
-	return osp.checkSubtitles(v, res, log)
-}
-
-// searchSubtitlesByHash will make a hash of the file, and check for corresponding subtitles
-func (osp *osProxy) searchSubtitlesByHash(_ polochon.Video, lang string, filePath string) (osdb.Subtitles, error) {
-	// Set the languages
-	languages := []string{lang}
-	// Hash movie file, and search...
-	return fileSearchSubtitles(osp.client, filePath, languages)
-}
-
-// searchSubtitlesByFilename will search for subtitles corresponding to the name of the file
-func (osp *osProxy) searchSubtitlesByFilename(_ polochon.Video, lang string, filePath string) (osdb.Subtitles, error) {
-	var innerParams = []map[string]string{
-		{
-			"query":         path.Base(filePath),
-			"sublanguageid": lang,
-		},
-	}
-
-	params := []any{
-		osp.client.Token,
-		innerParams,
-	}
-
-	return searchOsdbSubtitles(osp.client, params)
-}
-
-// searchSubtitlesByInfos will take the info of the video (imdbId / title / ...) to get subtitles
-func (osp *osProxy) searchSubtitlesByInfos(v polochon.Video, lang string, filePath string) (osdb.Subtitles, error) {
-
-	innerParams, err := osp.openSubtitleParams(v)
-	if err != nil {
-		return nil, err
-	}
-	innerParams[0]["sublanguageid"] = lang
-
-	params := []any{
-		osp.client.Token,
-		innerParams,
-	}
-
-	return searchOsdbSubtitles(osp.client, params)
-}
-
-// openSubtitleParams will return the good params needed for a search
-func (osp *osProxy) openSubtitleParams(video polochon.Video) ([]map[string]string, error) {
-	switch v := video.(type) {
-	case *polochon.ShowEpisode:
-		return osp.openSubtitleShowEpisodeParams(v), nil
-	case *polochon.Movie:
-		return osp.openSubtitleMovieParams(v), nil
-	default:
-		return []map[string]string{}, fmt.Errorf("opensubtitles: not a showEpisode, not a movie, something's fucked up")
-	}
-}
-
-// openSubtitleMovieParam will return the needed params to look for a movie
-func (osp *osProxy) openSubtitleMovieParams(m *polochon.Movie) []map[string]string {
-	return []map[string]string{
-		{
-			"imdbid": strings.ReplaceAll(m.ImdbID, "tt", ""),
-		},
-	}
-}
-
-// openSubtitleShowEpisode will return the needed params to look for a show episode
-func (osp *osProxy) openSubtitleShowEpisodeParams(s *polochon.ShowEpisode) []map[string]string {
-	return []map[string]string{
-		{
-			"query":   s.ShowTitle,
-			"season":  strconv.Itoa(s.Season),
-			"episode": strconv.Itoa(s.Episode),
-		},
-	}
-}
-
-// getBestSubtitle will get the best subtitle from the list
-// Given the nb of downloads and the rating
-func (osp *osProxy) getBestSubtitle(subs []osdb.Subtitle) *osdb.Subtitle {
-	if len(subs) > 0 {
-		return &subs[0]
-	}
-	return nil
-}
-
-// getGoodMovieSubtitles will retrieve only the movies with the same imdbId
-func (osp *osProxy) getGoodMovieSubtitles(m *polochon.Movie, subs osdb.Subtitles, log *logrus.Entry) []osdb.Subtitle {
-	var goodSubs []osdb.Subtitle
-	for _, sub := range subs {
-		// Need to check that it's the good subtitle
-		imdbID := fmt.Sprintf("tt%07s", sub.IDMovieImdb)
-
-		if imdbID == m.ImdbID {
-			goodSubs = append(goodSubs, sub)
-		} else {
-			continue
-		}
-	}
-	if len(goodSubs) > 0 {
-		log.Debugf("Got %d subtitles", len(goodSubs))
-	}
-	return goodSubs
-}
-
-// getGoodShowEpisodeSubtitles will retrieve only the shoes with the same
-// imdbId / season nb / episode nb
-func (osp *osProxy) getGoodShowEpisodeSubtitles(s *polochon.ShowEpisode, subs osdb.Subtitles, log *logrus.Entry) []osdb.Subtitle {
-	var goodSubs []osdb.Subtitle
-	for _, sub := range subs {
-		// Need to check that it's the good subtitle
-		imdbID := fmt.Sprintf("tt%07s", sub.SeriesIMDBParent)
-		if imdbID != s.ShowImdbID {
-			continue
-		}
-
-		if sub.SeriesEpisode != strconv.Itoa(s.Episode) {
-			continue
-		}
-
-		if sub.SeriesSeason != strconv.Itoa(s.Season) {
-			continue
-		}
-
-		goodSubs = append(goodSubs, sub)
-	}
-	if len(goodSubs) > 0 {
-		log.Debugf("Got %d subtitles", len(goodSubs))
-	}
-	return goodSubs
-}
-
-// filterSubtitles returns all subtitles from subs that match the video (IMDB ID / season / episode).
-func (osp *osProxy) filterSubtitles(i any, subs osdb.Subtitles, log *logrus.Entry) []osdb.Subtitle {
-	switch v := i.(type) {
-	case *polochon.ShowEpisode:
-		return osp.getGoodShowEpisodeSubtitles(v, subs, log)
-	case *polochon.Movie:
-		return osp.getGoodMovieSubtitles(v, subs, log)
-	default:
-		return nil
-	}
-}
-
-// searchAndFilter checks the connection, runs f, and returns all matching subtitles.
-func (osp *osProxy) searchAndFilter(
-	f func(polochon.Video, string, string) (osdb.Subtitles, error),
-	v polochon.Video, lang string, log *logrus.Entry,
-) []osdb.Subtitle {
-	if err := osp.getOpenSubtitleClient(); err != nil {
-		return nil
-	}
-	raw, err := f(v, lang, v.GetFile().Path)
-	if err != nil {
-		return nil
-	}
-	return osp.filterSubtitles(v, raw, log)
-}
-
-// listAllSubtitles runs the 3-tier search and returns all matching osdb.Subtitle entries.
-func (osp *osProxy) listAllSubtitles(v polochon.Video, lang string, log *logrus.Entry) []osdb.Subtitle {
-	seen := map[string]bool{}
-	var all []osdb.Subtitle
-
-	for _, s := range osp.searchAndFilter(osp.searchSubtitlesByHash, v, lang, log) {
-		if !seen[s.IDSubtitle] {
-			seen[s.IDSubtitle] = true
-			all = append(all, s)
-		}
-	}
-	for _, s := range osp.searchAndFilter(osp.searchSubtitlesByFilename, v, lang, log) {
-		if !seen[s.IDSubtitle] {
-			seen[s.IDSubtitle] = true
-			all = append(all, s)
-		}
-	}
-	for _, s := range osp.searchAndFilter(osp.searchSubtitlesByInfos, v, lang, log) {
-		if !seen[s.IDSubtitle] {
-			seen[s.IDSubtitle] = true
-			all = append(all, s)
-		}
-	}
-	return all
-}
-
-// ListSubtitles implements the Subtitler interface.
-func (osp *osProxy) ListSubtitles(i any, lang polochon.Language, log *logrus.Entry) ([]*polochon.SubtitleEntry, error) {
-	opensubtitlesLang, err := lang.ISO6392()
-	if err != nil {
-		return nil, ErrInvalidArgument
-	}
-
-	video, ok := i.(polochon.Video)
-	if !ok {
-		return nil, fmt.Errorf("opensub: invalid argument")
-	}
-
-	subs := osp.listAllSubtitles(video, opensubtitlesLang, log)
-
-	if len(subs) == 0 {
+	if len(entries) == 0 {
 		return nil, polochon.ErrNoSubtitleFound
 	}
+	return o.DownloadSubtitle(i, entries[0], log)
+}
 
-	entries := make([]*polochon.SubtitleEntry, 0, len(subs))
-	for _, s := range subs {
+func videoPath(i any) string {
+	switch v := i.(type) {
+	case *polochon.Movie:
+		return v.Path
+	case *polochon.ShowEpisode:
+		return v.Path
+	}
+	return ""
+}
+
+func imdbParam(i any) string {
+	switch v := i.(type) {
+	case *polochon.Movie:
+		return strings.TrimPrefix(v.ImdbID, "tt")
+	case *polochon.ShowEpisode:
+		return strings.TrimPrefix(v.ShowImdbID, "tt")
+	}
+	return ""
+}
+
+func titleParams(i any, lang polochon.Language) (url.Values, error) {
+	p := url.Values{"languages": {lang.ShortForm()}}
+	switch v := i.(type) {
+	case *polochon.Movie:
+		p.Set("query", v.Title)
+	case *polochon.ShowEpisode:
+		p.Set("query", v.ShowTitle)
+		p.Set("season_number", strconv.Itoa(v.Season))
+		p.Set("episode_number", strconv.Itoa(v.Episode))
+	default:
+		return nil, ErrInvalidVideoType
+	}
+	return p, nil
+}
+
+func setLang(entries []*polochon.SubtitleEntry, lang polochon.Language) []*polochon.SubtitleEntry {
+	for _, e := range entries {
+		e.Language = lang
+	}
+	return entries
+}
+
+func (o *opensubs) ListSubtitles(i any, lang polochon.Language, _ *logrus.Entry) ([]*polochon.SubtitleEntry, error) {
+	// Bail early if the daily download quota is exhausted, searching is
+	// pointless since we won't be able to download whatever we find.
+	if o.quotaReached() {
+		return nil, ErrQuotaExceeded
+	}
+
+	// Tier 1: hash search (most accurate, requires file on disk)
+	if path := videoPath(i); path != "" {
+		if hash, err := hashFile(path); err == nil {
+			p := url.Values{"moviehash": {hash}, "languages": {lang.ShortForm()}}
+			if entries, err := o.search(p); err == nil && len(entries) > 0 {
+				return setLang(entries, lang), nil
+			}
+		}
+	}
+
+	// Tier 2: IMDB ID search
+	if id := imdbParam(i); id != "" {
+		p := url.Values{"imdb_id": {id}, "languages": {lang.ShortForm()}}
+		if ep, ok := i.(*polochon.ShowEpisode); ok {
+			p.Set("season_number", strconv.Itoa(ep.Season))
+			p.Set("episode_number", strconv.Itoa(ep.Episode))
+		}
+		if entries, err := o.search(p); err == nil && len(entries) > 0 {
+			return setLang(entries, lang), nil
+		}
+	}
+
+	// Tier 3: title/query search
+	params, err := titleParams(i, lang)
+	if err != nil {
+		return nil, err
+	}
+	entries, err := o.search(params)
+	if err != nil {
+		return nil, err
+	}
+	if len(entries) == 0 {
+		return nil, polochon.ErrNoSubtitleFound
+	}
+	return setLang(entries, lang), nil
+}
+
+type loginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type loginResponse struct {
+	Token string `json:"token"`
+}
+
+func (o *opensubs) login() (string, error) {
+	body, err := json.Marshal(loginRequest{Username: o.username, Password: o.password})
+	if err != nil {
+		return "", err
+	}
+	req, err := o.newRequest(http.MethodPost, "/login", bytes.NewReader(body))
+	if err != nil {
+		return "", err
+	}
+	resp, err := doRequest(req)
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("opensubtitles: login returned status %d", resp.StatusCode)
+	}
+	var lr loginResponse
+	if err := json.NewDecoder(resp.Body).Decode(&lr); err != nil {
+		return "", err
+	}
+	if lr.Token == "" {
+		return "", fmt.Errorf("opensubtitles: login returned empty token")
+	}
+	return lr.Token, nil
+}
+
+func (o *opensubs) logout(token string) {
+	req, err := o.newRequest(http.MethodDelete, "/logout", nil)
+	if err != nil {
+		return
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	resp, err := doRequest(req)
+	if err != nil {
+		return
+	}
+	_ = resp.Body.Close()
+}
+
+type downloadRequest struct {
+	FileID int `json:"file_id"`
+}
+
+type downloadResponse struct {
+	Link         string `json:"link"`
+	Remaining    int    `json:"remaining"`
+	ResetTimeUTC string `json:"reset_time_utc"`
+}
+
+// quotaReached returns true if the daily download quota is known to be exhausted.
+func (o *opensubs) quotaReached() bool {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	return o.remaining == 0 && !o.resetAt.IsZero() && time.Now().Before(o.resetAt)
+}
+
+// updateQuota stores the remaining count and reset time returned by the download endpoint.
+// The API returns timestamps with milliseconds (e.g. "2022-04-08T13:03:16.000Z").
+func (o *opensubs) updateQuota(remaining int, resetTimeUTC string) {
+	t, err := time.Parse(time.RFC3339Nano, resetTimeUTC)
+	if err != nil {
+		return
+	}
+	o.mu.Lock()
+	o.remaining = remaining
+	o.resetAt = t
+	o.mu.Unlock()
+}
+
+// DownloadSubtitle fetches the subtitle identified by entry.Token (a permanent file_id).
+func (o *opensubs) DownloadSubtitle(i any, entry *polochon.SubtitleEntry, _ *logrus.Entry) (*polochon.Subtitle, error) {
+	if o.quotaReached() {
+		return nil, ErrQuotaExceeded
+	}
+
+	token, err := o.login()
+	if err != nil {
+		return nil, err
+	}
+	defer o.logout(token)
+
+	fileID, err := strconv.Atoi(entry.Token)
+	if err != nil {
+		return nil, fmt.Errorf("opensubtitles: invalid token %q", entry.Token)
+	}
+
+	body, err := json.Marshal(downloadRequest{FileID: fileID})
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := o.newRequest(http.MethodPost, "/download", bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := doRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode == http.StatusTooManyRequests {
+		return nil, ErrQuotaExceeded
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("opensubtitles: download returned status %d", resp.StatusCode)
+	}
+
+	var dr downloadResponse
+	if err := json.NewDecoder(resp.Body).Decode(&dr); err != nil {
+		return nil, err
+	}
+	o.updateQuota(dr.Remaining, dr.ResetTimeUTC)
+
+	// Fetch the actual subtitle file from the pre-signed temp URL (no auth headers needed)
+	getReq, err := http.NewRequest(http.MethodGet, dr.Link, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	fileResp, err := doRequest(getReq)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = fileResp.Body.Close() }()
+
+	if fileResp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("opensubtitles: file fetch returned status %d", fileResp.StatusCode)
+	}
+
+	data, err := io.ReadAll(fileResp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	v, ok := i.(polochon.Video)
+	if !ok {
+		return nil, ErrInvalidVideoType
+	}
+	s := polochon.NewSubtitleFromVideo(v, entry.Language)
+	s.Data = data
+	return s, nil
+}
+
+// hashFile computes the OpenSubtitles hash for a video file.
+// Algorithm: sum of first + last 64 KB as little-endian uint64 words, plus file size.
+func hashFile(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = f.Close() }()
+
+	fi, err := f.Stat()
+	if err != nil {
+		return "", err
+	}
+
+	const chunkSize = 65536
+	if fi.Size() < chunkSize {
+		return "", fmt.Errorf("opensubtitles: file too small to hash (%d bytes)", fi.Size())
+	}
+	hash := uint64(fi.Size())
+
+	addChunk := func() {
+		var word [8]byte
+		for range chunkSize / 8 {
+			if _, err := io.ReadFull(f, word[:]); err != nil {
+				break
+			}
+			hash += binary.LittleEndian.Uint64(word[:])
+		}
+	}
+
+	addChunk() // first 64 KB
+
+	offset := max(fi.Size()-chunkSize, 0)
+	if _, err := f.Seek(offset, io.SeekStart); err != nil {
+		return "", err
+	}
+	addChunk() // last 64 KB
+
+	return fmt.Sprintf("%016x", hash), nil
+}
+
+// doRequest is overridable for tests.
+var doRequest = func(req *http.Request) (*http.Response, error) {
+	return http.DefaultClient.Do(req)
+}
+
+// newRequest builds an authenticated request to the OpenSubtitles REST API.
+func (o *opensubs) newRequest(method, path string, body io.Reader) (*http.Request, error) {
+	req, err := http.NewRequest(method, o.apiBase+path, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Api-Key", o.apiKey)
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", "polochon")
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	return req, nil
+}
+
+type searchResponse struct {
+	Data []struct {
+		Attributes struct {
+			Release string  `json:"release"`
+			Ratings float64 `json:"ratings"`
+			Files   []struct {
+				FileID int `json:"file_id"`
+			} `json:"files"`
+		} `json:"attributes"`
+	} `json:"data"`
+}
+
+func (o *opensubs) search(params url.Values) ([]*polochon.SubtitleEntry, error) {
+	req, err := o.newRequest(http.MethodGet, "/subtitles?"+params.Encode(), nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := doRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("opensubtitles: search returned status %d", resp.StatusCode)
+	}
+
+	var sr searchResponse
+	if err := json.NewDecoder(resp.Body).Decode(&sr); err != nil {
+		return nil, err
+	}
+
+	var entries []*polochon.SubtitleEntry
+	for _, item := range sr.Data {
+		if len(item.Attributes.Files) == 0 {
+			continue
+		}
 		entries = append(entries, &polochon.SubtitleEntry{
-			Language: lang,
-			Release:  s.SubFileName,
-			Rating:   s.SubRating,
-			Token:    s.IDSubtitle,
+			Release: item.Attributes.Release,
+			Rating:  fmt.Sprintf("%.1f", item.Attributes.Ratings),
+			Token:   strconv.Itoa(item.Attributes.Files[0].FileID),
+			Source:  moduleName,
 		})
 	}
 	return entries, nil
-}
-
-// DownloadSubtitle implements the Subtitler interface.
-func (osp *osProxy) DownloadSubtitle(i any, entry *polochon.SubtitleEntry, _ *logrus.Entry) (*polochon.Subtitle, error) {
-	video, ok := i.(polochon.Video)
-	if !ok {
-		return nil, fmt.Errorf("opensubtitles: invalid argument")
-	}
-
-	if err := osp.getOpenSubtitleClient(); err != nil {
-		return nil, err
-	}
-
-	sub := openSubtitle{
-		os:     &osdb.Subtitle{IDSubtitle: entry.Token},
-		client: osp.client,
-	}
-
-	data := &bytes.Buffer{}
-	if _, err := data.ReadFrom(&sub); err != nil {
-		return nil, err
-	}
-
-	s := polochon.NewSubtitleFromVideo(video, entry.Language)
-	s.Data = data.Bytes()
-	return s, nil
-}
-
-func (osp *osProxy) GetSubtitle(i any, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
-	opensubtitlesLang, err := lang.ISO6392()
-	if err != nil {
-		return nil, ErrInvalidArgument
-	}
-
-	video, ok := i.(polochon.Video)
-	if !ok {
-		return nil, fmt.Errorf("opensub: invalid argument")
-	}
-
-	sub, err := osp.searchSubtitles(video, opensubtitlesLang, log)
-	if err != nil {
-		return nil, err
-	}
-
-	data := &bytes.Buffer{}
-	_, err = data.ReadFrom(sub)
-	if err != nil {
-		return nil, err
-	}
-
-	s := polochon.NewSubtitleFromVideo(video, lang)
-	s.Data = data.Bytes()
-	return s, nil
-}
-
-// Struct of a subtitle containing an osdbSubtitle, a connexion if any, and a
-// link to the osdb.Client
-type openSubtitle struct {
-	os     *osdb.Subtitle
-	conn   io.ReadCloser
-	client *osdb.Client
-}
-
-// Close the subtitle connexion
-func (o *openSubtitle) Close() error {
-	if o.conn != nil {
-		return o.conn.Close()
-	}
-	return nil
-}
-
-// Read the subtitle
-func (o *openSubtitle) Read(b []byte) (int, error) {
-	// Download
-	if o.conn == nil {
-		files, err := o.client.DownloadSubtitles([]osdb.Subtitle{*o.os})
-		if err != nil {
-			return 0, err
-		}
-		if len(files) == 0 {
-			return 0, fmt.Errorf("opensubtitles: no file match this subtitle ID")
-		}
-
-		// Save to disk.
-		r, err := files[0].Reader()
-		if err != nil {
-			return 0, err
-		}
-		o.conn = r
-	}
-
-	return o.conn.Read(b)
 }

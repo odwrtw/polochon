@@ -20,7 +20,6 @@ require (
 	github.com/odwrtw/whatsthis v0.0.0-20260324183316-86994131f0d2
 	github.com/odwrtw/yifysubs v0.0.0-20260324231500-2a22e2158ed9
 	github.com/odwrtw/yts v0.0.0-20231024130053-dfa826fee7b6
-	github.com/oz/osdb v0.0.0-20221214175751-f169057712ec
 	github.com/phyber/negroni-gzip v1.0.0
 	github.com/pioz/tvdb v0.0.0-20221212235421-03519fb7a0e2
 	github.com/prometheus/client_golang v1.23.2
@@ -53,7 +52,6 @@ require (
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/jpillora/scraper v0.3.0 // indirect
 	github.com/kennygrant/sanitize v1.2.4 // indirect
-	github.com/kolo/xmlrpc v0.0.0-20220921171641-a4b6fa1dd06b // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/kylelemons/go-gypsy v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
