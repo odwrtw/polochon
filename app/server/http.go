@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"path/filepath"
 	"time"
@@ -30,6 +31,7 @@ type Server struct {
 	library         *library.Library
 	authManager     *auth.Manager
 	gracefulServer  *http.Server
+	shutdownCancel  context.CancelFunc
 	hub             *sseHub
 	log             *logrus.Entry
 	render          *render.Render
@@ -56,7 +58,14 @@ func (s *Server) Run(log *logrus.Entry) error {
 	// Init the app
 	s.InitStart(log)
 
-	s.gracefulServer = s.httpServer(s.log)
+	ctx, cancel := context.WithCancel(context.Background())
+	s.shutdownCancel = cancel
+	defer cancel()
+
+	srv := s.httpServer(s.log)
+	srv.BaseContext = func(_ net.Listener) context.Context { return ctx }
+	s.gracefulServer = srv
+
 	err := s.gracefulServer.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		return err
@@ -66,7 +75,12 @@ func (s *Server) Run(log *logrus.Entry) error {
 
 // Stop stops the http server
 func (s *Server) Stop(log *logrus.Entry) {
-	if err := s.gracefulServer.Shutdown(context.Background()); err != nil {
+	if s.shutdownCancel != nil {
+		s.shutdownCancel()
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := s.gracefulServer.Shutdown(ctx); err != nil {
 		log.WithError(err).Error("failed to shutdown http server")
 	}
 }
