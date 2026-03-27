@@ -165,11 +165,12 @@ modules_params:
     key: sdf7as8f8ds7f9sf
     recipient: 9327a472s3947234792
     # Opensubtitles is used to download the subtitles for movies and episodes.
-    # The username and password are mandatory.
+    # Get an API key at https://www.opensubtitles.com/consumers
   - name: opensubtitles
-    user: opensubtitle@canapeapp.com
-    lang: en_US
-    password: my@w3$0m3p@$$w0rD
+    api_key: my_api_key
+    username: my_username
+    password: my_password
+    # api_base: https://stoplight.io/mocks/opensubtitles/opensubtitles-api/2781383  # mock server for testing
     # Imdb is used to get the wishlist from a *public* list for a user id, you
     # can specify multiple user ids to tracks multiple lists.
   - name: imdb
