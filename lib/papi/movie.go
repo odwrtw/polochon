@@ -47,6 +47,10 @@ func (m *Movie) downloadURL() (string, error) {
 		return "", err
 	}
 
+	if m.Path != "" {
+		return fmt.Sprintf("%s/download/%s", uri, m.Filename()), nil
+	}
+
 	return fmt.Sprintf("%s/download", uri), nil
 }
 

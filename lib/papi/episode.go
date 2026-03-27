@@ -37,6 +37,10 @@ func (e *Episode) downloadURL() (string, error) {
 		return "", err
 	}
 
+	if e.Path != "" {
+		return fmt.Sprintf("%s/download/%s", uri, e.Filename()), nil
+	}
+
 	return fmt.Sprintf("%s/download", uri), nil
 }
 

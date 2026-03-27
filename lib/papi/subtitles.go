@@ -2,6 +2,7 @@ package papi
 
 import (
 	"fmt"
+	"path/filepath"
 
 	polochon "github.com/odwrtw/polochon/lib"
 )
@@ -51,6 +52,15 @@ func (s *Subtitle) downloadURL() (string, error) {
 	uri, err := s.uri()
 	if err != nil {
 		return "", err
+	}
+
+	if s.Path != "" {
+		return fmt.Sprintf("%s/download/%s", uri, s.Filename()), nil
+	}
+
+	if s.Video != nil && s.Video.GetFile().Path != "" {
+		name := filepath.Base(s.Video.GetFile().SubtitlePath(s.Lang))
+		return fmt.Sprintf("%s/download/%s", uri, name), nil
 	}
 
 	return uri + "/download", nil
