@@ -83,9 +83,9 @@ func (c *Client) ListSubtitles(i any, lang polochon.Language, _ *logrus.Entry) (
 	entries := make([]*polochon.SubtitleEntry, 0, len(subs))
 	for _, s := range subs {
 		entries = append(entries, &polochon.SubtitleEntry{
-			Language: lang,
-			Release:  strings.Join(s.CustomReleases, ", "),
-			Token:    s.PublishID,
+			Language:    lang,
+			Description: strings.Join(s.CustomReleases, ", "),
+			ID:          s.PublishID,
 		})
 	}
 	return entries, nil
@@ -99,7 +99,7 @@ func (c *Client) DownloadSubtitle(i any, entry *polochon.SubtitleEntry, _ *logru
 	}
 
 	release := filepath.Base(video.GetFile().PathWithoutExt())
-	data, err := podnapisiDownload(entry.Token, release)
+	data, err := podnapisiDownload(entry.ID, release)
 	if err != nil {
 		return nil, err
 	}

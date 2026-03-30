@@ -139,7 +139,7 @@ func TestDownloadSubtitle_FileFetchError(t *testing.T) {
 	o := &opensubs{apiKey: "key", username: "user", password: "pass"}
 	movie := &polochon.Movie{}
 	movie.Path = "/media/movie.mkv"
-	entry := &polochon.SubtitleEntry{Token: "42", Language: polochon.EN}
+	entry := &polochon.SubtitleEntry{ID: "42", Language: polochon.EN}
 
 	orig := doRequest
 	defer func() { doRequest = orig }()
@@ -242,8 +242,8 @@ func TestListSubtitles_TitleFallback(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if entries[0].Token != "7" {
-		t.Errorf("got token %q, want %q", entries[0].Token, "7")
+	if entries[0].ID != "7" {
+		t.Errorf("got id %q, want %q", entries[0].ID, "7")
 	}
 }
 
@@ -341,11 +341,11 @@ func TestSearch(t *testing.T) {
 	if len(entries) != 1 {
 		t.Fatalf("expected 1 entry, got %d", len(entries))
 	}
-	if entries[0].Token != "42" {
-		t.Errorf("got token %q, want %q", entries[0].Token, "42")
+	if entries[0].ID != "42" {
+		t.Errorf("got id %q, want %q", entries[0].ID, "42")
 	}
-	if entries[0].Release != "Movie.2020.BluRay" {
-		t.Errorf("got release %q, want %q", entries[0].Release, "Movie.2020.BluRay")
+	if entries[0].Description != "Movie.2020.BluRay (Rating: 8.0)" {
+		t.Errorf("got description %q, want %q", entries[0].Description, "Movie.2020.BluRay (Rating: 8.0)")
 	}
 	if entries[0].Source != moduleName {
 		t.Errorf("got source %q, want %q", entries[0].Source, moduleName)
@@ -402,7 +402,7 @@ func TestDownloadSubtitle(t *testing.T) {
 	o := &opensubs{apiKey: "key", username: "user", password: "pass"}
 	movie := &polochon.Movie{}
 	movie.Path = "/media/The.Matrix.1999.mkv"
-	entry := &polochon.SubtitleEntry{Token: "42", Language: polochon.EN}
+	entry := &polochon.SubtitleEntry{ID: "42", Language: polochon.EN}
 
 	orig := doRequest
 	defer func() { doRequest = orig }()
@@ -462,7 +462,7 @@ func TestDownloadSubtitle_QuotaExceeded(t *testing.T) {
 	o := &opensubs{apiKey: "key", username: "user", password: "pass"}
 	movie := &polochon.Movie{}
 	movie.Path = "/media/movie.mkv"
-	entry := &polochon.SubtitleEntry{Token: "42"}
+	entry := &polochon.SubtitleEntry{ID: "42"}
 
 	orig := doRequest
 	defer func() { doRequest = orig }()
@@ -577,7 +577,7 @@ func TestQuotaReached(t *testing.T) {
 func TestDownloadSubtitle_QuotaReached(t *testing.T) {
 	o := &opensubs{remaining: 0, resetAt: time.Now().Add(time.Hour)}
 	movie := &polochon.Movie{}
-	entry := &polochon.SubtitleEntry{Token: "42"}
+	entry := &polochon.SubtitleEntry{ID: "42"}
 
 	_, err := o.DownloadSubtitle(movie, entry, silentLog)
 	if err != ErrQuotaExceeded {
@@ -599,7 +599,7 @@ func TestDownloadSubtitle_StoresQuota(t *testing.T) {
 	o := &opensubs{apiKey: "key", username: "user", password: "pass"}
 	movie := &polochon.Movie{}
 	movie.Path = "/media/movie.mkv"
-	entry := &polochon.SubtitleEntry{Token: "42", Language: polochon.EN}
+	entry := &polochon.SubtitleEntry{ID: "42", Language: polochon.EN}
 
 	orig := doRequest
 	defer func() { doRequest = orig }()

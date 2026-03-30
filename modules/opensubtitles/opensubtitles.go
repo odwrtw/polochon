@@ -272,7 +272,7 @@ func (o *opensubs) updateQuota(remaining int, resetTimeUTC string) {
 	o.mu.Unlock()
 }
 
-// DownloadSubtitle fetches the subtitle identified by entry.Token (a permanent file_id).
+// DownloadSubtitle fetches the subtitle identified by entry.ID (a permanent file_id).
 func (o *opensubs) DownloadSubtitle(i any, entry *polochon.SubtitleEntry, _ *logrus.Entry) (*polochon.Subtitle, error) {
 	if o.quotaReached() {
 		return nil, ErrQuotaExceeded
@@ -284,9 +284,9 @@ func (o *opensubs) DownloadSubtitle(i any, entry *polochon.SubtitleEntry, _ *log
 	}
 	defer o.logout(token)
 
-	fileID, err := strconv.Atoi(entry.Token)
+	fileID, err := strconv.Atoi(entry.ID)
 	if err != nil {
-		return nil, fmt.Errorf("opensubtitles: invalid token %q", entry.Token)
+		return nil, fmt.Errorf("opensubtitles: invalid id %q", entry.ID)
 	}
 
 	body, err := json.Marshal(downloadRequest{FileID: fileID})
@@ -448,10 +448,9 @@ func (o *opensubs) search(params url.Values) ([]*polochon.SubtitleEntry, error) 
 			continue
 		}
 		entries = append(entries, &polochon.SubtitleEntry{
-			Release: item.Attributes.Release,
-			Rating:  fmt.Sprintf("%.1f", item.Attributes.Ratings),
-			Token:   strconv.Itoa(item.Attributes.Files[0].FileID),
-			Source:  moduleName,
+			Description: fmt.Sprintf("%s (Rating: %.1f)", item.Attributes.Release, item.Attributes.Ratings),
+			ID:          strconv.Itoa(item.Attributes.Files[0].FileID),
+			Source:      moduleName,
 		})
 	}
 	return entries, nil

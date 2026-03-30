@@ -1,6 +1,8 @@
 package mkvinfo
 
 import (
+	"fmt"
+
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/sirupsen/logrus"
 )
@@ -70,9 +72,10 @@ func (m *MKVInfo) ListSubtitles(v any, lang polochon.Language, log *logrus.Entry
 
 	return []*polochon.SubtitleEntry{
 		{
-			Language: lang,
-			Embedded: true,
-			Token:    "",
+			Language:    lang,
+			Embedded:    true,
+			ID:          string(lang),
+			Description: fmt.Sprintf("Embedded %s subtitle", lang),
 		},
 	}, nil
 }

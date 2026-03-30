@@ -154,9 +154,9 @@ func (y *YifySubs) ListSubtitles(i any, lang polochon.Language, log *logrus.Entr
 	for _, sub := range subs {
 		for _, rel := range sub.Releases {
 			entries = append(entries, &polochon.SubtitleEntry{
-				Language: lang,
-				Release:  rel,
-				Token:    sub.URL,
+				Language:    lang,
+				Description: rel,
+				ID:          sub.URL,
 			})
 		}
 	}
@@ -174,7 +174,7 @@ func (y *YifySubs) DownloadSubtitle(i any, entry *polochon.SubtitleEntry, _ *log
 		return nil, polochon.ErrNotAvailable
 	}
 
-	sub := &yifysubs.Subtitle{URL: entry.Token}
+	sub := &yifysubs.Subtitle{URL: entry.ID}
 
 	data := &bytes.Buffer{}
 	if _, err := data.ReadFrom(sub); err != nil {

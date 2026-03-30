@@ -9,12 +9,11 @@ import (
 
 // SubtitleEntry represents a subtitle available for download (without the data itself)
 type SubtitleEntry struct {
-	Language Language `json:"language"`
-	Release  string   `json:"release"`
-	Rating   string   `json:"rating"`
-	Embedded bool     `json:"embedded"`
-	Source   string   `json:"source"`
-	Token    string   `json:"-"` // module-specific identifier, not exposed to clients
+	Language    Language `json:"language"`
+	Embedded    bool     `json:"embedded"`
+	Source      string   `json:"source"`
+	ID          string   `json:"id"`
+	Description string   `json:"description"`
 }
 
 // Subtitle errors
