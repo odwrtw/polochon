@@ -10,7 +10,7 @@ require (
 	github.com/gregdel/pushover v1.4.0
 	github.com/hanwen/go-fuse/v2 v2.9.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
-	github.com/odwrtw/addicted v0.0.0-20260324184247-15bba5a9b030
+	github.com/odwrtw/addicted v0.0.0-20260331124050-5f397e4f1ac9
 	github.com/odwrtw/eztv v0.0.0-20231026192001-039613c81a8e
 	github.com/odwrtw/fanarttv v0.0.0-20170412122542-9f67d3cf0188
 	github.com/odwrtw/imdb-watchlist v0.0.0-20190417175016-b7a9f7503d69
@@ -50,7 +50,6 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/gorilla/rpc v1.2.1 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
-	github.com/jpillora/scraper v0.3.0 // indirect
 	github.com/kennygrant/sanitize v1.2.4 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/kylelemons/go-gypsy v1.0.0 // indirect
