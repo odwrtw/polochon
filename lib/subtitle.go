@@ -7,15 +7,6 @@ import (
 	"os"
 )
 
-// SubtitleEntry represents a subtitle available for download (without the data itself)
-type SubtitleEntry struct {
-	Language    Language `json:"language"`
-	Embedded    bool     `json:"embedded"`
-	Source      string   `json:"source"`
-	ID          string   `json:"id"`
-	Description string   `json:"description"`
-}
-
 // Subtitle errors
 var (
 	ErrMissingSubtitleLang = errors.New("polochon: no subtitle lang")
