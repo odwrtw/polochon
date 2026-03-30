@@ -161,6 +161,8 @@ func (c *Client) request(httpType, url string, data io.Reader, result any) error
 			return nil
 		}
 		return json.NewDecoder(resp.Body).Decode(&result)
+	case http.StatusNoContent:
+		return nil
 	case http.StatusNotFound:
 		// return the not found error
 		return ErrResourceNotFound

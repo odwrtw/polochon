@@ -66,38 +66,28 @@ func (s *Subtitle) downloadURL() (string, error) {
 	return uri + "/download", nil
 }
 
-// SubtitleEntry represents a subtitle entry returned by the available subtitles listing.
-type SubtitleEntry struct {
-	Index int `json:"index"`
-	*polochon.SubtitleEntry
-}
-
 // ListAvailableSubtitles returns the list of available subtitles for a video.
-func (c *Client) ListAvailableSubtitles(video polochon.Video, lang polochon.Language) ([]*SubtitleEntry, error) {
+func (c *Client) ListAvailableSubtitles(video polochon.Video, lang polochon.Language) ([]*polochon.SubtitleEntry, error) {
 	s := &Subtitle{Subtitle: &polochon.Subtitle{Video: video, Lang: lang}}
 	uri, err := s.uri()
 	if err != nil {
 		return nil, err
 	}
 
-	var entries []*SubtitleEntry
+	var entries []*polochon.SubtitleEntry
 	err = c.get(fmt.Sprintf("%s/%s/available", c.endpoint, uri), &entries)
 	return entries, err
 }
 
-// DownloadSubtitleByIndex downloads a specific subtitle by its index from the available listing.
-func (c *Client) DownloadSubtitleByIndex(video polochon.Video, lang polochon.Language, index int) (*Subtitle, error) {
+// DownloadSubtitle downloads a subtitle identified by a SubtitleEntry.
+func (c *Client) DownloadSubtitle(video polochon.Video, lang polochon.Language, entry *polochon.SubtitleEntry) error {
 	s := &Subtitle{Subtitle: &polochon.Subtitle{Video: video, Lang: lang}}
 	uri, err := s.uri()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	result := &Subtitle{Subtitle: &polochon.Subtitle{}}
-	err = c.post(fmt.Sprintf("%s/%s/available", c.endpoint, uri), struct {
-		Index int `json:"index"`
-	}{Index: index}, &result)
-	return result, err
+	return c.post(fmt.Sprintf("%s/%s/available", c.endpoint, uri), entry, nil)
 }
 
 // UpdateSubtitle updates the subtitles of a ressource

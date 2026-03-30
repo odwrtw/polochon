@@ -32,10 +32,9 @@ type Server struct {
 	authManager     *auth.Manager
 	gracefulServer  *http.Server
 	shutdownCancel  context.CancelFunc
-	hub             *sseHub
-	log             *logrus.Entry
-	render          *render.Render
-	subtitleCache   *subtitleCache
+	hub    *sseHub
+	log    *logrus.Entry
+	render *render.Render
 }
 
 // New returns a new server
@@ -45,9 +44,8 @@ func New(config *configuration.Config, vs *library.Library, auth *auth.Manager) 
 		config:        config,
 		library:       vs,
 		authManager:   auth,
-		hub:           newSSEHub(),
-		render:        render.New(),
-		subtitleCache: newSubtitleCache(30 * time.Minute),
+		hub:    newSSEHub(),
+		render: render.New(),
 	}
 }
 
