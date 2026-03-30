@@ -2,6 +2,7 @@ package polochon
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 )
@@ -21,33 +22,49 @@ type SubtitleEntry struct {
 // ListSubtitles returns all available subtitles for a video in the given language
 // across all configured subtitlers, without downloading the subtitle data.
 func ListSubtitles(video Video, lang Language, log *logrus.Entry) ([]*SubtitleEntry, error) {
+	resultCh := make(chan []*SubtitleEntry)
+	done := make(chan struct{})
+
 	var result []*SubtitleEntry
+	go func() {
+		defer close(done)
+		for entries := range resultCh {
+			result = append(result, entries...)
+		}
+	}()
 
+	var wg sync.WaitGroup
 	for _, subtitler := range video.GetSubtitlers() {
-		l := log.WithFields(logrus.Fields{
-			"subtitler": subtitler.Name(),
-			"lang":      lang,
-		})
-		l.Debug("listing subtitles")
+		wg.Go(func() {
+			l := log.WithFields(logrus.Fields{
+				"subtitler": subtitler.Name(),
+				"lang":      lang,
+			})
+			l.Debug("listing subtitles")
 
-		entries, err := subtitler.ListSubtitles(video, lang, l)
-		if err != nil {
-			switch err {
-			case ErrNotAvailable:
-				// nothing to log
-			case ErrNoSubtitleFound:
-				l.Debug("no subtitles found")
-			default:
-				l.Warn(err)
+			entries, err := subtitler.ListSubtitles(video, lang, l)
+			if err != nil {
+				switch err {
+				case ErrNotAvailable:
+					// nothing to log
+				case ErrNoSubtitleFound:
+					l.Debug("no subtitles found")
+				default:
+					l.Warn(err)
+				}
+				return
 			}
-			continue
-		}
 
-		for _, e := range entries {
-			e.Source = subtitler.Name()
-		}
-		result = append(result, entries...)
+			for _, e := range entries {
+				e.Source = subtitler.Name()
+			}
+			resultCh <- entries
+		})
 	}
+
+	wg.Wait()
+	close(resultCh)
+	<-done
 
 	if len(result) == 0 {
 		return nil, ErrNoSubtitleFound
