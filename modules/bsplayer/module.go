@@ -2,6 +2,7 @@ package bsplayer
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"path/filepath"
 
@@ -81,10 +82,9 @@ func (c *Client) ListSubtitles(i any, lang polochon.Language, _ *logrus.Entry) (
 	entries := make([]*polochon.SubtitleEntry, 0, len(subs))
 	for _, s := range subs {
 		entries = append(entries, &polochon.SubtitleEntry{
-			Language: lang,
-			Release:  s.Name,
-			Rating:   s.Rating,
-			Token:    s.URL,
+			Language:    lang,
+			Description: fmt.Sprintf("%s (Rating: %s)", s.Name, s.Rating),
+			ID:          s.URL,
 		})
 	}
 	return entries, nil
@@ -97,7 +97,7 @@ func (c *Client) DownloadSubtitle(i any, entry *polochon.SubtitleEntry, _ *logru
 		return nil, ErrNotAVideo
 	}
 
-	rc, err := fetch(entry.Token)
+	rc, err := fetch(entry.ID)
 	if err != nil {
 		return nil, err
 	}

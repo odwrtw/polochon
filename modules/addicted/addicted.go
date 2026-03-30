@@ -35,7 +35,6 @@ const (
 // Custom errors
 var (
 	ErrMissingCredentials = errors.New("addicted: user and password are required")
-	ErrInvalidToken       = errors.New("addicted: invalid token")
 )
 
 // Params represents the module params
@@ -78,21 +77,6 @@ func (a *addictedProxy) InitWithParams(params *Params) error {
 	a.configured = true
 
 	return nil
-}
-
-// buildToken encodes subtitle metadata into a human-readable token string.
-func buildToken(s addicted.Subtitle) string {
-	return fmt.Sprintf("%s - HearingImpaired:%t - Downloads:%d - %s",
-		s.Title, s.HearingImpaired, s.Download, s.Link)
-}
-
-// parseTokenLink extracts the download link from a token built by buildToken.
-func parseTokenLink(token string) (string, error) {
-	idx := strings.LastIndex(token, " - ")
-	if idx < 0 {
-		return "", ErrInvalidToken
-	}
-	return token[idx+3:], nil
 }
 
 // Name implements the Module interface
@@ -212,9 +196,9 @@ func (a *addictedProxy) ListSubtitles(i any, lang polochon.Language, log *logrus
 	entries := make([]*polochon.SubtitleEntry, 0, len(filteredSubs))
 	for _, s := range filteredSubs {
 		entries = append(entries, &polochon.SubtitleEntry{
-			Language: lang,
-			Release:  s.Release,
-			Token:    buildToken(s),
+			Language:    lang,
+			ID:          s.Link,
+			Description: fmt.Sprintf("%s - %s (HI:%t, Downloads:%d)", s.Title, s.Release, s.HearingImpaired, s.Download),
 		})
 	}
 	return entries, nil
@@ -227,14 +211,9 @@ func (a *addictedProxy) DownloadSubtitle(i any, entry *polochon.SubtitleEntry, _
 		return nil, fmt.Errorf("addicted: invalid argument")
 	}
 
-	link, err := parseTokenLink(entry.Token)
-	if err != nil {
-		return nil, err
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), httpTimeout)
 	defer cancel()
-	r, err := a.client.Download(ctx, addicted.Subtitle{Link: link})
+	r, err := a.client.Download(ctx, addicted.Subtitle{Link: entry.ID})
 	if err != nil {
 		return nil, err
 	}

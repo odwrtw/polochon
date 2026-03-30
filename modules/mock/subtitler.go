@@ -26,9 +26,9 @@ func (mock *Mock) ListSubtitles(v any, lang polochon.Language, log *logrus.Entry
 
 	return []*polochon.SubtitleEntry{
 		{
-			Language: lang,
-			Release:  "mock.release." + string(lang),
-			Token:    "mock-token",
+			Language:    lang,
+			ID:          "mock-id",
+			Description: "mock subtitle",
 		},
 	}, nil
 }
@@ -41,6 +41,6 @@ func (mock *Mock) DownloadSubtitle(v any, entry *polochon.SubtitleEntry, log *lo
 	}
 
 	sub := polochon.NewSubtitleFromVideo(video, entry.Language)
-	sub.Data = []byte("downloaded subtitle in " + string(entry.Language))
+	sub.Data = []byte("downloaded subtitle for language: " + string(entry.Language))
 	return sub, nil
 }
