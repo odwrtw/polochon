@@ -174,10 +174,11 @@ func searchResp(release string, fileID int) *http.Response {
 		"data": []map[string]any{
 			{
 				"attributes": map[string]any{
-					"language": "en",
-					"release":  release,
-					"ratings":  8.0,
-					"files":    []map[string]any{{"file_id": fileID}},
+					"language":         "en",
+					"release":          release,
+					"hearing_impaired": false,
+					"download_count":   1234,
+					"files":            []map[string]any{{"file_id": fileID}},
 				},
 			},
 		},
@@ -316,6 +317,74 @@ func TestListSubtitles_ShowEpisode(t *testing.T) {
 	if !strings.Contains(capturedQuery, "episode_number=3") {
 		t.Errorf("episode_number missing from query: %s", capturedQuery)
 	}
+	if !strings.Contains(capturedQuery, "type=episode") {
+		t.Errorf("type=episode missing from query: %s", capturedQuery)
+	}
+	if !strings.Contains(capturedQuery, "parent_imdb_id=411008") {
+		t.Errorf("parent_imdb_id=411008 missing from query: %s", capturedQuery)
+	}
+	if strings.Contains(capturedQuery, "&imdb_id=") || strings.HasPrefix(capturedQuery, "imdb_id=") {
+		t.Errorf("imdb_id must not appear for show episode query: %s", capturedQuery)
+	}
+}
+
+func TestListSubtitles_TypeParam(t *testing.T) {
+	for _, tc := range []struct {
+		name          string
+		video         any
+		wantSubstring string
+	}{
+		{
+			name:          "movie uses imdb_id without leading zeros",
+			video:         func() *polochon.Movie { m := &polochon.Movie{}; m.ImdbID = "tt0133093"; return m }(),
+			wantSubstring: "imdb_id=133093",
+		},
+		{
+			name: "episode uses parent_imdb_id without leading zeros",
+			video: func() *polochon.ShowEpisode {
+				ep := &polochon.ShowEpisode{}
+				ep.ShowImdbID = "tt0411008"
+				ep.Season = 1
+				ep.Episode = 1
+				return ep
+			}(),
+			wantSubstring: "parent_imdb_id=411008",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			o := &opensubs{apiKey: "key"}
+			orig := doRequest
+			defer func() { doRequest = orig }()
+			var capturedQuery string
+			doRequest = func(req *http.Request) (*http.Response, error) {
+				capturedQuery = req.URL.RawQuery
+				return searchResp("Some.Release", 42), nil
+			}
+			_, err := o.ListSubtitles(tc.video, polochon.EN, silentLog)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if !strings.Contains(capturedQuery, tc.wantSubstring) {
+				t.Errorf("%s missing from query: %s", tc.wantSubstring, capturedQuery)
+			}
+		})
+	}
+}
+
+func TestSearch_ZeroFileID(t *testing.T) {
+	o := &opensubs{apiKey: "key"}
+	orig := doRequest
+	defer func() { doRequest = orig }()
+	doRequest = func(_ *http.Request) (*http.Response, error) {
+		return searchResp("string", 0), nil
+	}
+	entries, err := o.search(url.Values{"imdb_id": {"9253284"}})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(entries) != 0 {
+		t.Errorf("expected entries with file_id=0 to be filtered out, got %d", len(entries))
+	}
 }
 
 func TestSearch(t *testing.T) {
@@ -344,8 +413,8 @@ func TestSearch(t *testing.T) {
 	if entries[0].ID != "42" {
 		t.Errorf("got id %q, want %q", entries[0].ID, "42")
 	}
-	if entries[0].Description != "Movie.2020.BluRay (Rating: 8.0)" {
-		t.Errorf("got description %q, want %q", entries[0].Description, "Movie.2020.BluRay (Rating: 8.0)")
+	if entries[0].Description != "Movie.2020.BluRay (HI:false, Downloads:1234)" {
+		t.Errorf("got description %q, want %q", entries[0].Description, "Movie.2020.BluRay (HI:false, Downloads:1234)")
 	}
 	if entries[0].Source != moduleName {
 		t.Errorf("got source %q, want %q", entries[0].Source, moduleName)
@@ -592,6 +661,29 @@ func TestListSubtitles_QuotaReached(t *testing.T) {
 	_, err := o.ListSubtitles(movie, polochon.EN, silentLog)
 	if err != ErrQuotaExceeded {
 		t.Errorf("expected ErrQuotaExceeded, got %v", err)
+	}
+}
+
+func TestStripImdbID(t *testing.T) {
+	for _, tc := range []struct {
+		in   string
+		want string
+	}{
+		{"tt0133093", "133093"},
+		{"tt0411008", "411008"},
+		{"tt133093", "133093"}, // no leading zero
+		{"133093", "133093"},   // no tt prefix
+		{"tt0000000", ""},      // all zeros → invalid
+		{"", ""},               // empty
+		{"tt", ""},             // no digits
+		{"ttabc", ""},          // non-numeric
+	} {
+		t.Run(tc.in, func(t *testing.T) {
+			got := stripImdbID(tc.in)
+			if got != tc.want {
+				t.Errorf("stripImdbID(%q) = %q, want %q", tc.in, got, tc.want)
+			}
+		})
 	}
 }
 

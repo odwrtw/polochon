@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -117,23 +118,26 @@ func videoPath(i any) string {
 	return ""
 }
 
-func imdbParam(i any) string {
-	switch v := i.(type) {
-	case *polochon.Movie:
-		return strings.TrimPrefix(v.ImdbID, "tt")
-	case *polochon.ShowEpisode:
-		return strings.TrimPrefix(v.ShowImdbID, "tt")
+// stripImdbID removes the "tt" prefix and leading zeroes from an IMDB ID.
+// Returns "" if the ID is absent or non-numeric.
+func stripImdbID(id string) string {
+	s := strings.TrimPrefix(id, "tt")
+	n, err := strconv.Atoi(s)
+	if err != nil || n == 0 {
+		return ""
 	}
-	return ""
+	return strconv.Itoa(n)
 }
 
 func titleParams(i any, lang polochon.Language) (url.Values, error) {
 	p := url.Values{"languages": {lang.ShortForm()}}
 	switch v := i.(type) {
 	case *polochon.Movie:
-		p.Set("query", v.Title)
+		p.Set("type", "movie")
+		p.Set("query", strings.ToLower(v.Title))
 	case *polochon.ShowEpisode:
-		p.Set("query", v.ShowTitle)
+		p.Set("type", "episode")
+		p.Set("query", strings.ToLower(v.ShowTitle))
 		p.Set("season_number", strconv.Itoa(v.Season))
 		p.Set("episode_number", strconv.Itoa(v.Episode))
 	default:
@@ -160,6 +164,9 @@ func (o *opensubs) ListSubtitles(i any, lang polochon.Language, _ *logrus.Entry)
 	if path := videoPath(i); path != "" {
 		if hash, err := hashFile(path); err == nil {
 			p := url.Values{"moviehash": {hash}, "languages": {lang.ShortForm()}}
+			if base := filepath.Base(path); base != "" && base != "." {
+				p.Set("query", strings.ToLower(base))
+			}
 			if entries, err := o.search(p); err == nil && len(entries) > 0 {
 				return setLang(entries, lang), nil
 			}
@@ -167,14 +174,26 @@ func (o *opensubs) ListSubtitles(i any, lang polochon.Language, _ *logrus.Entry)
 	}
 
 	// Tier 2: IMDB ID search
-	if id := imdbParam(i); id != "" {
-		p := url.Values{"imdb_id": {id}, "languages": {lang.ShortForm()}}
-		if ep, ok := i.(*polochon.ShowEpisode); ok {
-			p.Set("season_number", strconv.Itoa(ep.Season))
-			p.Set("episode_number", strconv.Itoa(ep.Episode))
+	switch v := i.(type) {
+	case *polochon.Movie:
+		if id := stripImdbID(v.ImdbID); id != "" {
+			p := url.Values{"imdb_id": {id}, "type": {"movie"}, "languages": {lang.ShortForm()}}
+			if entries, err := o.search(p); err == nil && len(entries) > 0 {
+				return setLang(entries, lang), nil
+			}
 		}
-		if entries, err := o.search(p); err == nil && len(entries) > 0 {
-			return setLang(entries, lang), nil
+	case *polochon.ShowEpisode:
+		if id := stripImdbID(v.ShowImdbID); id != "" {
+			p := url.Values{
+				"parent_imdb_id": {id},
+				"type":           {"episode"},
+				"season_number":  {strconv.Itoa(v.Season)},
+				"episode_number": {strconv.Itoa(v.Episode)},
+				"languages":      {lang.ShortForm()},
+			}
+			if entries, err := o.search(p); err == nil && len(entries) > 0 {
+				return setLang(entries, lang), nil
+			}
 		}
 	}
 
@@ -413,9 +432,11 @@ func (o *opensubs) newRequest(method, path string, body io.Reader) (*http.Reques
 type searchResponse struct {
 	Data []struct {
 		Attributes struct {
-			Release string  `json:"release"`
-			Ratings float64 `json:"ratings"`
-			Files   []struct {
+			Release         string  `json:"release"`
+			HearingImpaired bool    `json:"hearing_impaired"`
+			DownloadCount   int     `json:"download_count"`
+			Ratings         float64 `json:"ratings"`
+			Files           []struct {
 				FileID int `json:"file_id"`
 			} `json:"files"`
 		} `json:"attributes"`
@@ -444,11 +465,11 @@ func (o *opensubs) search(params url.Values) ([]*polochon.SubtitleEntry, error) 
 
 	var entries []*polochon.SubtitleEntry
 	for _, item := range sr.Data {
-		if len(item.Attributes.Files) == 0 {
+		if len(item.Attributes.Files) == 0 || item.Attributes.Files[0].FileID == 0 {
 			continue
 		}
 		entries = append(entries, &polochon.SubtitleEntry{
-			Description: fmt.Sprintf("%s (Rating: %.1f)", item.Attributes.Release, item.Attributes.Ratings),
+			Description: fmt.Sprintf("%s (HI:%t, Downloads:%d)", item.Attributes.Release, item.Attributes.HearingImpaired, item.Attributes.DownloadCount),
 			ID:          strconv.Itoa(item.Attributes.Files[0].FileID),
 			Source:      moduleName,
 		})
