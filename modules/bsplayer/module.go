@@ -81,10 +81,14 @@ func (c *Client) ListSubtitles(i any, lang polochon.Language, _ *logrus.Entry) (
 
 	entries := make([]*polochon.SubtitleEntry, 0, len(subs))
 	for _, s := range subs {
+		id, err := encodeDownloadID(s.URL)
+		if err != nil {
+			continue
+		}
 		entries = append(entries, &polochon.SubtitleEntry{
 			Language:    lang,
 			Description: fmt.Sprintf("%s (Rating: %s)", s.Name, s.Rating),
-			ID:          s.URL,
+			ID:          id,
 		})
 	}
 	return entries, nil
@@ -97,7 +101,11 @@ func (c *Client) DownloadSubtitle(i any, entry *polochon.SubtitleEntry, _ *logru
 		return nil, ErrNotAVideo
 	}
 
-	rc, err := fetch(entry.ID)
+	downloadURL, err := decodeDownloadURL(entry.ID)
+	if err != nil {
+		return nil, err
+	}
+	rc, err := fetch(downloadURL)
 	if err != nil {
 		return nil, err
 	}

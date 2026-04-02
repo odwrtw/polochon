@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"net/url"
 	"path/filepath"
 
 	"github.com/agnivade/levenshtein"
@@ -22,6 +23,7 @@ func init() {
 // YifySubs holds the YifySubs module
 type YifySubs struct {
 	Client     Searcher
+	baseURL    string
 	configured bool
 }
 
@@ -47,7 +49,9 @@ func (y *YifySubs) Init(p []byte) error {
 		return nil
 	}
 
-	y.Client = yifysubs.NewDefault()
+	c := yifysubs.NewDefault()
+	y.Client = c
+	y.baseURL = c.Endpoint
 	y.configured = true
 	return nil
 }
@@ -152,11 +156,20 @@ func (y *YifySubs) ListSubtitles(i any, lang polochon.Language, log *logrus.Entr
 
 	var entries []*polochon.SubtitleEntry
 	for _, sub := range subs {
+		u, err := url.Parse(sub.URL)
+		if err != nil {
+			log.WithFields(logrus.Fields{
+				"module":  "yifysubs",
+				"url":     sub.URL,
+				"imdb_id": m.ImdbID,
+			}).Warn("invalid subtitle URL")
+			continue
+		}
 		for _, rel := range sub.Releases {
 			entries = append(entries, &polochon.SubtitleEntry{
 				Language:    lang,
 				Description: rel,
-				ID:          sub.URL,
+				ID:          u.Path,
 			})
 		}
 	}
@@ -174,7 +187,7 @@ func (y *YifySubs) DownloadSubtitle(i any, entry *polochon.SubtitleEntry, _ *log
 		return nil, polochon.ErrNotAvailable
 	}
 
-	sub := &yifysubs.Subtitle{URL: entry.ID}
+	sub := &yifysubs.Subtitle{URL: y.baseURL + entry.ID}
 
 	data := &bytes.Buffer{}
 	if _, err := data.ReadFrom(sub); err != nil {
