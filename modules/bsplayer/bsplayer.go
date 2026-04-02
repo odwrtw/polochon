@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -16,10 +17,11 @@ import (
 	polochon "github.com/odwrtw/polochon/lib"
 )
 
+const bsplayerDomain = "api.bsplayer-subtitles.com"
+
 var (
 	domainIndex  atomic.Uint64
 	soapClient   = &http.Client{Timeout: 5 * time.Second}
-	baseURL      = "http://s%d.api.bsplayer-subtitles.com/v1.php"
 	domains      = []int{1, 2, 3, 4, 5, 6, 7, 8, 101, 102, 103, 104, 105, 106, 107, 108, 109}
 	soapTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
@@ -43,7 +45,7 @@ var (
 func getEndpoint() (string, int) {
 	idx := domainIndex.Add(1)
 	domain := domains[idx%uint64(len(domains))]
-	return fmt.Sprintf(baseURL, domain), domain
+	return fmt.Sprintf("http://s%d.%s/v1.php", domain, bsplayerDomain), domain
 }
 
 type soapParams struct {
@@ -218,6 +220,26 @@ func search(qp *queryParams) ([]*subtitle, error) {
 	}
 
 	return data.Subs, nil
+}
+
+// encodeDownloadID encodes the server number and path from a download URL as "N:path".
+func encodeDownloadID(rawURL string) (string, error) {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return "", fmt.Errorf("bsplayer: invalid download URL: %w", err)
+	}
+	host := strings.TrimSuffix(u.Host, "."+bsplayerDomain)
+	host = strings.TrimPrefix(host, "s")
+	return host + ":" + u.RequestURI(), nil
+}
+
+// decodeDownloadURL reconstructs the download URL from a composite ID "N:path".
+func decodeDownloadURL(id string) (string, error) {
+	domain, path, ok := strings.Cut(id, ":")
+	if !ok || !strings.HasPrefix(path, "/") {
+		return "", fmt.Errorf("bsplayer: invalid download ID %q", id)
+	}
+	return fmt.Sprintf("http://s%s.%s%s", domain, bsplayerDomain, path), nil
 }
 
 func fetch(url string) (io.ReadCloser, error) {
