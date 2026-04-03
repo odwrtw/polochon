@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"time"
 
-	"gopkg.in/yaml.v2"
+	"github.com/goccy/go-yaml"
 
 	polochon "github.com/odwrtw/polochon/lib"
 )

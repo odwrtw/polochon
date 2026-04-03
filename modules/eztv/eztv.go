@@ -8,7 +8,7 @@ import (
 
 	"github.com/odwrtw/eztv"
 	polochon "github.com/odwrtw/polochon/lib"
-	"gopkg.in/yaml.v2"
+	"github.com/goccy/go-yaml"
 )
 
 // Make sure that the module is a torrenter, an explorer and a searcher

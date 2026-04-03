@@ -9,7 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"gopkg.in/yaml.v2"
+	"github.com/goccy/go-yaml"
 
 	"github.com/gregdel/pushover"
 	"github.com/nfnt/resize"

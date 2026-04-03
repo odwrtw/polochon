@@ -1,53 +1,41 @@
 package configuration
 
 import (
-	"bytes"
 	"fmt"
 	"log/slog"
 
+	"github.com/goccy/go-yaml"
+
 	polochon "github.com/odwrtw/polochon/lib"
-	"gopkg.in/yaml.v2"
 )
 
 // ModulesParams holds the module params in raw yaml
 type ModulesParams struct {
-	params map[string][]byte
+	params map[string]yaml.RawMessage
 }
 
 // UnmarshalYAML implements the Unmarshaler interface
 func (mp *ModulesParams) UnmarshalYAML(unmarshal func(any) error) error {
-	mp.params = map[string][]byte{}
-
-	modules := []map[string]any{}
-	if err := unmarshal(&modules); err != nil {
+	var rawEntries []yaml.RawMessage
+	if err := unmarshal(&rawEntries); err != nil {
 		return err
 	}
 
-	for _, module := range modules {
-		// Check if the name is present
-		nameField, ok := module["name"]
-		if !ok {
-			return fmt.Errorf("configuration: missing name field in module %+v", module)
+	mp.params = make(map[string]yaml.RawMessage, len(rawEntries))
+	for _, raw := range rawEntries {
+		var entry struct {
+			Name string `yaml:"name"`
 		}
-
-		// Check if the name is a string
-		name, ok := nameField.(string)
-		if !ok {
-			return fmt.Errorf("configuration: invalid name field in module %+v", module)
-		}
-
-		// Check if the name is not already configured
-		if _, ok := mp.params[name]; ok {
-			return fmt.Errorf("configuration: duplicate configuration for module %s", name)
-		}
-
-		// Marshal the data for later use
-		data, err := yaml.Marshal(module)
-		if err != nil {
+		if err := yaml.Unmarshal(raw, &entry); err != nil {
 			return err
 		}
-
-		mp.params[name] = bytes.Trim(data, "\n")
+		if entry.Name == "" {
+			return fmt.Errorf("configuration: missing name field in module")
+		}
+		if _, ok := mp.params[entry.Name]; ok {
+			return fmt.Errorf("configuration: duplicate configuration for module %s", entry.Name)
+		}
+		mp.params[entry.Name] = raw
 	}
 
 	return nil

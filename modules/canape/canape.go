@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"gopkg.in/yaml.v2"
+	"github.com/goccy/go-yaml"
 
 	polochon "github.com/odwrtw/polochon/lib"
 )

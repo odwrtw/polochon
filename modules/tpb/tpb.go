@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	yaml "gopkg.in/yaml.v2"
+	yaml "github.com/goccy/go-yaml"
 
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/tpb"

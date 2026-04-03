@@ -5,6 +5,7 @@ go 1.26.1
 require (
 	github.com/agnivade/levenshtein v1.2.1
 	github.com/dustin/go-humanize v1.0.1
+	github.com/goccy/go-yaml v1.19.2
 	github.com/gorilla/mux v1.8.1
 	github.com/gregdel/argo v0.0.0-20190104143955-4ac365771987
 	github.com/gregdel/pushover v1.4.0
@@ -30,7 +31,6 @@ require (
 	golang.org/x/sync v0.20.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/unrolled/render.v1 v1.0.0
-	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (

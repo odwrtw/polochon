@@ -14,7 +14,7 @@ import (
 	"github.com/agnivade/levenshtein"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/pioz/tvdb"
-	"gopkg.in/yaml.v2"
+	"github.com/goccy/go-yaml"
 )
 
 // Make sure that the module is a detailer and a calendar

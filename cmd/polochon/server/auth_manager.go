@@ -3,7 +3,7 @@ package server
 import (
 	"io"
 
-	yaml "gopkg.in/yaml.v2"
+	"github.com/goccy/go-yaml"
 )
 
 type authRight string
