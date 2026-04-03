@@ -3,8 +3,8 @@ package downloader
 import (
 	"context"
 	"log/slog"
+	"sync"
 
-	"github.com/odwrtw/polochon/app/subapp"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/library"
@@ -16,90 +16,62 @@ const AppName = "downloader"
 
 // Downloader represents the downloader
 type Downloader struct {
-	*subapp.Base
-
 	log     *slog.Logger
 	config  *configuration.Config
 	library *library.Library
-	event   chan struct{}
 }
 
 // New returns a new downloader
 func New(config *configuration.Config, vs *library.Library, log *slog.Logger) *Downloader {
-	l := log.With("app", AppName)
 	return &Downloader{
-		Base:    subapp.NewBase(AppName, l),
-		log:     l,
+		log:     log.With("app", AppName),
 		config:  config,
 		library: vs,
 	}
 }
 
-// Name returns the name of the app
-func (d *Downloader) Name() string {
-	return AppName
-}
-
 // Run starts the downloader
 func (d *Downloader) Run(ctx context.Context) error {
-	// Init the app
-	d.InitStart()
-
 	d.log.Debug("downloader started")
-	d.event = make(chan struct{}, 1)
 
+	event := make(chan struct{}, 1)
 	if d.config.Downloader.LaunchAtStartup {
 		d.log.Debug("initial downloader launch")
-		d.event <- struct{}{}
+		event <- struct{}{}
 	}
 
-	// Start the scheduler
-	d.Wg.Go(func() {
-		d.scheduler()
+	var wg sync.WaitGroup
+	wg.Go(func() {
+		d.scheduler(ctx, event)
 	})
 
-	// Start the downloader
-	var err error
-	d.Wg.Add(1)
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				err = subapp.ErrPanicRecovered
-				d.Stop()
-			}
+	d.downloader(ctx, event)
+	wg.Wait()
 
-			d.Wg.Done()
-		}()
-		d.downloader(ctx)
-	}()
-
-	defer d.log.Debug("downloader stopped")
-
-	d.Wg.Wait()
-
-	return err
+	d.log.Debug("downloader stopped")
+	return nil
 }
 
-func (d *Downloader) scheduler() {
+func (d *Downloader) scheduler(ctx context.Context, event chan<- struct{}) {
 	c := cron.New()
 	c.Schedule(d.config.Downloader.Schedule, cron.FuncJob(func() {
 		d.log.Debug("downloader scheduler triggered")
-		d.event <- struct{}{}
+		event <- struct{}{}
 	}))
 	c.Start()
 
-	<-d.Done
+	<-ctx.Done()
 	d.log.Debug("downloader scheduler stopped")
 	c.Stop()
 }
 
-func (d *Downloader) downloader(ctx context.Context) {
+func (d *Downloader) downloader(ctx context.Context, event <-chan struct{}) {
 	for {
 		select {
-		case <-d.event:
+		case <-event:
 			d.log.Debug("downloader event")
 			d.downloadMissingVideos(ctx)
-		case <-d.Done:
+		case <-ctx.Done():
 			d.log.Debug("downloader done handling events")
 			return
 		}

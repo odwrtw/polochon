@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/odwrtw/polochon/app/subapp"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/library"
@@ -17,8 +16,6 @@ const AppName = "download_manager"
 
 // DownloadManager represents the download manager
 type DownloadManager struct {
-	*subapp.Base
-
 	log     *slog.Logger
 	library *library.Library
 	config  *configuration.Config
@@ -26,10 +23,8 @@ type DownloadManager struct {
 
 // New returns a new download manager
 func New(config *configuration.Config, library *library.Library, log *slog.Logger) *DownloadManager {
-	l := log.With("app", AppName)
 	return &DownloadManager{
-		Base:    subapp.NewBase(AppName, l),
-		log:     l,
+		log:     log.With("app", AppName),
 		config:  config,
 		library: library,
 	}
@@ -37,56 +32,24 @@ func New(config *configuration.Config, library *library.Library, log *slog.Logge
 
 // Run starts the download manager
 func (dm *DownloadManager) Run(ctx context.Context) error {
-	// Init the app
-	dm.InitStart()
-
 	dm.log.Debug("download manager started")
-	dm.log.Debug("initial download manager launch")
+	dm.run(ctx)
 
-	var err error
-	dm.Wg.Add(1)
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				err = subapp.ErrPanicRecovered
-				dm.Stop()
-			}
-
-			dm.Wg.Done()
-		}()
-		dm.run(ctx)
-	}()
-
-	// Start the download manager
-	dm.Wg.Go(func() {
-		dm.ticker(ctx)
-	})
-
-	defer dm.log.Debug("download manager stopped")
-
-	dm.Wg.Wait()
-
-	return err
-}
-
-func (dm *DownloadManager) ticker(ctx context.Context) {
 	ticker := time.NewTicker(dm.config.DownloadManager.Timer)
 	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ticker.C:
 			dm.run(ctx)
-		case <-dm.Done:
-			dm.log.Debug("download manager timer stopped")
-			return
+		case <-ctx.Done():
+			dm.log.Debug("download manager stopped")
+			return nil
 		}
 	}
 }
 
 func (dm *DownloadManager) run(ctx context.Context) {
-	// Organise all the files in the files directory stuff
-	// Start the fs notifier on this directory
-	// Start the torrent list stuff
 	torrents, err := dm.config.Downloader.Client.List()
 	if err != nil {
 		dm.log.Error("error while getting torrent list", "error", err)
