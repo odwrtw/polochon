@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -104,17 +105,18 @@ func TestHashFile(t *testing.T) {
 	}
 	_ = f.Close()
 
-	hash, err := hashFile(f.Name())
+	h, err := polochon.NewFile(f.Name()).OpensubHash()
 	if err != nil {
-		t.Fatalf("hashFile error: %v", err)
+		t.Fatalf("OpensubHash error: %v", err)
 	}
+	hash := fmt.Sprintf("%016x", h)
 	if len(hash) != 16 {
 		t.Errorf("expected 16-char hex hash, got %q (len %d)", hash, len(hash))
 	}
 	// Must be deterministic
-	hash2, err := hashFile(f.Name())
-	if err != nil || hash != hash2 {
-		t.Errorf("hash not deterministic: %q vs %q", hash, hash2)
+	h2, err := polochon.NewFile(f.Name()).OpensubHash()
+	if err != nil || h != h2 {
+		t.Errorf("hash not deterministic: %016x vs %016x", h, h2)
 	}
 }
 
@@ -126,7 +128,7 @@ func TestHashFile_SmallFile(t *testing.T) {
 	defer func() { _ = os.Remove(f.Name()) }()
 	_ = f.Close()
 
-	_, err = hashFile(f.Name())
+	_, err = polochon.NewFile(f.Name()).OpensubHash()
 	if err == nil {
 		t.Error("expected error for file smaller than 64KB, got nil")
 	}

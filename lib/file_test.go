@@ -110,6 +110,52 @@ func TestIsVideo(t *testing.T) {
 	}
 }
 
+func TestOpensubHash(t *testing.T) {
+	f, err := os.CreateTemp("", "opensub_hash_*.dat")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = os.Remove(f.Name()) }()
+
+	// 200 KB of patterned data so first and last chunks are distinct
+	data := make([]byte, 200*1024)
+	for i := range data {
+		data[i] = byte(i)
+	}
+	if _, err := f.Write(data); err != nil {
+		t.Fatal(err)
+	}
+	_ = f.Close()
+
+	file := NewFile(f.Name())
+	hash, err := file.OpensubHash()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// Must be deterministic
+	hash2, err := file.OpensubHash()
+	if err != nil {
+		t.Fatalf("unexpected error on second call: %v", err)
+	}
+	if hash != hash2 {
+		t.Errorf("hash not deterministic: %016x vs %016x", hash, hash2)
+	}
+}
+
+func TestOpensubHashSmallFile(t *testing.T) {
+	f, err := os.CreateTemp("", "opensub_hash_small_*.dat")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = os.Remove(f.Name()) }()
+	_ = f.Close()
+
+	_, err = NewFile(f.Name()).OpensubHash()
+	if err == nil {
+		t.Error("expected error for file smaller than 64KB, got nil")
+	}
+}
+
 func TestExludedFile(t *testing.T) {
 	// Create a temp dir
 	tmpDir, err := os.MkdirTemp(os.TempDir(), "polochon-file-test")

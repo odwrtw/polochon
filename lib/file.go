@@ -3,6 +3,7 @@ package polochon
 import (
 	"encoding/binary"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -203,10 +204,9 @@ func (f *File) MovieThumbPath() string {
 // https://trac.opensubtitles.org/projects/opensubtitles/wiki/HashSourceCodes
 func (f *File) OpensubHash() (uint64, error) {
 	const hashChunkSize = 65536 // 64k
-	const hashBufSize = 8       // 8 bytes
 
 	if f.Size < hashChunkSize {
-		return 0, fmt.Errorf("polochon: file to small to be hashed")
+		return 0, fmt.Errorf("polochon: file too small to be hashed")
 	}
 
 	file, err := os.Open(f.Path)
@@ -217,28 +217,26 @@ func (f *File) OpensubHash() (uint64, error) {
 
 	hash := uint64(f.Size)
 
-	buf := make([]byte, hashBufSize)
-	parts := hashChunkSize / 8
-	for _, offset := range []int64{0, f.Size - hashChunkSize} {
-		_, err := file.Seek(offset, 0)
-		if err != nil {
-			return 0, err
-		}
-
-		for range parts {
-			n, err := file.Read(buf)
-			if err != nil {
-				return 0, err
+	addChunk := func() error {
+		var word [8]byte
+		for range hashChunkSize / 8 {
+			if _, err := io.ReadFull(file, word[:]); err != nil {
+				return err
 			}
-
-			if n != hashBufSize {
-				return 0, fmt.Errorf("polochon: failed to read all bytes %d/%d", n, hashBufSize)
-			}
-
-			hash += binary.LittleEndian.Uint64(buf)
+			hash += binary.LittleEndian.Uint64(word[:])
 		}
+		return nil
 	}
 
+	if err := addChunk(); err != nil {
+		return 0, err
+	}
+	if _, err := file.Seek(f.Size-hashChunkSize, io.SeekStart); err != nil {
+		return 0, err
+	}
+	if err := addChunk(); err != nil {
+		return 0, err
+	}
 	return hash, nil
 }
 

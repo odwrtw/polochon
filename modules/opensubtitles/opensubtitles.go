@@ -3,7 +3,6 @@ package opensubtitles
 import (
 	"bytes"
 	"context"
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,7 +10,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -163,8 +161,8 @@ func (o *opensubs) ListSubtitles(_ context.Context, i any, lang polochon.Languag
 
 	// Tier 1: hash search (most accurate, requires file on disk)
 	if path := videoPath(i); path != "" {
-		if hash, err := hashFile(path); err == nil {
-			p := url.Values{"moviehash": {hash}, "languages": {lang.ShortForm()}}
+		if hash, err := polochon.NewFile(path).OpensubHash(); err == nil {
+			p := url.Values{"moviehash": {fmt.Sprintf("%016x", hash)}, "languages": {lang.ShortForm()}}
 			if base := filepath.Base(path); base != "" && base != "." {
 				p.Set("query", strings.ToLower(base))
 			}
@@ -367,47 +365,6 @@ func (o *opensubs) DownloadSubtitle(_ context.Context, i any, entry *polochon.Su
 	s := polochon.NewSubtitleFromVideo(v, entry.Language)
 	s.Data = data
 	return s, nil
-}
-
-// hashFile computes the OpenSubtitles hash for a video file.
-// Algorithm: sum of first + last 64 KB as little-endian uint64 words, plus file size.
-func hashFile(path string) (string, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return "", err
-	}
-	defer func() { _ = f.Close() }()
-
-	fi, err := f.Stat()
-	if err != nil {
-		return "", err
-	}
-
-	const chunkSize = 65536
-	if fi.Size() < chunkSize {
-		return "", fmt.Errorf("opensubtitles: file too small to hash (%d bytes)", fi.Size())
-	}
-	hash := uint64(fi.Size())
-
-	addChunk := func() {
-		var word [8]byte
-		for range chunkSize / 8 {
-			if _, err := io.ReadFull(f, word[:]); err != nil {
-				break
-			}
-			hash += binary.LittleEndian.Uint64(word[:])
-		}
-	}
-
-	addChunk() // first 64 KB
-
-	offset := max(fi.Size()-chunkSize, 0)
-	if _, err := f.Seek(offset, io.SeekStart); err != nil {
-		return "", err
-	}
-	addChunk() // last 64 KB
-
-	return fmt.Sprintf("%016x", hash), nil
 }
 
 // doRequest is overridable for tests.
