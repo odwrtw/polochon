@@ -47,83 +47,42 @@ func (ml *ModuleLoader) load(log *slog.Logger) error {
 	if ml.modulesParams == nil {
 		return ErrMissingModuleParams
 	}
-
+	mp := ml.modulesParams
 	var err error
-	if len(ml.DetailerNames) != 0 {
-		ml.detailers, err = ml.modulesParams.getDetailers(ml.DetailerNames, log)
-		if err != nil {
-			return err
-		}
+
+	if ml.detailers, err = getModulesAs[polochon.Detailer](mp, polochon.TypeDetailer, log, ml.DetailerNames); err != nil {
+		return err
+	}
+	if ml.torrenters, err = getModulesAs[polochon.Torrenter](mp, polochon.TypeTorrenter, log, ml.TorrenterNames); err != nil {
+		return err
+	}
+	if ml.subtitlers, err = getModulesAs[polochon.Subtitler](mp, polochon.TypeSubtitler, log, ml.SubtitlerNames); err != nil {
+		return err
+	}
+	if ml.explorers, err = getModulesAs[polochon.Explorer](mp, polochon.TypeExplorer, log, ml.ExplorerNames); err != nil {
+		return err
+	}
+	if ml.searchers, err = getModulesAs[polochon.Searcher](mp, polochon.TypeSearcher, log, ml.SearcherNames); err != nil {
+		return err
+	}
+	if ml.notifiers, err = getModulesAs[polochon.Notifier](mp, polochon.TypeNotifier, log, ml.NotifierNames); err != nil {
+		return err
+	}
+	if ml.wishlisters, err = getModulesAs[polochon.Wishlister](mp, polochon.TypeWishlister, log, ml.WishlisterNames); err != nil {
+		return err
+	}
+	if ml.guessers, err = getModulesAs[polochon.Guesser](mp, polochon.TypeGuesser, log, ml.GuesserNames); err != nil {
+		return err
 	}
 
-	if len(ml.TorrenterNames) != 0 {
-		ml.torrenters, err = ml.modulesParams.getTorrenters(ml.TorrenterNames, log)
-		if err != nil {
-			return err
-		}
+	if ml.calendar, err = getModuleAs[polochon.Calendar](mp, polochon.TypeCalendar, log, ml.CalendarName); err != nil {
+		return err
 	}
-
-	if len(ml.SubtitlerNames) != 0 {
-		ml.subtitlers, err = ml.modulesParams.getSubtitlers(ml.SubtitlerNames, log)
-		if err != nil {
-			return err
-		}
+	if ml.fsNotifier, err = getModuleAs[polochon.FsNotifier](mp, polochon.TypeFsNotifier, log, ml.FsNotifierName); err != nil {
+		return err
 	}
-
-	if len(ml.ExplorerNames) != 0 {
-		ml.explorers, err = ml.modulesParams.getExplorers(ml.ExplorerNames, log)
-		if err != nil {
-			return err
-		}
-	}
-
-	if len(ml.SearcherNames) != 0 {
-		ml.searchers, err = ml.modulesParams.getSearchers(ml.SearcherNames, log)
-		if err != nil {
-			return err
-		}
-	}
-
-	if len(ml.NotifierNames) != 0 {
-		ml.notifiers, err = ml.modulesParams.getNotifiers(ml.NotifierNames, log)
-		if err != nil {
-			return err
-		}
-	}
-
-	if len(ml.WishlisterNames) != 0 {
-		ml.wishlisters, err = ml.modulesParams.getWishlisters(ml.WishlisterNames, log)
-		if err != nil {
-			return err
-		}
-	}
-
-	if len(ml.GuesserNames) != 0 {
-		ml.guessers, err = ml.modulesParams.getGuessers(ml.GuesserNames, log)
-		if err != nil {
-			return err
-		}
-	}
-
-	if ml.CalendarName != "" {
-		ml.calendar, err = ml.modulesParams.getCalendar(ml.CalendarName, log)
-		if err != nil {
-			return err
-		}
-	}
-
-	if ml.FsNotifierName != "" {
-		ml.fsNotifier, err = ml.modulesParams.getFsNotifier(ml.FsNotifierName, log)
-		if err != nil {
-			return err
-		}
-	}
-
-	if ml.DownloaderName != "" {
-		ml.downloader, err = ml.modulesParams.getDownloader(ml.DownloaderName, log)
-		if err != nil {
-			return err
-		}
+	if ml.downloader, err = getModuleAs[polochon.Downloader](mp, polochon.TypeDownloader, log, ml.DownloaderName); err != nil {
+		return err
 	}
 
 	return nil
