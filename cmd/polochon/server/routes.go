@@ -6,7 +6,6 @@ import (
 	"net/http/pprof"
 
 	"github.com/gorilla/mux"
-	"github.com/odwrtw/polochon/cmd/polochon/auth"
 	"github.com/phyber/negroni-gzip/gzip"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/urfave/negroni"
@@ -306,7 +305,7 @@ func (s *Server) httpServer() *http.Server {
 
 	// Add token auth middleware if token configuration file specified
 	if s.authManager != nil {
-		n.Use(auth.NewMiddleware(s.authManager))
+		n.Use(newAuthMiddleware(s.authManager))
 	}
 
 	// Wrap the router

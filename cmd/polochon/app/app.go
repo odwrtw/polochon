@@ -10,7 +10,6 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/odwrtw/polochon/cmd/polochon/auth"
 	"github.com/odwrtw/polochon/cmd/polochon/dm"
 	"github.com/odwrtw/polochon/cmd/polochon/downloader"
 	"github.com/odwrtw/polochon/cmd/polochon/organizer"
@@ -85,24 +84,10 @@ func (a *App) init() error {
 	}
 
 	if config.HTTPServer.Enable {
-		var authManager *auth.Manager
-		if _, err := os.Stat(a.authConfigPath); err == nil {
-			log.Debug("loading auth manager configuration")
-
-			file, err := os.Open(a.authConfigPath)
-			if err != nil {
-				return err
-			}
-			defer func() { _ = file.Close() }()
-
-			authManager, err = auth.New(file)
-			if err != nil {
-				return err
-			}
-			log.Debug("auth manager configuration loaded")
+		srv, err := server.New(config, lib, a.authConfigPath, a.log)
+		if err != nil {
+			return err
 		}
-
-		srv := server.New(config, lib, authManager, a.log)
 		config.Notifiers = append(config.Notifiers, srv.Hub())
 		a.subapps = append(a.subapps, subapp{name: "http_server", run: srv.Run})
 	}

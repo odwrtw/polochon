@@ -4,7 +4,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/odwrtw/polochon/cmd/polochon/auth"
 	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
@@ -15,9 +14,9 @@ type Error struct {
 }
 
 func (s *Server) logEntry(r *http.Request) *slog.Logger {
-	tokenName, ok := r.Context().Value(auth.TokenName).(string)
+	name, ok := r.Context().Value(tokenName).(string)
 	if ok {
-		return s.log.With("token_name", tokenName)
+		return s.log.With("token_name", name)
 	}
 
 	return s.log

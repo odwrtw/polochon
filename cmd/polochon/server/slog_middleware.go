@@ -6,7 +6,6 @@ import (
 	"slices"
 	"time"
 
-	"github.com/odwrtw/polochon/cmd/polochon/auth"
 	"github.com/urfave/negroni"
 )
 
@@ -68,9 +67,9 @@ func (lm *slogMiddleware) ServeHTTP(rw http.ResponseWriter, r *http.Request, nex
 		"encoding", encoding,
 	}
 
-	tokenName, ok := r.Context().Value(auth.TokenName).(string)
+	name, ok := r.Context().Value(tokenName).(string)
 	if ok {
-		attrs = append(attrs, "token_name", tokenName)
+		attrs = append(attrs, "token_name", name)
 	}
 
 	entry.With(attrs...).Info("completed handling request")

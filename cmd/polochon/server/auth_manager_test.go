@@ -1,4 +1,4 @@
-package auth
+package server
 
 import (
 	"strings"
@@ -34,7 +34,7 @@ var testConfigData = `
 `
 
 func TestIsAllowed(t *testing.T) {
-	manager, err := New(strings.NewReader(testConfigData))
+	manager, err := newAuthManager(strings.NewReader(testConfigData))
 	if err != nil {
 		t.Fatalf("expected no error, got %s", err)
 	}
@@ -42,24 +42,24 @@ func TestIsAllowed(t *testing.T) {
 	tt := []struct {
 		name     string
 		token    string
-		right    Right
+		right    authRight
 		wantOK   bool
 		wantName string
 	}{
-		{"unknown token", "bad", RightRead, false, ""},
-		{"guest can read", "guest1token", RightRead, true, "guest1"},
-		{"guest cannot write", "guest1token", RightWrite, false, ""},
-		{"guest cannot debug", "guest1token", RightDebug, false, ""},
-		{"user can write", "user1token", RightWrite, true, "user1"},
-		{"user cannot debug", "user1token", RightDebug, false, ""},
-		{"admin can debug", "admin1token", RightDebug, true, "admin1"},
+		{"unknown token", "bad", authRightRead, false, ""},
+		{"guest can read", "guest1token", authRightRead, true, "guest1"},
+		{"guest cannot write", "guest1token", authRightWrite, false, ""},
+		{"guest cannot debug", "guest1token", authRightDebug, false, ""},
+		{"user can write", "user1token", authRightWrite, true, "user1"},
+		{"user cannot debug", "user1token", authRightDebug, false, ""},
+		{"admin can debug", "admin1token", authRightDebug, true, "admin1"},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			name, ok := manager.IsAllowed(tc.token, tc.right)
+			name, ok := manager.isAllowed(tc.token, tc.right)
 			if ok != tc.wantOK {
-				t.Fatalf("IsAllowed: want %t, got %t", tc.wantOK, ok)
+				t.Fatalf("isAllowed: want %t, got %t", tc.wantOK, ok)
 			}
 			if name != tc.wantName {
 				t.Fatalf("token name: want %q, got %q", tc.wantName, name)
