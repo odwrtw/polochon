@@ -1,10 +1,9 @@
 package polochon
 
 import (
+	"context"
 	"errors"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 // Calendar error
@@ -16,7 +15,7 @@ var (
 // Calendar is an interface to get the calendar for movies and shows
 type Calendar interface {
 	Module
-	GetShowCalendar(*Show, *logrus.Entry) (*ShowCalendar, error)
+	GetShowCalendar(ctx context.Context, show *Show) (*ShowCalendar, error)
 }
 
 // ShowCalendar holds the calendar for a show

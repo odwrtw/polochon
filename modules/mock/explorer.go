@@ -1,8 +1,9 @@
 package mock
 
 import (
+	"context"
+
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
 
 // AvailableMovieOptions implements the explorer interface
@@ -16,7 +17,7 @@ func (mock *Mock) AvailableShowOptions() []string {
 }
 
 // GetMovieList implements the explorer interface
-func (mock *Mock) GetMovieList(option string, log *logrus.Entry) ([]*polochon.Movie, error) {
+func (mock *Mock) GetMovieList(_ context.Context, option string) ([]*polochon.Movie, error) {
 	var movies []*polochon.Movie
 	for i := 1; i <= 20; i++ {
 		movies = append(movies, &polochon.Movie{
@@ -27,7 +28,7 @@ func (mock *Mock) GetMovieList(option string, log *logrus.Entry) ([]*polochon.Mo
 }
 
 // GetShowList implements the explorer interface
-func (mock *Mock) GetShowList(option string, log *logrus.Entry) ([]*polochon.Show, error) {
+func (mock *Mock) GetShowList(_ context.Context, option string) ([]*polochon.Show, error) {
 	var shows []*polochon.Show
 	for i := 1; i <= 20; i++ {
 		shows = append(shows, &polochon.Show{

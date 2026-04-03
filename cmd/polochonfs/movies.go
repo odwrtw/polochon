@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/odwrtw/polochon/lib/papi"
-	log "github.com/sirupsen/logrus"
 )
 
 func movieDirTitle(m *papi.Movie) string {
@@ -20,10 +20,10 @@ func movieDirTitle(m *papi.Movie) string {
 }
 
 func (pfs *polochonfs) updateMovies() {
-	log.Debug("Fecthing movies")
+	slog.Debug("Fecthing movies")
 	movies, err := pfs.client.GetMovies()
 	if err != nil {
-		log.WithField("error", err).Error("Failed to get movies")
+		slog.Error("Failed to get movies", "error", err)
 		// TODO: should we remove all the files if we can't get an update ?
 		return
 	}
@@ -37,10 +37,7 @@ func (pfs *polochonfs) updateMovies() {
 
 		err = pfs.createFileNode(movieDirNode, m, m.Path, m.Size, m.DateAdded)
 		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-				"title": m.Title,
-			}).Error("Failed to create movie node")
+			slog.Error("Failed to create movie node", "error", err, "title", m.Title)
 			continue
 		}
 
@@ -50,5 +47,5 @@ func (pfs *polochonfs) updateMovies() {
 
 	movieRootDir.clear()
 
-	log.Debug("Movies updated")
+	slog.Debug("Movies updated")
 }

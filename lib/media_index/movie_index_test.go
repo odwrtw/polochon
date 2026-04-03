@@ -100,7 +100,7 @@ func TestMovieIndexAddAndRemove(t *testing.T) {
 		t.Fatalf("the movie %q should be in the index", m.ImdbID)
 	}
 
-	if err = idx.Remove(m, mockLogEntry); err != nil {
+	if err = idx.Remove(m); err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
 

@@ -2,9 +2,8 @@ package subapp
 
 import (
 	"errors"
+	"log/slog"
 	"sync"
-
-	"github.com/sirupsen/logrus"
 )
 
 // ErrPanicRecovered is returned if the app paniced and recovered
@@ -14,22 +13,24 @@ var ErrPanicRecovered = errors.New("subapp: panic recovered")
 type Base struct {
 	AppName   string
 	AppStatus Status
+	log       *slog.Logger
 
 	Done chan struct{}
 	Wg   sync.WaitGroup
 }
 
 // NewBase returns a new base app
-func NewBase(name string) *Base {
+func NewBase(name string, log *slog.Logger) *Base {
 	return &Base{
 		AppName:   name,
 		AppStatus: Unknown,
+		log:       log,
 	}
 }
 
 // InitStart inits the app, so that it can be started
-func (b *Base) InitStart(log *logrus.Entry) {
-	log.WithField("app_name", b.AppName).Info("starting app")
+func (b *Base) InitStart() {
+	b.log.Info("starting app", "app_name", b.AppName)
 	b.Done = make(chan struct{})
 	b.AppStatus = Started
 }
@@ -45,23 +46,23 @@ func (b *Base) Status() Status {
 }
 
 // Stop stops the app
-func (b *Base) Stop(log *logrus.Entry) {
-	log.WithField("app", b.AppName).Debug("stopping app asynchronously")
+func (b *Base) Stop() {
+	b.log.Debug("stopping app asynchronously", "app", b.AppName)
 	if b.AppStatus == Started {
 		close(b.Done)
 		b.AppStatus = Stopped
 	}
 }
 
-// BlockingStop stops the app a nd waits for it to be done
-func (b *Base) BlockingStop(log *logrus.Entry) {
-	log.WithField("app", b.AppName).Debug("stopping app synchronously")
+// BlockingStop stops the app and waits for it to be done
+func (b *Base) BlockingStop() {
+	b.log.Debug("stopping app synchronously", "app", b.AppName)
 
 	// Send a signal to stop the app
-	b.Stop(log)
+	b.Stop()
 
 	// Wait for all the goroutines to be done
 	b.Wg.Wait()
 
-	log.WithField("app_name", b.AppName).Info("app stopped")
+	b.log.Info("app stopped", "app_name", b.AppName)
 }

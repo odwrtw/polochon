@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"sync"
 	"syscall"
@@ -12,7 +13,6 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/hanwen/go-fuse/v2/fs"
 	"github.com/hanwen/go-fuse/v2/fuse"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -90,18 +90,11 @@ func (n *node) clear() {
 			continue
 		}
 
-		log.WithFields(log.Fields{
-			"parent": n.name,
-			"child":  name,
-		}).Debug("Removing child")
+		slog.Debug("Removing child", "parent", n.name, "child", name)
 
 		ok, _ := n.RmChild(name)
 		if !ok {
-			log.WithFields(log.Fields{
-				"parent": n.name,
-				"child":  name,
-				"ok":     ok,
-			}).Error("Failed to remove inode child")
+			slog.Error("Failed to remove inode child", "parent", n.name, "child", name, "ok", ok)
 			continue
 		}
 
@@ -110,7 +103,7 @@ func (n *node) clear() {
 			// If it hasn't (ENOENT), fall back to NotifyEntry which invalidates
 			// the directory entry by name.
 			if notifyEntryRet := n.NotifyEntry(name); notifyEntryRet != 0 {
-				log.WithField("file", child.name).Error("Failed to notify delete")
+				slog.Error("Failed to notify delete", "file", child.name)
 			}
 		}
 
@@ -160,17 +153,14 @@ func (n *node) updateAttr(out *fuse.Attr) {
 }
 
 func (n *node) Getattr(_ context.Context, _ fs.FileHandle, out *fuse.AttrOut) syscall.Errno {
-	log.WithField("node", n.name).Debug("Getattr called")
+	slog.Debug("Getattr called", "node", n.name)
 	out.SetTimeout(libraryRefresh)
 	n.updateAttr(&out.Attr)
 	return 0
 }
 
 func (n *node) Open(_ context.Context, flags uint32) (fh fs.FileHandle, fuseFlags uint32, errno syscall.Errno) {
-	log.WithFields(log.Fields{
-		"node":  n.name,
-		"flags": flags,
-	}).Debug("Open called on node")
+	slog.Debug("Open called on node", "node", n.name, "flags", flags)
 	return newFileHandle(n.name, n.url, int64(n.size)), 0, 0
 }
 
@@ -190,7 +180,7 @@ func newFileHandle(name, url string, size int64) *fileHandle {
 }
 
 func (fh *fileHandle) Flush(_ context.Context) syscall.Errno {
-	log.WithField("name", fh.name).Debug("Flush called")
+	slog.Debug("Flush called", "name", fh.name)
 	fh.close()
 	return 0
 }
@@ -205,10 +195,7 @@ func (fh *fileHandle) close() {
 }
 
 func (fh *fileHandle) setup(_ context.Context, offset int64) error {
-	log.WithFields(log.Fields{
-		"name":   fh.name,
-		"offset": offset,
-	}).Trace("Setting up filehandle")
+	slog.Debug("Setting up filehandle", "name", fh.name, "offset", offset)
 
 	cancelCtx, cancelFunc := context.WithCancel(globalCtx)
 	fh.cancel = cancelFunc
@@ -226,7 +213,7 @@ func (fh *fileHandle) setup(_ context.Context, offset int64) error {
 	}
 
 	timeout := time.AfterFunc(defaultTimeout, func() {
-		log.WithField("name", fh.name).Error("Request timeout")
+		slog.Error("Request timeout", "name", fh.name)
 		fh.cancel()
 	})
 
@@ -242,9 +229,9 @@ func (fh *fileHandle) setup(_ context.Context, offset int64) error {
 	}
 
 	if fh.buffer != nil {
-		log.WithField("name", fh.name).Trace("Closing old buffer")
+		slog.Debug("Closing old buffer", "name", fh.name)
 		_ = fh.buffer.Close()
-		log.WithField("name", fh.name).Trace("Done closing old buffer")
+		slog.Debug("Done closing old buffer", "name", fh.name)
 	}
 
 	fh.lastOffset = offset
@@ -255,11 +242,6 @@ func (fh *fileHandle) setup(_ context.Context, offset int64) error {
 func (fh *fileHandle) Read(ctx context.Context, dest []byte, offset int64) (fuse.ReadResult, syscall.Errno) {
 	readSize := int64(len(dest))
 
-	l := log.WithFields(log.Fields{
-		"name":             fh.name,
-		"requested_offset": offset,
-	})
-
 	// Handle context cancelled from the given fuse.Context
 	err := ctx.Err()
 	if err != nil {
@@ -268,7 +250,7 @@ func (fh *fileHandle) Read(ctx context.Context, dest []byte, offset int64) (fuse
 			return fuse.ReadResultData(dest), syscall.EINTR
 		}
 
-		l.WithField("error", err).Error("Read failed from fuse context")
+		slog.Error("Read failed from fuse context", "name", fh.name, "requested_offset", offset, "error", err)
 		return fuse.ReadResultData(dest), syscall.EIO
 	}
 
@@ -276,7 +258,7 @@ func (fh *fileHandle) Read(ctx context.Context, dest []byte, offset int64) (fuse
 	err = globalCtx.Err()
 	if err != nil {
 		if err != context.Canceled {
-			l.WithField("error", err).Error("Read failed from global context")
+			slog.Error("Read failed from global context", "name", fh.name, "requested_offset", offset, "error", err)
 		}
 		return fuse.ReadResultData(dest), syscall.EIO
 	}
@@ -284,7 +266,7 @@ func (fh *fileHandle) Read(ctx context.Context, dest []byte, offset int64) (fuse
 	defaultErr := syscall.ENETUNREACH // Network unreachable
 	if fh.buffer == nil || offset != fh.lastOffset {
 		if err := fh.setup(ctx, offset); err != nil {
-			l.WithField("error", err).Error("Failed to setup file handle")
+			slog.Error("Failed to setup file handle", "name", fh.name, "requested_offset", offset, "error", err)
 			return fuse.ReadResultData(dest), defaultErr
 		}
 	}
@@ -298,10 +280,6 @@ func (fh *fileHandle) Read(ctx context.Context, dest []byte, offset int64) (fuse
 	timeout.Stop()
 
 	fh.lastOffset += int64(read)
-	l = l.WithFields(log.Fields{
-		"read":        humanize.SI(float64(readSize), "B"),
-		"last_offset": fh.lastOffset,
-	})
 
 	if timedOut {
 		err = fmt.Errorf("timeout after %s", defaultTimeout.String())
@@ -309,15 +287,28 @@ func (fh *fileHandle) Read(ctx context.Context, dest []byte, offset int64) (fuse
 
 	switch err {
 	case nil:
-		l.Trace("Read from async reader")
+		slog.Debug("Read from async reader",
+			"name", fh.name, "requested_offset", offset,
+			"read", humanize.SI(float64(readSize), "B"),
+			"last_offset", fh.lastOffset,
+		)
 		return fuse.ReadResultData(dest), 0
 	case io.EOF:
-		l.Trace("Read from async reader until EOF")
+		slog.Debug("Read from async reader until EOF",
+			"name", fh.name, "requested_offset", offset,
+			"read", humanize.SI(float64(readSize), "B"),
+			"last_offset", fh.lastOffset,
+		)
 		return fuse.ReadResultData(dest), 0
 	case context.Canceled:
-		l.Debug("Context cancelled")
+		slog.Debug("Context cancelled", "name", fh.name, "requested_offset", offset)
 	default:
-		l.WithField("error", err).Error("Failed to read from async reader")
+		slog.Error("Failed to read from async reader",
+			"name", fh.name, "requested_offset", offset,
+			"read", humanize.SI(float64(readSize), "B"),
+			"last_offset", fh.lastOffset,
+			"error", err,
+		)
 	}
 
 	fh.close()

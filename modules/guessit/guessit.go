@@ -2,12 +2,12 @@ package guessit
 
 import (
 	"fmt"
+	"log/slog"
 	"path/filepath"
 	"strings"
 
 	"github.com/odwrtw/whatsthis"
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
 
 // Make sure that the module is a guesser
@@ -27,7 +27,7 @@ const (
 type Guessit struct{}
 
 // Init implements the module interface
-func (g *Guessit) Init(_ []byte) error {
+func (g *Guessit) Init(_ []byte, _ *slog.Logger) error {
 	return nil
 }
 
@@ -42,7 +42,7 @@ func (g *Guessit) Status() (polochon.ModuleStatus, error) {
 }
 
 // GuessMetadata guess the metadata of a file
-func (g *Guessit) GuessMetadata(file *polochon.File, _ *logrus.Entry) (*polochon.VideoMetadata, error) {
+func (g *Guessit) GuessMetadata(file *polochon.File) (*polochon.VideoMetadata, error) {
 	filePath := filepath.Base(file.Path)
 	guess := whatsthis.Video(filePath)
 
@@ -56,7 +56,7 @@ func (g *Guessit) GuessMetadata(file *polochon.File, _ *logrus.Entry) (*polochon
 }
 
 // Guess implements the Guesser interface
-func (g *Guessit) Guess(file polochon.File, movieConf polochon.MovieConfig, showConf polochon.ShowConfig, _ *logrus.Entry) (polochon.Video, error) {
+func (g *Guessit) Guess(file polochon.File, movieConf polochon.MovieConfig, showConf polochon.ShowConfig) (polochon.Video, error) {
 	filename := filepath.Base(file.Path)
 	guess := whatsthis.Video(filename)
 

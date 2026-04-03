@@ -1,6 +1,8 @@
 package library
 
 import (
+	"io"
+	"log/slog"
 	"testing"
 
 	polochon "github.com/odwrtw/polochon/lib"
@@ -8,7 +10,7 @@ import (
 )
 
 func TestMovieDir(t *testing.T) {
-	library := New(&configuration.Config{})
+	library := New(&configuration.Config{Logger: slog.New(slog.NewTextHandler(io.Discard, nil))})
 
 	tt := []struct {
 		name     string

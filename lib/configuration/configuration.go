@@ -2,18 +2,18 @@ package configuration
 
 import (
 	"io"
+	"log/slog"
 	"os"
 	"time"
 
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/robfig/cron/v3"
-	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
 // Config represents the configuration for polochon
 type Config struct {
-	Logger            *logrus.Logger
+	Logger            *slog.Logger
 	Watcher           WatcherConfig
 	Organizer         OrganizerConfig
 	Downloader        DownloaderConfig

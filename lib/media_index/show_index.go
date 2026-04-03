@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
 
 // ShowIndex is an index for the shows
@@ -330,27 +329,21 @@ func (si *ShowIndex) IsSeasonEmpty(imdbID string, season int) (bool, error) {
 }
 
 // RemoveSeason removes the season from the index
-func (si *ShowIndex) RemoveSeason(show *polochon.Show, season int, log *logrus.Entry) error {
-	log.Infof("deleting whole season from index")
-
+func (si *ShowIndex) RemoveSeason(show *polochon.Show, season int) error {
 	delete(si.shows[show.ImdbID].Seasons, season)
-
 	return nil
 }
 
 // RemoveShow removes the show from the index
-func (si *ShowIndex) RemoveShow(show *polochon.Show, log *logrus.Entry) error {
-	log.Infof("deleting whole show from index")
-
+func (si *ShowIndex) RemoveShow(show *polochon.Show) error {
 	si.Lock()
 	defer si.Unlock()
 	delete(si.shows, show.ImdbID)
-
 	return nil
 }
 
 // RemoveEpisode removes the show episode from the index
-func (si *ShowIndex) RemoveEpisode(episode *polochon.ShowEpisode, log *logrus.Entry) error {
+func (si *ShowIndex) RemoveEpisode(episode *polochon.ShowEpisode) error {
 	id := episode.ShowImdbID
 	sNum := episode.Season
 	eNum := episode.Episode

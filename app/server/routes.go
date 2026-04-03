@@ -9,14 +9,13 @@ import (
 	"github.com/odwrtw/polochon/app/auth"
 	"github.com/phyber/negroni-gzip/gzip"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 )
 
 // httpServer returns an http server
-func (s *Server) httpServer(log *logrus.Entry) *http.Server {
+func (s *Server) httpServer() *http.Server {
 	addr := fmt.Sprintf("%s:%d", s.config.HTTPServer.Host, s.config.HTTPServer.Port)
-	log.Debugf("http server will listen on: %s", addr)
+	s.log.Debug("http server will listen on", "addr", addr)
 
 	mux := mux.NewRouter()
 	for _, route := range []struct {
@@ -284,8 +283,8 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 	// Panic recovery
 	n.Use(negroni.NewRecovery())
 
-	// Use logrus as logger
-	n.Use(newLogrusMiddleware(s.log.Logger, s.config.HTTPServer.LogExcludePaths))
+	// Use slog as logger
+	n.Use(newSlogMiddleware(s.log, s.config.HTTPServer.LogExcludePaths))
 
 	// Strip Accept-Encoding for the SSE endpoint so the gzip middleware
 	// does not wrap the ResponseWriter and break streaming.
@@ -301,7 +300,7 @@ func (s *Server) httpServer(log *logrus.Entry) *http.Server {
 
 	// Add basic auth if configured
 	if s.config.HTTPServer.BasicAuth {
-		log.Info("server will require basic authentication")
+		s.log.Info("server will require basic authentication")
 		n.Use(NewBasicAuthMiddleware(s.config.HTTPServer.BasicAuthUser, s.config.HTTPServer.BasicAuthPassword))
 	}
 

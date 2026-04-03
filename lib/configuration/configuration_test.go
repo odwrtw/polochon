@@ -13,7 +13,7 @@ import (
 
 var testConfigData = []byte(`
 logs:
-  level: panic
+  level: error
 watcher:
   fsnotifier: mock
   dir: /downloads/todo

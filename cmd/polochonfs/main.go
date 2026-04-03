@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"log/slog"
 	"os"
 	"os/signal"
 	"os/user"
@@ -11,7 +12,6 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -34,9 +34,10 @@ var (
 	uid, gid uint32
 )
 
+
 func main() {
 	if err := run(); err != nil {
-		log.Error(err)
+		slog.Error(err.Error())
 		os.Exit(1)
 	}
 }
@@ -72,7 +73,7 @@ func run() error {
 	flag.StringVar(&showDirName, "showDirName", showDirName, "show directory name")
 	flag.StringVar(&movieDirName, "movieDirName", movieDirName, "movie directory name")
 	flag.StringVar(&defaultCacheSize, "cache", defaultCacheSize, "cache size (e.g. 10MB)")
-	flag.StringVar(&logLevel, "logLevel", logLevel, "log level (warn, error, info, debug, trace)")
+	flag.StringVar(&logLevel, "logLevel", logLevel, "log level (debug, info, warn, error)")
 	flag.DurationVar(&defaultTimeout, "timeout", defaultTimeout, "HTTP requests timeout")
 	flag.DurationVar(&libraryRefresh, "libraryRefresh", libraryRefresh, "library refresh timer")
 	flag.Uint64Var(&uid64, "uid", uid64, "UID of the mounted files")
@@ -90,17 +91,13 @@ func run() error {
 	cacheSize = int(cacheBytes)
 
 	// Setup logger
-	log.SetFormatter(&log.TextFormatter{
-		FullTimestamp:   true,
-		TimestampFormat: "2006/01/02 15:04:05",
-	})
-
-	lvl, err := log.ParseLevel(logLevel)
-	if err != nil {
+	var level slog.Level
+	if err := level.UnmarshalText([]byte(logLevel)); err != nil {
 		return err
 	}
-	log.SetOutput(os.Stdout)
-	log.SetLevel(lvl)
+
+	handler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: level})
+	slog.SetDefault(slog.New(handler))
 
 	err = pfs.init()
 	if err != nil {
@@ -108,13 +105,13 @@ func run() error {
 		return err
 	}
 
-	log.WithField("mountpoint", pfs.mountPoint).Info("Mouting polochonfs")
+	slog.Info("Mounting polochonfs", "mountpoint", pfs.mountPoint)
 	server, err := pfs.mount()
 	if err != nil {
 		return err
 	}
 
-	log.Info("FUSE daemon started")
+	slog.Info("FUSE daemon started")
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	<-sigs

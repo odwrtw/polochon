@@ -1,13 +1,14 @@
 package pam
 
 import (
+	"context"
+
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/papi"
-	"github.com/sirupsen/logrus"
 )
 
 // GetDetails implements the Detailer interface
-func (p *Pam) GetDetails(i any, log *logrus.Entry) error {
+func (p *Pam) GetDetails(_ context.Context, i any) error {
 	switch resource := i.(type) {
 	case *polochon.Movie:
 		m := &papi.Movie{Movie: resource}

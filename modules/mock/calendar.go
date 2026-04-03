@@ -1,11 +1,12 @@
 package mock
 
 import (
+	"context"
+
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
 
 // GetShowCalendar implements the calendar interface
-func (mock *Mock) GetShowCalendar(*polochon.Show, *logrus.Entry) (*polochon.ShowCalendar, error) {
+func (mock *Mock) GetShowCalendar(_ context.Context, _ *polochon.Show) (*polochon.ShowCalendar, error) {
 	return nil, nil
 }

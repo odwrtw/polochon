@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/odwrtw/polochon/app/app"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -28,10 +28,11 @@ func main() {
 		os.Exit(0)
 	}
 
-	app, err := app.NewApp(*configPath, *tokenPath)
+	a, err := app.NewApp(*configPath, *tokenPath)
 	if err != nil {
-		logrus.Fatal(err)
+		slog.Error(err.Error())
+		os.Exit(1)
 	}
 
-	app.Run()
+	a.Run()
 }

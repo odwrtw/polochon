@@ -1,13 +1,14 @@
 package server
 
 import (
+	"context"
 	"io"
+	"log/slog"
 	"net/http"
 	"sync"
 	"time"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
 
 const sseModuleName = "sse"
@@ -27,12 +28,12 @@ func newSSEHub() *sseHub {
 }
 
 // Module interface.
-func (h *sseHub) Init(_ []byte) error                    { return nil }
+func (h *sseHub) Init(_ []byte, _ *slog.Logger) error    { return nil }
 func (h *sseHub) Name() string                           { return sseModuleName }
 func (h *sseHub) Status() (polochon.ModuleStatus, error) { return polochon.StatusOK, nil }
 
 // Notifier interface.
-func (h *sseHub) Notify(_ any, _ *logrus.Entry) error {
+func (h *sseHub) Notify(_ context.Context, _ any) error {
 	h.broadcast()
 	return nil
 }

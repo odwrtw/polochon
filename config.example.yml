@@ -1,6 +1,6 @@
 # Logs
 logs:
-  # Log level available log levels: debug, info, warn, error, fatal, panic
+  # Log level: debug, info, warn, error
   level: debug
   # Disable timestamp logging. useful when output is redirected to logging
   # system that already adds timestamps.

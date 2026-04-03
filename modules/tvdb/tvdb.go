@@ -1,8 +1,10 @@
 package tvdb
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"sort"
 	"strconv"
@@ -12,7 +14,6 @@ import (
 	"github.com/agnivade/levenshtein"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/pioz/tvdb"
-	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
@@ -57,7 +58,7 @@ type TvDB struct {
 }
 
 // Init implements the module interface
-func (t *TvDB) Init(p []byte) error {
+func (t *TvDB) Init(p []byte, _ *slog.Logger) error {
 	if t.configured {
 		return nil
 	}
@@ -213,7 +214,7 @@ func (t *TvDB) searchByName(query string) (*tvdb.Series, error) {
 }
 
 // GetDetails implements the Detailer interface
-func (t *TvDB) GetDetails(i any, log *logrus.Entry) error {
+func (t *TvDB) GetDetails(_ context.Context, i any) error {
 	switch v := i.(type) {
 	case *polochon.Show:
 		return t.getShowDetails(v, nil)
@@ -468,7 +469,7 @@ func (t *TvDB) getEpisodeDetails(s *polochon.ShowEpisode) error {
 }
 
 // GetShowCalendar implements the Calendar interface
-func (t *TvDB) GetShowCalendar(show *polochon.Show, log *logrus.Entry) (*polochon.ShowCalendar, error) {
+func (t *TvDB) GetShowCalendar(_ context.Context, show *polochon.Show) (*polochon.ShowCalendar, error) {
 	if err := t.getShowDetails(show, nil); err != nil {
 		return nil, err
 	}

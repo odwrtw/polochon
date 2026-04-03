@@ -1,11 +1,11 @@
 package fsnotify
 
 import (
+	"log/slog"
 	"os"
 	"time"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 	"gopkg.in/fsnotify.v1"
 )
 
@@ -27,6 +27,7 @@ const (
 
 // FsNotify is a fsNotifier watching a directory
 type FsNotify struct {
+	log     *slog.Logger
 	watcher *fsnotify.Watcher
 }
 
@@ -41,12 +42,13 @@ func (fs *FsNotify) Status() (polochon.ModuleStatus, error) {
 }
 
 // Init implements the Module interface
-func (fs *FsNotify) Init([]byte) error {
+func (fs *FsNotify) Init(_ []byte, log *slog.Logger) error {
+	fs.log = log.With("module", moduleName)
 	return nil
 }
 
 // Watch implements the modules fsNotifier interface
-func (fs *FsNotify) Watch(watchPath string, ctx polochon.FsNotifierCtx, log *logrus.Entry) error {
+func (fs *FsNotify) Watch(watchPath string, ctx polochon.FsNotifierCtx) error {
 	// Create a new watcher
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -59,16 +61,14 @@ func (fs *FsNotify) Watch(watchPath string, ctx polochon.FsNotifierCtx, log *log
 		return err
 	}
 
-	log = log.WithField("module", moduleName)
-
 	// Run the event handler
-	go fs.eventHandler(ctx, log)
+	go fs.eventHandler(ctx)
 
 	// Watch the path
 	return fs.watcher.Add(watchPath)
 }
 
-func (fs *FsNotify) eventHandler(ctx polochon.FsNotifierCtx, log *logrus.Entry) {
+func (fs *FsNotify) eventHandler(ctx polochon.FsNotifierCtx) {
 	// Notify the waitgroup
 	ctx.Wg.Add(1)
 	defer ctx.Wg.Done()
@@ -79,7 +79,7 @@ func (fs *FsNotify) eventHandler(ctx polochon.FsNotifierCtx, log *logrus.Entry) 
 	for {
 		select {
 		case <-ctx.Done:
-			log.Debug("fsnotify is done watching")
+			fs.log.Debug("fsnotify is done watching")
 			return
 		case ev := <-fs.watcher.Events:
 			if ev.Op != fsnotify.Create && ev.Op != fsnotify.Chmod {
@@ -95,7 +95,7 @@ func (fs *FsNotify) eventHandler(ctx polochon.FsNotifierCtx, log *logrus.Entry) 
 				ctx.Event <- ev.Name
 			}()
 		case err := <-fs.watcher.Errors:
-			log.Error(err)
+			fs.log.Error("fsnotify error", "error", err)
 		}
 	}
 }

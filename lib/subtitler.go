@@ -1,13 +1,13 @@
 package polochon
 
-import "github.com/sirupsen/logrus"
+import "context"
 
 // Subtitler all subtitler must implement it
 type Subtitler interface {
 	Module
-	GetSubtitle(any, Language, *logrus.Entry) (*Subtitle, error)
-	ListSubtitles(any, Language, *logrus.Entry) ([]*SubtitleEntry, error)
-	DownloadSubtitle(any, *SubtitleEntry, *logrus.Entry) (*Subtitle, error)
+	GetSubtitle(ctx context.Context, v any, lang Language) (*Subtitle, error)
+	ListSubtitles(ctx context.Context, v any, lang Language) ([]*SubtitleEntry, error)
+	DownloadSubtitle(ctx context.Context, v any, entry *SubtitleEntry) (*Subtitle, error)
 }
 
 // FindSubtitler returns the first subtitler with the given name, or nil if not found.

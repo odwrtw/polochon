@@ -2,6 +2,7 @@ package opensubtitles
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -11,12 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	polochon "github.com/odwrtw/polochon/lib"
 )
-
-var silentLog = logrus.NewEntry(&logrus.Logger{Out: io.Discard})
 
 func TestName(t *testing.T) {
 	o := &opensubs{}
@@ -162,7 +159,7 @@ func TestDownloadSubtitle_FileFetchError(t *testing.T) {
 		}
 	}
 
-	_, err := o.DownloadSubtitle(movie, entry, silentLog)
+	_, err := o.DownloadSubtitle(context.Background(), movie, entry)
 	if err == nil {
 		t.Error("expected error for non-200 file fetch, got nil")
 	}
@@ -212,7 +209,7 @@ func TestListSubtitles_IMDBFallback(t *testing.T) {
 		return searchResp("The.Matrix.1999.BluRay", 99), nil
 	}
 
-	entries, err := o.ListSubtitles(movie, polochon.EN, silentLog)
+	entries, err := o.ListSubtitles(context.Background(), movie, polochon.EN)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -239,7 +236,7 @@ func TestListSubtitles_TitleFallback(t *testing.T) {
 		return searchResp("Unknown.Film.2020", 7), nil
 	}
 
-	entries, err := o.ListSubtitles(movie, polochon.EN, silentLog)
+	entries, err := o.ListSubtitles(context.Background(), movie, polochon.EN)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -259,7 +256,7 @@ func TestListSubtitles_NoResults(t *testing.T) {
 		return emptySearchResp(), nil
 	}
 
-	_, err := o.ListSubtitles(movie, polochon.EN, silentLog)
+	_, err := o.ListSubtitles(context.Background(), movie, polochon.EN)
 	if err != polochon.ErrNoSubtitleFound {
 		t.Errorf("expected polochon.ErrNoSubtitleFound, got %v", err)
 	}
@@ -279,7 +276,7 @@ func TestListSubtitles_TransportError(t *testing.T) {
 		}, nil
 	}
 
-	_, err := o.ListSubtitles(movie, polochon.EN, silentLog)
+	_, err := o.ListSubtitles(context.Background(), movie, polochon.EN)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -304,7 +301,7 @@ func TestListSubtitles_ShowEpisode(t *testing.T) {
 		return searchResp("Lost.S01E03.BluRay", 55), nil
 	}
 
-	entries, err := o.ListSubtitles(ep, polochon.FR, silentLog)
+	entries, err := o.ListSubtitles(context.Background(), ep, polochon.FR)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -360,7 +357,7 @@ func TestListSubtitles_TypeParam(t *testing.T) {
 				capturedQuery = req.URL.RawQuery
 				return searchResp("Some.Release", 42), nil
 			}
-			_, err := o.ListSubtitles(tc.video, polochon.EN, silentLog)
+			_, err := o.ListSubtitles(context.Background(), tc.video, polochon.EN)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -509,7 +506,7 @@ func TestDownloadSubtitle(t *testing.T) {
 		}
 	}
 
-	sub, err := o.DownloadSubtitle(movie, entry, silentLog)
+	sub, err := o.DownloadSubtitle(context.Background(), movie, entry)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -550,7 +547,7 @@ func TestDownloadSubtitle_QuotaExceeded(t *testing.T) {
 		}
 	}
 
-	_, err := o.DownloadSubtitle(movie, entry, silentLog)
+	_, err := o.DownloadSubtitle(context.Background(), movie, entry)
 	if err != ErrQuotaExceeded {
 		t.Errorf("expected ErrQuotaExceeded, got %v", err)
 	}
@@ -585,7 +582,7 @@ func TestGetSubtitle(t *testing.T) {
 		}
 	}
 
-	sub, err := o.GetSubtitle(movie, polochon.EN, silentLog)
+	sub, err := o.GetSubtitle(context.Background(), movie, polochon.EN)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -648,7 +645,7 @@ func TestDownloadSubtitle_QuotaReached(t *testing.T) {
 	movie := &polochon.Movie{}
 	entry := &polochon.SubtitleEntry{ID: "42"}
 
-	_, err := o.DownloadSubtitle(movie, entry, silentLog)
+	_, err := o.DownloadSubtitle(context.Background(), movie, entry)
 	if err != ErrQuotaExceeded {
 		t.Errorf("expected ErrQuotaExceeded, got %v", err)
 	}
@@ -658,7 +655,7 @@ func TestListSubtitles_QuotaReached(t *testing.T) {
 	o := &opensubs{remaining: 0, resetAt: time.Now().Add(time.Hour)}
 	movie := &polochon.Movie{} // no doRequest mock needed — returns before any HTTP call
 
-	_, err := o.ListSubtitles(movie, polochon.EN, silentLog)
+	_, err := o.ListSubtitles(context.Background(), movie, polochon.EN)
 	if err != ErrQuotaExceeded {
 		t.Errorf("expected ErrQuotaExceeded, got %v", err)
 	}
@@ -711,7 +708,7 @@ func TestDownloadSubtitle_StoresQuota(t *testing.T) {
 		}
 	}
 
-	_, err := o.DownloadSubtitle(movie, entry, silentLog)
+	_, err := o.DownloadSubtitle(context.Background(), movie, entry)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

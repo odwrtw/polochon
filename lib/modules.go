@@ -3,6 +3,7 @@ package polochon
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"reflect"
 )
 
@@ -37,7 +38,7 @@ type ModuleStatus string
 
 // Module type, all modules must implement it
 type Module interface {
-	Init(params []byte) error
+	Init(params []byte, log *slog.Logger) error
 	Name() string
 	Status() (ModuleStatus, error)
 }

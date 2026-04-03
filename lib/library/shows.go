@@ -1,12 +1,12 @@
 package library
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
 	polochon "github.com/odwrtw/polochon/lib"
 	index "github.com/odwrtw/polochon/lib/media_index"
-	"github.com/sirupsen/logrus"
 )
 
 // ShowIDs returns the show ids, seasons and episodes
@@ -31,7 +31,8 @@ func (l *Library) GetShow(id string) (*polochon.Show, error) {
 }
 
 // DeleteShow deletes the whole show
-func (l *Library) DeleteShow(id string, log *logrus.Entry) error {
+func (l *Library) DeleteShow(id string) error {
+	log := l.log.With("type", "show", "imdb_id", id)
 	path, err := l.showIndex.ShowPath(id)
 	if err != nil {
 		return err
@@ -41,9 +42,10 @@ func (l *Library) DeleteShow(id string, log *logrus.Entry) error {
 		return err
 	}
 
+	log.Info("removing show")
 	// Remove the show from the index
 	show := &polochon.Show{ImdbID: id}
-	return l.showIndex.RemoveShow(show, log)
+	return l.showIndex.RemoveShow(show)
 }
 
 // GetIndexedShow returns an indexed Show from its id
@@ -56,7 +58,7 @@ func (l *Library) GetIndexedShow(id string) (*index.Show, error) {
 	return s, nil
 }
 
-func (l *Library) addShow(ep *polochon.ShowEpisode, log *logrus.Entry) error {
+func (l *Library) addShow(ep *polochon.ShowEpisode) error {
 	dir := l.getShowDir(ep)
 	nfoPath := l.showNFOPath(dir)
 	if exists(nfoPath) {
@@ -66,7 +68,7 @@ func (l *Library) addShow(ep *polochon.ShowEpisode, log *logrus.Entry) error {
 	s := ep.Show
 	if s == nil {
 		s = polochon.NewShowFromEpisode(ep)
-		if err := polochon.GetDetails(s, log); err != nil {
+		if err := polochon.GetDetails(context.Background(), s, l.log); err != nil {
 			return err
 		}
 	}
@@ -106,7 +108,7 @@ func (l *Library) addShow(ep *polochon.ShowEpisode, log *logrus.Entry) error {
 			name: "banner.jpg",
 		},
 	} {
-		log.Debug("downloading " + img.name)
+		l.log.Debug("downloading " + img.name)
 		savePath := filepath.Join(dir, img.name)
 		if err := download(img.url, savePath); err != nil {
 			return err

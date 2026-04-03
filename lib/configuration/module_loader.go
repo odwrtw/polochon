@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"errors"
+	"log/slog"
 
 	polochon "github.com/odwrtw/polochon/lib"
 )
@@ -42,84 +43,84 @@ type ModuleLoader struct {
 	downloader  polochon.Downloader
 }
 
-func (ml *ModuleLoader) load() error {
+func (ml *ModuleLoader) load(log *slog.Logger) error {
 	if ml.modulesParams == nil {
 		return ErrMissingModuleParams
 	}
 
 	var err error
 	if len(ml.DetailerNames) != 0 {
-		ml.detailers, err = ml.modulesParams.getDetailers(ml.DetailerNames)
+		ml.detailers, err = ml.modulesParams.getDetailers(ml.DetailerNames, log)
 		if err != nil {
 			return err
 		}
 	}
 
 	if len(ml.TorrenterNames) != 0 {
-		ml.torrenters, err = ml.modulesParams.getTorrenters(ml.TorrenterNames)
+		ml.torrenters, err = ml.modulesParams.getTorrenters(ml.TorrenterNames, log)
 		if err != nil {
 			return err
 		}
 	}
 
 	if len(ml.SubtitlerNames) != 0 {
-		ml.subtitlers, err = ml.modulesParams.getSubtitlers(ml.SubtitlerNames)
+		ml.subtitlers, err = ml.modulesParams.getSubtitlers(ml.SubtitlerNames, log)
 		if err != nil {
 			return err
 		}
 	}
 
 	if len(ml.ExplorerNames) != 0 {
-		ml.explorers, err = ml.modulesParams.getExplorers(ml.ExplorerNames)
+		ml.explorers, err = ml.modulesParams.getExplorers(ml.ExplorerNames, log)
 		if err != nil {
 			return err
 		}
 	}
 
 	if len(ml.SearcherNames) != 0 {
-		ml.searchers, err = ml.modulesParams.getSearchers(ml.SearcherNames)
+		ml.searchers, err = ml.modulesParams.getSearchers(ml.SearcherNames, log)
 		if err != nil {
 			return err
 		}
 	}
 
 	if len(ml.NotifierNames) != 0 {
-		ml.notifiers, err = ml.modulesParams.getNotifiers(ml.NotifierNames)
+		ml.notifiers, err = ml.modulesParams.getNotifiers(ml.NotifierNames, log)
 		if err != nil {
 			return err
 		}
 	}
 
 	if len(ml.WishlisterNames) != 0 {
-		ml.wishlisters, err = ml.modulesParams.getWishlisters(ml.WishlisterNames)
+		ml.wishlisters, err = ml.modulesParams.getWishlisters(ml.WishlisterNames, log)
 		if err != nil {
 			return err
 		}
 	}
 
 	if len(ml.GuesserNames) != 0 {
-		ml.guessers, err = ml.modulesParams.getGuessers(ml.GuesserNames)
+		ml.guessers, err = ml.modulesParams.getGuessers(ml.GuesserNames, log)
 		if err != nil {
 			return err
 		}
 	}
 
 	if ml.CalendarName != "" {
-		ml.calendar, err = ml.modulesParams.getCalendar(ml.CalendarName)
+		ml.calendar, err = ml.modulesParams.getCalendar(ml.CalendarName, log)
 		if err != nil {
 			return err
 		}
 	}
 
 	if ml.FsNotifierName != "" {
-		ml.fsNotifier, err = ml.modulesParams.getFsNotifier(ml.FsNotifierName)
+		ml.fsNotifier, err = ml.modulesParams.getFsNotifier(ml.FsNotifierName, log)
 		if err != nil {
 			return err
 		}
 	}
 
 	if ml.DownloaderName != "" {
-		ml.downloader, err = ml.modulesParams.getDownloader(ml.DownloaderName)
+		ml.downloader, err = ml.modulesParams.getDownloader(ml.DownloaderName, log)
 		if err != nil {
 			return err
 		}

@@ -9,7 +9,7 @@ import (
 )
 
 func (s *Server) addTorrent(w http.ResponseWriter, r *http.Request) {
-	s.logEntry(r).Infof("adding torrent")
+	s.logEntry(r).Info("adding torrent")
 
 	if !s.config.Downloader.Enabled {
 		s.renderError(w, r, &Error{
@@ -53,7 +53,7 @@ func (s *Server) addTorrent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) getTorrents(w http.ResponseWriter, r *http.Request) {
-	s.logEntry(r).Debugf("getting torrents")
+	s.logEntry(r).Debug("getting torrents")
 
 	// Check that the downloader is enabled
 	if !s.config.Downloader.Enabled {
@@ -78,7 +78,7 @@ func (s *Server) getTorrents(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) removeTorrent(w http.ResponseWriter, r *http.Request) {
-	s.logEntry(r).Infof("removing torrent")
+	s.logEntry(r).Info("removing torrent")
 
 	// Check that the downloader is enabled
 	if !s.config.Downloader.Enabled {

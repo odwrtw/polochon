@@ -1,12 +1,13 @@
 package mock
 
 import (
+	"context"
+
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
 
 // GetSubtitle implements the Subtitler interface
-func (mock *Mock) GetSubtitle(v any, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
+func (mock *Mock) GetSubtitle(_ context.Context, v any, lang polochon.Language) (*polochon.Subtitle, error) {
 	video, ok := v.(polochon.Video)
 	if !ok {
 		return nil, ErrInvalidArgument
@@ -19,7 +20,7 @@ func (mock *Mock) GetSubtitle(v any, lang polochon.Language, log *logrus.Entry) 
 }
 
 // ListSubtitles implements the Subtitler interface
-func (mock *Mock) ListSubtitles(v any, lang polochon.Language, log *logrus.Entry) ([]*polochon.SubtitleEntry, error) {
+func (mock *Mock) ListSubtitles(_ context.Context, v any, lang polochon.Language) ([]*polochon.SubtitleEntry, error) {
 	if _, ok := v.(polochon.Video); !ok {
 		return nil, ErrInvalidArgument
 	}
@@ -34,7 +35,7 @@ func (mock *Mock) ListSubtitles(v any, lang polochon.Language, log *logrus.Entry
 }
 
 // DownloadSubtitle implements the Subtitler interface
-func (mock *Mock) DownloadSubtitle(v any, entry *polochon.SubtitleEntry, log *logrus.Entry) (*polochon.Subtitle, error) {
+func (mock *Mock) DownloadSubtitle(_ context.Context, v any, entry *polochon.SubtitleEntry) (*polochon.Subtitle, error) {
 	video, ok := v.(polochon.Video)
 	if !ok {
 		return nil, ErrInvalidArgument

@@ -3,19 +3,16 @@ package podnapisi
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"errors"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
 
-var fakeLogger = &logrus.Logger{Out: io.Discard}
-var fakeLoggerEntry = logrus.NewEntry(fakeLogger)
 
 // makeZip builds an in-memory zip archive containing the given files.
 func makeZip(files map[string]string) []byte {
@@ -219,7 +216,7 @@ func TestGetSubtitle(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			sub, err := c.GetSubtitle(tc.input, tc.lang, fakeLoggerEntry)
+			sub, err := c.GetSubtitle(context.Background(), tc.input, tc.lang)
 			if tc.wantErr != nil {
 				if !errors.Is(err, tc.wantErr) {
 					t.Fatalf("expected err %v, got %v", tc.wantErr, err)
@@ -252,7 +249,7 @@ func TestGetSubtitleSearchError(t *testing.T) {
 	movie.Year = 1999
 
 	c := &Client{}
-	_, err := c.GetSubtitle(movie, polochon.EN, fakeLoggerEntry)
+	_, err := c.GetSubtitle(context.Background(), movie, polochon.EN)
 	if !errors.Is(err, fakeErr) {
 		t.Fatalf("expected %v, got %v", fakeErr, err)
 	}
@@ -273,7 +270,7 @@ func TestGetSubtitleNoResults(t *testing.T) {
 	movie.Year = 1999
 
 	c := &Client{}
-	_, err := c.GetSubtitle(movie, polochon.EN, fakeLoggerEntry)
+	_, err := c.GetSubtitle(context.Background(), movie, polochon.EN)
 	if !errors.Is(err, polochon.ErrNoSubtitleFound) {
 		t.Fatalf("expected ErrNoSubtitleFound, got %v", err)
 	}

@@ -2,14 +2,13 @@ package configuration
 
 import (
 	"io"
+	"log/slog"
 	"os"
-
-	"github.com/sirupsen/logrus"
 )
 
 // Logger represents a logger
 type Logger struct {
-	logger *logrus.Logger
+	logger *slog.Logger
 }
 
 // UnmarshalYAML implements the Unmarshaler interface
@@ -24,34 +23,32 @@ func (l *Logger) UnmarshalYAML(unmarshal func(any) error) error {
 		return err
 	}
 
-	// Create a new logger
-	logger := logrus.New()
-	logger.Formatter = &logrus.TextFormatter{
-		FullTimestamp:    true,
-		DisableTimestamp: params.DisableTimestamp,
-	}
-
-	// Get the log level
-	logLevel, err := logrus.ParseLevel(params.Level)
-	if err != nil {
+	var logLevel slog.Level
+	if err := logLevel.UnmarshalText([]byte(params.Level)); err != nil {
 		return err
 	}
-	logger.Level = logLevel
 
-	// Setup the output file
 	var logOut io.Writer
 	if params.File == "" {
 		logOut = os.Stderr
 	} else {
-		var err error
-		logOut, err = os.OpenFile(params.File, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0640)
+		f, err := os.OpenFile(params.File, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0640)
 		if err != nil {
 			return err
 		}
+		logOut = f
 	}
-	logger.Out = logOut
 
-	l.logger = logger
+	opts := &slog.HandlerOptions{Level: logLevel}
+	if params.DisableTimestamp {
+		opts.ReplaceAttr = func(_ []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.TimeKey {
+				return slog.Attr{}
+			}
+			return a
+		}
+	}
 
+	l.logger = slog.New(slog.NewTextHandler(logOut, opts))
 	return nil
 }

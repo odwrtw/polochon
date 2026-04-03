@@ -1,10 +1,10 @@
 package polochon
 
 import (
+	"context"
 	"errors"
+	"log/slog"
 	"sync"
-
-	"github.com/sirupsen/logrus"
 )
 
 // ErrNoSubtitleFound trigger when no subtitle found
@@ -21,7 +21,7 @@ type SubtitleEntry struct {
 
 // ListSubtitles returns all available subtitles for a video in the given language
 // across all configured subtitlers, without downloading the subtitle data.
-func ListSubtitles(video Video, lang Language, log *logrus.Entry) ([]*SubtitleEntry, error) {
+func ListSubtitles(ctx context.Context, video Video, lang Language, log *slog.Logger) ([]*SubtitleEntry, error) {
 	resultCh := make(chan []*SubtitleEntry)
 	done := make(chan struct{})
 
@@ -36,13 +36,10 @@ func ListSubtitles(video Video, lang Language, log *logrus.Entry) ([]*SubtitleEn
 	var wg sync.WaitGroup
 	for _, subtitler := range video.GetSubtitlers() {
 		wg.Go(func() {
-			l := log.WithFields(logrus.Fields{
-				"subtitler": subtitler.Name(),
-				"lang":      lang,
-			})
+			l := log.With("subtitler", subtitler.Name(), "lang", lang)
 			l.Debug("listing subtitles")
 
-			entries, err := subtitler.ListSubtitles(video, lang, l)
+			entries, err := subtitler.ListSubtitles(ctx, video, lang)
 			if err != nil {
 				switch err {
 				case ErrNotAvailable:
@@ -50,7 +47,7 @@ func ListSubtitles(video Video, lang Language, log *logrus.Entry) ([]*SubtitleEn
 				case ErrNoSubtitleFound:
 					l.Debug("no subtitles found")
 				default:
-					l.Warn(err)
+					l.Warn("listing subtitles failed", "error", err)
 				}
 				return
 			}
@@ -74,18 +71,15 @@ func ListSubtitles(video Video, lang Language, log *logrus.Entry) ([]*SubtitleEn
 }
 
 // GetSubtitle gets the subtitles of a video in the given languages
-func GetSubtitle(video Video, lang Language, log *logrus.Entry) (*Subtitle, error) {
+func GetSubtitle(ctx context.Context, video Video, lang Language, log *slog.Logger) (*Subtitle, error) {
 	var found *Subtitle
 
 	// Ask all the subtitlers
 	for _, subtitler := range video.GetSubtitlers() {
-		l := log.WithFields(logrus.Fields{
-			"subtitler": subtitler.Name(),
-			"lang":      lang,
-		})
+		l := log.With("subtitler", subtitler.Name(), "lang", lang)
 		l.Debug("searching subtitle")
 
-		subtitle, err := subtitler.GetSubtitle(video, lang, l)
+		subtitle, err := subtitler.GetSubtitle(ctx, video, lang)
 		if err != nil {
 			switch err {
 			case ErrNotAvailable:
@@ -93,7 +87,7 @@ func GetSubtitle(video Video, lang Language, log *logrus.Entry) (*Subtitle, erro
 			case ErrNoSubtitleFound:
 				l.Debug("no subtitle found")
 			default:
-				l.Warn(err)
+				l.Warn("searching subtitle failed", "error", err)
 			}
 			continue
 		}
@@ -105,7 +99,7 @@ func GetSubtitle(video Video, lang Language, log *logrus.Entry) (*Subtitle, erro
 	}
 
 	if found == nil {
-		log.WithField("lang", lang).Debug("all subtitlers failed to find a subtitle")
+		log.Debug("all subtitlers failed to find a subtitle", "lang", lang)
 		return nil, ErrNoSubtitleFound
 	}
 

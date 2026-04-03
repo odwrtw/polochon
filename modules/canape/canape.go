@@ -1,15 +1,16 @@
 package canape
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 
 	"gopkg.in/yaml.v2"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
 
 // Make sure that the module is a wishlister
@@ -45,6 +46,7 @@ type showResponse struct {
 type Wishlist struct {
 	*Params
 	configured bool
+	log        *slog.Logger
 }
 
 // Params represents the module params
@@ -53,10 +55,12 @@ type Params struct {
 }
 
 // Init implements the module interface
-func (w *Wishlist) Init(p []byte) error {
+func (w *Wishlist) Init(p []byte, log *slog.Logger) error {
 	if w.configured {
 		return nil
 	}
+
+	w.log = log.With("module", moduleName)
 
 	params := &Params{}
 	if err := yaml.Unmarshal(p, params); err != nil {
@@ -83,8 +87,8 @@ func (w *Wishlist) Status() (polochon.ModuleStatus, error) {
 }
 
 // GetMovieWishlist gets the movies wishlist
-func (w *Wishlist) GetMovieWishlist(log *logrus.Entry) ([]*polochon.WishedMovie, error) {
-	wl, err := w.getMovieWishlists()
+func (w *Wishlist) GetMovieWishlist(ctx context.Context) ([]*polochon.WishedMovie, error) {
+	wl, err := w.getMovieWishlists(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -93,8 +97,8 @@ func (w *Wishlist) GetMovieWishlist(log *logrus.Entry) ([]*polochon.WishedMovie,
 }
 
 // GetShowWishlist gets the show wishlist
-func (w *Wishlist) GetShowWishlist(log *logrus.Entry) ([]*polochon.WishedShow, error) {
-	wl, err := w.getShowWishlists()
+func (w *Wishlist) GetShowWishlist(ctx context.Context) ([]*polochon.WishedShow, error) {
+	wl, err := w.getShowWishlists(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -103,11 +107,11 @@ func (w *Wishlist) GetShowWishlist(log *logrus.Entry) ([]*polochon.WishedShow, e
 }
 
 // Get all the users movie wishlists
-func (w *Wishlist) getMovieWishlists() (*polochon.Wishlist, error) {
+func (w *Wishlist) getMovieWishlists(ctx context.Context) (*polochon.Wishlist, error) {
 	wl := &polochon.Wishlist{}
 
 	for _, userWishlist := range w.Wishlists {
-		movies, err := userWishlist.getMovieWishlist()
+		movies, err := userWishlist.getMovieWishlist(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -124,11 +128,11 @@ func (w *Wishlist) getMovieWishlists() (*polochon.Wishlist, error) {
 }
 
 // Get all the users show wishlists
-func (w *Wishlist) getShowWishlists() (*polochon.Wishlist, error) {
+func (w *Wishlist) getShowWishlists(ctx context.Context) (*polochon.Wishlist, error) {
 	wl := &polochon.Wishlist{}
 
 	for _, userWishlist := range w.Wishlists {
-		showList, err := userWishlist.getShowWishlist()
+		showList, err := userWishlist.getShowWishlist(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -145,9 +149,9 @@ func (w *Wishlist) getShowWishlists() (*polochon.Wishlist, error) {
 }
 
 // Get a user's show wishlist
-func (w *UserWishlist) getShowWishlist() ([]polochon.WishedShow, error) {
+func (w *UserWishlist) getShowWishlist(ctx context.Context) ([]polochon.WishedShow, error) {
 	wishlist := &showResponse{}
-	err := w.request("wishlist/shows", wishlist)
+	err := w.request(ctx, "wishlist/shows", wishlist)
 	if err != nil {
 		return nil, err
 	}
@@ -155,9 +159,9 @@ func (w *UserWishlist) getShowWishlist() ([]polochon.WishedShow, error) {
 }
 
 // Get a user's movie wishlist
-func (w *UserWishlist) getMovieWishlist() ([]polochon.WishedMovie, error) {
+func (w *UserWishlist) getMovieWishlist(ctx context.Context) ([]polochon.WishedMovie, error) {
 	wishlist := &movieResponse{}
-	err := w.request("wishlist/movies", wishlist)
+	err := w.request(ctx, "wishlist/movies", wishlist)
 	if err != nil {
 		return nil, err
 	}
@@ -165,9 +169,9 @@ func (w *UserWishlist) getMovieWishlist() ([]polochon.WishedMovie, error) {
 
 }
 
-func (w *UserWishlist) request(URL string, response any) error {
+func (w *UserWishlist) request(ctx context.Context, URL string, response any) error {
 	// Create a new request
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s", w.URL, URL), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/%s", w.URL, URL), nil)
 	if err != nil {
 		return err
 	}

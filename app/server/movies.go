@@ -10,7 +10,7 @@ import (
 )
 
 func (s *Server) movieIndex(w http.ResponseWriter, req *http.Request) {
-	s.logEntry(req).Infof("listing movie index")
+	s.logEntry(req).Info("listing movie index")
 	s.renderOK(w, s.library.MovieIndex())
 }
 
@@ -19,7 +19,7 @@ func (s *Server) getMovie(w http.ResponseWriter, req *http.Request) *polochon.Mo
 	vars := mux.Vars(req)
 	id := vars["id"]
 
-	s.logEntry(req).Infof("looking for a movie with ID %q", id)
+	s.logEntry(req).Info("looking for a movie", "id", id)
 
 	// Find the file
 	m, err := s.library.GetMovie(id)
@@ -32,7 +32,7 @@ func (s *Server) getMovie(w http.ResponseWriter, req *http.Request) *polochon.Mo
 }
 
 func (s *Server) getMovieDetails(w http.ResponseWriter, req *http.Request) {
-	s.logEntry(req).Infof("getting movie details")
+	s.logEntry(req).Info("getting movie details")
 
 	m := s.getMovie(w, req)
 	if m == nil {
@@ -89,15 +89,14 @@ func (s *Server) serveMovieFile(w http.ResponseWriter, req *http.Request) {
 }
 
 func (s *Server) deleteMovie(w http.ResponseWriter, req *http.Request) {
-	log := s.logEntry(req)
-	log.Infof("deleting movie")
+	s.logEntry(req).Info("deleting movie")
 
 	m := s.getMovie(w, req)
 	if m == nil {
 		return
 	}
 
-	if err := s.library.Delete(m, log); err != nil {
+	if err := s.library.Delete(m); err != nil {
 		s.renderError(w, req, err)
 		return
 	}

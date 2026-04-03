@@ -2,6 +2,7 @@ package trakttv
 
 import (
 	"errors"
+	"log/slog"
 
 	"gopkg.in/yaml.v2"
 
@@ -43,14 +44,17 @@ type Params struct {
 type TraktTV struct {
 	client       *trakttv.TraktTv
 	fanartClient *fanarttv.Client
+	log          *slog.Logger
 	configured   bool
 }
 
 // Init implements the module interface
-func (trakt *TraktTV) Init(p []byte) error {
+func (trakt *TraktTV) Init(p []byte, log *slog.Logger) error {
 	if trakt.configured {
 		return nil
 	}
+
+	trakt.log = log.With("module", moduleName)
 
 	params := &Params{}
 	if err := yaml.Unmarshal(p, params); err != nil {

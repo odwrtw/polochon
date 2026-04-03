@@ -2,10 +2,9 @@ package safeguard
 
 import (
 	"fmt"
+	"log/slog"
 	"sync"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -41,11 +40,11 @@ func (s *Safeguard) Event() {
 }
 
 // Run runs the safeguard
-func (s *Safeguard) Run(log *logrus.Entry) error {
+func (s *Safeguard) Run(log *slog.Logger) error {
 	s.wg.Add(1)
 	defer s.wg.Done()
 
-	log = log.WithField("module", "safeguard")
+	log = log.With("module", "safeguard")
 	log.Debug("safeguard started")
 
 	for {
@@ -63,7 +62,7 @@ func (s *Safeguard) Run(log *logrus.Entry) error {
 					s.count, MaxEventDelay)
 			}
 		case <-time.After(MaxEventDelay):
-			// Reset the panic count is there was not panic during the
+			// Reset the panic count if there was no panic during the
 			// MaxPanicDelay
 			s.count = 0
 		}
@@ -71,7 +70,7 @@ func (s *Safeguard) Run(log *logrus.Entry) error {
 }
 
 // BlockingStop stops the safeguard
-func (s *Safeguard) BlockingStop(log *logrus.Entry) {
+func (s *Safeguard) BlockingStop() {
 	close(s.done)
 	s.wg.Wait()
 }

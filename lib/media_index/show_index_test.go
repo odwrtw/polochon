@@ -1,15 +1,11 @@
 package index
 
 import (
-	"io"
 	"reflect"
 	"testing"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
-
-var mockLogEntry = logrus.NewEntry(&logrus.Logger{Out: io.Discard})
 
 func mockShowIndex() *ShowIndex {
 	return &ShowIndex{
@@ -224,7 +220,7 @@ func TestShowIndexRemoveEpisode(t *testing.T) {
 		Season:     season,
 		Episode:    episode,
 	}
-	if err := idx.RemoveEpisode(e, mockLogEntry); err != nil {
+	if err := idx.RemoveEpisode(e); err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
 
@@ -252,7 +248,7 @@ func TestShowIndexRemoveSeason(t *testing.T) {
 	}
 
 	s := &polochon.Show{ImdbID: id}
-	if err := idx.RemoveSeason(s, season, mockLogEntry); err != nil {
+	if err := idx.RemoveSeason(s, season); err != nil {
 		t.Fatalf("error while removing season from the index: %q", err)
 	}
 
@@ -278,7 +274,7 @@ func TestShowIndexRemoveShow(t *testing.T) {
 	}
 
 	s := &polochon.Show{ImdbID: id}
-	if err := idx.RemoveShow(s, mockLogEntry); err != nil {
+	if err := idx.RemoveShow(s); err != nil {
 		t.Fatalf("error while removing show from the index: %q", err)
 	}
 

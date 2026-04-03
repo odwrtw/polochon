@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
 
 // MovieIndex is an index for the movies
@@ -107,7 +106,7 @@ func (mi *MovieIndex) UpsertSubtitle(m *polochon.Movie, s *polochon.Subtitle) er
 }
 
 // Remove will delete the movie from the index
-func (mi *MovieIndex) Remove(m *polochon.Movie, log *logrus.Entry) error {
+func (mi *MovieIndex) Remove(m *polochon.Movie) error {
 	if _, err := mi.Movie(m.ImdbID); err != nil {
 		return err
 	}

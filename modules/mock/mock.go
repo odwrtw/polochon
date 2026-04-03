@@ -3,6 +3,7 @@ package mock
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"math/rand"
 
 	polochon "github.com/odwrtw/polochon/lib"
@@ -41,7 +42,7 @@ var (
 type Mock struct{}
 
 // Init implements the Module interface
-func (mock *Mock) Init(p []byte) error {
+func (mock *Mock) Init(p []byte, _ *slog.Logger) error {
 	return nil
 }
 

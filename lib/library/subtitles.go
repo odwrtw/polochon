@@ -2,7 +2,6 @@ package library
 
 import (
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
 
 // GetSubtitle returns the subtitle if it exists, nil otherwise
@@ -34,16 +33,13 @@ func (l *Library) UpdateSubtitles(v polochon.Video) {
 }
 
 // SaveSubtitles saves the subtitles of a video
-func (l *Library) SaveSubtitles(video polochon.Video, log *logrus.Entry) error {
+func (l *Library) SaveSubtitles(video polochon.Video) error {
 	for _, s := range video.GetSubtitles() {
 		if err := s.Save(); err != nil {
 			return err
 		}
 
-		log.WithFields(logrus.Fields{
-			"lang": string(s.Lang),
-			"path": s.Path,
-		}).Debugf("subtitle saved")
+		l.log.Debug("subtitle saved", "lang", string(s.Lang), "path", s.Path)
 	}
 
 	return nil

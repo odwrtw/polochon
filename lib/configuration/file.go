@@ -65,7 +65,7 @@ func loadConfig(cf *configFile, conf *Config) error {
 		&cf.Wishlist.ModuleLoader,
 	} {
 		ml.modulesParams = cf.modulesParams
-		if err := ml.load(); err != nil {
+		if err := ml.load(cf.Logs.logger); err != nil {
 			return err
 		}
 	}

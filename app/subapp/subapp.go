@@ -1,6 +1,6 @@
 package subapp
 
-import "github.com/sirupsen/logrus"
+import "context"
 
 // Status represents the status of the app
 type Status int
@@ -19,10 +19,10 @@ type App interface {
 	// Name returns the name of the sub app
 	Name() string
 	// Run starts the SubApp, it should be a synchronous call
-	Run(log *logrus.Entry) error
+	Run(ctx context.Context) error
 	// Stop sends a signal to the SubApp to stop gracefully, this should be an
 	// asynchronous call
-	Stop(log *logrus.Entry)
+	Stop()
 	// BlockingStop is similar to Stop, except that it blocks until the sub app is stopped
-	BlockingStop(log *logrus.Entry)
+	BlockingStop()
 }

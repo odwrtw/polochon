@@ -1,14 +1,14 @@
 package mock
 
 import (
+	"context"
 	"fmt"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
 
 // GetDetails implements the Detailer interface
-func (mock *Mock) GetDetails(i any, log *logrus.Entry) (err error) {
+func (mock *Mock) GetDetails(_ context.Context, i any) (err error) {
 	switch v := i.(type) {
 	case *polochon.Show:
 		mock.getShowDetails(v)

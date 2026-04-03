@@ -1,14 +1,12 @@
 package polochon
 
-import (
-	"github.com/sirupsen/logrus"
-)
+import "context"
 
 // Explorer is the interface explore new videos from different sources
 type Explorer interface {
 	Module
 	AvailableMovieOptions() []string
-	GetMovieList(option string, log *logrus.Entry) ([]*Movie, error)
+	GetMovieList(ctx context.Context, option string) ([]*Movie, error)
 	AvailableShowOptions() []string
-	GetShowList(option string, log *logrus.Entry) ([]*Show, error)
+	GetShowList(ctx context.Context, option string) ([]*Show, error)
 }

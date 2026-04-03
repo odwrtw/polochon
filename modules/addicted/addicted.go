@@ -5,13 +5,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/agnivade/levenshtein"
 	"github.com/odwrtw/addicted"
-	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
 	polochon "github.com/odwrtw/polochon/lib"
@@ -44,12 +44,14 @@ type Params struct {
 }
 
 type addictedProxy struct {
+	log        *slog.Logger
 	client     *addicted.Client
 	configured bool
 }
 
 // Init implements the module interface
-func (a *addictedProxy) Init(p []byte) error {
+func (a *addictedProxy) Init(p []byte, log *slog.Logger) error {
+	a.log = log.With("module", moduleName)
 	if a.configured {
 		return nil
 	}
@@ -86,11 +88,11 @@ func (a *addictedProxy) Name() string {
 
 // Status implements the Module interface
 func (a *addictedProxy) Status() (polochon.ModuleStatus, error) {
-	_, err := a.getShowSubtitle(&polochon.ShowEpisode{
+	_, err := a.getShowSubtitle(context.Background(), &polochon.ShowEpisode{
 		ShowTitle: "Black Mirror",
 		Season:    1,
 		Episode:   1,
-	}, polochon.EN, logrus.NewEntry(logrus.New()))
+	}, polochon.EN)
 	if err != nil {
 		return polochon.StatusFail, err
 	}
@@ -98,14 +100,11 @@ func (a *addictedProxy) Status() (polochon.ModuleStatus, error) {
 }
 
 // getFilteredSubtitles fetches and filters subtitles by language for a show episode.
-func (a *addictedProxy) getFilteredSubtitles(showTitle string, season, episode int, lang polochon.Language) (addicted.Subtitles, error) {
+func (a *addictedProxy) getFilteredSubtitles(ctx context.Context, showTitle string, season, episode int, lang polochon.Language) (addicted.Subtitles, error) {
 	langName, err := lang.Name()
 	if err != nil {
 		return nil, fmt.Errorf("addicted: language %q not supported", lang)
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), httpTimeout)
-	defer cancel()
 
 	subtitles, err := a.client.GetSubtitles(ctx, showTitle, season, episode)
 	if err != nil {
@@ -119,8 +118,11 @@ func (a *addictedProxy) getFilteredSubtitles(showTitle string, season, episode i
 	return filtered, nil
 }
 
-func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
-	filteredSubs, err := a.getFilteredSubtitles(reqEpisode.ShowTitle, reqEpisode.Season, reqEpisode.Episode, lang)
+func (a *addictedProxy) getShowSubtitle(ctx context.Context, reqEpisode *polochon.ShowEpisode, lang polochon.Language) (*polochon.Subtitle, error) {
+	subCtx, cancel := context.WithTimeout(ctx, httpTimeout)
+	defer cancel()
+
+	filteredSubs, err := a.getFilteredSubtitles(subCtx, reqEpisode.ShowTitle, reqEpisode.Season, reqEpisode.Episode, lang)
 	if err != nil {
 		return nil, err
 	}
@@ -130,12 +132,12 @@ func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang p
 	subtitle := polochon.NewSubtitleFromVideo(reqEpisode, lang)
 	data := &bytes.Buffer{}
 
-	ctx, cancel := context.WithTimeout(context.Background(), httpTimeout)
-	defer cancel()
+	dlCtx, dlCancel := context.WithTimeout(ctx, httpTimeout)
+	defer dlCancel()
 
 	if reqEpisode.ReleaseGroup == "" {
 		// No release group specified: get the most downloaded subtitle
-		r, err := a.client.Download(ctx, filteredSubs[0])
+		r, err := a.client.Download(dlCtx, filteredSubs[0])
 		if err != nil {
 			return nil, err
 		}
@@ -163,12 +165,9 @@ func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang p
 		return nil, nil
 	}
 
-	log.WithFields(logrus.Fields{
-		"release":  chosen.Release,
-		"distance": subDist,
-	}).Info("subtitle chosen")
+	a.log.Info("subtitle chosen", "release", chosen.Release, "distance", subDist)
 
-	r, err := a.client.Download(ctx, *chosen)
+	r, err := a.client.Download(dlCtx, *chosen)
 	if err != nil {
 		return nil, err
 	}
@@ -182,13 +181,16 @@ func (a *addictedProxy) getShowSubtitle(reqEpisode *polochon.ShowEpisode, lang p
 }
 
 // ListSubtitles implements the Subtitler interface.
-func (a *addictedProxy) ListSubtitles(i any, lang polochon.Language, log *logrus.Entry) ([]*polochon.SubtitleEntry, error) {
+func (a *addictedProxy) ListSubtitles(ctx context.Context, i any, lang polochon.Language) ([]*polochon.SubtitleEntry, error) {
 	reqEpisode, ok := i.(*polochon.ShowEpisode)
 	if !ok {
 		return nil, polochon.ErrNotAvailable
 	}
 
-	filteredSubs, err := a.getFilteredSubtitles(reqEpisode.ShowTitle, reqEpisode.Season, reqEpisode.Episode, lang)
+	subCtx, cancel := context.WithTimeout(ctx, httpTimeout)
+	defer cancel()
+
+	filteredSubs, err := a.getFilteredSubtitles(subCtx, reqEpisode.ShowTitle, reqEpisode.Season, reqEpisode.Episode, lang)
 	if err != nil {
 		return nil, err
 	}
@@ -205,15 +207,15 @@ func (a *addictedProxy) ListSubtitles(i any, lang polochon.Language, log *logrus
 }
 
 // DownloadSubtitle implements the Subtitler interface.
-func (a *addictedProxy) DownloadSubtitle(i any, entry *polochon.SubtitleEntry, _ *logrus.Entry) (*polochon.Subtitle, error) {
+func (a *addictedProxy) DownloadSubtitle(ctx context.Context, i any, entry *polochon.SubtitleEntry) (*polochon.Subtitle, error) {
 	video, ok := i.(polochon.Video)
 	if !ok {
 		return nil, fmt.Errorf("addicted: invalid argument")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), httpTimeout)
+	dlCtx, cancel := context.WithTimeout(ctx, httpTimeout)
 	defer cancel()
-	r, err := a.client.Download(ctx, addicted.Subtitle{Link: entry.ID})
+	r, err := a.client.Download(dlCtx, addicted.Subtitle{Link: entry.ID})
 	if err != nil {
 		return nil, err
 	}
@@ -230,10 +232,10 @@ func (a *addictedProxy) DownloadSubtitle(i any, entry *polochon.SubtitleEntry, _
 }
 
 // GetSubtitle implements the Subtitler interface
-func (a *addictedProxy) GetSubtitle(i any, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
+func (a *addictedProxy) GetSubtitle(ctx context.Context, i any, lang polochon.Language) (*polochon.Subtitle, error) {
 	switch v := i.(type) {
 	case *polochon.ShowEpisode:
-		return a.getShowSubtitle(v, lang, log)
+		return a.getShowSubtitle(ctx, v, lang)
 	default:
 		return nil, fmt.Errorf("addicted: invalid argument")
 	}

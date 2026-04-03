@@ -1,11 +1,11 @@
 package server
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/odwrtw/polochon/app/auth"
 	index "github.com/odwrtw/polochon/lib/media_index"
-	"github.com/sirupsen/logrus"
 )
 
 // Error represents an http error
@@ -14,10 +14,10 @@ type Error struct {
 	Message string `json:"error"`
 }
 
-func (s *Server) logEntry(r *http.Request) *logrus.Entry {
+func (s *Server) logEntry(r *http.Request) *slog.Logger {
 	tokenName, ok := r.Context().Value(auth.TokenName).(string)
 	if ok {
-		return s.log.WithField("token_name", tokenName)
+		return s.log.With("token_name", tokenName)
 	}
 
 	return s.log
@@ -36,7 +36,7 @@ func (s *Server) renderOK(w http.ResponseWriter, i any) {
 func (s *Server) renderError(w http.ResponseWriter, r *http.Request, input error) {
 	var err *Error
 
-	s.logEntry(r).Error(input)
+	s.logEntry(r).Error(input.Error())
 
 	switch e := input.(type) {
 	case *Error:

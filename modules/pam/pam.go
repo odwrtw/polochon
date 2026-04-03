@@ -2,6 +2,7 @@ package pam
 
 import (
 	"errors"
+	"log/slog"
 
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/papi"
@@ -43,7 +44,7 @@ type Pam struct {
 }
 
 // Init implements the module interface
-func (p *Pam) Init(data []byte) error {
+func (p *Pam) Init(data []byte, _ *slog.Logger) error {
 	if p.configured {
 		return nil
 	}

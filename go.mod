@@ -26,7 +26,6 @@ require (
 	github.com/remko/go-mkvparse v0.14.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/ryanbradynd05/go-tmdb v0.0.0-20230108222638-2a68dc6ff40c
-	github.com/sirupsen/logrus v1.9.4
 	github.com/urfave/negroni v1.0.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/unrolled/render.v1 v1.0.0

@@ -7,13 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"gopkg.in/yaml.v2"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
 
 // Make sure that the module is a notifier
@@ -46,13 +46,15 @@ type Hook struct {
 
 // WebHook stores the webhook configs
 type WebHook struct {
+	log        *slog.Logger
 	httpClient *http.Client
 	hooks      []*Hook
 	configured bool
 }
 
 // Init implements the module interface
-func (w *WebHook) Init(p []byte) error {
+func (w *WebHook) Init(p []byte, log *slog.Logger) error {
+	w.log = log.With("module", moduleName)
 	if w.configured {
 		return nil
 	}
@@ -93,7 +95,7 @@ func (w *WebHook) Status() (polochon.ModuleStatus, error) {
 }
 
 // Notify sends a notification to the recipient
-func (w *WebHook) Notify(i any, log *logrus.Entry) error {
+func (w *WebHook) Notify(ctx context.Context, i any) error {
 	var videoType string
 	var video polochon.Video
 
@@ -109,16 +111,16 @@ func (w *WebHook) Notify(i any, log *logrus.Entry) error {
 	}
 
 	for _, h := range w.hooks {
-		err := w.notify(h, video, videoType)
+		err := w.notify(ctx, h, video, videoType)
 		if err != nil {
-			log.Warn(err.Error())
+			w.log.Warn(err.Error())
 		}
 	}
 
 	return nil
 }
 
-func (w *WebHook) notify(hook *Hook, video polochon.Video, videoType string) error {
+func (w *WebHook) notify(ctx context.Context, hook *Hook, video polochon.Video, videoType string) error {
 	var URL bytes.Buffer
 	err := hook.URLTemplate.Execute(&URL, video)
 	if err != nil {
@@ -134,7 +136,7 @@ func (w *WebHook) notify(hook *Hook, video polochon.Video, videoType string) err
 		Data: video,
 	})
 
-	req, err := http.NewRequest("POST", URL.String(), b)
+	req, err := http.NewRequestWithContext(ctx, "POST", URL.String(), b)
 	if err != nil {
 		return err
 	}
@@ -142,11 +144,11 @@ func (w *WebHook) notify(hook *Hook, video polochon.Video, videoType string) err
 	req.Header.Set("Content-Type", "application/json")
 
 	// Add a context with a timeout to the request
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	timeoutCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	// Send request
-	resp, err := w.httpClient.Do(req.WithContext(ctx))
+	resp, err := w.httpClient.Do(req.WithContext(timeoutCtx))
 	if err != nil {
 		return err
 	}

@@ -1,16 +1,12 @@
 package addicted
 
 import (
+	"context"
 	"errors"
-	"io"
 	"testing"
-
-	"github.com/sirupsen/logrus"
 
 	polochon "github.com/odwrtw/polochon/lib"
 )
-
-var fakeLog = logrus.NewEntry(&logrus.Logger{Out: io.Discard})
 
 // TestInitWithParams covers credential validation.
 func TestInitWithParams(t *testing.T) {
@@ -48,7 +44,7 @@ func TestInitWithParams(t *testing.T) {
 // TestListSubtitlesWrongType checks that non-ShowEpisode input is rejected.
 func TestListSubtitlesWrongType(t *testing.T) {
 	a := &addictedProxy{}
-	_, err := a.ListSubtitles("not an episode", polochon.EN, fakeLog)
+	_, err := a.ListSubtitles(context.Background(), "not an episode", polochon.EN)
 	if !errors.Is(err, polochon.ErrNotAvailable) {
 		t.Fatalf("ListSubtitles() err = %v, want ErrNotAvailable", err)
 	}
@@ -58,7 +54,7 @@ func TestListSubtitlesWrongType(t *testing.T) {
 func TestDownloadSubtitleWrongType(t *testing.T) {
 	a := &addictedProxy{}
 	entry := &polochon.SubtitleEntry{ID: "/updated/1/2/3"}
-	_, err := a.DownloadSubtitle("not a video", entry, fakeLog)
+	_, err := a.DownloadSubtitle(context.Background(), "not a video", entry)
 	if err == nil {
 		t.Fatal("DownloadSubtitle() expected error, got nil")
 	}
@@ -67,7 +63,7 @@ func TestDownloadSubtitleWrongType(t *testing.T) {
 // TestGetSubtitleWrongType checks that non-ShowEpisode input is rejected.
 func TestGetSubtitleWrongType(t *testing.T) {
 	a := &addictedProxy{}
-	_, err := a.GetSubtitle("not an episode", polochon.EN, fakeLog)
+	_, err := a.GetSubtitle(context.Background(), "not an episode", polochon.EN)
 	if err == nil {
 		t.Fatal("GetSubtitle() expected error, got nil")
 	}
