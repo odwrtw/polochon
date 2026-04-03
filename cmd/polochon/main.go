@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/odwrtw/polochon/app/app"
+	"github.com/odwrtw/polochon/cmd/polochon/app"
 )
 
 var (
@@ -17,8 +17,8 @@ var (
 )
 
 func main() {
-	configPath := flag.String("configPath", "../config.yml", "path of the configuration file")
-	tokenPath := flag.String("tokenPath", "", "path of the token file")
+	configPath := flag.String("configPath", "config.yml", "path of the configuration file")
+	tokenPath := flag.String("tokenPath", "token.yml", "path of the token file")
 	versionFlag := flag.Bool("version", false, "show version number and quit")
 
 	flag.Parse()

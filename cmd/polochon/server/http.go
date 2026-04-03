@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/mux"
 	"gopkg.in/unrolled/render.v1"
 
-	"github.com/odwrtw/polochon/app/auth"
+	"github.com/odwrtw/polochon/cmd/polochon/auth"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/library"

@@ -28,9 +28,8 @@ chmod +x polochon
 ./polochon -configPath=/home/user/config.yml -tokenPath=/home/user/token.yml
 ```
 
-#### From source
+#### Run
 
 ```sh
-cd app
-go build *.go
+go run cmd/polochon/*.go
 ```

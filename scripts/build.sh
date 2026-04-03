@@ -36,7 +36,7 @@ _build_bin() {
 	os=$1
 	arch=$2
 	app=$3
-	name=$4
+	name="$(basename "$app")"
 
 	_log "Building $name for $os/$arch"
 	(
@@ -60,8 +60,8 @@ _build() {
 
 	while read -r os arch; do
 		[ -z "$os" ] && continue
-		_build_bin "$os" "$arch" "app" "polochon"
-		_build_bin "$os" "$arch" "cmd/polochonfs" "polochonfs"
+		_build_bin "$os" "$arch" "cmd/polochon"
+		_build_bin "$os" "$arch" "cmd/polochonfs"
 	done <<-EOF
 	$to_build
 	EOF

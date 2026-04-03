@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/odwrtw/polochon/app/auth"
+	"github.com/odwrtw/polochon/cmd/polochon/auth"
 	index "github.com/odwrtw/polochon/lib/media_index"
 )
 

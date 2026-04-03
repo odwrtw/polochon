@@ -6,7 +6,7 @@ import (
 	"net/http/pprof"
 
 	"github.com/gorilla/mux"
-	"github.com/odwrtw/polochon/app/auth"
+	"github.com/odwrtw/polochon/cmd/polochon/auth"
 	"github.com/phyber/negroni-gzip/gzip"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/urfave/negroni"
