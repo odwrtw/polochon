@@ -1,22 +1,20 @@
 package eztv
 
 import (
+	"context"
 	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/odwrtw/eztv"
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
-
-var fakeLogEntry = logrus.NewEntry(logrus.New())
 
 func TestEztvGetTorrentsInvalidArgumens(t *testing.T) {
 	eztv := &Eztv{}
 	m := "invalid type"
 
-	err := eztv.GetTorrents(m, fakeLogEntry)
+	err := eztv.GetTorrents(context.Background(), m)
 	if err != ErrInvalidArgument {
 		t.Fatalf("expected %q got %q", ErrInvalidArgument, err)
 	}
@@ -26,13 +24,13 @@ func TestEztvInvalidArguments(t *testing.T) {
 	e := &Eztv{}
 	s := polochon.NewShowEpisode(polochon.ShowConfig{})
 
-	err := e.GetTorrents(s, fakeLogEntry)
+	err := e.GetTorrents(context.Background(), s)
 	if err != ErrMissingShowImdbID {
 		t.Fatalf("expected %q got %q", ErrMissingShowImdbID, err)
 	}
 
 	s.ShowImdbID = "tt2562232"
-	err = e.GetTorrents(s, fakeLogEntry)
+	err = e.GetTorrents(context.Background(), s)
 	if err != ErrInvalidShowEpisode {
 		t.Fatalf("expected %q got %q", ErrInvalidShowEpisode, err)
 	}
@@ -49,7 +47,7 @@ func TestEztvNoShowEpisodeFound(t *testing.T) {
 		return nil, eztv.ErrEpisodeNotFound
 	}
 
-	err := e.GetTorrents(s, fakeLogEntry)
+	err := e.GetTorrents(context.Background(), s)
 	if err != polochon.ErrTorrentNotFound {
 		t.Fatalf("expected %q got %q", polochon.ErrTorrentNotFound, err)
 	}
@@ -66,7 +64,7 @@ func TestEztvNoTorrentFound(t *testing.T) {
 		return []*eztv.EpisodeTorrent{}, nil
 	}
 
-	err := e.GetTorrents(s, fakeLogEntry)
+	err := e.GetTorrents(context.Background(), s)
 	if err != polochon.ErrTorrentNotFound {
 		t.Fatalf("expected %q got %q", polochon.ErrTorrentNotFound, err)
 	}
@@ -111,7 +109,7 @@ func TestEztvGetTorrents(t *testing.T) {
 		}, nil
 	}
 
-	err := e.GetTorrents(s, fakeLogEntry)
+	err := e.GetTorrents(context.Background(), s)
 	if err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
@@ -179,7 +177,7 @@ func TestEztvInit(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			e := &Eztv{}
-			err := e.Init(test.params)
+			err := e.Init(test.params, nil)
 			if err != nil {
 				t.Fatalf("unexpected error on init %+v", err)
 			}

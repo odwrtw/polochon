@@ -2,6 +2,8 @@ package library
 
 import (
 	"fmt"
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -98,6 +100,7 @@ func newMockLibrary() (*mockLibrary, error) {
 	}))
 
 	c := &configuration.Config{
+		Logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
 		Show:       showConfig,
 		Movie:      movieConfig,
 		File:       fileConfig,

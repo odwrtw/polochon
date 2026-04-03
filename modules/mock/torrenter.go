@@ -1,16 +1,16 @@
 package mock
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"strconv"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
 
 // GetTorrents implements the torrenter interface
-func (mock *Mock) GetTorrents(i any, log *logrus.Entry) error {
+func (mock *Mock) GetTorrents(_ context.Context, i any) error {
 	switch v := i.(type) {
 	case *polochon.ShowEpisode:
 		mock.getShowEpisodeTorrents(v)

@@ -1,6 +1,8 @@
 package dm
 
 import (
+	"context"
+	"log/slog"
 	"path/filepath"
 	"time"
 
@@ -8,7 +10,6 @@ import (
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/library"
-	"github.com/sirupsen/logrus"
 )
 
 // AppName is the application name
@@ -18,29 +19,29 @@ const AppName = "download_manager"
 type DownloadManager struct {
 	*subapp.Base
 
+	log     *slog.Logger
 	library *library.Library
 	config  *configuration.Config
 }
 
 // New returns a new download manager
-func New(config *configuration.Config, library *library.Library) *DownloadManager {
+func New(config *configuration.Config, library *library.Library, log *slog.Logger) *DownloadManager {
+	l := log.With("app", AppName)
 	return &DownloadManager{
-		Base:    subapp.NewBase(AppName),
+		Base:    subapp.NewBase(AppName, l),
+		log:     l,
 		config:  config,
 		library: library,
 	}
 }
 
 // Run starts the download manager
-func (dm *DownloadManager) Run(log *logrus.Entry) error {
-	log = log.WithField("app", AppName)
-
+func (dm *DownloadManager) Run(ctx context.Context) error {
 	// Init the app
-	dm.InitStart(log)
+	dm.InitStart()
 
-	log.Debug("download manager started")
-
-	log.Debug("initial download manager launch")
+	dm.log.Debug("download manager started")
+	dm.log.Debug("initial download manager launch")
 
 	var err error
 	dm.Wg.Add(1)
@@ -48,47 +49,47 @@ func (dm *DownloadManager) Run(log *logrus.Entry) error {
 		defer func() {
 			if r := recover(); r != nil {
 				err = subapp.ErrPanicRecovered
-				dm.Stop(log)
+				dm.Stop()
 			}
 
 			dm.Wg.Done()
 		}()
-		dm.run(log)
+		dm.run(ctx)
 	}()
 
 	// Start the download manager
 	dm.Wg.Go(func() {
-		dm.ticker(log)
+		dm.ticker(ctx)
 	})
 
-	defer log.Debug("download manager stopped")
+	defer dm.log.Debug("download manager stopped")
 
 	dm.Wg.Wait()
 
 	return err
 }
 
-func (dm *DownloadManager) ticker(log *logrus.Entry) {
+func (dm *DownloadManager) ticker(ctx context.Context) {
 	ticker := time.NewTicker(dm.config.DownloadManager.Timer)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
-			dm.run(log)
+			dm.run(ctx)
 		case <-dm.Done:
-			log.Debug("download manager timer stopped")
+			dm.log.Debug("download manager timer stopped")
 			return
 		}
 	}
 }
 
-func (dm *DownloadManager) run(log *logrus.Entry) {
+func (dm *DownloadManager) run(ctx context.Context) {
 	// Organise all the files in the files directory stuff
 	// Start the fs notifier on this directory
 	// Start the torrent list stuff
 	torrents, err := dm.config.Downloader.Client.List()
 	if err != nil {
-		log.Errorf("error while getting torrent list: %q", err)
+		dm.log.Error("error while getting torrent list", "error", err)
 		return
 	}
 
@@ -97,36 +98,36 @@ func (dm *DownloadManager) run(log *logrus.Entry) {
 			continue
 		}
 
-		tlog := log.WithField("torrent_name", torrent.Status.Name)
+		tlog := dm.log.With("torrent_name", torrent.Status.Name)
 		if !torrent.Status.IsFinished {
 			continue
 		}
 
 		video := torrent.Video()
 		if video == nil {
-			tlog.Debugf("torrent is not a video")
-			dm.moveToWatcherDirectory(torrent, tlog)
+			tlog.Debug("torrent is not a video")
+			dm.moveToWatcherDirectory(torrent)
 			continue
 		}
 
 		file := dm.findVideoFile(torrent)
 		if file == nil {
-			tlog.Debugf("torrent video file not found")
-			dm.moveToWatcherDirectory(torrent, tlog)
+			tlog.Debug("torrent video file not found")
+			dm.moveToWatcherDirectory(torrent)
 			continue
 		}
 		video.SetFile(*file)
 
 		if file.IsSymlink() {
 			if torrent.RatioReached(dm.config.DownloadManager.Ratio) {
-				dm.cleanTorrent(torrent, tlog)
+				dm.cleanTorrent(torrent)
 			}
 			continue
 		}
 
 		metadata, err := file.GuessMetadata(tlog)
 		if err != nil {
-			tlog.Warnf("failed to guess metadata: %s", err.Error())
+			tlog.Warn("failed to guess metadata", "error", err)
 		}
 		video.SetMetadata(metadata)
 
@@ -137,39 +138,39 @@ func (dm *DownloadManager) run(log *logrus.Entry) {
 		case *polochon.ShowEpisode:
 			v.ShowConfig = dm.config.Show
 		default:
-			dm.moveToWatcherDirectory(torrent, tlog)
+			dm.moveToWatcherDirectory(torrent)
 			continue
 		}
 
 		// Get the video details
-		if err := polochon.GetDetails(video, tlog); err != nil {
+		if err := polochon.GetDetails(ctx, video, tlog); err != nil {
 			if err != polochon.ErrGettingDetails {
-				tlog.Error(err)
+				tlog.Error(err.Error())
 			}
 
-			dm.moveToWatcherDirectory(torrent, tlog)
+			dm.moveToWatcherDirectory(torrent)
 			continue
 		}
 
 		// Get the video subtitles
 		for _, lang := range dm.config.SubtitleLanguages {
-			_, err := polochon.GetSubtitle(video, lang, tlog)
+			_, err := polochon.GetSubtitle(ctx, video, lang, tlog)
 			if err != nil && err != polochon.ErrNoSubtitleFound {
-				tlog.Error(err)
+				tlog.Error(err.Error())
 			}
 		}
 
 		// Store the video
-		if err := dm.library.Add(video, tlog); err != nil {
-			tlog.Error(err)
-			dm.moveToWatcherDirectory(torrent, tlog)
+		if err := dm.library.Add(video); err != nil {
+			tlog.Error(err.Error())
+			dm.moveToWatcherDirectory(torrent)
 			continue
 		}
 
 		// Notify
-		dm.Notify(video, tlog)
+		dm.Notify(ctx, video)
 
-		tlog.Debugf("torrent organized")
+		tlog.Debug("torrent organized")
 	}
 }
 
@@ -190,8 +191,9 @@ func (dm *DownloadManager) findVideoFile(torrent *polochon.Torrent) *polochon.Fi
 	return nil
 }
 
-func (dm *DownloadManager) moveToWatcherDirectory(torrent *polochon.Torrent, log *logrus.Entry) {
-	log.Infof("moving to the watcher directory")
+func (dm *DownloadManager) moveToWatcherDirectory(torrent *polochon.Torrent) {
+	log := dm.log.With("torrent_name", torrent.Status.Name)
+	log.Info("moving to the watcher directory")
 
 	// Extract the top path of the directories and the path of the files
 	fileMap := map[string]struct{}{}
@@ -206,21 +208,21 @@ func (dm *DownloadManager) moveToWatcherDirectory(torrent *polochon.Torrent, log
 	for p := range fileMap {
 		oldPath := filepath.Join(dm.config.DownloadManager.Dir, p)
 		newPath := filepath.Join(dm.config.Watcher.Dir, p)
-		log.Debugf("moving %s to %s", oldPath, newPath)
+		log.Debug("moving file", "from", oldPath, "to", newPath)
 		if err := library.MoveFile(oldPath, newPath); err != nil {
-			log.Errorf("error while moving torrent file: %s", err.Error())
+			log.Error("error while moving torrent file", "error", err)
 		}
 	}
 
-	dm.cleanTorrent(torrent, log)
+	dm.cleanTorrent(torrent)
 }
 
 // Notify sends video to the notifiers
-func (dm *DownloadManager) Notify(v polochon.Video, log *logrus.Entry) {
-	log = log.WithField("function", "notify")
+func (dm *DownloadManager) Notify(ctx context.Context, v polochon.Video) {
+	log := dm.log.With("function", "notify")
 	for _, n := range dm.config.Notifiers {
-		if err := n.Notify(v, log); err != nil {
-			log.Warnf("failed to send a notification from notifier: %q: %q", n.Name(), err)
+		if err := n.Notify(ctx, v); err != nil {
+			log.Warn("failed to send a notification from notifier", "notifier", n.Name(), "error", err)
 		}
 	}
 }

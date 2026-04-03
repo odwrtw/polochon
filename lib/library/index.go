@@ -8,12 +8,10 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 // RebuildIndex rebuilds both the movie and show index
-func (l *Library) RebuildIndex(log *logrus.Entry) error {
+func (l *Library) RebuildIndex() error {
 	var wg sync.WaitGroup
 	errc := make(chan error, 2)
 	wg.Add(2)
@@ -21,7 +19,7 @@ func (l *Library) RebuildIndex(log *logrus.Entry) error {
 	// Build the movie index
 	go func() {
 		defer wg.Done()
-		if err := l.buildMovieIndex(log); err != nil {
+		if err := l.buildMovieIndex(); err != nil {
 			errc <- err
 		}
 	}()
@@ -29,7 +27,7 @@ func (l *Library) RebuildIndex(log *logrus.Entry) error {
 	// Build the show index
 	go func() {
 		defer wg.Done()
-		if err := l.buildShowIndex(log); err != nil {
+		if err := l.buildShowIndex(); err != nil {
 			errc <- err
 		}
 	}()
@@ -47,10 +45,10 @@ func (l *Library) RebuildIndex(log *logrus.Entry) error {
 	return nil
 }
 
-func (l *Library) buildMovieIndex(log *logrus.Entry) error {
+func (l *Library) buildMovieIndex() error {
 	start := time.Now()
 	defer func() {
-		log.Infof("movie index built in %s", time.Since(start))
+		l.log.Info("movie index built", "duration", time.Since(start))
 	}()
 	l.movieIndex.Clear()
 
@@ -69,12 +67,12 @@ func (l *Library) buildMovieIndex(log *logrus.Entry) error {
 
 	for _, d := range dirs {
 		if !reg.MatchString(d) {
-			log.WithField("dir", d).Warn("invalid movie dir")
+			l.log.Warn("invalid movie dir", "dir", d)
 			continue
 		}
 
 		if err := l.buildFromMovieDir(d); err != nil {
-			log.WithField("dir", d).Error(err)
+			l.log.Error("failed to build movie index entry", "dir", d, "error", err)
 		}
 	}
 
@@ -116,10 +114,10 @@ func (l *Library) buildFromMovieDir(d string) error {
 	return l.movieIndex.Add(movie)
 }
 
-func (l *Library) buildShowIndex(log *logrus.Entry) error {
+func (l *Library) buildShowIndex() error {
 	start := time.Now()
 	defer func() {
-		log.Infof("show index built in %s", time.Since(start))
+		l.log.Info("show index built", "duration", time.Since(start))
 	}()
 
 	l.showIndex.Clear()
@@ -141,19 +139,19 @@ func (l *Library) buildShowIndex(log *logrus.Entry) error {
 
 		show, err := l.newShowFromPath(nfoPath)
 		if err != nil {
-			log.Errorf("library: failed to read tv show NFO: %q", err)
+			l.log.Error("failed to read tv show NFO", "error", err)
 			continue
 		}
 
-		if err := l.buildFromShowDir(show.ImdbID, showDir, log); err != nil {
-			log.WithField("dir", d).Error(err)
+		if err := l.buildFromShowDir(show.ImdbID, showDir); err != nil {
+			l.log.Error("failed to build show index entry", "dir", d, "error", err)
 		}
 	}
 
 	return nil
 }
 
-func (l *Library) buildFromShowDir(imdbID, showDir string, log *logrus.Entry) error {
+func (l *Library) buildFromShowDir(imdbID, showDir string) error {
 	dir, err := os.Open(showDir)
 	if err != nil {
 		return fmt.Errorf("failed to read movie dir %w", err)
@@ -171,8 +169,8 @@ func (l *Library) buildFromShowDir(imdbID, showDir string, log *logrus.Entry) er
 		}
 
 		seasonDir := filepath.Join(showDir, file)
-		if err := l.buildFromShowSeasonDir(imdbID, seasonDir, log); err != nil {
-			log.WithField("path", seasonDir).Error(err)
+		if err := l.buildFromShowSeasonDir(imdbID, seasonDir); err != nil {
+			l.log.Error("failed to build show season index entry", "path", seasonDir, "error", err)
 			continue
 		}
 	}
@@ -180,7 +178,7 @@ func (l *Library) buildFromShowDir(imdbID, showDir string, log *logrus.Entry) er
 	return nil
 }
 
-func (l *Library) buildFromShowSeasonDir(imdbID, seasonDir string, log *logrus.Entry) error {
+func (l *Library) buildFromShowSeasonDir(imdbID, seasonDir string) error {
 	dir, err := os.Open(seasonDir)
 	if err != nil {
 		return fmt.Errorf("failed to read movie dir %w", err)
@@ -201,15 +199,14 @@ func (l *Library) buildFromShowSeasonDir(imdbID, seasonDir string, log *logrus.E
 
 		episode, err := l.newEpisodeFromPath(episodePath)
 		if err != nil {
-			log.Errorf("library: failed to read episode NFO: %q", err)
+			l.log.Error("failed to read episode NFO", "error", err)
 			continue
 		}
 
 		episode.ShowImdbID = imdbID
 		episode.ShowConfig = l.showConfig
-		err = l.showIndex.Add(episode)
-		if err != nil {
-			log.Errorf("library: failed to add episode to the library: %q", err)
+		if err := l.showIndex.Add(episode); err != nil {
+			l.log.Error("failed to add episode to the library", "error", err)
 			continue
 		}
 	}

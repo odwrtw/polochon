@@ -1,13 +1,14 @@
 package trakttv
 
 import (
+	"context"
+
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/trakttv"
-	"github.com/sirupsen/logrus"
 )
 
 // GetMovieList implements the explorer interface
-func (trakt *TraktTV) GetMovieList(option string, log *logrus.Entry) ([]*polochon.Movie, error) {
+func (trakt *TraktTV) GetMovieList(_ context.Context, option string) ([]*polochon.Movie, error) {
 	queryOption := trakttv.QueryOption{
 		ExtendedInfos: []trakttv.ExtendedInfo{
 			trakttv.ExtendedInfoMin,
@@ -92,7 +93,7 @@ func (trakt *TraktTV) GetMovieList(option string, log *logrus.Entry) ([]*polocho
 
 // GetShowList implements the Explorer interface
 // Not implemented
-func (trakt *TraktTV) GetShowList(option string, log *logrus.Entry) ([]*polochon.Show, error) {
+func (trakt *TraktTV) GetShowList(_ context.Context, option string) ([]*polochon.Show, error) {
 	queryOption := trakttv.QueryOption{
 		ExtendedInfos: []trakttv.ExtendedInfo{
 			trakttv.ExtendedInfoMin,

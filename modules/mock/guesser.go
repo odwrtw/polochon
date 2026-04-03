@@ -1,17 +1,14 @@
 package mock
 
-import (
-	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
-)
+import polochon "github.com/odwrtw/polochon/lib"
 
 // Guess implements the guesser interface
 func (mock *Mock) Guess(polochon.File, polochon.MovieConfig,
-	polochon.ShowConfig, *logrus.Entry) (polochon.Video, error) {
+	polochon.ShowConfig) (polochon.Video, error) {
 	return nil, nil
 }
 
 // GuessMetadata implements the guesser interface
-func (mock *Mock) GuessMetadata(*polochon.File, *logrus.Entry) (*polochon.VideoMetadata, error) {
+func (mock *Mock) GuessMetadata(*polochon.File) (*polochon.VideoMetadata, error) {
 	return nil, nil
 }

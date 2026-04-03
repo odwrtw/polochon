@@ -1,11 +1,9 @@
 package polochon
 
-import (
-	"github.com/sirupsen/logrus"
-)
+import "context"
 
 // Notifier is an interface to notify when a video is added
 type Notifier interface {
 	Module
-	Notify(any, *logrus.Entry) error
+	Notify(ctx context.Context, v any) error
 }

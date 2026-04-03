@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	logger "log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"sync"
@@ -13,7 +14,6 @@ import (
 	"github.com/hanwen/go-fuse/v2/fs"
 	"github.com/hanwen/go-fuse/v2/fuse"
 	"github.com/odwrtw/polochon/lib/papi"
-	log "github.com/sirupsen/logrus"
 )
 
 type polochonfs struct {
@@ -85,31 +85,31 @@ func (pfs *polochonfs) handleUpdates() {
 			if !ok {
 				// SSE channel closed (server doesn't support /events),
 				// degrade to ticker-only mode.
-				log.Warn("SSE connection closed, falling back to ticker")
+				slog.Warn("SSE connection closed, falling back to ticker")
 				events = nil
 				continue
 			}
-			log.Info("Updating library from SSE event")
+			slog.Info("Updating library from SSE event")
 			ticker.Reset(libraryRefresh)
 			pfs.updateMovies()
 			pfs.updateShows()
 		case s := <-sigs:
 			switch s {
 			case syscall.SIGUSR1:
-				log.Info("Updating movies from signal")
+				slog.Info("Updating movies from signal")
 				ticker.Reset(libraryRefresh)
 				pfs.updateMovies()
 			case syscall.SIGUSR2:
-				log.Info("Updating shows from signal")
+				slog.Info("Updating shows from signal")
 				ticker.Reset(libraryRefresh)
 				pfs.updateShows()
 			}
 		case <-ticker.C:
-			log.Debug("Handle updates from ticker")
+			slog.Debug("Handle updates from ticker")
 			pfs.updateMovies()
 			pfs.updateShows()
 		case <-pfs.ctx.Done():
-			log.Info("Handle updates done")
+			slog.Info("Handle updates done")
 			return
 		}
 	}
@@ -145,7 +145,7 @@ func (pfs *polochonfs) mount() (*fuse.Server, error) {
 func (pfs *polochonfs) unmount(server *fuse.Server) {
 	var err error
 
-	log.Info("Waiting for unmount...")
+	slog.Info("Waiting for unmount...")
 	start := time.Now()
 	for {
 		err = server.Unmount()
@@ -154,13 +154,13 @@ func (pfs *polochonfs) unmount(server *fuse.Server) {
 		}
 
 		if time.Since(start) > umountLogTimeout {
-			log.Debug("Still waiting for unmount...")
+			slog.Debug("Still waiting for unmount...")
 			start = time.Now()
 		}
 
-		log.WithField("error", err).Error("Failed to unmount")
+		slog.Error("Failed to unmount", "error", err)
 		time.Sleep(1 * time.Second)
 	}
 
-	log.Info("polochonfs unmounted successfully")
+	slog.Info("polochonfs unmounted successfully")
 }

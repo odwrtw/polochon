@@ -2,6 +2,7 @@ package aria2
 
 import (
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 
@@ -37,7 +38,7 @@ type Client struct {
 }
 
 // Init implements the module interface
-func (c *Client) Init(p []byte) error {
+func (c *Client) Init(p []byte, _ *slog.Logger) error {
 	if c.configured {
 		return nil
 	}

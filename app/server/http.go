@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"path/filepath"
@@ -17,7 +18,6 @@ import (
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/library"
 	index "github.com/odwrtw/polochon/lib/media_index"
-	"github.com/sirupsen/logrus"
 )
 
 // AppName is the application name
@@ -27,41 +27,41 @@ const AppName = "http_server"
 type Server struct {
 	*subapp.Base
 
-	config          *configuration.Config
-	library         *library.Library
-	authManager     *auth.Manager
-	gracefulServer  *http.Server
-	shutdownCancel  context.CancelFunc
-	hub    *sseHub
-	log    *logrus.Entry
-	render *render.Render
+	config         *configuration.Config
+	library        *library.Library
+	authManager    *auth.Manager
+	gracefulServer *http.Server
+	shutdownCancel context.CancelFunc
+	hub            *sseHub
+	log            *slog.Logger
+	render         *render.Render
 }
 
 // New returns a new server
-func New(config *configuration.Config, vs *library.Library, auth *auth.Manager) *Server {
+func New(config *configuration.Config, vs *library.Library, auth *auth.Manager, log *slog.Logger) *Server {
+	l := log.With("app", AppName)
 	return &Server{
-		Base:          subapp.NewBase(AppName),
-		config:        config,
-		library:       vs,
-		authManager:   auth,
-		hub:    newSSEHub(),
-		render: render.New(),
+		Base:        subapp.NewBase(AppName, l),
+		config:      config,
+		library:     vs,
+		authManager: auth,
+		hub:         newSSEHub(),
+		log:         l,
+		render:      render.New(),
 	}
 }
 
 // Run starts the server
-func (s *Server) Run(log *logrus.Entry) error {
-	s.log = log.WithField("app", AppName)
-
+func (s *Server) Run(ctx context.Context) error {
 	// Init the app
-	s.InitStart(log)
+	s.InitStart()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	shutdownCtx, cancel := context.WithCancel(context.Background())
 	s.shutdownCancel = cancel
 	defer cancel()
 
-	srv := s.httpServer(s.log)
-	srv.BaseContext = func(_ net.Listener) context.Context { return ctx }
+	srv := s.httpServer()
+	srv.BaseContext = func(_ net.Listener) context.Context { return shutdownCtx }
 	s.gracefulServer = srv
 
 	err := s.gracefulServer.ListenAndServe()
@@ -72,14 +72,14 @@ func (s *Server) Run(log *logrus.Entry) error {
 }
 
 // Stop stops the http server
-func (s *Server) Stop(log *logrus.Entry) {
+func (s *Server) Stop() {
 	if s.shutdownCancel != nil {
 		s.shutdownCancel()
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := s.gracefulServer.Shutdown(ctx); err != nil {
-		log.WithError(err).Error("failed to shutdown http server")
+		s.log.Error("failed to shutdown http server", "error", err)
 	}
 }
 
@@ -90,11 +90,11 @@ func (s *Server) Hub() polochon.Notifier {
 
 func (s *Server) wishlist(w http.ResponseWriter, r *http.Request) {
 	log := s.logEntry(r)
-	log.Infof("getting wishlist")
+	log.Info("getting wishlist")
 
 	wl := polochon.NewWishlist(s.config.Wishlist, log)
 
-	if err := wl.Fetch(); err != nil {
+	if err := wl.Fetch(r.Context()); err != nil {
 		s.renderError(w, r, err)
 		return
 	}
@@ -116,7 +116,7 @@ func (s *Server) serveFile(w http.ResponseWriter, r *http.Request, file *polocho
 		return
 	}
 
-	s.logEntry(r).Infof("serving file %q", filename)
+	s.logEntry(r).Info("serving file", "filename", filename)
 	// Set the header so that when downloading, the real filename will be given
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
 	http.ServeFile(w, r, file.Path)

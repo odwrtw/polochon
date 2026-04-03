@@ -1,10 +1,11 @@
 package mkvinfo
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
 
 var _ polochon.Guesser = (*MKVInfo)(nil)
@@ -25,7 +26,7 @@ type MKVInfo struct {
 }
 
 // Init implements the module interface
-func (m *MKVInfo) Init(p []byte) error {
+func (m *MKVInfo) Init(p []byte, _ *slog.Logger) error {
 	return nil
 }
 
@@ -40,7 +41,7 @@ func (m *MKVInfo) Status() (polochon.ModuleStatus, error) {
 }
 
 // GuessMetadata implements the Guesser interface
-func (m *MKVInfo) GuessMetadata(file *polochon.File, log *logrus.Entry) (*polochon.VideoMetadata, error) {
+func (m *MKVInfo) GuessMetadata(file *polochon.File) (*polochon.VideoMetadata, error) {
 	entries, err := ParseFile(file)
 	if err != nil {
 		return nil, err
@@ -50,12 +51,12 @@ func (m *MKVInfo) GuessMetadata(file *polochon.File, log *logrus.Entry) (*poloch
 }
 
 // Guess implements the Guesser interface
-func (m *MKVInfo) Guess(file polochon.File, movieConf polochon.MovieConfig, showConf polochon.ShowConfig, log *logrus.Entry) (polochon.Video, error) {
+func (m *MKVInfo) Guess(file polochon.File, movieConf polochon.MovieConfig, showConf polochon.ShowConfig) (polochon.Video, error) {
 	return nil, polochon.ErrNotAvailable
 }
 
 // ListSubtitles implements the Subtitler interface.
-func (m *MKVInfo) ListSubtitles(v any, lang polochon.Language, log *logrus.Entry) ([]*polochon.SubtitleEntry, error) {
+func (m *MKVInfo) ListSubtitles(_ context.Context, v any, lang polochon.Language) ([]*polochon.SubtitleEntry, error) {
 	video, ok := v.(polochon.Video)
 	if !ok {
 		return nil, ErrNotAVideo
@@ -81,7 +82,7 @@ func (m *MKVInfo) ListSubtitles(v any, lang polochon.Language, log *logrus.Entry
 }
 
 // DownloadSubtitle implements the Subtitler interface.
-func (m *MKVInfo) DownloadSubtitle(v any, entry *polochon.SubtitleEntry, _ *logrus.Entry) (*polochon.Subtitle, error) {
+func (m *MKVInfo) DownloadSubtitle(_ context.Context, v any, entry *polochon.SubtitleEntry) (*polochon.Subtitle, error) {
 	video, ok := v.(polochon.Video)
 	if !ok {
 		return nil, ErrNotAVideo
@@ -94,7 +95,7 @@ func (m *MKVInfo) DownloadSubtitle(v any, entry *polochon.SubtitleEntry, _ *logr
 }
 
 // GetSubtitle implements the Subtitler interface
-func (m *MKVInfo) GetSubtitle(v any, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
+func (m *MKVInfo) GetSubtitle(_ context.Context, v any, lang polochon.Language) (*polochon.Subtitle, error) {
 	video, ok := v.(polochon.Video)
 	if !ok {
 		return nil, ErrNotAVideo

@@ -1,6 +1,8 @@
 package app
 
 import (
+	"context"
+	"log/slog"
 	"os"
 	"os/signal"
 	"sync"
@@ -15,7 +17,6 @@ import (
 	"github.com/odwrtw/polochon/app/subapp"
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/library"
-	"github.com/sirupsen/logrus"
 )
 
 // App represents the polochon app
@@ -39,7 +40,7 @@ type App struct {
 	wg sync.WaitGroup
 
 	// app logger
-	logger *logrus.Logger
+	log *slog.Logger
 }
 
 // NewApp create a new app from the given configuration path
@@ -67,32 +68,32 @@ func (a *App) init() error {
 	if err != nil {
 		return err
 	}
-	a.logger = config.Logger
+	a.log = config.Logger
 
-	log := logrus.NewEntry(a.logger).WithField("function", "app_init")
+	log := a.log.With("function", "app_init")
 	log.Debug("app configuration loaded")
 
-	library := library.New(config)
+	lib := library.New(config)
 
 	// Build the library index
-	if err := library.RebuildIndex(log); err != nil {
-		log.WithField("function", "rebuild_index").Error(err)
+	if err := lib.RebuildIndex(); err != nil {
+		log.With("function", "rebuild_index").Error(err.Error())
 	}
 
 	a.subApps = []subapp.App{}
 	if config.Organizer.Enabled {
 		// Add the organizer
-		a.subApps = append(a.subApps, organizer.New(config, library))
+		a.subApps = append(a.subApps, organizer.New(config, lib, a.log))
 	}
 
 	if config.Downloader.Enabled {
 		// Add the downloader
-		a.subApps = append(a.subApps, downloader.New(config, library))
+		a.subApps = append(a.subApps, downloader.New(config, lib, a.log))
 	}
 
 	if config.DownloadManager.Enabled {
 		// Add the download manager
-		a.subApps = append(a.subApps, dm.New(config, library))
+		a.subApps = append(a.subApps, dm.New(config, lib, a.log))
 	}
 
 	// Only run the HTTP server if specified
@@ -116,7 +117,7 @@ func (a *App) init() error {
 		}
 
 		// Add the http server
-		srv := server.New(config, library, authManager)
+		srv := server.New(config, lib, authManager, a.log)
 		config.Notifiers = append(config.Notifiers, srv.Hub())
 		a.subApps = append(a.subApps, srv)
 	}
@@ -128,23 +129,22 @@ func (a *App) init() error {
 
 // Run launches the app
 func (a *App) Run() {
-	// Hangle os signals
+	// Handle os signals
 	osSig := make(chan os.Signal, 1)
 	signal.Notify(osSig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 
-	log := logrus.NewEntry(a.logger)
-	log.Info("starting the app")
+	a.log.Info("starting the app")
 
 	// Panic loop safeguard
 	go func() {
-		if err := a.safeguard.Run(log); err != nil {
-			log.Error(err)
-			go a.Stop(log)
+		if err := a.safeguard.Run(a.log); err != nil {
+			a.log.Error(err.Error())
+			go a.Stop()
 		}
 	}()
 
 	// Start all the apps
-	a.startSubApps(log)
+	a.startSubApps()
 
 	// Handle graceful shutdown
 	var forceShutdown bool
@@ -153,83 +153,85 @@ func (a *App) Run() {
 	for {
 		select {
 		case <-a.done:
-			log.Info("all done, exiting")
+			a.log.Info("all done, exiting")
 			return
 		case subApp := <-a.reload:
-			log.Infof("reloading sub app %q", subApp.Name())
+			a.log.Info("reloading sub app", "app", subApp.Name())
 			a.wg.Go(func() {
-				subApp.BlockingStop(log)
-				a.subAppStart(subApp, log)
+				subApp.BlockingStop()
+				a.subAppStart(subApp)
 			})
 		case sig := <-osSig:
-			log.WithField("os_event", sig).Info("got an os event")
+			a.log.Info("got an os event", "os_event", sig)
 			switch sig {
 			case syscall.SIGINT, syscall.SIGTERM:
 				if forceShutdown {
-					log.Warn("forced shutdown")
+					a.log.Warn("forced shutdown")
 					os.Exit(1)
 				}
-				log.Info("graceful shutdown")
+				a.log.Info("graceful shutdown")
 
 				// stop the app
-				go a.Stop(log)
+				go a.Stop()
 
 				// Next time it won't be so gentle
 				forceShutdown = true
 
 			case syscall.SIGHUP:
-				log.Info("reloading app")
+				a.log.Info("reloading app")
 
-				a.stopApps(log)
+				a.stopApps()
 
 				if err := a.init(); err != nil {
-					log.Fatal(err)
+					a.log.Error(err.Error())
+					os.Exit(1)
 				}
 
-				a.startSubApps(log)
+				a.startSubApps()
 
-				log.Info("app reloaded")
+				a.log.Info("app reloaded")
 			}
 		}
 	}
 }
 
 // startSubApps launches all the sub app
-func (a *App) startSubApps(log *logrus.Entry) {
-	log.Debug("starting the sub apps")
+func (a *App) startSubApps() {
+	a.log.Debug("starting the sub apps")
 	for _, subApp := range a.subApps {
-		a.subAppStart(subApp, log)
+		a.subAppStart(subApp)
 	}
 }
 
 // stopApps stops all the sub apps
-func (a *App) stopApps(log *logrus.Entry) {
-	log.Debug("stopping the sub apps")
+func (a *App) stopApps() {
+	a.log.Debug("stopping the sub apps")
 	for _, subApp := range a.subApps {
-		log.Debugf("stopping sub app %q", subApp.Name())
-		subApp.Stop(log)
+		a.log.Debug("stopping sub app", "app", subApp.Name())
+		subApp.Stop()
 	}
 
 	a.wg.Wait()
-	log.Debug("sub apps stopped gracefully")
+	a.log.Debug("sub apps stopped gracefully")
 }
 
 // Stop stops the app
-func (a *App) Stop(log *logrus.Entry) {
-	a.stopApps(log)
-	a.safeguard.BlockingStop(log)
+func (a *App) Stop() {
+	a.stopApps()
+	a.safeguard.BlockingStop()
 	close(a.done)
 }
 
-// Start statrs a sub app in its own goroutine
-func (a *App) subAppStart(app subapp.App, log *logrus.Entry) {
-	log.Debugf("starting sub app %q", app.Name())
+// subAppStart starts a sub app in its own goroutine
+func (a *App) subAppStart(app subapp.App) {
+	a.log.Debug("starting sub app", "app", app.Name())
+	ctx := context.Background()
 	a.wg.Go(func() {
-		if err := app.Run(log); err != nil {
+		if err := app.Run(ctx); err != nil {
 			// Check the error, if it comes from a panic recovery reload the
 			// app
 			if err == subapp.ErrPanicRecovered {
-				log.WithField("app", app.Name()).Error(err)
+				a.log.Error(err.Error(), "app", app.Name())
 
 				// Notify the safeguard of the error
 				a.safeguard.Event()
@@ -240,10 +242,10 @@ func (a *App) subAppStart(app subapp.App, log *logrus.Entry) {
 				}()
 			} else {
 				// Only log the error
-				log.Error(err)
-				go a.Stop(log)
+				a.log.Error(err.Error())
+				go a.Stop()
 			}
 		}
 	})
-	log.Debugf("sub app %q started", app.Name())
+	a.log.Debug("sub app started", "app", app.Name())
 }

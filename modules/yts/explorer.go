@@ -1,9 +1,10 @@
 package yts
 
 import (
+	"context"
+
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/yts"
-	"github.com/sirupsen/logrus"
 )
 
 // AvailableShowOptions implements the the explorer interface
@@ -12,7 +13,7 @@ func (y *Yts) AvailableShowOptions() []string {
 }
 
 // GetShowList implements the explorer interface
-func (y *Yts) GetShowList(option string, log *logrus.Entry) ([]*polochon.Show, error) {
+func (y *Yts) GetShowList(_ context.Context, option string) ([]*polochon.Show, error) {
 	return nil, polochon.ErrNotAvailable
 }
 
@@ -31,9 +32,7 @@ func (y *Yts) AvailableMovieOptions() []string {
 }
 
 // GetMovieList implements the explorer interface
-func (y *Yts) GetMovieList(option string, log *logrus.Entry) ([]*polochon.Movie, error) {
-	log = log.WithField("explore_category", "movies")
-
+func (y *Yts) GetMovieList(_ context.Context, option string) ([]*polochon.Movie, error) {
 	movieList, err := yts.GetList(1, 6, option, yts.OrderDesc)
 	if err != nil {
 		return nil, err
@@ -52,7 +51,6 @@ func (y *Yts) GetMovieList(option string, log *logrus.Entry) ([]*polochon.Movie,
 			// Get the torrent quality
 			torrentQuality := polochon.Quality(t.Quality)
 			if !torrentQuality.IsAllowed() {
-				log.Debugf("yts: unhandled quality: %q", torrentQuality)
 				continue
 			}
 			m.Torrents = append(m.Torrents, &polochon.Torrent{

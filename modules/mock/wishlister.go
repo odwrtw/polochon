@@ -1,16 +1,17 @@
 package mock
 
 import (
+	"context"
+
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
 
 // GetMovieWishlist implements the wishlister interface
-func (mock *Mock) GetMovieWishlist(*logrus.Entry) ([]*polochon.WishedMovie, error) {
+func (mock *Mock) GetMovieWishlist(_ context.Context) ([]*polochon.WishedMovie, error) {
 	return nil, nil
 }
 
 // GetShowWishlist implements the wishlister interface
-func (mock *Mock) GetShowWishlist(*logrus.Entry) ([]*polochon.WishedShow, error) {
+func (mock *Mock) GetShowWishlist(_ context.Context) ([]*polochon.WishedShow, error) {
 	return nil, nil
 }

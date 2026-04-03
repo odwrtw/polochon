@@ -1,14 +1,12 @@
 package imdb
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
-
-var fakeLogEntry = logrus.NewEntry(logrus.New())
 
 // Test data, fakes users wishlists
 var testData = map[string]map[string][]string{
@@ -36,7 +34,7 @@ func TestMoviesWishlist(t *testing.T) {
 		return &ids, nil
 	}
 
-	got, err := testWishlist.GetMovieWishlist(fakeLogEntry)
+	got, err := testWishlist.GetMovieWishlist(context.Background())
 	if err != nil {
 		t.Fatalf("Expected no error, got %q", err)
 	}
@@ -58,7 +56,7 @@ func TestShowsWishlist(t *testing.T) {
 		return &ids, nil
 	}
 
-	got, err := testWishlist.GetShowWishlist(fakeLogEntry)
+	got, err := testWishlist.GetShowWishlist(context.Background())
 	if err != nil {
 		t.Fatalf("Expected no error, got %q", err)
 	}
@@ -79,7 +77,7 @@ func TestEmptyWishlist(t *testing.T) {
 		return nil, nil
 	}
 
-	got, err := testWishlist.GetMovieWishlist(fakeLogEntry)
+	got, err := testWishlist.GetMovieWishlist(context.Background())
 	if err != nil {
 		t.Fatalf("Expected no error, got %q", err)
 	}

@@ -1,13 +1,14 @@
 package yts
 
 import (
+	"context"
+
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/yts"
-	"github.com/sirupsen/logrus"
 )
 
 // GetTorrents implements the Torrenter interface
-func (y *Yts) GetTorrents(i any, log *logrus.Entry) error {
+func (y *Yts) GetTorrents(_ context.Context, i any) error {
 	m, err := getMovieArgument(i)
 	if err != nil {
 		return err

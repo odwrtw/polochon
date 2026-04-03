@@ -1,10 +1,6 @@
 package polochon
 
-import (
-	"sync"
-
-	"github.com/sirupsen/logrus"
-)
+import "sync"
 
 // FsNotifierCtx is the context of the notifier
 type FsNotifierCtx struct {
@@ -16,5 +12,5 @@ type FsNotifierCtx struct {
 // FsNotifier is an interface to notify on filesystem change
 type FsNotifier interface {
 	Module
-	Watch(watchPath string, ctx FsNotifierCtx, log *logrus.Entry) error
+	Watch(watchPath string, ctx FsNotifierCtx) error
 }

@@ -2,11 +2,13 @@ package opensubtitles
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,7 +18,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 
 	polochon "github.com/odwrtw/polochon/lib"
@@ -58,7 +59,7 @@ func init() { polochon.RegisterModule(&opensubs{}) }
 
 func (o *opensubs) Name() string { return moduleName }
 
-func (o *opensubs) Init(params []byte) error {
+func (o *opensubs) Init(params []byte, _ *slog.Logger) error {
 	p := &Params{}
 	if err := yaml.Unmarshal(params, p); err != nil {
 		return err
@@ -97,15 +98,15 @@ func (o *opensubs) Status() (polochon.ModuleStatus, error) {
 	return polochon.StatusOK, nil
 }
 
-func (o *opensubs) GetSubtitle(i any, lang polochon.Language, log *logrus.Entry) (*polochon.Subtitle, error) {
-	entries, err := o.ListSubtitles(i, lang, log)
+func (o *opensubs) GetSubtitle(ctx context.Context, i any, lang polochon.Language) (*polochon.Subtitle, error) {
+	entries, err := o.ListSubtitles(ctx, i, lang)
 	if err != nil {
 		return nil, err
 	}
 	if len(entries) == 0 {
 		return nil, polochon.ErrNoSubtitleFound
 	}
-	return o.DownloadSubtitle(i, entries[0], log)
+	return o.DownloadSubtitle(ctx, i, entries[0])
 }
 
 func videoPath(i any) string {
@@ -153,7 +154,7 @@ func setLang(entries []*polochon.SubtitleEntry, lang polochon.Language) []*poloc
 	return entries
 }
 
-func (o *opensubs) ListSubtitles(i any, lang polochon.Language, _ *logrus.Entry) ([]*polochon.SubtitleEntry, error) {
+func (o *opensubs) ListSubtitles(_ context.Context, i any, lang polochon.Language) ([]*polochon.SubtitleEntry, error) {
 	// Bail early if the daily download quota is exhausted, searching is
 	// pointless since we won't be able to download whatever we find.
 	if o.quotaReached() {
@@ -292,7 +293,7 @@ func (o *opensubs) updateQuota(remaining int, resetTimeUTC string) {
 }
 
 // DownloadSubtitle fetches the subtitle identified by entry.ID (a permanent file_id).
-func (o *opensubs) DownloadSubtitle(i any, entry *polochon.SubtitleEntry, _ *logrus.Entry) (*polochon.Subtitle, error) {
+func (o *opensubs) DownloadSubtitle(_ context.Context, i any, entry *polochon.SubtitleEntry) (*polochon.Subtitle, error) {
 	if o.quotaReached() {
 		return nil, ErrQuotaExceeded
 	}

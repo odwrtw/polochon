@@ -2,16 +2,16 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/odwrtw/polochon/lib/papi"
-	log "github.com/sirupsen/logrus"
 )
 
 func (pfs *polochonfs) updateShows() {
-	log.Debug("Fecthing shows")
+	slog.Debug("Fecthing shows")
 	shows, err := pfs.client.GetShows()
 	if err != nil {
-		log.WithField("error", err).Error("Failed to get shows")
+		slog.Error("Failed to get shows", "error", err)
 		// TODO: remove all files ?
 		return
 	}
@@ -33,12 +33,12 @@ func (pfs *polochonfs) updateShows() {
 			for _, episode := range season.Episodes {
 				err = pfs.createFileNode(seasonDir, episode, episode.Path, episode.Size, episode.DateAdded)
 				if err != nil {
-					log.WithFields(log.Fields{
-						"error":   err,
-						"show":    s.Title,
-						"season":  episode.Season,
-						"episode": episode.Episode,
-					}).Error("Failed to create episode node")
+					slog.Error("Failed to create episode node",
+						"error", err,
+						"show", s.Title,
+						"season", episode.Season,
+						"episode", episode.Episode,
+					)
 					continue
 				}
 
@@ -51,5 +51,5 @@ func (pfs *polochonfs) updateShows() {
 
 	showRootDir.clear()
 
-	log.Debug("Shows updated")
+	slog.Debug("Shows updated")
 }

@@ -1,10 +1,10 @@
 package polochon
 
 import (
+	"context"
+	"log/slog"
 	"reflect"
 	"testing"
-
-	"github.com/sirupsen/logrus"
 )
 
 // Fake movies
@@ -58,7 +58,7 @@ func (fw *FakeWishlister) Name() string {
 	return "fake"
 }
 
-func (fw *FakeWishlister) Init([]byte) error {
+func (fw *FakeWishlister) Init([]byte, *slog.Logger) error {
 	return nil
 }
 
@@ -66,16 +66,12 @@ func (fw *FakeWishlister) Status() (ModuleStatus, error) {
 	return StatusOK, nil
 }
 
-func (fw *FakeWishlister) GetMovieWishlist(log *logrus.Entry) ([]*WishedMovie, error) {
+func (fw *FakeWishlister) GetMovieWishlist(_ context.Context) ([]*WishedMovie, error) {
 	return fakeWishedMovies, nil
 }
 
-func (fw *FakeWishlister) GetShowWishlist(log *logrus.Entry) ([]*WishedShow, error) {
+func (fw *FakeWishlister) GetShowWishlist(_ context.Context) ([]*WishedShow, error) {
 	return fakeWishedShows, nil
-}
-
-func NewFakeWishlister(params []byte, log *logrus.Entry) (Wishlister, error) {
-	return &FakeWishlister{}, nil
 }
 
 func TestAddMoviesWishlist(t *testing.T) {
@@ -109,8 +105,8 @@ func TestAddShowsWishlist(t *testing.T) {
 }
 
 func TestFetchWishlist(t *testing.T) {
-	log := logrus.NewEntry(logrus.New())
-	wishlister, _ := NewFakeWishlister([]byte{}, log)
+	log := slog.Default()
+	wishlister := &FakeWishlister{}
 
 	conf := WishlistConfig{
 		Wishlisters:           []Wishlister{wishlister},
@@ -120,7 +116,7 @@ func TestFetchWishlist(t *testing.T) {
 
 	wl := NewWishlist(conf, log)
 
-	if err := wl.Fetch(); err != nil {
+	if err := wl.Fetch(context.Background()); err != nil {
 		t.Fatalf("Expected no error, got %q", err)
 	}
 

@@ -1,7 +1,10 @@
 package library
 
 import (
+	"context"
 	"fmt"
+	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -26,12 +29,12 @@ func (m *mockLibrary) mockMovie(name string) (*polochon.Movie, error) {
 	movie.Thumb = m.httpServer.URL
 	movie.ImdbID = "tt12345"
 
-	if err := polochon.GetDetails(movie, mockLogEntry); err != nil {
+	if err := polochon.GetDetails(context.Background(), movie, slog.New(slog.NewTextHandler(io.Discard, nil))); err != nil {
 		return nil, err
 	}
 
 	for _, lang := range m.SubtitleLanguages {
-		if _, err := polochon.GetSubtitle(movie, lang, mockLogEntry); err != nil {
+		if _, err := polochon.GetSubtitle(context.Background(), movie, lang, slog.New(slog.NewTextHandler(io.Discard, nil))); err != nil {
 			return nil, err
 		}
 	}
@@ -55,7 +58,7 @@ func TestAddMovie(t *testing.T) {
 	oldMoviePath := m.Path
 
 	// Add the movie to the library
-	if err := lib.Add(m, mockLogEntry); err != nil {
+	if err := lib.Add(m); err != nil {
 		t.Fatalf("failed to add the movie: %q", err)
 	}
 
@@ -81,7 +84,7 @@ func TestAddMovie(t *testing.T) {
 	}
 
 	// Add the movie again, this should replace the old file
-	if err := lib.Add(m, mockLogEntry); err != nil {
+	if err := lib.Add(m); err != nil {
 		t.Fatalf("failed to add the movie again: %q", err)
 	}
 
@@ -151,7 +154,7 @@ func TestAddMovie(t *testing.T) {
 	}
 
 	// Rebuild the index, the movie should be found and added to the index
-	if err := lib.RebuildIndex(mockLogEntry); err != nil {
+	if err := lib.RebuildIndex(); err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
 
@@ -175,7 +178,7 @@ func TestDeleteMovie(t *testing.T) {
 	}
 
 	// Add the movie to the library
-	if err := lib.Add(m, mockLogEntry); err != nil {
+	if err := lib.Add(m); err != nil {
 		t.Fatalf("failed to add the movie: %q", err)
 	}
 
@@ -187,7 +190,7 @@ func TestDeleteMovie(t *testing.T) {
 	}
 
 	// Delete the movie from the library
-	if err := lib.Delete(m, mockLogEntry); err != nil {
+	if err := lib.Delete(m); err != nil {
 		t.Fatalf("failed to add the movie: %q", err)
 	}
 
@@ -204,7 +207,7 @@ func TestDeleteMovie(t *testing.T) {
 	}
 
 	// Rebuild the index, it should remain empty
-	if err := lib.RebuildIndex(mockLogEntry); err != nil {
+	if err := lib.RebuildIndex(); err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
 

@@ -1,7 +1,10 @@
 package library
 
 import (
+	"context"
 	"fmt"
+	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -25,12 +28,12 @@ func (m *mockLibrary) mockEpisode(s *polochon.Show, name string) (*polochon.Show
 	e.Thumb = m.httpServer.URL
 	e.Show = s
 
-	if err := polochon.GetDetails(e, mockLogEntry); err != nil {
+	if err := polochon.GetDetails(context.Background(), e, slog.New(slog.NewTextHandler(io.Discard, nil))); err != nil {
 		return nil, err
 	}
 
 	for _, lang := range m.SubtitleLanguages {
-		if _, err := polochon.GetSubtitle(e, lang, mockLogEntry); err != nil {
+		if _, err := polochon.GetSubtitle(context.Background(), e, lang, slog.New(slog.NewTextHandler(io.Discard, nil))); err != nil {
 			return nil, err
 		}
 	}
@@ -47,7 +50,7 @@ func (m *mockLibrary) mockShow() (*polochon.Show, error) {
 	s.Poster = m.httpServer.URL
 	s.ImdbID = "tt12345"
 
-	if err := polochon.GetDetails(s, mockLogEntry); err != nil {
+	if err := polochon.GetDetails(context.Background(), s, slog.New(slog.NewTextHandler(io.Discard, nil))); err != nil {
 		return nil, err
 	}
 
@@ -78,7 +81,7 @@ func TestAddEpisode(t *testing.T) {
 	oldEpisodePath := episode.Path
 
 	// Add the episode to the library
-	if err := lib.Add(episode, mockLogEntry); err != nil {
+	if err := lib.Add(episode); err != nil {
 		t.Fatalf("failed to add the episode: %q", err)
 	}
 
@@ -121,7 +124,7 @@ func TestAddEpisode(t *testing.T) {
 	}
 
 	// Add the same episode again, this should replace the old one
-	if err := lib.Add(episode, mockLogEntry); err != nil {
+	if err := lib.Add(episode); err != nil {
 		t.Fatalf("failed to add the episode again: %q", err)
 	}
 
@@ -221,7 +224,7 @@ func TestAddEpisode(t *testing.T) {
 	}
 
 	// Rebuild the index, the episode should be found and added to the index
-	if err := lib.RebuildIndex(mockLogEntry); err != nil {
+	if err := lib.RebuildIndex(); err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
 
@@ -305,12 +308,12 @@ func TestDeleteEpisode(t *testing.T) {
 	}
 
 	// Add the episode to the library
-	if err := lib.Add(episode, mockLogEntry); err != nil {
+	if err := lib.Add(episode); err != nil {
 		t.Fatalf("failed to add the episode: %q", err)
 	}
 
 	// Add the episode to the library
-	if err := lib.Delete(episode, mockLogEntry); err != nil {
+	if err := lib.Delete(episode); err != nil {
 		t.Fatalf("failed to remove the episode: %q", err)
 	}
 
@@ -323,7 +326,7 @@ func TestDeleteEpisode(t *testing.T) {
 	}
 
 	// Rebuild the index
-	if err := lib.RebuildIndex(mockLogEntry); err != nil {
+	if err := lib.RebuildIndex(); err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
 

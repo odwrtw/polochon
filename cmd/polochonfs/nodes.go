@@ -1,11 +1,11 @@
 package main
 
 import (
+	"log/slog"
 	"time"
 
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/papi"
-	log "github.com/sirupsen/logrus"
 )
 
 func (pfs *polochonfs) createDirNode(parent *node, name string, times time.Time) *node {
@@ -53,10 +53,7 @@ func (pfs *polochonfs) createFilesNodes(parent *node, files []*papi.File, times 
 
 		err := pfs.createFileNode(parent, file, file.Name, file.Size, times)
 		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-				"name":  file.Name,
-			}).Error("Failed to file node")
+			slog.Error("Failed to file node", "error", err, "name", file.Name)
 			continue
 		}
 	}
@@ -71,11 +68,7 @@ func (pfs *polochonfs) createSubtitlesNodes(parent *node, videoPath string, subs
 		path := polochon.NewFile(videoPath).SubtitlePath(sub.Lang)
 		err := pfs.createFileNode(parent, sub, path, sub.Size, times)
 		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-				"video": videoPath,
-				"lang":  sub.Lang,
-			}).Error("Failed to create subtitle node")
+			slog.Error("Failed to create subtitle node", "error", err, "video", videoPath, "lang", sub.Lang)
 			continue
 		}
 	}

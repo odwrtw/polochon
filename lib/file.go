@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"log/slog"
 )
 
 // FileConfig represents the configuration for a file
@@ -121,26 +121,26 @@ func (f *File) Ignore() error {
 }
 
 // Guess video information from file
-func (f *File) Guess(movieConf MovieConfig, showConf ShowConfig, log *logrus.Entry) (Video, error) {
+func (f *File) Guess(movieConf MovieConfig, showConf ShowConfig, log *slog.Logger) (Video, error) {
 	for _, guesser := range f.Guessers {
-		v, err := guesser.Guess(*f, movieConf, showConf, log)
+		v, err := guesser.Guess(*f, movieConf, showConf)
 		if err == nil {
 			return v, err
 		}
 
 		if err != ErrNotAvailable {
-			log.WithField("guesser", guesser.Name()).WithError(err).Debugf("failed to guess video")
+			log.Debug("failed to guess video", "guesser", guesser.Name(), "error", err)
 		}
 	}
 	return nil, ErrGuessingVideo
 }
 
 // GuessMetadata guesses the metadata of a file
-func (f *File) GuessMetadata(log *logrus.Entry) (*VideoMetadata, error) {
+func (f *File) GuessMetadata(log *slog.Logger) (*VideoMetadata, error) {
 	var updated bool
 	m := &VideoMetadata{}
 	for _, guesser := range f.Guessers {
-		metadata, err := guesser.GuessMetadata(f, log)
+		metadata, err := guesser.GuessMetadata(f)
 		if err == nil {
 			updated = true
 			m.Update(metadata)
@@ -148,7 +148,7 @@ func (f *File) GuessMetadata(log *logrus.Entry) (*VideoMetadata, error) {
 		}
 
 		if err != ErrNotAvailable {
-			log.WithField("guesser", guesser.Name()).WithError(err).Debugf("failed to guess metadata")
+			log.Debug("failed to guess metadata", "guesser", guesser.Name(), "error", err)
 		}
 	}
 

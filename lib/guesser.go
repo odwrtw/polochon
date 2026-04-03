@@ -1,10 +1,6 @@
 package polochon
 
-import (
-	"errors"
-
-	"github.com/sirupsen/logrus"
-)
+import "errors"
 
 // Guess errors
 var (
@@ -16,6 +12,6 @@ var (
 // from a file
 type Guesser interface {
 	Module
-	Guess(File, MovieConfig, ShowConfig, *logrus.Entry) (Video, error)
-	GuessMetadata(*File, *logrus.Entry) (*VideoMetadata, error)
+	Guess(File, MovieConfig, ShowConfig) (Video, error)
+	GuessMetadata(*File) (*VideoMetadata, error)
 }

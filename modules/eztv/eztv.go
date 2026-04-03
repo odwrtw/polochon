@@ -1,12 +1,13 @@
 package eztv
 
 import (
+	"context"
 	"errors"
+	"log/slog"
 	"strings"
 
 	"github.com/odwrtw/eztv"
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
@@ -38,7 +39,7 @@ type Eztv struct {
 }
 
 // Init implements the Module interface
-func (e *Eztv) Init(p []byte) error {
+func (e *Eztv) Init(p []byte, _ *slog.Logger) error {
 	return yaml.Unmarshal(p, e)
 }
 
@@ -133,7 +134,7 @@ func (e *Eztv) Status() (polochon.ModuleStatus, error) {
 }
 
 // GetTorrents implements the Torrenter interface
-func (e *Eztv) GetTorrents(i any, log *logrus.Entry) error {
+func (e *Eztv) GetTorrents(_ context.Context, i any) error {
 	switch v := i.(type) {
 	case *polochon.ShowEpisode:
 		return e.getShowEpisodeDetails(v)

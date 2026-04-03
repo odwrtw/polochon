@@ -7,7 +7,6 @@ import (
 
 	polochon "github.com/odwrtw/polochon/lib"
 	index "github.com/odwrtw/polochon/lib/media_index"
-	"github.com/sirupsen/logrus"
 )
 
 // GetIndexedSeason returns a ShowSeason from its id
@@ -35,7 +34,8 @@ func (l *Library) GetSeason(id string, season int) (*polochon.ShowSeason, error)
 }
 
 // DeleteSeason deletes a season
-func (l *Library) DeleteSeason(id string, season int, log *logrus.Entry) error {
+func (l *Library) DeleteSeason(id string, season int) error {
+	log := l.log.With("type", "show_season", "imdb_id", id, "season", season)
 	path, err := l.showIndex.SeasonPath(id, season)
 	if err != nil {
 		return err
@@ -46,9 +46,10 @@ func (l *Library) DeleteSeason(id string, season int, log *logrus.Entry) error {
 		return err
 	}
 
+	log.Info("removing season from index")
 	// Remove the season from the index
 	show := &polochon.Show{ImdbID: id}
-	if err := l.showIndex.RemoveSeason(show, season, log); err != nil {
+	if err := l.showIndex.RemoveSeason(show, season); err != nil {
 		return err
 	}
 
@@ -59,7 +60,7 @@ func (l *Library) DeleteSeason(id string, season int, log *logrus.Entry) error {
 	}
 	if ok {
 		// Delete the whole Show
-		if err := l.DeleteShow(id, log); err != nil {
+		if err := l.DeleteShow(id); err != nil {
 			return err
 		}
 	}

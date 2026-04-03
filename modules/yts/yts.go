@@ -2,6 +2,7 @@ package yts
 
 import (
 	"errors"
+	"log/slog"
 
 	"github.com/dustin/go-humanize"
 	polochon "github.com/odwrtw/polochon/lib"
@@ -33,7 +34,7 @@ const (
 type Yts struct{}
 
 // Init implements the module interface
-func (y *Yts) Init(p []byte) error {
+func (y *Yts) Init(p []byte, _ *slog.Logger) error {
 	return nil
 }
 

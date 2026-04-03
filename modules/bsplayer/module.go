@@ -1,14 +1,15 @@
 package bsplayer
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"path/filepath"
 
 	"github.com/agnivade/levenshtein"
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
 
 const moduleName = "bsplayer"
@@ -26,7 +27,7 @@ type Client struct {
 }
 
 // Init implements the polochon.Module interface.
-func (c *Client) Init(_ []byte) error {
+func (c *Client) Init(_ []byte, _ *slog.Logger) error {
 	return nil
 }
 
@@ -53,7 +54,7 @@ func (c *Client) Status() (polochon.ModuleStatus, error) {
 }
 
 // ListSubtitles implements the polochon.Subtitler interface.
-func (c *Client) ListSubtitles(i any, lang polochon.Language, _ *logrus.Entry) ([]*polochon.SubtitleEntry, error) {
+func (c *Client) ListSubtitles(_ context.Context, i any, lang polochon.Language) ([]*polochon.SubtitleEntry, error) {
 	var qp *queryParams
 	var err error
 
@@ -95,7 +96,7 @@ func (c *Client) ListSubtitles(i any, lang polochon.Language, _ *logrus.Entry) (
 }
 
 // DownloadSubtitle implements the polochon.Subtitler interface.
-func (c *Client) DownloadSubtitle(i any, entry *polochon.SubtitleEntry, _ *logrus.Entry) (*polochon.Subtitle, error) {
+func (c *Client) DownloadSubtitle(_ context.Context, i any, entry *polochon.SubtitleEntry) (*polochon.Subtitle, error) {
 	video, ok := i.(polochon.Video)
 	if !ok {
 		return nil, ErrNotAVideo
@@ -120,7 +121,7 @@ func (c *Client) DownloadSubtitle(i any, entry *polochon.SubtitleEntry, _ *logru
 }
 
 // GetSubtitle implements the polochon.Subtitler interface.
-func (c *Client) GetSubtitle(i any, lang polochon.Language, _ *logrus.Entry) (*polochon.Subtitle, error) {
+func (c *Client) GetSubtitle(_ context.Context, i any, lang polochon.Language) (*polochon.Subtitle, error) {
 	var qp *queryParams
 	var err error
 

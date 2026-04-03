@@ -8,7 +8,6 @@ import (
 
 	polochon "github.com/odwrtw/polochon/lib"
 	index "github.com/odwrtw/polochon/lib/media_index"
-	"github.com/sirupsen/logrus"
 )
 
 // HasShowEpisode returns true if the show is in the store
@@ -17,14 +16,14 @@ func (l *Library) HasShowEpisode(imdbID string, season, episode int) (bool, erro
 }
 
 // AddShowEpisode adds an episode to the store
-func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode, logEntry *logrus.Entry) error {
-	log := logEntry.WithFields(logrus.Fields{
-		"type":         "show_episode",
-		"show_title":   ep.ShowTitle,
-		"show_imdb_id": ep.ShowImdbID,
-		"episode":      ep.Episode,
-		"season":       ep.Season,
-	})
+func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode) error {
+	log := l.log.With(
+		"type", "show_episode",
+		"show_title", ep.ShowTitle,
+		"show_imdb_id", ep.ShowImdbID,
+		"episode", ep.Episode,
+		"season", ep.Season,
+	)
 	if ep.Path == "" {
 		return ErrMissingShowEpisodeFilePath
 	}
@@ -40,13 +39,13 @@ func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode, logEntry *logrus.Entr
 			return err
 		}
 
-		if err := l.DeleteShowEpisode(oldEpisode, log); err != nil {
+		if err := l.DeleteShowEpisode(oldEpisode); err != nil {
 			return err
 		}
 	}
 
 	// Add the show
-	if err := l.addShow(ep, log); err != nil {
+	if err := l.addShow(ep); err != nil {
 		return err
 	}
 
@@ -70,10 +69,7 @@ func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode, logEntry *logrus.Entr
 
 	// Move the episode into the folder
 	newPath := filepath.Join(seasonDir, path.Base(ep.Path))
-	log.WithFields(logrus.Fields{
-		"old_path": ep.Path,
-		"new_path": newPath,
-	}).Debugf("moving episode")
+	log.Debug("moving episode", "old_path", ep.Path, "new_path", newPath)
 	if err := MoveFile(ep.Path, newPath); err != nil {
 		return err
 	}
@@ -85,7 +81,7 @@ func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode, logEntry *logrus.Entr
 	// Only if the downloader is enabled
 	if l.downloaderConfig.Enabled {
 		if err := os.Symlink(ep.Path, oldPath); err != nil {
-			log.Warnf("error while making symlink")
+			log.Warn("error while making symlink", "error", err)
 		}
 	}
 
@@ -95,7 +91,7 @@ func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode, logEntry *logrus.Entr
 	}
 
 	// Save the subtitles here
-	if err := l.SaveSubtitles(ep, log); err != nil {
+	if err := l.SaveSubtitles(ep); err != nil {
 		return err
 	}
 
@@ -103,9 +99,9 @@ func (l *Library) AddShowEpisode(ep *polochon.ShowEpisode, logEntry *logrus.Entr
 }
 
 // DeleteShowEpisode will delete the showEpisode
-func (l *Library) DeleteShowEpisode(se *polochon.ShowEpisode, log *logrus.Entry) error {
-	// Delete the episode
-	log.Infof("removing episode file")
+func (l *Library) DeleteShowEpisode(se *polochon.ShowEpisode) error {
+	log := l.log.With("type", "show_episode", "show_imdb_id", se.ShowImdbID, "season", se.Season, "episode", se.Episode)
+	log.Info("removing episode file")
 	// Remove the episode
 	if err := os.RemoveAll(se.Path); err != nil {
 		return err
@@ -114,7 +110,7 @@ func (l *Library) DeleteShowEpisode(se *polochon.ShowEpisode, log *logrus.Entry)
 	// Remove also the .nfo and .srt files
 	for _, ext := range []string{"nfo", "srt"} {
 		fileToDelete := fmt.Sprintf("%s.%s", pathWithoutExt, ext)
-		log.Debugf("removing associated extention %s", ext)
+		log.Debug("removing associated extension", "ext", ext)
 		// Remove file
 		if err := os.RemoveAll(fileToDelete); err != nil {
 			return err
@@ -122,7 +118,7 @@ func (l *Library) DeleteShowEpisode(se *polochon.ShowEpisode, log *logrus.Entry)
 	}
 
 	// Remove the episode from the index
-	if err := l.showIndex.RemoveEpisode(se, log); err != nil {
+	if err := l.showIndex.RemoveEpisode(se); err != nil {
 		return err
 	}
 
@@ -133,7 +129,7 @@ func (l *Library) DeleteShowEpisode(se *polochon.ShowEpisode, log *logrus.Entry)
 	}
 	if ok {
 		// Delete the whole season
-		if err := l.DeleteSeason(se.ShowImdbID, se.Season, log); err != nil {
+		if err := l.DeleteSeason(se.ShowImdbID, se.Season); err != nil {
 			return err
 		}
 	}

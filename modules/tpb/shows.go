@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/odwrtw/whatsthis"
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
+	"github.com/odwrtw/whatsthis"
 )
 
 type showSearcher struct {
@@ -45,20 +44,17 @@ func (sS *showSearcher) imdbID() string {
 	return sS.Episode.ShowImdbID
 }
 
-func (sS *showSearcher) isValidGuess(guess whatsthis.Info, log *logrus.Entry) bool {
+func (sS *showSearcher) isValidGuess(guess whatsthis.Info) bool {
 	// Check the video type
 	if guess.Type != whatsthis.Episode {
-		log.Debugf("tpb: is not an episode but a %s", guess.Type)
 		return false
 	}
 
 	if !strings.EqualFold(guess.Title, sS.Episode.ShowTitle) {
-		log.Debugf("skipping bad show title %s != %s", guess.Title, sS.Episode.ShowTitle)
 		return false
 	}
 	// Check if the data matches the episode
 	if guess.Season != sS.Episode.Season || guess.Episode != sS.Episode.Episode {
-		log.Debugf("skipping bad show episode/season S%dE%d != S%dE%d", guess.Season, guess.Episode, sS.Episode.Season, sS.Episode.Episode)
 		return false
 	}
 	return true

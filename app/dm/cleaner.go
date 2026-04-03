@@ -9,24 +9,25 @@ import (
 	"slices"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
 
-func (dm *DownloadManager) cleanTorrent(torrent *polochon.Torrent, log *logrus.Entry) {
+func (dm *DownloadManager) cleanTorrent(torrent *polochon.Torrent) {
 	if torrent.Status == nil {
 		return
 	}
 
+	log := dm.log.With("torrent_name", torrent.Status.Name)
+
 	// We remove the torrent
-	log.Debugf("removing torrent")
+	log.Debug("removing torrent")
 	err := dm.config.Downloader.Client.Remove(torrent)
 	if err != nil {
-		log.Errorf("got error when removing torrent : %q", err)
+		log.Error("got error when removing torrent", "error", err)
 		return
 	}
 
 	// Going over all the files and remove only the allowed ones
-	log.Debugf("cleaning torrent files")
+	log.Debug("cleaning torrent files")
 	for _, tPath := range torrent.Status.FilePaths {
 		filePath := filepath.Join(dm.config.DownloadManager.Dir, tPath)
 		file := polochon.NewFile(filePath)
@@ -36,39 +37,38 @@ func (dm *DownloadManager) cleanTorrent(torrent *polochon.Torrent, log *logrus.E
 		if !slices.Contains(dm.config.File.AllowedExtensionsToDelete, ext) {
 			if !file.IsSymlink() {
 				// Not allowed to delete these types of files
-				log.WithFields(logrus.Fields{
-					"extension":     ext,
-					"file_to_clean": filePath,
-				}).Debug("protected extension")
+				log.Debug("protected extension", "extension", ext, "file_to_clean", filePath)
 				continue
 			} else {
-				log.Debugf("file %q is a symlink, delete it", filePath)
+				log.Debug("file is a symlink, delete it", "file", filePath)
 			}
 		}
 
-		err := dm.remove(file.Path, log)
+		err := dm.remove(file.Path)
 		if err != nil {
-			log.Warnf("got error while removing file %q", err)
+			log.Warn("got error while removing file", "error", err)
 			continue
 		}
 	}
 
 	// Need to check if we can delete the directory of the torrent
-	err = dm.cleanDirectory(torrent, log)
+	err = dm.cleanDirectory(torrent)
 	if err != nil {
-		log.Warnf("got error while deleting directory : %q", err)
+		log.Warn("got error while deleting directory", "error", err)
 	}
 }
 
-func (dm *DownloadManager) remove(filePath string, log *logrus.Entry) error {
-	log.WithField("path", filePath).Debug("deleting item")
+func (dm *DownloadManager) remove(filePath string) error {
+	dm.log.Debug("deleting item", "path", filePath)
 	return os.Remove(filePath)
 }
 
-func (dm *DownloadManager) cleanDirectory(torrent *polochon.Torrent, log *logrus.Entry) error {
+func (dm *DownloadManager) cleanDirectory(torrent *polochon.Torrent) error {
 	if torrent.Status == nil {
 		return fmt.Errorf("missing torrent status")
 	}
+
+	log := dm.log.With("torrent_name", torrent.Status.Name)
 
 	if len(torrent.Status.FilePaths) == 0 {
 		return fmt.Errorf("no torrent files to clean")
@@ -99,7 +99,7 @@ func (dm *DownloadManager) cleanDirectory(torrent *polochon.Torrent, log *logrus
 	// Get the first part of the directory to clean
 	for filepath.Dir(relDir) != "." {
 		relDir = filepath.Dir(relDir)
-		log.Debugf("going higher : %s", relDir)
+		log.Debug("going higher", "dir", relDir)
 	}
 
 	// Get the full path
@@ -108,7 +108,7 @@ func (dm *DownloadManager) cleanDirectory(torrent *polochon.Torrent, log *logrus
 
 	ok, err := IsEmpty(directoryToClean)
 	if err != nil {
-		log.Warnf("got error checking if directory is empty : %q", err)
+		log.Warn("got error checking if directory is empty", "error", err)
 		return err
 	}
 	if !ok {
@@ -119,7 +119,7 @@ func (dm *DownloadManager) cleanDirectory(torrent *polochon.Torrent, log *logrus
 	log.Debug("everything is ready to delete the dir")
 
 	// Delete the directory
-	return dm.remove(directoryToClean, log)
+	return dm.remove(directoryToClean)
 }
 
 // IsEmpty checks if a directory is empty

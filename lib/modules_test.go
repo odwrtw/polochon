@@ -1,10 +1,10 @@
 package polochon
 
 import (
+	"context"
+	"log/slog"
 	"reflect"
 	"testing"
-
-	"github.com/sirupsen/logrus"
 )
 
 // Make sure that the test module is a detailer
@@ -14,7 +14,7 @@ type testModule struct {
 	name string
 }
 
-func (m *testModule) Init([]byte) error {
+func (m *testModule) Init([]byte, *slog.Logger) error {
 	return nil
 }
 
@@ -26,7 +26,7 @@ func (m *testModule) Status() (ModuleStatus, error) {
 	return StatusOK, nil
 }
 
-func (m *testModule) GetDetails(i any, log *logrus.Entry) error {
+func (m *testModule) GetDetails(_ context.Context, i any) error {
 	return nil
 }
 

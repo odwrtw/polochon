@@ -1,15 +1,16 @@
 package polochon
 
 import (
-	"github.com/sirupsen/logrus"
+	"context"
+	"log/slog"
 )
 
 // Wishlister is an interface which defines the behavior of the wishlister
 // modules
 type Wishlister interface {
 	Module
-	GetMovieWishlist(*logrus.Entry) ([]*WishedMovie, error)
-	GetShowWishlist(*logrus.Entry) ([]*WishedShow, error)
+	GetMovieWishlist(ctx context.Context) ([]*WishedMovie, error)
+	GetShowWishlist(ctx context.Context) ([]*WishedShow, error)
 }
 
 // WishedMovie represents a wished movie and its expected qualities
@@ -37,36 +38,36 @@ type WishlistConfig struct {
 // Wishlist represents a user wishlist
 type Wishlist struct {
 	WishlistConfig `xml:"-" json:"-"`
-	log            *logrus.Entry
+	log            *slog.Logger
 	Movies         []*WishedMovie `json:"movies"`
 	Shows          []*WishedShow  `json:"shows"`
 }
 
 // NewWishlist returns a new wishlist
-func NewWishlist(wishlistConfig WishlistConfig, log *logrus.Entry) *Wishlist {
+func NewWishlist(wishlistConfig WishlistConfig, log *slog.Logger) *Wishlist {
 	return &Wishlist{
 		WishlistConfig: wishlistConfig,
-		log:            log.WithField("type", "wishlist"),
+		log:            log.With("type", "wishlist"),
 	}
 }
 
 // Fetch the informations from the wishlister an returns a merged wishlist
 // TODO: merge the wishlists from the different wishlisters
-func (w *Wishlist) Fetch() error {
+func (w *Wishlist) Fetch(ctx context.Context) error {
 	// Movie wishlists
-	if err := w.fetchMovies(); err != nil {
+	if err := w.fetchMovies(ctx); err != nil {
 		return err
 	}
 
 	// Shows wishlists
-	return w.fetchShows()
+	return w.fetchShows(ctx)
 }
 
-func (w *Wishlist) fetchMovies() error {
+func (w *Wishlist) fetchMovies(ctx context.Context) error {
 	for _, wl := range w.Wishlisters {
-		movieWishlist, err := wl.GetMovieWishlist(w.log)
+		movieWishlist, err := wl.GetMovieWishlist(ctx)
 		if err != nil {
-			w.log.Warnf("failed to get movie wishlist from wishlister: %q", err)
+			w.log.Warn("failed to get movie wishlist from wishlister", "error", err)
 			continue
 		}
 
@@ -82,11 +83,11 @@ func (w *Wishlist) fetchMovies() error {
 	return nil
 }
 
-func (w *Wishlist) fetchShows() error {
+func (w *Wishlist) fetchShows(ctx context.Context) error {
 	for _, wl := range w.Wishlisters {
-		showWishlist, err := wl.GetShowWishlist(w.log)
+		showWishlist, err := wl.GetShowWishlist(ctx)
 		if err != nil {
-			w.log.Warnf("failed to get show wishlist from wishlister: %q", err)
+			w.log.Warn("failed to get show wishlist from wishlister", "error", err)
 			continue
 		}
 

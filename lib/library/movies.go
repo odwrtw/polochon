@@ -9,7 +9,6 @@ import (
 
 	polochon "github.com/odwrtw/polochon/lib"
 	index "github.com/odwrtw/polochon/lib/media_index"
-	"github.com/sirupsen/logrus"
 )
 
 // MovieIDs returns the movie ids
@@ -38,12 +37,8 @@ func (l *Library) getMovieDir(movie *polochon.Movie) string {
 }
 
 // AddMovie adds a movie to the store
-func (l *Library) AddMovie(movie *polochon.Movie, logEntry *logrus.Entry) error {
-	log := logEntry.WithFields(logrus.Fields{
-		"type":    "movie",
-		"title":   movie.Title,
-		"imdb_id": movie.ImdbID,
-	})
+func (l *Library) AddMovie(movie *polochon.Movie) error {
+	log := l.log.With("type", "movie", "title", movie.Title, "imdb_id", movie.ImdbID)
 
 	log.Debug("adding movie to the library")
 
@@ -65,7 +60,7 @@ func (l *Library) AddMovie(movie *polochon.Movie, logEntry *logrus.Entry) error 
 		}
 
 		// Delete it
-		if err := l.DeleteMovie(oldMovie, log); err != nil {
+		if err := l.DeleteMovie(oldMovie); err != nil {
 			return err
 		}
 	}
@@ -97,10 +92,7 @@ func (l *Library) AddMovie(movie *polochon.Movie, logEntry *logrus.Entry) error 
 	// Save the old path
 	oldPath := movie.Path
 
-	log.WithFields(logrus.Fields{
-		"old_path": movie.Path,
-		"new_path": newPath,
-	}).Debugf("moving movie file")
+	log.Debug("moving movie file", "old_path", movie.Path, "new_path", newPath)
 	if err := MoveFile(movie.Path, newPath); err != nil {
 		return err
 	}
@@ -111,9 +103,9 @@ func (l *Library) AddMovie(movie *polochon.Movie, logEntry *logrus.Entry) error 
 	// Create a symlink between the new and the old location
 	// Only if the downloader is enabled
 	if l.downloaderConfig.Enabled {
-		log.Debugf("creating symlink with the old path")
+		log.Debug("creating symlink with the old path")
 		if err := os.Symlink(movie.Path, oldPath); err != nil {
-			log.Warnf("error while making symlink between %s and %s : %+v", oldPath, movie.Path, err)
+			log.Warn("error while making symlink", "old_path", oldPath, "new_path", movie.Path, "error", err)
 		}
 	}
 
@@ -123,7 +115,7 @@ func (l *Library) AddMovie(movie *polochon.Movie, logEntry *logrus.Entry) error 
 	}
 
 	// Save the subtitles here
-	if err := l.SaveSubtitles(movie, log); err != nil {
+	if err := l.SaveSubtitles(movie); err != nil {
 		return err
 	}
 
@@ -172,16 +164,17 @@ func (l *Library) GetMovie(imdbID string) (*polochon.Movie, error) {
 }
 
 // DeleteMovie will delete the movie
-func (l *Library) DeleteMovie(m *polochon.Movie, log *logrus.Entry) error {
+func (l *Library) DeleteMovie(m *polochon.Movie) error {
+	log := l.log.With("type", "movie", "imdb_id", m.ImdbID)
 	// Delete the movie
 	d := filepath.Dir(m.Path)
-	log.Infof("removing movie")
+	log.Info("removing movie")
 
 	if err := os.RemoveAll(d); err != nil {
 		return err
 	}
 	// Remove the movie from the index
-	return l.movieIndex.Remove(m, log)
+	return l.movieIndex.Remove(m)
 }
 
 // NewMovieFromPath returns a new Movie from its path

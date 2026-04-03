@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	polochon "github.com/odwrtw/polochon/lib"
 	"gopkg.in/yaml.v2"
@@ -60,20 +61,20 @@ func (mp *ModulesParams) UnmarshalYAML(unmarshal func(any) error) error {
 }
 
 // get returns the configured module of type t
-func (mp ModulesParams) getModule(t polochon.ModuleType, name string) (polochon.Module, error) {
+func (mp ModulesParams) getModule(t polochon.ModuleType, name string, log *slog.Logger) (polochon.Module, error) {
 	module, err := polochon.GetModule(name, t)
 	if err != nil {
 		return nil, err
 	}
 
-	return module, module.Init(mp.params[name])
+	return module, module.Init(mp.params[name], log)
 }
 
-func (mp ModulesParams) getModules(t polochon.ModuleType, names ...string) ([]polochon.Module, error) {
+func (mp ModulesParams) getModules(t polochon.ModuleType, log *slog.Logger, names ...string) ([]polochon.Module, error) {
 	modules := []polochon.Module{}
 
 	for _, name := range names {
-		module, err := mp.getModule(t, name)
+		module, err := mp.getModule(t, name, log)
 		if err != nil {
 			return nil, err
 		}
@@ -83,12 +84,12 @@ func (mp ModulesParams) getModules(t polochon.ModuleType, names ...string) ([]po
 	return modules, nil
 }
 
-func (mp ModulesParams) getDetailers(names []string) ([]polochon.Detailer, error) {
+func (mp ModulesParams) getDetailers(names []string, log *slog.Logger) ([]polochon.Detailer, error) {
 	if len(names) == 0 {
 		return nil, ErrMissingDetailerNames
 	}
 
-	modules, err := mp.getModules(polochon.TypeDetailer, names...)
+	modules, err := mp.getModules(polochon.TypeDetailer, log, names...)
 	if err != nil {
 		return nil, err
 	}
@@ -100,8 +101,8 @@ func (mp ModulesParams) getDetailers(names []string) ([]polochon.Detailer, error
 	return res, nil
 }
 
-func (mp ModulesParams) getSubtitlers(names []string) ([]polochon.Subtitler, error) {
-	modules, err := mp.getModules(polochon.TypeSubtitler, names...)
+func (mp ModulesParams) getSubtitlers(names []string, log *slog.Logger) ([]polochon.Subtitler, error) {
+	modules, err := mp.getModules(polochon.TypeSubtitler, log, names...)
 	if err != nil {
 		return nil, err
 	}
@@ -113,8 +114,8 @@ func (mp ModulesParams) getSubtitlers(names []string) ([]polochon.Subtitler, err
 	return res, nil
 }
 
-func (mp ModulesParams) getExplorers(names []string) ([]polochon.Explorer, error) {
-	modules, err := mp.getModules(polochon.TypeExplorer, names...)
+func (mp ModulesParams) getExplorers(names []string, log *slog.Logger) ([]polochon.Explorer, error) {
+	modules, err := mp.getModules(polochon.TypeExplorer, log, names...)
 	if err != nil {
 		return nil, err
 	}
@@ -126,8 +127,8 @@ func (mp ModulesParams) getExplorers(names []string) ([]polochon.Explorer, error
 	return res, nil
 }
 
-func (mp ModulesParams) getSearchers(names []string) ([]polochon.Searcher, error) {
-	modules, err := mp.getModules(polochon.TypeSearcher, names...)
+func (mp ModulesParams) getSearchers(names []string, log *slog.Logger) ([]polochon.Searcher, error) {
+	modules, err := mp.getModules(polochon.TypeSearcher, log, names...)
 	if err != nil {
 		return nil, err
 	}
@@ -139,8 +140,8 @@ func (mp ModulesParams) getSearchers(names []string) ([]polochon.Searcher, error
 	return res, nil
 }
 
-func (mp ModulesParams) getWishlisters(names []string) ([]polochon.Wishlister, error) {
-	modules, err := mp.getModules(polochon.TypeWishlister, names...)
+func (mp ModulesParams) getWishlisters(names []string, log *slog.Logger) ([]polochon.Wishlister, error) {
+	modules, err := mp.getModules(polochon.TypeWishlister, log, names...)
 	if err != nil {
 		return nil, err
 	}
@@ -152,8 +153,8 @@ func (mp ModulesParams) getWishlisters(names []string) ([]polochon.Wishlister, e
 	return res, nil
 }
 
-func (mp ModulesParams) getNotifiers(names []string) ([]polochon.Notifier, error) {
-	modules, err := mp.getModules(polochon.TypeNotifier, names...)
+func (mp ModulesParams) getNotifiers(names []string, log *slog.Logger) ([]polochon.Notifier, error) {
+	modules, err := mp.getModules(polochon.TypeNotifier, log, names...)
 	if err != nil {
 		return nil, err
 	}
@@ -165,12 +166,12 @@ func (mp ModulesParams) getNotifiers(names []string) ([]polochon.Notifier, error
 	return res, nil
 }
 
-func (mp ModulesParams) getTorrenters(names []string) ([]polochon.Torrenter, error) {
+func (mp ModulesParams) getTorrenters(names []string, log *slog.Logger) ([]polochon.Torrenter, error) {
 	if len(names) == 0 {
 		return nil, ErrMissingTorrenterNames
 	}
 
-	modules, err := mp.getModules(polochon.TypeTorrenter, names...)
+	modules, err := mp.getModules(polochon.TypeTorrenter, log, names...)
 	if err != nil {
 		return nil, err
 	}
@@ -182,8 +183,8 @@ func (mp ModulesParams) getTorrenters(names []string) ([]polochon.Torrenter, err
 	return torrenters, nil
 }
 
-func (mp ModulesParams) getFsNotifier(name string) (polochon.FsNotifier, error) {
-	module, err := mp.getModule(polochon.TypeFsNotifier, name)
+func (mp ModulesParams) getFsNotifier(name string, log *slog.Logger) (polochon.FsNotifier, error) {
+	module, err := mp.getModule(polochon.TypeFsNotifier, name, log)
 	if err != nil {
 		return nil, err
 	}
@@ -191,8 +192,8 @@ func (mp ModulesParams) getFsNotifier(name string) (polochon.FsNotifier, error) 
 	return module.(polochon.FsNotifier), nil
 }
 
-func (mp ModulesParams) getGuessers(names []string) ([]polochon.Guesser, error) {
-	modules, err := mp.getModules(polochon.TypeGuesser, names...)
+func (mp ModulesParams) getGuessers(names []string, log *slog.Logger) ([]polochon.Guesser, error) {
+	modules, err := mp.getModules(polochon.TypeGuesser, log, names...)
 	if err != nil {
 		return nil, err
 	}
@@ -204,8 +205,8 @@ func (mp ModulesParams) getGuessers(names []string) ([]polochon.Guesser, error) 
 	return res, nil
 }
 
-func (mp ModulesParams) getDownloader(name string) (polochon.Downloader, error) {
-	module, err := mp.getModule(polochon.TypeDownloader, name)
+func (mp ModulesParams) getDownloader(name string, log *slog.Logger) (polochon.Downloader, error) {
+	module, err := mp.getModule(polochon.TypeDownloader, name, log)
 	if err != nil {
 		return nil, err
 	}
@@ -213,8 +214,8 @@ func (mp ModulesParams) getDownloader(name string) (polochon.Downloader, error) 
 	return module.(polochon.Downloader), nil
 }
 
-func (mp ModulesParams) getCalendar(name string) (polochon.Calendar, error) {
-	module, err := mp.getModule(polochon.TypeCalendar, name)
+func (mp ModulesParams) getCalendar(name string, log *slog.Logger) (polochon.Calendar, error) {
+	module, err := mp.getModule(polochon.TypeCalendar, name, log)
 	if err != nil {
 		return nil, err
 	}

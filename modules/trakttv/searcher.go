@@ -1,13 +1,14 @@
 package trakttv
 
 import (
+	"context"
+
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/trakttv"
-	"github.com/sirupsen/logrus"
 )
 
 // SearchMovie implements the polochon Searcher interface
-func (trakt *TraktTV) SearchMovie(key string, log *logrus.Entry) ([]*polochon.Movie, error) {
+func (trakt *TraktTV) SearchMovie(_ context.Context, key string) ([]*polochon.Movie, error) {
 	searchQuery := trakttv.SearchQuery{
 		Type:  trakttv.TypeMovie,
 		Field: trakttv.FieldTitle,
@@ -27,7 +28,7 @@ func (trakt *TraktTV) SearchMovie(key string, log *logrus.Entry) ([]*polochon.Mo
 
 	// Check if there is any results
 	if len(traktMovies) == 0 {
-		log.Debugf("failed to find movie with %q", key)
+		trakt.log.Debug("failed to find movie", "key", key)
 		return nil, ErrNotFound
 	}
 
@@ -53,7 +54,7 @@ func (trakt *TraktTV) SearchMovie(key string, log *logrus.Entry) ([]*polochon.Mo
 }
 
 // SearchShow implements the polochon Searcher interface
-func (trakt *TraktTV) SearchShow(key string, log *logrus.Entry) ([]*polochon.Show, error) {
+func (trakt *TraktTV) SearchShow(_ context.Context, key string) ([]*polochon.Show, error) {
 	searchQuery := trakttv.SearchQuery{
 		Type:  trakttv.TypeShow,
 		Field: trakttv.FieldTitle,
@@ -73,7 +74,7 @@ func (trakt *TraktTV) SearchShow(key string, log *logrus.Entry) ([]*polochon.Sho
 
 	// Check if there is any results
 	if len(traktShows) == 0 {
-		log.Debugf("failed to find shows with %q", key)
+		trakt.log.Debug("failed to find shows", "key", key)
 		return nil, ErrNotFound
 	}
 

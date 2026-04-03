@@ -5,10 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/odwrtw/whatsthis"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/tpb"
-	"github.com/sirupsen/logrus"
+	"github.com/odwrtw/whatsthis"
 )
 
 var (
@@ -25,7 +24,7 @@ func (t *TPB) AvailableMovieOptions() []string {
 }
 
 // GetMovieList implements the Explorer interface
-func (t *TPB) GetMovieList(option string, log *logrus.Entry) ([]*polochon.Movie, error) {
+func (t *TPB) GetMovieList(_ context.Context, option string) ([]*polochon.Movie, error) {
 	var category tpb.TorrentCategory
 	switch option {
 	case "top100":
@@ -62,7 +61,7 @@ func (t *TPB) GetMovieList(option string, log *logrus.Entry) ([]*polochon.Movie,
 
 		torrentQuality := polochon.Quality(screenSize)
 		if !torrentQuality.IsAllowed() {
-			log.Debugf("tpb: unhandled quality: %q", torrentQuality)
+			t.log.Debug("tpb: unhandled quality", "quality", torrentQuality)
 			continue
 		}
 		m.Torrents = append(m.Torrents, &polochon.Torrent{
@@ -90,7 +89,7 @@ func (t *TPB) AvailableShowOptions() []string {
 }
 
 // GetShowList implements the Explorer interface
-func (t *TPB) GetShowList(option string, log *logrus.Entry) ([]*polochon.Show, error) {
+func (t *TPB) GetShowList(_ context.Context, option string) ([]*polochon.Show, error) {
 	var category tpb.TorrentCategory
 	switch option {
 	case "top100":

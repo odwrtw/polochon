@@ -58,7 +58,7 @@ func (s *Server) getShowFiles(w http.ResponseWriter, req *http.Request) {
 }
 
 func (s *Server) getSeasonDetails(w http.ResponseWriter, req *http.Request) {
-	s.logEntry(req).Infof("getting season details")
+	s.logEntry(req).Info("getting season details")
 	vars := mux.Vars(req)
 
 	seasonNum, err := strconv.Atoi(vars["season"])
@@ -84,7 +84,7 @@ func (s *Server) getSeasonDetails(w http.ResponseWriter, req *http.Request) {
 
 func (s *Server) deleteSeason(w http.ResponseWriter, req *http.Request) {
 	log := s.logEntry(req)
-	log.Infof("deleting season details")
+	log.Info("deleting season details")
 	vars := mux.Vars(req)
 
 	seasonNum, err := strconv.Atoi(vars["season"])
@@ -93,7 +93,7 @@ func (s *Server) deleteSeason(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err := s.library.DeleteSeason(vars["id"], seasonNum, log); err != nil {
+	if err := s.library.DeleteSeason(vars["id"], seasonNum); err != nil {
 		s.renderError(w, req, err)
 		return
 	}

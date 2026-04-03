@@ -1,12 +1,14 @@
 package downloader
 
 import (
+	"context"
+	"log/slog"
+
 	"github.com/odwrtw/polochon/app/subapp"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/library"
 	"github.com/robfig/cron/v3"
-	"github.com/sirupsen/logrus"
 )
 
 // AppName is the application name
@@ -16,15 +18,18 @@ const AppName = "downloader"
 type Downloader struct {
 	*subapp.Base
 
+	log     *slog.Logger
 	config  *configuration.Config
 	library *library.Library
 	event   chan struct{}
 }
 
 // New returns a new downloader
-func New(config *configuration.Config, vs *library.Library) *Downloader {
+func New(config *configuration.Config, vs *library.Library, log *slog.Logger) *Downloader {
+	l := log.With("app", AppName)
 	return &Downloader{
-		Base:    subapp.NewBase(AppName),
+		Base:    subapp.NewBase(AppName, l),
+		log:     l,
 		config:  config,
 		library: vs,
 	}
@@ -36,23 +41,21 @@ func (d *Downloader) Name() string {
 }
 
 // Run starts the downloader
-func (d *Downloader) Run(log *logrus.Entry) error {
-	log = log.WithField("app", AppName)
-
+func (d *Downloader) Run(ctx context.Context) error {
 	// Init the app
-	d.InitStart(log)
+	d.InitStart()
 
-	log.Debug("downloader started")
+	d.log.Debug("downloader started")
 	d.event = make(chan struct{}, 1)
 
 	if d.config.Downloader.LaunchAtStartup {
-		log.Debug("initial downloader launch")
+		d.log.Debug("initial downloader launch")
 		d.event <- struct{}{}
 	}
 
 	// Start the scheduler
 	d.Wg.Go(func() {
-		d.scheduler(log)
+		d.scheduler()
 	})
 
 	// Start the downloader
@@ -62,94 +65,94 @@ func (d *Downloader) Run(log *logrus.Entry) error {
 		defer func() {
 			if r := recover(); r != nil {
 				err = subapp.ErrPanicRecovered
-				d.Stop(log)
+				d.Stop()
 			}
 
 			d.Wg.Done()
 		}()
-		d.downloader(log)
+		d.downloader(ctx)
 	}()
 
-	defer log.Debug("downloader stopped")
+	defer d.log.Debug("downloader stopped")
 
 	d.Wg.Wait()
 
 	return err
 }
 
-func (d *Downloader) scheduler(log *logrus.Entry) {
+func (d *Downloader) scheduler() {
 	c := cron.New()
 	c.Schedule(d.config.Downloader.Schedule, cron.FuncJob(func() {
-		log.Debug("downloader scheduler triggered")
+		d.log.Debug("downloader scheduler triggered")
 		d.event <- struct{}{}
 	}))
 	c.Start()
 
 	<-d.Done
-	log.Debug("downloader scheduler stopped")
+	d.log.Debug("downloader scheduler stopped")
 	c.Stop()
 }
 
-func (d *Downloader) downloader(log *logrus.Entry) {
+func (d *Downloader) downloader(ctx context.Context) {
 	for {
 		select {
 		case <-d.event:
-			log.Debug("downloader event")
-			d.downloadMissingVideos(log)
+			d.log.Debug("downloader event")
+			d.downloadMissingVideos(ctx)
 		case <-d.Done:
-			log.Debug("downloader done handling events")
+			d.log.Debug("downloader done handling events")
 			return
 		}
 	}
 }
 
-func (d *Downloader) downloadMissingVideos(log *logrus.Entry) {
+func (d *Downloader) downloadMissingVideos(ctx context.Context) {
 	// Fetch wishlist
-	wl := polochon.NewWishlist(d.config.Wishlist, log)
-	if err := wl.Fetch(); err != nil {
-		log.Errorf("got an error while fetching wishlist: %q", err)
+	wl := polochon.NewWishlist(d.config.Wishlist, d.log)
+	if err := wl.Fetch(ctx); err != nil {
+		d.log.Error("got an error while fetching wishlist", "error", err)
 		return
 	}
 
-	d.downloadMissingMovies(wl, log)
-	d.downloadMissingShows(wl, log)
+	d.downloadMissingMovies(ctx, wl)
+	d.downloadMissingShows(ctx, wl)
 }
 
-func (d *Downloader) downloadMissingMovies(wl *polochon.Wishlist, log *logrus.Entry) {
-	logger := log.WithField("function", "download_movies")
+func (d *Downloader) downloadMissingMovies(ctx context.Context, wl *polochon.Wishlist) {
+	log := d.log.With("function", "download_movies")
 
 	for _, wantedMovie := range wl.Movies {
-		log := logger.WithField("imdb_id", wantedMovie.ImdbID)
+		log := log.With("imdb_id", wantedMovie.ImdbID)
 
 		ok, err := d.library.HasMovie(wantedMovie.ImdbID)
 		if err != nil {
-			log.Error(err)
+			log.Error(err.Error())
 			continue
 		}
 
 		if ok {
-			log.Debugf("movie %q already in the video store", wantedMovie.ImdbID)
+			log.Debug("movie already in the video store", "imdb_id", wantedMovie.ImdbID)
 			continue
 		}
 
 		m := polochon.NewMovie(d.config.Movie)
 		m.ImdbID = wantedMovie.ImdbID
 
-		if err := polochon.GetDetails(m, log); err != nil {
+		if err := polochon.GetDetails(ctx, m, log); err != nil {
 			if err != polochon.ErrGettingDetails {
-				log.Error(err)
+				log.Error(err.Error())
 			}
 			continue
 		}
 
-		log = log.WithField("title", m.Title)
+		log = log.With("title", m.Title)
 
-		if err := polochon.GetTorrents(m, log); err != nil {
+		if err := polochon.GetTorrents(ctx, m); err != nil {
 			if err == polochon.ErrTorrentNotFound {
 				continue
 			}
 
-			log.Error(err)
+			log.Error(err.Error())
 		}
 
 		torrent := polochon.ChooseTorrentFromQualities(m.Torrents, wantedMovie.Qualities)
@@ -161,35 +164,35 @@ func (d *Downloader) downloadMissingMovies(wl *polochon.Wishlist, log *logrus.En
 		torrent.Type = polochon.TypeMovie
 		torrent.ImdbID = m.ImdbID
 		if err := d.config.Downloader.Client.Download(torrent); err != nil {
-			log.Error(err)
+			log.Error(err.Error())
 			continue
 		}
 	}
 }
 
-func (d *Downloader) downloadMissingShows(wl *polochon.Wishlist, log *logrus.Entry) {
-	logger := log.WithField("function", "download_shows")
+func (d *Downloader) downloadMissingShows(ctx context.Context, wl *polochon.Wishlist) {
+	log := d.log.With("function", "download_shows")
 
 	for _, wishedShow := range wl.Shows {
-		log := logger.WithField("imdb_id", wishedShow.ImdbID)
+		log := log.With("imdb_id", wishedShow.ImdbID)
 
 		s := polochon.NewShow(d.config.Show)
 		s.ImdbID = wishedShow.ImdbID
 
-		if err := polochon.GetDetails(s, log); err != nil {
+		if err := polochon.GetDetails(ctx, s, log); err != nil {
 			if err != polochon.ErrGettingDetails {
-				log.Error(err)
+				log.Error(err.Error())
 			}
 
 			continue
 		}
 
-		calendar, err := s.GetCalendar(log)
+		calendar, err := s.GetCalendar(ctx)
 		if err != nil {
 			if err == polochon.ErrCalendarNotFound {
 				log.Info("calendar not found")
 			} else {
-				log.Error(err)
+				log.Error(err.Error())
 			}
 			continue
 		}
@@ -208,7 +211,7 @@ func (d *Downloader) downloadMissingShows(wl *polochon.Wishlist, log *logrus.Ent
 			// Check if the episode has already been downloaded
 			ok, err := d.library.HasShowEpisode(wishedShow.ImdbID, calEpisode.Season, calEpisode.Episode)
 			if err != nil {
-				log.Error(err)
+				log.Error(err.Error())
 				continue
 			}
 
@@ -222,17 +225,17 @@ func (d *Downloader) downloadMissingShows(wl *polochon.Wishlist, log *logrus.Ent
 			e.ShowTitle = s.Title
 			e.Season = calEpisode.Season
 			e.Episode = calEpisode.Episode
-			log = log.WithFields(logrus.Fields{
-				"show_imdb_id": e.ShowImdbID,
-				"show_title":   e.ShowTitle,
-				"season":       e.Season,
-				"episode":      e.Episode,
-			})
+			log = log.With(
+				"show_imdb_id", e.ShowImdbID,
+				"show_title", e.ShowTitle,
+				"season", e.Season,
+				"episode", e.Episode,
+			)
 
-			err = polochon.GetTorrents(e, log)
+			err = polochon.GetTorrents(ctx, e)
 			if err != nil {
 				if err != polochon.ErrTorrentNotFound {
-					log.Error(err)
+					log.Error(err.Error())
 				}
 
 				continue
@@ -249,7 +252,7 @@ func (d *Downloader) downloadMissingShows(wl *polochon.Wishlist, log *logrus.Ent
 			torrent.Season = e.Season
 			torrent.Episode = e.Episode
 			if err := d.config.Downloader.Client.Download(torrent); err != nil {
-				log.Error(err)
+				log.Error(err.Error())
 				continue
 			}
 		}

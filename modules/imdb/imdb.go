@@ -1,13 +1,14 @@
 package imdb
 
 import (
+	"context"
+	"log/slog"
 	"sort"
 
 	"gopkg.in/yaml.v2"
 
 	imdbwatchlist "github.com/odwrtw/imdb-watchlist"
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
 
 // Make sure that the module is a wishlister
@@ -29,7 +30,7 @@ type Params struct {
 }
 
 // Init implements the module interface
-func (w *Wishlist) Init(p []byte) error {
+func (w *Wishlist) Init(p []byte, _ *slog.Logger) error {
 	if w.configured {
 		return nil
 	}
@@ -71,7 +72,7 @@ var getMoviesFromImdb = func(userID string) (*[]string, error) {
 }
 
 // GetMovieWishlist gets the movies wishlist
-func (w *Wishlist) GetMovieWishlist(log *logrus.Entry) ([]*polochon.WishedMovie, error) {
+func (w *Wishlist) GetMovieWishlist(_ context.Context) ([]*polochon.WishedMovie, error) {
 	imdbIDs, err := w.getList(getMoviesFromImdb)
 	if err != nil {
 		return nil, err
@@ -91,7 +92,7 @@ var getShowsFromImdb = func(userID string) (*[]string, error) {
 }
 
 // GetShowWishlist gets the show wishlist
-func (w *Wishlist) GetShowWishlist(log *logrus.Entry) ([]*polochon.WishedShow, error) {
+func (w *Wishlist) GetShowWishlist(_ context.Context) ([]*polochon.WishedShow, error) {
 	imdbIDs, err := w.getList(getShowsFromImdb)
 	if err != nil {
 		return nil, err

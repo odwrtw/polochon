@@ -3,6 +3,7 @@ package transmission
 import (
 	"crypto/tls"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -50,7 +51,7 @@ type Client struct {
 }
 
 // Init implements the module interface
-func (c *Client) Init(p []byte) error {
+func (c *Client) Init(p []byte, _ *slog.Logger) error {
 	if c.configured {
 		return nil
 	}

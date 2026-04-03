@@ -1,10 +1,12 @@
 package pushover
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"image/jpeg"
 	"io"
+	"log/slog"
 	"net/http"
 
 	"gopkg.in/yaml.v2"
@@ -12,7 +14,6 @@ import (
 	"github.com/gregdel/pushover"
 	"github.com/nfnt/resize"
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
 
 // Make sure that the module is a notifier
@@ -54,13 +55,15 @@ func (p *Params) IsValid() bool {
 
 // Pushover stores the notification configs
 type Pushover struct {
+	log        *slog.Logger
 	app        *pushover.Pushover
 	recipient  *pushover.Recipient
 	configured bool
 }
 
 // Init implements the module interface
-func (p *Pushover) Init(data []byte) error {
+func (p *Pushover) Init(data []byte, log *slog.Logger) error {
+	p.log = log.With("module", moduleName)
 	if p.configured {
 		return nil
 	}
@@ -97,19 +100,19 @@ func (p *Pushover) Status() (polochon.ModuleStatus, error) {
 }
 
 // Notify sends a notification to the recipient
-func (p *Pushover) Notify(i any, log *logrus.Entry) error {
+func (p *Pushover) Notify(ctx context.Context, i any) error {
 	switch v := i.(type) {
 	case *polochon.ShowEpisode:
 		return p.notifyShowEpisode(v)
 	case *polochon.Movie:
-		return p.notifyMovie(v)
+		return p.notifyMovie(ctx, v)
 	default:
 		return ErrInvalidArgument
 	}
 }
 
-// Notify sends a movie notification
-func (p *Pushover) notifyMovie(movie *polochon.Movie) error {
+// notifyMovie sends a movie notification
+func (p *Pushover) notifyMovie(ctx context.Context, movie *polochon.Movie) error {
 	message := &pushover.Message{
 		Title:    "Canapé (Movie)",
 		Message:  movie.Title,
@@ -118,7 +121,11 @@ func (p *Pushover) notifyMovie(movie *polochon.Movie) error {
 	}
 
 	if movie.Thumb != "" {
-		resp, err := http.Get(movie.Thumb)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, movie.Thumb, nil)
+		if err != nil {
+			return err
+		}
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			return err
 		}
@@ -153,7 +160,7 @@ func (p *Pushover) notifyMovie(movie *polochon.Movie) error {
 	return nil
 }
 
-// Notify sends a show episode notification
+// notifyShowEpisode sends a show episode notification
 func (p *Pushover) notifyShowEpisode(show *polochon.ShowEpisode) error {
 	message := &pushover.Message{
 		Title:    "Canapé (Show)",

@@ -1,12 +1,13 @@
 package tmdb
 
 import (
+	"context"
+
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/sirupsen/logrus"
 )
 
 // SearchMovie implements the polochon Searcher interface
-func (t *TmDB) SearchMovie(key string, log *logrus.Entry) ([]*polochon.Movie, error) {
+func (t *TmDB) SearchMovie(_ context.Context, key string) ([]*polochon.Movie, error) {
 	// We don't want porn (yet)
 	options := map[string]string{
 		"include_adult": "false",
@@ -15,12 +16,12 @@ func (t *TmDB) SearchMovie(key string, log *logrus.Entry) ([]*polochon.Movie, er
 	// Search on tmdb
 	r, err := tmdbSearchMovie(t.client, key, options)
 	if err != nil {
-		log.Debugf("error while trying to find movie with %q", key)
+		t.log.Debug("error while trying to find movie", "key", key)
 		return nil, err
 	}
 	// Check if there is any results
 	if len(r.Results) == 0 {
-		log.Debugf("failed to find movie with %q", key)
+		t.log.Debug("failed to find movie", "key", key)
 		return nil, ErrNoMovieFound
 	}
 
@@ -30,7 +31,7 @@ func (t *TmDB) SearchMovie(key string, log *logrus.Entry) ([]*polochon.Movie, er
 		m.TmdbID = tMovie.ID
 		err = t.getMovieDetails(m)
 		if err != nil {
-			log.Warnf("error while getting tmdb movie details %q", err)
+			t.log.Warn("error while getting tmdb movie details", "error", err)
 			continue
 		}
 		result = append(result, m)
@@ -41,6 +42,6 @@ func (t *TmDB) SearchMovie(key string, log *logrus.Entry) ([]*polochon.Movie, er
 
 // SearchShow implements the polochon Searcher interface
 // Not implemented
-func (t *TmDB) SearchShow(key string, log *logrus.Entry) ([]*polochon.Show, error) {
+func (t *TmDB) SearchShow(_ context.Context, key string) ([]*polochon.Show, error) {
 	return nil, ErrInvalidArgument
 }

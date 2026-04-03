@@ -1,21 +1,18 @@
 package library
 
 import (
-	"io"
+	"log/slog"
 	"testing"
 
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
-	"github.com/sirupsen/logrus"
 )
 
-var mockLogEntry = logrus.NewEntry(&logrus.Logger{Out: io.Discard})
-
 func TestStoreMovieNoPath(t *testing.T) {
-	library := New(&configuration.Config{})
+	library := New(&configuration.Config{Logger: slog.Default()})
 	movie := &polochon.Movie{}
 
-	if err := library.Add(movie, mockLogEntry); err != ErrMissingMovieFilePath {
+	if err := library.Add(movie); err != ErrMissingMovieFilePath {
 		t.Errorf("Expected %q, got %q", ErrMissingMovieFilePath, err)
 	}
 }

@@ -1,9 +1,8 @@
 package polochon
 
 import (
+	"context"
 	"errors"
-
-	"github.com/sirupsen/logrus"
 )
 
 // Torrenter error
@@ -14,7 +13,7 @@ var (
 // Torrenter is an interface which allows to get torrent for a movie or a show
 type Torrenter interface {
 	Module
-	GetTorrents(any, *logrus.Entry) error
+	GetTorrents(ctx context.Context, v any) error
 	SearchTorrents(string) ([]*Torrent, error)
 }
 
@@ -24,12 +23,9 @@ type Torrentable interface {
 }
 
 // GetTorrents helps getting the torrent files for a movie
-func GetTorrents(v Torrentable, log *logrus.Entry) error {
+func GetTorrents(ctx context.Context, v Torrentable) error {
 	for _, t := range v.GetTorrenters() {
-		torrenterLog := log.WithField("torrenter", t.Name())
-		err := t.GetTorrents(v, torrenterLog)
-		if err == nil {
-			// Torrents found
+		if err := t.GetTorrents(ctx, v); err == nil {
 			return nil
 		}
 	}

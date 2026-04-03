@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/dustin/go-humanize"
-	log "github.com/sirupsen/logrus"
 )
 
 // blockSize represents the read size off the HTTP body.
@@ -48,13 +48,13 @@ func (r *asyncReader) readBlockFromSource() error {
 		return err
 	}
 
-	log.WithFields(log.Fields{
-		"name":       r.name,
-		"bytes":      humanize.SI(float64(n), "B"),
-		"offset":     r.sourcePos,
-		"cache_size": humanize.SI(float64(r.cacheSize()), "B"),
-		"read":       read,
-	}).Trace("Async read block from source")
+	slog.Debug("Async read block from source",
+		"name", r.name,
+		"bytes", humanize.SI(float64(n), "B"),
+		"offset", r.sourcePos,
+		"cache_size", humanize.SI(float64(r.cacheSize()), "B"),
+		"read", read,
+	)
 
 	r.sourcePos += read
 
@@ -89,12 +89,12 @@ func (r *asyncReader) Read(p []byte) (int, error) {
 		}
 
 		if try%10 == 0 {
-			log.WithFields(log.Fields{
-				"name":       r.name,
-				"cache_size": humanize.SI(float64(r.cacheSize()), "B"),
-				"requested":  requested,
-				"tries":      try,
-			}).Trace("Async read not enough bytes to read")
+			slog.Debug("Async read not enough bytes to read",
+				"name", r.name,
+				"cache_size", humanize.SI(float64(r.cacheSize()), "B"),
+				"requested", requested,
+				"tries", try,
+			)
 		}
 
 		// Wait until the buffer has enough bytes to read.
@@ -123,7 +123,7 @@ func (r *asyncReader) Close() error {
 	select {
 	case <-done:
 	case <-time.After(5 * time.Second):
-		log.WithField("name", r.name).Warn("Timeout waiting for async reader to close")
+		slog.Warn("Timeout waiting for async reader to close", "name", r.name)
 	}
 
 	return r.source.Close()
@@ -164,10 +164,7 @@ func (r *asyncReader) asyncRead() {
 		return
 	}
 
-	log.WithFields(log.Fields{
-		"error": err,
-		"name":  r.name,
-	}).Error("Async read error")
+	slog.Error("Async read error", "error", err, "name", r.name)
 }
 
 // newAsyncReader creates a new asyncReader and starts a goroutine to read the
@@ -187,13 +184,13 @@ func newAsyncReader(ctx context.Context, name string, s io.ReadCloser, start, en
 
 	go r.asyncRead()
 
-	log.WithFields(log.Fields{
-		"name":       r.name,
-		"start":      start,
-		"end":        end,
-		"total_size": humanize.SI(float64(end-start), "B"),
-		"block_size": humanize.SI(float64(blockSize), "B"),
-		"cache_size": humanize.SI(float64(cacheSize), "B"),
-	}).Trace("Async buffer created")
+	slog.Debug("Async buffer created",
+		"name", r.name,
+		"start", start,
+		"end", end,
+		"total_size", humanize.SI(float64(end-start), "B"),
+		"block_size", humanize.SI(float64(blockSize), "B"),
+		"cache_size", humanize.SI(float64(cacheSize), "B"),
+	)
 	return r
 }

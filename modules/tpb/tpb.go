@@ -3,15 +3,15 @@ package tpb
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/odwrtw/whatsthis"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/tpb"
-	"github.com/sirupsen/logrus"
+	"github.com/odwrtw/whatsthis"
 )
 
 // Make sure that the module is a torrenter and an explorer
@@ -47,14 +47,17 @@ type TPB struct {
 	Timeout    time.Duration
 	MovieUsers []string
 	ShowUsers  []string
+	log        *slog.Logger
 	configured bool
 }
 
 // Init implements the module interface
-func (t *TPB) Init(p []byte) error {
+func (t *TPB) Init(p []byte, log *slog.Logger) error {
 	if t.configured {
 		return nil
 	}
+
+	t.log = log.With("module", moduleName)
 
 	params := &Params{}
 	if err := yaml.Unmarshal(p, params); err != nil {
@@ -106,7 +109,7 @@ type searcher interface {
 	users() []string
 	defaultQuality() string
 	setTorrents([]*polochon.Torrent)
-	isValidGuess(guess whatsthis.Info, log *logrus.Entry) bool
+	isValidGuess(guess whatsthis.Info) bool
 	imdbID() string
 }
 
@@ -139,7 +142,7 @@ func (t *TPB) search(s string) ([]*tpb.Torrent, error) {
 }
 
 // GetTorrents implements the Torrenter interface
-func (t *TPB) GetTorrents(i any, log *logrus.Entry) error {
+func (t *TPB) GetTorrents(_ context.Context, i any) error {
 	// Create a new Searcher
 	searcher, err := t.newSearcher(i)
 	if err != nil {
@@ -152,7 +155,7 @@ func (t *TPB) GetTorrents(i any, log *logrus.Entry) error {
 	}
 
 	// Transform and filter the torrents we found
-	pTorrents := t.transformTorrents(searcher, torrents, log)
+	pTorrents := t.transformTorrents(searcher, torrents)
 
 	// Set the torrents into the video object
 	searcher.setTorrents(pTorrents)
@@ -207,41 +210,38 @@ func filterTorrents(torrents []*tpb.Torrent, allowedUsers []string) []*tpb.Torre
 }
 
 // transformTorrents will filter and transform tpb.Torrent in polochon.Torrent
-func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent, log *logrus.Entry) []*polochon.Torrent {
+func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent) []*polochon.Torrent {
 	torrents := []*polochon.Torrent{}
 	for _, torrent := range filterTorrents(list, s.users()) {
 		torrentStr := torrentGuessitStr(torrent)
 		guess := whatsthis.Video(torrentStr)
 
 		// Check the guess validity
-		if !s.isValidGuess(guess, log) {
+		if !s.isValidGuess(guess) {
 			continue
 		}
 
 		// If the torrent has an ImdbID, check it
 		if torrent.ImdbID != "" && torrent.ImdbID != s.imdbID() {
-			log.Debugf("tpb: imdbIDs doesn't match %s != %s", torrent.ImdbID, s.imdbID())
+			t.log.Debug("tpb: imdbIDs doesn't match", "torrent_imdb", torrent.ImdbID, "expected_imdb", s.imdbID())
 			continue
 		}
 
 		// Set the default quality if none is defined
 		screenSize := guess.ScreenSize
 		if screenSize == "" {
-			log.Debugf("tpb: default quality for %s", torrent.Name)
+			t.log.Debug("tpb: default quality", "torrent", torrent.Name)
 			screenSize = s.defaultQuality()
 		}
 
 		// Check that the Quality is valid
 		torrentQuality := polochon.Quality(screenSize)
 		if !torrentQuality.IsAllowed() {
-			log.Debugf("tpb: unhandled quality: %q", torrentQuality)
+			t.log.Debug("tpb: unhandled quality", "quality", torrentQuality)
 			continue
 		}
 
-		log.WithFields(logrus.Fields{
-			"torrent_quality": screenSize,
-			"torrent_name":    torrentStr,
-		}).Debug("Adding torrent to the list")
+		t.log.Debug("Adding torrent to the list", "torrent_quality", screenSize, "torrent_name", torrentStr)
 
 		torrents = append(torrents, &polochon.Torrent{
 			Quality: torrentQuality,

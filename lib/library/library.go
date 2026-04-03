@@ -2,11 +2,11 @@ package library
 
 import (
 	"errors"
+	"log/slog"
 
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
 	index "github.com/odwrtw/polochon/lib/media_index"
-	"github.com/sirupsen/logrus"
 )
 
 // Custom errors
@@ -21,6 +21,7 @@ var (
 // Library represents a collection of videos
 type Library struct {
 	configuration.LibraryConfig
+	log               *slog.Logger
 	movieIndex        *index.MovieIndex
 	showIndex         *index.ShowIndex
 	showConfig        polochon.ShowConfig
@@ -33,6 +34,7 @@ type Library struct {
 // New returns a list of videos
 func New(config *configuration.Config) *Library {
 	return &Library{
+		log:               config.Logger.With("component", "library"),
 		movieIndex:        index.NewMovieIndex(),
 		showIndex:         index.NewShowIndex(),
 		showConfig:        config.Show,
@@ -57,24 +59,24 @@ func (l *Library) HasVideo(video polochon.Video) (bool, error) {
 }
 
 // Add adds a video in the library
-func (l *Library) Add(video polochon.Video, log *logrus.Entry) error {
+func (l *Library) Add(video polochon.Video) error {
 	switch v := video.(type) {
 	case *polochon.Movie:
-		return l.AddMovie(v, log)
+		return l.AddMovie(v)
 	case *polochon.ShowEpisode:
-		return l.AddShowEpisode(v, log)
+		return l.AddShowEpisode(v)
 	default:
 		return ErrInvalidIndexVideoType
 	}
 }
 
 // Delete deletes a video from the library
-func (l *Library) Delete(video polochon.Video, log *logrus.Entry) error {
+func (l *Library) Delete(video polochon.Video) error {
 	switch v := video.(type) {
 	case *polochon.Movie:
-		return l.DeleteMovie(v, log)
+		return l.DeleteMovie(v)
 	case *polochon.ShowEpisode:
-		return l.DeleteShowEpisode(v, log)
+		return l.DeleteShowEpisode(v)
 	default:
 		return ErrInvalidIndexVideoType
 	}

@@ -1,23 +1,22 @@
 package tmdb
 
 import (
+	"context"
 	"log"
+	"log/slog"
 	"reflect"
 	"testing"
 
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/ryanbradynd05/go-tmdb"
-	"github.com/sirupsen/logrus"
 )
 
 // Fake TmDB pointer to run the tests
-var mockLogger = logrus.New()
-var mockLogEntry = logrus.NewEntry(mockLogger)
-var mockTmdb = &TmDB{}
+var mockTmdb = &TmDB{log: slog.Default()}
 
 func TestTmdbInvalidMovieArgument(t *testing.T) {
 	m := polochon.NewShowEpisode(polochon.ShowConfig{})
-	err := mockTmdb.GetDetails(m, mockLogEntry)
+	err := mockTmdb.GetDetails(context.Background(), m)
 	if err != ErrInvalidArgument {
 		log.Fatalf("Got %q, expected %q", err, ErrInvalidArgument)
 	}
@@ -25,7 +24,7 @@ func TestTmdbInvalidMovieArgument(t *testing.T) {
 
 func TestTmdbMissingArgument(t *testing.T) {
 	tm := &TmDB{}
-	err := tm.Init(nil)
+	err := tm.Init(nil, slog.Default())
 	if err != ErrMissingArgument {
 		log.Fatalf("Got %q, expected %q", err, ErrMissingArgument)
 	}
@@ -39,7 +38,7 @@ func TestTmdbSearchByTitleArguments(t *testing.T) {
 	}
 
 	// No movie title should produce an error
-	err := mockTmdb.searchByTitle(m, mockLogEntry)
+	err := mockTmdb.searchByTitle(m)
 	if err != ErrNoMovieTitle {
 		log.Fatalf("Got %q, expected %q", err, ErrNoMovieTitle)
 	}
@@ -47,7 +46,7 @@ func TestTmdbSearchByTitleArguments(t *testing.T) {
 	// Nothing to do if the id is already found
 	m.Title = "Matrix"
 	m.TmdbID = 12345
-	err = mockTmdb.searchByTitle(m, mockLogEntry)
+	err = mockTmdb.searchByTitle(m)
 	if err != nil {
 		log.Fatal("Search the Tmdb ID of movie with a tmdb ID should not produce an error", err)
 	}
@@ -67,7 +66,7 @@ func TestTmdbSearchByTitle(t *testing.T) {
 	}
 
 	// No movie title should produce an error
-	err := mockTmdb.searchByTitle(m, mockLogEntry)
+	err := mockTmdb.searchByTitle(m)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +83,7 @@ func TestTmdbSearchByTitleNoResult(t *testing.T) {
 		return &tmdb.MovieSearchResults{Results: []tmdb.MovieShort{}}, nil
 	}
 
-	err := mockTmdb.searchByTitle(m, mockLogEntry)
+	err := mockTmdb.searchByTitle(m)
 	if err != ErrNoMovieFound {
 		log.Fatalf("Got %q, expected %q", err, ErrNoMovieFound)
 	}
@@ -98,7 +97,7 @@ func TestTmdbSearchByImdbIDArguments(t *testing.T) {
 	}
 
 	// No movie title should produce an error
-	err := mockTmdb.searchByImdbID(m, mockLogEntry)
+	err := mockTmdb.searchByImdbID(m)
 	if err != ErrNoMovieImDBID {
 		log.Fatalf("Got %q, expected %q", err, ErrNoMovieImDBID)
 	}
@@ -106,7 +105,7 @@ func TestTmdbSearchByImdbIDArguments(t *testing.T) {
 	// Nothing to do if the id is already found
 	m.ImdbID = "tt0133093"
 	m.TmdbID = 12345
-	err = mockTmdb.searchByImdbID(m, mockLogEntry)
+	err = mockTmdb.searchByImdbID(m)
 	if err != nil {
 		log.Fatal("Search the Tmdb ID of movie with a tmdb ID should not produce an error", err)
 	}
@@ -119,7 +118,7 @@ func TestTmdbSearchByImdbIDNoResults(t *testing.T) {
 		return &tmdb.FindResults{}, nil
 	}
 
-	err := mockTmdb.searchByImdbID(m, mockLogEntry)
+	err := mockTmdb.searchByImdbID(m)
 	if err != ErrNoMovieFound {
 		log.Fatalf("Got %q, expected %q", err, ErrNoMovieFound)
 	}
@@ -136,7 +135,7 @@ func TestTmdbSearchByImdbID(t *testing.T) {
 		}, nil
 	}
 
-	err := mockTmdb.searchByImdbID(m, mockLogEntry)
+	err := mockTmdb.searchByImdbID(m)
 	if err != nil {
 		log.Fatalf("Expected no error, got %q", err)
 	}
@@ -157,9 +156,7 @@ func TestTmdbFailedToGetDetails(t *testing.T) {
 		return &tmdb.MovieSearchResults{Results: []tmdb.MovieShort{}}, nil
 	}
 
-	log := logrus.NewEntry(logrus.New())
-
-	err := mockTmdb.GetDetails(m, log)
+	err := mockTmdb.GetDetails(context.Background(), m)
 	if err != ErrFailedToGetDetails {
 		log.Fatalf("Got %q, expected %q", err, ErrFailedToGetDetails)
 	}
@@ -203,7 +200,7 @@ func TestTmdbGetDetails(t *testing.T) {
 		}, nil
 	}
 
-	err := tm.GetDetails(m, mockLogEntry)
+	err := tm.GetDetails(context.Background(), m)
 	if err != nil {
 		log.Fatalf("Expected no error, got %q", err)
 	}

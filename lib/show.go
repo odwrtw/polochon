@@ -1,9 +1,8 @@
 package polochon
 
 import (
+	"context"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 // Show represents a tv show
@@ -32,12 +31,12 @@ func NewShow(showConf ShowConfig) *Show {
 
 // GetCalendar gets the calendar for the show
 // If there is an error, it will be of type *errors.Error
-func (s *Show) GetCalendar(log *logrus.Entry) (*ShowCalendar, error) {
+func (s *Show) GetCalendar(ctx context.Context) (*ShowCalendar, error) {
 	if s.Calendar == nil {
 		return nil, ErrCalendarModuleNotFound
 	}
 
-	return s.Calendar.GetShowCalendar(s, log)
+	return s.Calendar.GetShowCalendar(ctx, s)
 }
 
 // NewShowFromEpisode will return a show from an episode

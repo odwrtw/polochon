@@ -30,7 +30,7 @@ func formatSeasons(show *index.Show) map[string]map[string]*index.Episode {
 }
 
 func (s *Server) showIds(w http.ResponseWriter, req *http.Request) {
-	s.logEntry(req).Infof("listing shows")
+	s.logEntry(req).Info("listing shows")
 
 	type formatedShow struct {
 		*index.Show
@@ -49,7 +49,7 @@ func (s *Server) showIds(w http.ResponseWriter, req *http.Request) {
 
 // TODO: handle this in a middleware
 func (s *Server) getEpisode(w http.ResponseWriter, req *http.Request) *polochon.ShowEpisode {
-	s.logEntry(req).Infof("getting episode")
+	s.logEntry(req).Info("getting episode")
 	vars := mux.Vars(req)
 
 	var season, episode int
@@ -75,7 +75,7 @@ func (s *Server) getEpisode(w http.ResponseWriter, req *http.Request) *polochon.
 }
 
 func (s *Server) getShowDetails(w http.ResponseWriter, req *http.Request) {
-	s.logEntry(req).Infof("getting show details")
+	s.logEntry(req).Info("getting show details")
 	vars := mux.Vars(req)
 
 	indexedShow, err := s.library.GetIndexedShow(vars["id"])
@@ -97,10 +97,10 @@ func (s *Server) getShowDetails(w http.ResponseWriter, req *http.Request) {
 
 func (s *Server) deleteShow(w http.ResponseWriter, req *http.Request) {
 	log := s.logEntry(req)
-	log.Infof("deleting show")
+	log.Info("deleting show")
 	vars := mux.Vars(req)
 
-	if err := s.library.DeleteShow(vars["id"], log); err != nil {
+	if err := s.library.DeleteShow(vars["id"]); err != nil {
 		s.renderError(w, req, err)
 		return
 	}
@@ -110,7 +110,7 @@ func (s *Server) deleteShow(w http.ResponseWriter, req *http.Request) {
 }
 
 func (s *Server) getShowEpisodeIDDetails(w http.ResponseWriter, req *http.Request) {
-	s.logEntry(req).Infof("getting episode details")
+	s.logEntry(req).Info("getting episode details")
 	e := s.getEpisode(w, req)
 	if e == nil {
 		return
@@ -141,14 +141,14 @@ func (s *Server) getShowEpisodeFiles(w http.ResponseWriter, req *http.Request) {
 
 func (s *Server) deleteEpisode(w http.ResponseWriter, req *http.Request) {
 	log := s.logEntry(req)
-	log.Infof("deleting episode")
+	log.Info("deleting episode")
 
 	e := s.getEpisode(w, req)
 	if e == nil {
 		return
 	}
 
-	if err := s.library.Delete(e, log); err != nil {
+	if err := s.library.Delete(e); err != nil {
 		s.renderError(w, req, err)
 		return
 	}
