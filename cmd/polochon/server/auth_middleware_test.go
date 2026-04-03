@@ -1,4 +1,4 @@
-package auth
+package server
 
 import (
 	"net/http"
@@ -9,9 +9,9 @@ import (
 	"github.com/urfave/negroni"
 )
 
-func newTestManager(t *testing.T) *Manager {
+func newTestManager(t *testing.T) *authManager {
 	t.Helper()
-	m, err := New(strings.NewReader(`
+	m, err := newAuthManager(strings.NewReader(`
 - role: reader
   read: true
   write: false
@@ -38,7 +38,7 @@ func TestMiddleWare(t *testing.T) {
 	})
 
 	n := negroni.New()
-	n.Use(NewMiddleware(manager))
+	n.Use(newAuthMiddleware(manager))
 	n.UseHandler(mux)
 
 	server := httptest.NewServer(n)
@@ -119,7 +119,7 @@ func TestMiddleWare(t *testing.T) {
 
 func TestMiddlewareCtx(t *testing.T) {
 	manager := newTestManager(t)
-	middleware := NewMiddleware(manager)
+	middleware := newAuthMiddleware(manager)
 
 	w := httptest.NewRecorder()
 	r, err := http.NewRequest("GET", "/stuff", nil)
@@ -129,12 +129,12 @@ func TestMiddlewareCtx(t *testing.T) {
 	r.Header.Add("X-Auth-Token", "token1")
 
 	middleware.ServeHTTP(w, r, func(w http.ResponseWriter, r *http.Request) {
-		tokenName, ok := r.Context().Value(TokenName).(string)
+		name, ok := r.Context().Value(tokenName).(string)
 		if !ok {
 			t.Fatal("expected token name in context")
 		}
-		if tokenName != "user token 1" {
-			t.Fatalf("invalid token name: %q", tokenName)
+		if name != "user token 1" {
+			t.Fatalf("invalid token name: %q", name)
 		}
 	})
 }

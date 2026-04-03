@@ -7,42 +7,54 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/gorilla/mux"
 	"gopkg.in/unrolled/render.v1"
 
-	"github.com/odwrtw/polochon/cmd/polochon/auth"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/library"
 	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
-// AppName is the application name
-const AppName = "http_server"
-
 // Server represents a http server
 type Server struct {
 	config      *configuration.Config
 	library     *library.Library
-	authManager *auth.Manager
+	authManager *authManager
 	hub         *sseHub
 	log         *slog.Logger
 	render      *render.Render
 }
 
 // New returns a new server
-func New(config *configuration.Config, vs *library.Library, auth *auth.Manager, log *slog.Logger) *Server {
+func New(config *configuration.Config, vs *library.Library, authConfigPath string, log *slog.Logger) (*Server, error) {
+	var mgr *authManager
+	httpLog := log.With("app", "http_server")
+	if authConfigPath == "" {
+		httpLog.Warn("http server is running without authentication")
+	} else {
+		f, err := os.Open(authConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		defer func() { _ = f.Close() }()
+		mgr, err = newAuthManager(f)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return &Server{
 		config:      config,
 		library:     vs,
-		authManager: auth,
+		authManager: mgr,
 		hub:         newSSEHub(),
-		log:         log.With("app", AppName),
+		log:         httpLog,
 		render:      render.New(),
-	}
+	}, nil
 }
 
 // Run starts the server

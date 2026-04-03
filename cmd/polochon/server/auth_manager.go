@@ -1,4 +1,4 @@
-package auth
+package server
 
 import (
 	"io"
@@ -6,35 +6,32 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// Right represents a permission level.
-type Right string
+type authRight string
 
 const (
-	RightRead  Right = "read"
-	RightWrite Right = "write"
-	RightDebug Right = "debug"
+	authRightRead  authRight = "read"
+	authRightWrite authRight = "write"
+	authRightDebug authRight = "debug"
 )
 
-type token struct {
+type authToken struct {
 	name  string
 	read  bool
 	write bool
 	debug bool
 }
 
-// Manager stores and checks tokens.
-type Manager struct {
-	tokens map[string]*token // keyed by token value
+type authManager struct {
+	tokens map[string]*authToken // keyed by token value
 }
 
-// New returns a new authentication manager.
-func New(r io.Reader) (*Manager, error) {
-	m := &Manager{tokens: map[string]*token{}}
+func newAuthManager(r io.Reader) (*authManager, error) {
+	m := &authManager{tokens: map[string]*authToken{}}
 	return m, yaml.NewDecoder(r).Decode(m)
 }
 
 // UnmarshalYAML implements the unmarshaler interface.
-func (m *Manager) UnmarshalYAML(unmarshal func(any) error) error {
+func (m *authManager) UnmarshalYAML(unmarshal func(any) error) error {
 	data := []struct {
 		Role   string `yaml:"role"`
 		Read   bool   `yaml:"read"`
@@ -52,7 +49,7 @@ func (m *Manager) UnmarshalYAML(unmarshal func(any) error) error {
 
 	for _, d := range data {
 		for _, t := range d.Tokens {
-			m.tokens[t.Value] = &token{
+			m.tokens[t.Value] = &authToken{
 				name:  t.Name,
 				read:  d.Read,
 				write: d.Write,
@@ -63,20 +60,20 @@ func (m *Manager) UnmarshalYAML(unmarshal func(any) error) error {
 	return nil
 }
 
-// IsAllowed checks if the given right is allowed for the given token value.
+// isAllowed checks if the given right is allowed for the given token value.
 // Returns the token name and whether access is granted.
-func (m *Manager) IsAllowed(tokenValue string, right Right) (string, bool) {
+func (m *authManager) isAllowed(tokenValue string, right authRight) (string, bool) {
 	t, ok := m.tokens[tokenValue]
 	if !ok {
 		return "", false
 	}
 	var granted bool
 	switch right {
-	case RightRead:
+	case authRightRead:
 		granted = t.read
-	case RightWrite:
+	case authRightWrite:
 		granted = t.write
-	case RightDebug:
+	case authRightDebug:
 		granted = t.debug
 	}
 	if !granted {
