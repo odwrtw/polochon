@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"sync"
 
-	"github.com/odwrtw/polochon/app/subapp"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/library"
@@ -17,20 +17,15 @@ const AppName = "organizer"
 
 // Organizer represents the organizer
 type Organizer struct {
-	*subapp.Base
-
 	log     *slog.Logger
 	config  *configuration.Config
 	library *library.Library
-	event   chan string
 }
 
 // New returns a new organizer
 func New(config *configuration.Config, vs *library.Library, log *slog.Logger) *Organizer {
-	l := log.With("app", AppName)
 	return &Organizer{
-		Base:    subapp.NewBase(AppName, l),
-		log:     l,
+		log:     log.With("app", AppName),
 		config:  config,
 		library: vs,
 	}
@@ -38,62 +33,33 @@ func New(config *configuration.Config, vs *library.Library, log *slog.Logger) *O
 
 // Run starts the organizer
 func (o *Organizer) Run(ctx context.Context) error {
-	// Create the channels
-	o.event = make(chan string, 1)
-	// Init the app
-	o.InitStart()
+	event := make(chan string, 1)
+	event <- o.config.Watcher.Dir
 
-	defer o.log.Debug("organizer stopped")
-
-	// Start the file system notifier
-	return o.startFsNotifier(ctx)
-}
-
-// startFsNotifier starts the FsNotifier
-func (o *Organizer) startFsNotifier(ctx context.Context) error {
+	var wg sync.WaitGroup
 	fsCtx := polochon.FsNotifierCtx{
-		Event: o.event,
-		Done:  o.Done,
-		Wg:    &o.Wg,
+		Event: event,
+		Done:  ctx.Done(),
+		Wg:    &wg,
 	}
 
-	// Send a notification to organize the whole folder on app start
-	watcherPath := o.config.Watcher.Dir
-	fsCtx.Event <- watcherPath
-
-	// Launch the FsNotifier
-	if err := o.config.Watcher.FsNotifier.Watch(watcherPath, fsCtx); err != nil {
+	if err := o.config.Watcher.FsNotifier.Watch(o.config.Watcher.Dir, fsCtx); err != nil {
 		return err
 	}
 
-	var err error
-	o.Wg.Add(1)
-	go func() {
-		defer func() {
-			o.Wg.Done()
-			if r := recover(); r != nil {
-				err = subapp.ErrPanicRecovered
-				o.Stop()
+	for {
+		select {
+		case file := <-event:
+			o.log.Debug("got an event", "event", file)
+			if err := o.organize(ctx, file); err != nil {
+				o.log.Error("failed to organize file", "error", err)
 			}
-		}()
-
-		for {
-			select {
-			case file := <-fsCtx.Event:
-				o.log.Debug("got an event", "event", file)
-				if err := o.organize(ctx, file); err != nil {
-					o.log.Error("failed to organize file", "error", err)
-				}
-			case <-o.Done:
-				o.log.Debug("organizer done handling events")
-				return
-			}
+		case <-ctx.Done():
+			wg.Wait()
+			o.log.Debug("organizer stopped")
+			return nil
 		}
-	}()
-
-	o.Wg.Wait()
-
-	return err
+	}
 }
 
 // organize stores the videos in the video library
