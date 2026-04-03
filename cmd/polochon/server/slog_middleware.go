@@ -6,7 +6,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/odwrtw/polochon/app/auth"
+	"github.com/odwrtw/polochon/cmd/polochon/auth"
 	"github.com/urfave/negroni"
 )
 

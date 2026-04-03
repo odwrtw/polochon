@@ -10,11 +10,11 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/odwrtw/polochon/app/auth"
-	"github.com/odwrtw/polochon/app/dm"
-	"github.com/odwrtw/polochon/app/downloader"
-	"github.com/odwrtw/polochon/app/organizer"
-	"github.com/odwrtw/polochon/app/server"
+	"github.com/odwrtw/polochon/cmd/polochon/auth"
+	"github.com/odwrtw/polochon/cmd/polochon/dm"
+	"github.com/odwrtw/polochon/cmd/polochon/downloader"
+	"github.com/odwrtw/polochon/cmd/polochon/organizer"
+	"github.com/odwrtw/polochon/cmd/polochon/server"
 	"github.com/odwrtw/polochon/lib/configuration"
 	"github.com/odwrtw/polochon/lib/library"
 )
