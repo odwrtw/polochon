@@ -8,7 +8,7 @@ import (
 
 	"github.com/gregdel/argo/rpc"
 	polochon "github.com/odwrtw/polochon/lib"
-	yaml "gopkg.in/yaml.v2"
+	yaml "github.com/goccy/go-yaml"
 )
 
 // Make sure that the module is a downloader

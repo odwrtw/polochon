@@ -4,7 +4,7 @@ import (
 	"errors"
 	"log/slog"
 
-	"gopkg.in/yaml.v2"
+	"github.com/goccy/go-yaml"
 
 	"github.com/odwrtw/fanarttv"
 	polochon "github.com/odwrtw/polochon/lib"

@@ -6,9 +6,10 @@ import (
 	"os"
 	"time"
 
-	polochon "github.com/odwrtw/polochon/lib"
+	"github.com/goccy/go-yaml"
 	"github.com/robfig/cron/v3"
-	"gopkg.in/yaml.v2"
+
+	polochon "github.com/odwrtw/polochon/lib"
 )
 
 // Config represents the configuration for polochon

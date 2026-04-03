@@ -8,9 +8,7 @@ import (
 )
 
 // Custom errors
-var (
-	ErrMissingModuleParams = errors.New("configuration: missing module params")
-)
+var ErrMissingModuleParams = errors.New("configuration: missing module params")
 
 // ModuleLoader is an helper to be embeded in the configuration structure. It
 // gets the module names from yaml and loads the module using the modules

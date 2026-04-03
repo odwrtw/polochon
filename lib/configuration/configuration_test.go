@@ -6,9 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/robfig/cron/v3"
+
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/modules/mock"
-	"github.com/robfig/cron/v3"
 )
 
 var testConfigData = []byte(`

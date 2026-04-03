@@ -12,7 +12,7 @@ import (
 
 	"github.com/agnivade/levenshtein"
 	"github.com/odwrtw/addicted"
-	"gopkg.in/yaml.v2"
+	"github.com/goccy/go-yaml"
 
 	polochon "github.com/odwrtw/polochon/lib"
 )

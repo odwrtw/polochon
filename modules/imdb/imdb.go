@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"sort"
 
-	"gopkg.in/yaml.v2"
+	"github.com/goccy/go-yaml"
 
 	imdbwatchlist "github.com/odwrtw/imdb-watchlist"
 	polochon "github.com/odwrtw/polochon/lib"

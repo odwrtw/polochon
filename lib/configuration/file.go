@@ -3,8 +3,9 @@ package configuration
 import (
 	"errors"
 
-	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/robfig/cron/v3"
+
+	polochon "github.com/odwrtw/polochon/lib"
 )
 
 type configFile struct {
