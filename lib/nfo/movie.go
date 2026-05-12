@@ -50,8 +50,8 @@ func (m *Movie) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 		Runtime:       m.Runtime,
 		SortTitle:     m.SortTitle,
 		Tagline:       m.Tagline,
-		Thumb:         m.Thumb,
-		Fanart:        m.Fanart,
+		Thumb:         m.ThumbURL,
+		Fanart:        m.FanartURL,
 		Title:         m.Title,
 		TmdbID:        m.TmdbID,
 		Votes:         m.Votes,
@@ -81,8 +81,8 @@ func (m *Movie) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	m.Runtime = nfo.Runtime
 	m.SortTitle = nfo.SortTitle
 	m.Tagline = nfo.Tagline
-	m.Thumb = nfo.Thumb
-	m.Fanart = nfo.Fanart
+	m.ThumbURL = nfo.Thumb
+	m.FanartURL = nfo.Fanart
 	m.Title = nfo.Title
 	m.TmdbID = nfo.TmdbID
 	m.Votes = nfo.Votes

@@ -10,28 +10,14 @@ import (
 type MovieIndex struct {
 	// Mutex to protect reads / writes made concurrently by the http server
 	sync.RWMutex
-	// ids keep the imdb ids and their associated infos
-	ids map[string]*Movie
-}
-
-// Movie represents a Movie in the index
-type Movie struct {
-	polochon.VideoMetadata
-	Path      string      `json:"-"`
-	Filename  string      `json:"filename"`
-	Title     string      `json:"title"`
-	Year      int         `json:"year"`
-	Size      int64       `json:"size"`
-	Subtitles []*Subtitle `json:"subtitles"`
-	Fanart    *File       `json:"fanart_file"`
-	Thumb     *File       `json:"thumb_file"`
-	NFO       *File       `json:"nfo_file"`
+	// ids keep the imdb ids and their associated movie
+	ids map[string]*polochon.Movie
 }
 
 // NewMovieIndex returns a new movie index
 func NewMovieIndex() *MovieIndex {
 	return &MovieIndex{
-		ids: map[string]*Movie{},
+		ids: map[string]*polochon.Movie{},
 	}
 }
 
@@ -40,15 +26,14 @@ func (mi *MovieIndex) Clear() {
 	mi.Lock()
 	defer mi.Unlock()
 
-	mi.ids = map[string]*Movie{}
+	mi.ids = map[string]*polochon.Movie{}
 }
 
-// Movie returns the movie index from its ID
-func (mi *MovieIndex) Movie(imdbID string) (*Movie, error) {
+// Movie returns the movie from its ID
+func (mi *MovieIndex) Movie(imdbID string) (*polochon.Movie, error) {
 	mi.RLock()
 	defer mi.RUnlock()
 
-	// Check if the id is in the index and get the filePath
 	movie, ok := mi.ids[imdbID]
 	if !ok {
 		return nil, ErrNotFound
@@ -57,41 +42,21 @@ func (mi *MovieIndex) Movie(imdbID string) (*Movie, error) {
 	return movie, nil
 }
 
-// Add adds a movie to an index
+// Add adds a movie to the index. The movie must already have its sidecar file
+// fields (FanartFile, ThumbFile, NFOFile) populated before calling Add.
 func (mi *MovieIndex) Add(movie *polochon.Movie) error {
-	m := &Movie{
-		Path:          movie.Path,
-		Filename:      movie.Filename(),
-		Title:         movie.Title,
-		Year:          movie.Year,
-		Size:          movie.Size,
-		VideoMetadata: movie.VideoMetadata,
-		Subtitles:     []*Subtitle{},
-	}
-
-	for _, s := range movie.Subtitles {
-		m.Subtitles = append(m.Subtitles, NewSubtitle(s))
-	}
-
-	for _, e := range []struct {
-		path string
-		file **File
-	}{
-		{path: movie.MovieFanartPath(), file: &m.Fanart},
-		{path: movie.MovieThumbPath(), file: &m.Thumb},
-		{path: movie.NfoPath(), file: &m.NFO},
-	} {
-		*e.file = newFile(e.path)
+	if movie.Name == "" {
+		movie.Name = movie.Filename()
 	}
 
 	mi.Lock()
-	mi.ids[movie.ImdbID] = m
+	mi.ids[movie.ImdbID] = movie
 	mi.Unlock()
 
 	return nil
 }
 
-// UpsertSubtitle updates or insert a subtitle
+// UpsertSubtitle updates or inserts a subtitle in the index
 func (mi *MovieIndex) UpsertSubtitle(m *polochon.Movie, s *polochon.Subtitle) error {
 	movie, err := mi.Movie(m.ImdbID)
 	if err != nil {
@@ -99,13 +64,13 @@ func (mi *MovieIndex) UpsertSubtitle(m *polochon.Movie, s *polochon.Subtitle) er
 	}
 
 	mi.Lock()
-	movie.Subtitles = upsertSubtitle(movie.Subtitles, NewSubtitle(s))
+	movie.Subtitles = upsertSubtitle(movie.Subtitles, s)
 	mi.Unlock()
 
 	return nil
 }
 
-// Remove will delete the movie from the index
+// Remove deletes the movie from the index
 func (mi *MovieIndex) Remove(m *polochon.Movie) error {
 	if _, err := mi.Movie(m.ImdbID); err != nil {
 		return err
@@ -126,16 +91,15 @@ func (mi *MovieIndex) IDs() []string {
 	return extractAndSortStringMapKeys(mi.ids)
 }
 
-// Index returns the movie index to be rendered
-func (mi *MovieIndex) Index() map[string]*Movie {
+// Index returns the movie index
+func (mi *MovieIndex) Index() map[string]*polochon.Movie {
 	mi.RLock()
 	defer mi.RUnlock()
 
 	return mi.ids
 }
 
-// Has searches the movie index for an ImdbID and returns true if the movie is
-// indexed
+// Has searches the movie index for an ImdbID and returns true if the movie is indexed
 func (mi *MovieIndex) Has(imdbID string) (bool, error) {
 	mi.RLock()
 	defer mi.RUnlock()
@@ -151,14 +115,10 @@ func (mi *MovieIndex) Has(imdbID string) (bool, error) {
 	}
 }
 
-// HasSubtitle searches the movie index for a subtitle in language lang and
-// ImdbID and returns true if the subtitle is present
+// HasSubtitle searches the movie index for a subtitle in language lang
 func (mi *MovieIndex) HasSubtitle(imdbID string, sub *polochon.Subtitle) (bool, error) {
 	movie, err := mi.Movie(imdbID)
 	if err != nil {
-		if err == ErrNotFound {
-			err = nil
-		}
 		return false, err
 	}
 

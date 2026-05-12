@@ -4,33 +4,13 @@ import (
 	polochon "github.com/odwrtw/polochon/lib"
 )
 
-// Subtitle represents a subtitle
-type Subtitle struct {
-	Embedded bool              `json:"embedded"`
-	Size     int64             `json:"size"`
-	Lang     polochon.Language `json:"lang"`
-}
-
-// NewSubtitle returns a new subtitle from a polochon subtitle
-func NewSubtitle(s *polochon.Subtitle) *Subtitle {
-	if s == nil {
-		return nil
-	}
-
-	return &Subtitle{
-		Embedded: s.Embedded,
-		Lang:     s.Lang,
-		Size:     s.Size,
-	}
-}
-
-func upsertSubtitle(subs []*Subtitle, sub *Subtitle) []*Subtitle {
+func upsertSubtitle(subs []*polochon.Subtitle, sub *polochon.Subtitle) []*polochon.Subtitle {
 	if sub == nil {
 		return subs
 	}
 
 	if subs == nil {
-		return []*Subtitle{sub}
+		return []*polochon.Subtitle{sub}
 	}
 
 	idx := -1

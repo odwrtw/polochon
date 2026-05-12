@@ -8,15 +8,15 @@ import (
 )
 
 func TestUpsertSubtitles(t *testing.T) {
-	s1fr := &Subtitle{Lang: polochon.FR, Size: 1000}
-	s2fr := &Subtitle{Lang: polochon.FR, Size: 2000}
-	s1en := &Subtitle{Lang: polochon.EN, Size: 3000}
+	s1fr := &polochon.Subtitle{File: polochon.File{Size: 1000}, Lang: polochon.FR}
+	s2fr := &polochon.Subtitle{File: polochon.File{Size: 2000}, Lang: polochon.FR}
+	s1en := &polochon.Subtitle{File: polochon.File{Size: 3000}, Lang: polochon.EN}
 
 	tt := []struct {
 		name     string
-		subs     []*Subtitle
-		sub      *Subtitle
-		expected []*Subtitle
+		subs     []*polochon.Subtitle
+		sub      *polochon.Subtitle
+		expected []*polochon.Subtitle
 	}{
 		{
 			name:     "no sub",
@@ -24,25 +24,25 @@ func TestUpsertSubtitles(t *testing.T) {
 		},
 		{
 			name:     "no new sub",
-			subs:     []*Subtitle{s1fr, s1en},
-			expected: []*Subtitle{s1fr, s1en},
+			subs:     []*polochon.Subtitle{s1fr, s1en},
+			expected: []*polochon.Subtitle{s1fr, s1en},
 		},
 		{
 			name:     "new lang",
-			subs:     []*Subtitle{s1fr},
+			subs:     []*polochon.Subtitle{s1fr},
 			sub:      s1en,
-			expected: []*Subtitle{s1fr, s1en},
+			expected: []*polochon.Subtitle{s1fr, s1en},
 		},
 		{
 			name:     "replace lang",
 			sub:      s2fr,
-			subs:     []*Subtitle{s1fr, s1en},
-			expected: []*Subtitle{s2fr, s1en},
+			subs:     []*polochon.Subtitle{s1fr, s1en},
+			expected: []*polochon.Subtitle{s2fr, s1en},
 		},
 		{
 			name:     "empty subs",
 			sub:      s1fr,
-			expected: []*Subtitle{s1fr},
+			expected: []*polochon.Subtitle{s1fr},
 		},
 	}
 

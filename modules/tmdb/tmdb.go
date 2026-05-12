@@ -272,8 +272,8 @@ func (t *TmDB) getMovieDetails(movie *polochon.Movie) error {
 	movie.Runtime = int(details.Runtime)
 	movie.SortTitle = details.Title
 	movie.Tagline = details.Tagline
-	movie.Thumb = TmDBimageBaseURL + details.PosterPath
-	movie.Fanart = TmDBimageBaseURL + details.BackdropPath
+	movie.ThumbURL = TmDBimageBaseURL + details.PosterPath
+	movie.FanartURL = TmDBimageBaseURL + details.BackdropPath
 	movie.Title = details.Title
 	movie.Votes = int(details.VoteCount)
 	movie.Year = year

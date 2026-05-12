@@ -5,28 +5,22 @@ import (
 	"strconv"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
 // Show struct returned by papi
 type Show struct {
 	*polochon.Show
 
-	Fanart *File `json:"fanart_file"`
-	Banner *File `json:"banner_file"`
-	Poster *File `json:"poster_file"`
-	NFO    *File `json:"nfo_file"`
-
 	Seasons map[int]*Season `json:"-"`
 }
 
-func (s *Show) linkFiles() {
-	for _, file := range []*File{s.Fanart, s.Banner, s.NFO, s.Poster} {
-		if file == nil {
-			continue
-		}
-
-		file.resource = s
+// SidecarFiles returns the show sidecar files as downloadable papi.File objects.
+func (s *Show) SidecarFiles() []*File {
+	return []*File{
+		NewFile(s.FanartFile, s),
+		NewFile(s.BannerFile, s),
+		NewFile(s.PosterFile, s),
+		NewFile(s.NFOFile, s),
 	}
 }
 
@@ -43,7 +37,7 @@ func (s *Show) uri() (string, error) {
 	return fmt.Sprintf("shows/%s", s.ImdbID), nil
 }
 
-func extractSeasons(imdbID string, input map[string]map[string]*index.Episode) (map[int]*Season, error) {
+func extractSeasons(imdbID string, input map[string]map[string]*polochon.ShowEpisode) (map[int]*Season, error) {
 	ret := map[int]*Season{}
 
 	for season, episodes := range input {
@@ -64,40 +58,34 @@ func extractSeasons(imdbID string, input map[string]map[string]*index.Episode) (
 				return nil, err
 			}
 
-			pe := &polochon.ShowEpisode{
-				ShowImdbID: imdbID,
-				Episode:    en,
-				Season:     sn,
+			if e == nil {
+				continue
 			}
-			pe.SetFile(polochon.File{
-				Path: e.Filename,
-				Size: e.Size,
-			})
-			pe.SetMetadata(&e.VideoMetadata)
+
+			e.ShowImdbID = imdbID
+			e.Episode = en
+			e.Season = sn
+			// Name holds the video filename from the HTTP response; use it as the path.
+			if e.Name != "" {
+				e.Path = e.Name
+			}
 
 			subs := []*Subtitle{}
-			for _, s := range e.Subtitles {
-				subs = append(subs, &Subtitle{
-					Subtitle: &polochon.Subtitle{
-						File:     polochon.File{Size: s.Size},
-						Lang:     s.Lang,
-						Embedded: s.Embedded,
-						Video:    pe,
-					},
-				})
+			for _, sub := range e.Subtitles {
+				sub.Video = e
+				subs = append(subs, &Subtitle{Subtitle: sub})
 			}
-
 			if len(subs) == 0 {
 				subs = nil
 			}
 
 			newEpisode := &Episode{
-				ShowEpisode: pe,
+				ShowEpisode: e,
 				Subtitles:   subs,
 			}
+			newEpisode.NFO = NewFile(e.NFOFile, newEpisode)
 
 			s.Episodes[en] = newEpisode
-			newEpisode.NFO = NewFile(e.NFO, newEpisode)
 		}
 
 		ret[sn] = s
@@ -110,9 +98,9 @@ func extractSeasons(imdbID string, input map[string]map[string]*index.Episode) (
 func (c *Client) GetShows() (*ShowCollection, error) {
 	url := fmt.Sprintf("%s/%s", c.endpoint, "shows")
 
-	ids := map[string]struct {
+	ids := map[string]*struct {
 		*Show
-		Seasons map[string]map[string]*index.Episode `json:"seasons"`
+		Seasons map[string]map[string]*polochon.ShowEpisode `json:"seasons"`
 	}{}
 
 	var err error
@@ -122,8 +110,13 @@ func (c *Client) GetShows() (*ShowCollection, error) {
 
 	showCollection := NewShowCollection()
 	for imdbID, data := range ids {
+		if data.Show == nil {
+			data.Show = &Show{Show: &polochon.Show{}}
+		}
+		if data.Show.Show == nil {
+			data.Show.Show = &polochon.Show{}
+		}
 		data.ImdbID = imdbID
-		data.linkFiles()
 
 		data.Show.Seasons, err = extractSeasons(imdbID, data.Seasons)
 		if err != nil {
@@ -184,7 +177,7 @@ func (c *Client) getShowDetails(s *Show) error {
 
 	input := &struct {
 		*Show
-		Seasons map[string]map[string]*index.Episode `json:"seasons"`
+		Seasons map[string]map[string]*polochon.ShowEpisode `json:"seasons"`
 	}{Show: s}
 
 	url := fmt.Sprintf("%s/%s", c.endpoint, uri)

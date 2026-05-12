@@ -11,19 +11,14 @@ type Movie struct {
 	*polochon.Movie
 
 	Subtitles []*Subtitle `json:"subtitles"`
-
-	Fanart *File `json:"fanart_file"`
-	Thumb  *File `json:"thumb_file"`
-	NFO    *File `json:"nfo_file"`
 }
 
-func (m *Movie) linkFiles() {
-	for _, file := range []*File{m.Fanart, m.Thumb, m.NFO} {
-		if file == nil {
-			continue
-		}
-
-		file.resource = m
+// SidecarFiles returns the sidecar files (fanart, thumb, nfo) as downloadable papi.File objects.
+func (m *Movie) SidecarFiles() []*File {
+	return []*File{
+		NewFile(m.FanartFile, m),
+		NewFile(m.ThumbFile, m),
+		NewFile(m.NFOFile, m),
 	}
 }
 
@@ -58,25 +53,27 @@ func (m *Movie) downloadURL() (string, error) {
 func (c *Client) GetMovies() (*MovieCollection, error) {
 	url := fmt.Sprintf("%s/%s", c.endpoint, "movies")
 
-	index := map[string]*struct {
-		*Movie
-		Filename string `json:"filename"`
-	}{}
+	index := map[string]*Movie{}
 	if err := c.get(url, &index); err != nil {
 		return nil, err
 	}
 
 	mc := NewMovieCollection()
 	for id, m := range index {
+		if m.Movie == nil {
+			m.Movie = &polochon.Movie{}
+		}
 		m.ImdbID = id
-		m.Path = m.Filename
+		// Name holds the video filename from the HTTP response
+		if m.Name != "" {
+			m.Path = m.Name
+		}
 
-		m.linkFiles()
 		for _, s := range m.Subtitles {
 			s.Video = m.Movie
 		}
 
-		if err := mc.Add(m.Movie); err != nil {
+		if err := mc.Add(m); err != nil {
 			return nil, err
 		}
 	}

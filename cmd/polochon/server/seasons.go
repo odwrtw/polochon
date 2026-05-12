@@ -3,27 +3,12 @@ package server
 import (
 	"fmt"
 	"net/http"
-	"path/filepath"
 	"strconv"
 
 	"github.com/gorilla/mux"
 	polochon "github.com/odwrtw/polochon/lib"
 	index "github.com/odwrtw/polochon/lib/media_index"
 )
-
-// Season represents the season output of the server
-type Season struct {
-	*polochon.ShowSeason
-	Episodes map[int]*index.Episode `json:"episodes"`
-}
-
-// NewSeason returns a new season to be JSON formated
-func NewSeason(season *polochon.ShowSeason, indexed *index.Season) *Season {
-	return &Season{
-		ShowSeason: season,
-		Episodes:   indexed.Episodes,
-	}
-}
 
 func (s *Server) getShowFiles(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
@@ -37,14 +22,9 @@ func (s *Server) getShowFiles(w http.ResponseWriter, req *http.Request) {
 	}
 
 	var path string
-	for _, file := range []string{
-		"tvshow.nfo",
-		"poster.jpg",
-		"fanart.jpg",
-		"banner.jpg",
-	} {
-		if name == file {
-			path = filepath.Join(show.Path, file)
+	for _, f := range []*polochon.File{show.FanartFile, show.BannerFile, show.PosterFile, show.NFOFile} {
+		if f != nil && f.Name == name {
+			path = f.Path
 			break
 		}
 	}
@@ -67,19 +47,13 @@ func (s *Server) getSeasonDetails(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	season, err := s.library.GetSeason(vars["id"], seasonNum)
+	season, err := s.library.GetIndexedSeason(vars["id"], seasonNum)
 	if err != nil {
 		s.renderError(w, req, err)
 		return
 	}
 
-	indexedSeason, err := s.library.GetIndexedSeason(vars["id"], seasonNum)
-	if err != nil {
-		s.renderError(w, req, err)
-		return
-	}
-
-	s.renderOK(w, NewSeason(season, indexedSeason))
+	s.renderOK(w, season)
 }
 
 func (s *Server) deleteSeason(w http.ResponseWriter, req *http.Request) {

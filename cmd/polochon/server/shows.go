@@ -11,16 +11,16 @@ import (
 	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
-// Format seasons to get a pretty marshal
-func formatSeasons(show *index.Show) map[string]map[string]*index.Episode {
-	ret := map[string]map[string]*index.Episode{}
+// formatSeasons converts the int-keyed seasons map to zero-padded string keys for JSON output.
+func formatSeasons(show *polochon.Show) map[string]map[string]*polochon.ShowEpisode {
+	ret := map[string]map[string]*polochon.ShowEpisode{}
 	for seasonNum, season := range show.Seasons {
 		s := fmt.Sprintf("%02d", seasonNum)
 		for episodeNb, episode := range season.Episodes {
 			e := fmt.Sprintf("%02d", episodeNb)
 
 			if _, ok := ret[s]; !ok {
-				ret[s] = map[string]*index.Episode{}
+				ret[s] = map[string]*polochon.ShowEpisode{}
 			}
 
 			ret[s][e] = episode
@@ -33,8 +33,8 @@ func (s *Server) showIds(w http.ResponseWriter, req *http.Request) {
 	s.logEntry(req).Info("listing shows")
 
 	type formatedShow struct {
-		*index.Show
-		Seasons map[string]map[string]*index.Episode `json:"seasons"`
+		*polochon.Show
+		Seasons map[string]map[string]*polochon.ShowEpisode `json:"seasons"`
 	}
 	ret := map[string]formatedShow{}
 	for id, show := range s.library.ShowIDs() {
@@ -85,8 +85,8 @@ func (s *Server) getShowDetails(w http.ResponseWriter, req *http.Request) {
 	}
 
 	out := struct {
-		*index.Show
-		Seasons map[string]map[string]*index.Episode `json:"seasons"`
+		*polochon.Show
+		Seasons map[string]map[string]*polochon.ShowEpisode `json:"seasons"`
 	}{
 		indexedShow,
 		formatSeasons(indexedShow),

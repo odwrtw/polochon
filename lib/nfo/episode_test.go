@@ -28,7 +28,7 @@ func mockEpisode() *polochon.ShowEpisode {
 	s.Aired = "2013-05-05"
 	s.Plot = "Awesome plot"
 	s.Runtime = 30
-	s.Thumb = "http://thetvdb.com/banners/episodes/73141/4488786.jpg"
+	s.ThumbURL = "http://thetvdb.com/banners/episodes/73141/4488786.jpg"
 	s.Rating = 7.6
 	s.ShowImdbID = "tt0397306"
 	s.ShowTvdbID = 73141

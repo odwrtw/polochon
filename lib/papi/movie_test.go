@@ -57,6 +57,8 @@ func TestGetMovies(t *testing.T) {
 			{
 				"tt001": {
 					"title": "title_1",
+					"name": "title_1.mkv",
+					"size": 1234,
 					"quality": "1080p",
 					"release_group": "R1",
 					"audio_codec": "AAC",
@@ -75,6 +77,11 @@ func TestGetMovies(t *testing.T) {
 		movies: map[string]*Movie{
 			"tt001": {Movie: &polochon.Movie{
 				BaseVideo: polochon.BaseVideo{
+					File: polochon.File{
+						Name: "title_1.mkv",
+						Path: "title_1.mkv",
+						Size: 1234,
+					},
 					VideoMetadata: polochon.VideoMetadata{
 						Quality:      polochon.Quality1080p,
 						ReleaseGroup: "R1",
@@ -153,8 +160,8 @@ func TestGetMovie(t *testing.T) {
 		Votes:         4721,
 		Rating:        7.3,
 		Runtime:       120,
-		Thumb:         "https://image.tmdb.org/t/p/original/kqjL17yufvn9OVLyXYpvtyrFfak.jpg",
-		Fanart:        "https://image.tmdb.org/t/p/original/tbhdm8UJAb4ViCTsulYFL3lxMCd.jpg",
+		ThumbURL:      "https://image.tmdb.org/t/p/original/kqjL17yufvn9OVLyXYpvtyrFfak.jpg",
+		FanartURL:     "https://image.tmdb.org/t/p/original/tbhdm8UJAb4ViCTsulYFL3lxMCd.jpg",
 		Genres:        []string{"Action", "Adventure", "Sci-Fi"},
 	}}
 

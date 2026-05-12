@@ -2,6 +2,7 @@ package polochon
 
 import (
 	"context"
+	"sort"
 	"time"
 )
 
@@ -16,10 +17,16 @@ type Show struct {
 	ImdbID     string         `json:"imdb_id"`
 	Year       int            `json:"year"`
 	FirstAired *time.Time     `json:"first_aired"`
-	Banner     string         `json:"-"`
-	Fanart     string         `json:"-"`
-	Poster     string         `json:"-"`
+	BannerURL  string         `json:"-"`
+	FanartURL  string         `json:"-"`
+	PosterURL  string         `json:"-"`
 	Episodes   []*ShowEpisode `json:"-"`
+
+	FanartFile *File              `json:"fanart_file"`
+	BannerFile *File              `json:"banner_file"`
+	PosterFile *File              `json:"poster_file"`
+	NFOFile    *File              `json:"nfo_file"`
+	Seasons    map[int]*ShowSeason `json:"-"`
 }
 
 // NewShow returns a new show
@@ -37,6 +44,16 @@ func (s *Show) GetCalendar(ctx context.Context) (*ShowCalendar, error) {
 	}
 
 	return s.Calendar.GetShowCalendar(ctx, s)
+}
+
+// SeasonList returns the sorted season numbers present in the index.
+func (s *Show) SeasonList() []int {
+	keys := make([]int, 0, len(s.Seasons))
+	for k := range s.Seasons {
+		keys = append(keys, k)
+	}
+	sort.Ints(keys)
+	return keys
 }
 
 // NewShowFromEpisode will return a show from an episode

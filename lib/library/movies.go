@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
 // MovieIDs returns the movie ids
@@ -16,8 +15,8 @@ func (l *Library) MovieIDs() []string {
 	return l.movieIndex.IDs()
 }
 
-// MovieIndex returns the movie ids
-func (l *Library) MovieIndex() map[string]*index.Movie {
+// MovieIndex returns the movie index
+func (l *Library) MovieIndex() map[string]*polochon.Movie {
 	return l.movieIndex.Index()
 }
 
@@ -119,7 +118,7 @@ func (l *Library) AddMovie(movie *polochon.Movie) error {
 		return err
 	}
 
-	if movie.Fanart == "" || movie.Thumb == "" {
+	if movie.FanartURL == "" || movie.ThumbURL == "" {
 		return ErrMissingMovieImageURL
 	}
 
@@ -131,12 +130,12 @@ func (l *Library) AddMovie(movie *polochon.Movie) error {
 	}{
 		{
 			name:     "fanart",
-			url:      movie.Fanart,
+			url:      movie.FanartURL,
 			savePath: movie.MovieFanartPath(),
 		},
 		{
 			name:     "thumb",
-			url:      movie.Thumb,
+			url:      movie.ThumbURL,
 			savePath: movie.MovieThumbPath(),
 		},
 	} {
@@ -145,6 +144,11 @@ func (l *Library) AddMovie(movie *polochon.Movie) error {
 			return err
 		}
 	}
+
+	// Populate sidecar file references on the movie before indexing
+	movie.FanartFile = polochon.NewSidecarFile(movie.MovieFanartPath())
+	movie.ThumbFile = polochon.NewSidecarFile(movie.MovieThumbPath())
+	movie.NFOFile = polochon.NewSidecarFile(movie.NfoPath())
 
 	// At this point the video is stored
 	if err := l.movieIndex.Add(movie); err != nil {
@@ -186,12 +190,16 @@ func (l *Library) newMovieFromPath(path string) (*polochon.Movie, error) {
 		return nil, err
 	}
 
+	m.FanartFile = polochon.NewSidecarFile(m.MovieFanartPath())
+	m.ThumbFile = polochon.NewSidecarFile(m.MovieThumbPath())
+	m.NFOFile = polochon.NewSidecarFile(m.NfoPath())
+
 	l.UpdateSubtitles(m)
 	return m, nil
 }
 
 // GetIndexedMovie returns a Movie index from its id
-func (l *Library) GetIndexedMovie(id string) (*index.Movie, error) {
+func (l *Library) GetIndexedMovie(id string) (*polochon.Movie, error) {
 	m, err := l.movieIndex.Movie(id)
 	if err != nil {
 		return nil, err

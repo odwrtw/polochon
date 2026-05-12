@@ -14,6 +14,11 @@ type Episode struct {
 	Subtitles []*Subtitle `json:"subtitles"`
 }
 
+// SidecarFile returns the episode NFO as a downloadable papi.File.
+func (e *Episode) SidecarFile() *File {
+	return NewFile(e.NFOFile, e)
+}
+
 // uri implements the Resource interface
 func (e *Episode) uri() (string, error) {
 	if e.ShowImdbID == "" {

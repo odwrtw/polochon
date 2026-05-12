@@ -25,8 +25,8 @@ func (m *mockLibrary) mockMovie(name string) (*polochon.Movie, error) {
 	file := polochon.NewFile(path)
 
 	movie := polochon.NewMovieFromFile(m.movieConfig, *file)
-	movie.Fanart = m.httpServer.URL
-	movie.Thumb = m.httpServer.URL
+	movie.FanartURL = m.httpServer.URL
+	movie.ThumbURL = m.httpServer.URL
 	movie.ImdbID = "tt12345"
 
 	if err := polochon.GetDetails(context.Background(), movie, slog.New(slog.NewTextHandler(io.Discard, nil))); err != nil {

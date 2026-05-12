@@ -23,7 +23,7 @@ func (pfs *polochonfs) updateShows() {
 	for _, s := range shows.List() {
 		showDirNode := pfs.createDirNode(showRootDir, s.Title, pfs.root.times)
 
-		files := []*papi.File{s.Fanart, s.Banner, s.Poster, s.NFO}
+		files := s.SidecarFiles()
 		pfs.createFilesNodes(showDirNode, files, showDirNode.times)
 
 		for _, season := range s.Seasons {
@@ -42,8 +42,7 @@ func (pfs *polochonfs) updateShows() {
 					continue
 				}
 
-				files := []*papi.File{episode.NFO}
-				pfs.createFilesNodes(seasonDir, files, episode.DateAdded)
+				pfs.createFilesNodes(seasonDir, []*papi.File{episode.SidecarFile()}, episode.DateAdded)
 				pfs.createSubtitlesNodes(seasonDir, episode.Path, episode.Subtitles, episode.DateAdded)
 			}
 		}

@@ -290,7 +290,7 @@ func (t *TvDB) getShowEpisodes(s *polochon.Show, show *tvdb.Series, params url.V
 		episode.Aired = e.FirstAired
 		episode.Plot = e.Overview
 		episode.Runtime = runtime
-		episode.Thumb = tvdb.ImageURL(e.Filename)
+		episode.ThumbURL = tvdb.ImageURL(e.Filename)
 		episode.ShowImdbID = s.ImdbID
 		episode.ShowTvdbID = s.TvdbID
 		episode.EpisodeImdbID = e.ImdbID
@@ -305,7 +305,7 @@ func (t *TvDB) getShowEpisodes(s *polochon.Show, show *tvdb.Series, params url.V
 
 func (t *TvDB) getShowImages(s *polochon.Show, show *tvdb.Series) error {
 	// Update the banner
-	s.Banner = show.BannerURL()
+	s.BannerURL = show.BannerURL()
 
 	// Update the poster and fannart
 	for _, imageType := range []struct {
@@ -315,12 +315,12 @@ func (t *TvDB) getShowImages(s *polochon.Show, show *tvdb.Series) error {
 	}{
 		{
 			t:   "fanart",
-			url: &s.Fanart,
+			url: &s.FanartURL,
 			f:   t.client.GetSeriesFanartImages,
 		},
 		{
 			t:   "poster",
-			url: &s.Poster,
+			url: &s.PosterURL,
 			f:   t.client.GetSeriesPosterImages,
 		},
 	} {
@@ -450,7 +450,7 @@ func (t *TvDB) getEpisodeDetails(s *polochon.ShowEpisode) error {
 			s.Aired = e.Aired
 			s.Plot = e.Plot
 			s.Runtime = e.Runtime
-			s.Thumb = e.Thumb
+			s.ThumbURL = e.ThumbURL
 			s.Rating = e.Rating
 			s.ShowImdbID = e.ShowImdbID
 			s.ShowTvdbID = e.ShowTvdbID

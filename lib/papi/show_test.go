@@ -9,7 +9,6 @@ import (
 	"time"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
 var showByIDsResponse = `
@@ -40,7 +39,7 @@ var showByIDsResponse = `
 					"audio_codec": "AAC",
 					"video_codec": "H.264",
 					"container": "mkv",
-					"filename": "Chefs.table.S01E01.mkv",
+					"name": "Chefs.table.S01E01.mkv",
 					"size": 546325850,
 					"nfo_file": {
 					  "name": "Chefs.table.S01E01.nfo",
@@ -80,10 +79,16 @@ func TestGetShows(t *testing.T) {
 	}))
 	defer ts.Close()
 
+	// Build subtitles and NFO file as shared objects (papi wraps same polochon pointers)
+	episodeNFO := &polochon.File{Name: "Chefs.table.S01E01.nfo", Size: 555}
+	subFR := &polochon.Subtitle{Lang: polochon.FR, File: polochon.File{Size: 35037}}
+	subEN := &polochon.Subtitle{Lang: polochon.EN, File: polochon.File{Size: 39349}}
+
 	expectedShowEpisode := &polochon.ShowEpisode{
 		BaseVideo: polochon.BaseVideo{
 			File: polochon.File{
 				Size: 546325850,
+				Name: "Chefs.table.S01E01.mkv",
 				Path: "Chefs.table.S01E01.mkv",
 			},
 			VideoMetadata: polochon.VideoMetadata{
@@ -93,23 +98,28 @@ func TestGetShows(t *testing.T) {
 				VideoCodec:   "H.264",
 				Container:    "mkv",
 			},
+			Subtitles: []*polochon.Subtitle{subFR, subEN},
 		},
 		ShowImdbID: "tt4295140",
 		Season:     1,
 		Episode:    1,
+		NFOFile:    episodeNFO,
 	}
+	// Set circular Video references on the subtitles
+	subFR.Video = expectedShowEpisode
+	subEN.Video = expectedShowEpisode
 
 	expected := &ShowCollection{
 		shows: map[string]*Show{
 			"tt4295140": {
 				Show: &polochon.Show{
-					ImdbID: "tt4295140",
-					Title:  "Chef's table",
+					ImdbID:     "tt4295140",
+					Title:      "Chef's table",
+					FanartFile: &polochon.File{Name: "fanart.jpg", Size: 111},
+					BannerFile: &polochon.File{Name: "banner.jpg", Size: 222},
+					PosterFile: &polochon.File{Name: "poster.jpg", Size: 333},
+					NFOFile:    &polochon.File{Name: "tvshow.nfo", Size: 444},
 				},
-				Fanart: &File{File: &index.File{Name: "fanart.jpg", Size: 111}},
-				Banner: &File{File: &index.File{Name: "banner.jpg", Size: 222}},
-				Poster: &File{File: &index.File{Name: "poster.jpg", Size: 333}},
-				NFO:    &File{File: &index.File{Name: "tvshow.nfo", Size: 444}},
 				Seasons: map[int]*Season{
 					1: {
 						ShowImdbID: "tt4295140",
@@ -117,23 +127,10 @@ func TestGetShows(t *testing.T) {
 						Episodes: map[int]*Episode{
 							1: {
 								ShowEpisode: expectedShowEpisode,
-								NFO: &File{
-									File: &index.File{
-										Name: "Chefs.table.S01E01.nfo",
-										Size: 555,
-									},
-								},
+								NFO:         &File{File: episodeNFO},
 								Subtitles: []*Subtitle{
-									{Subtitle: &polochon.Subtitle{
-										Lang:  polochon.FR,
-										File:  polochon.File{Size: 35037},
-										Video: expectedShowEpisode,
-									}},
-									{Subtitle: &polochon.Subtitle{
-										Lang:  polochon.EN,
-										File:  polochon.File{Size: 39349},
-										Video: expectedShowEpisode,
-									}},
+									{Subtitle: subFR},
+									{Subtitle: subEN},
 								},
 							},
 						},
@@ -167,13 +164,8 @@ func TestGetShows(t *testing.T) {
 		},
 	}
 
-	// Files hacks
-	show := expected.shows["tt4295140"]
-	show.Banner.resource = show
-	show.Poster.resource = show
-	show.Fanart.resource = show
-	show.NFO.resource = show
-	episode := show.Seasons[1].Episodes[1]
+	// Files hack: set the NFO resource to the episode itself (circular ref)
+	episode := expected.shows["tt4295140"].Seasons[1].Episodes[1]
 	episode.NFO.resource = episode
 
 	c, err := New(ts.URL)

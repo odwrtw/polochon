@@ -23,12 +23,14 @@ type ShowEpisode struct {
 	Aired         string  `json:"aired"`
 	Plot          string  `json:"plot"`
 	Runtime       int     `json:"runtime"`
-	Thumb         string  `json:"thumb"`
+	ThumbURL      string  `json:"thumb"`
 	Rating        float32 `json:"rating"`
 	ShowImdbID    string  `json:"show_imdb_id"`
 	ShowTvdbID    int     `json:"show_tvdb_id"`
 	EpisodeImdbID string  `json:"imdb_id"`
 	Show          *Show   `json:"-"`
+
+	NFOFile *File `json:"nfo_file"`
 }
 
 // NewShowEpisode returns a new show episode

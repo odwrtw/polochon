@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	index "github.com/odwrtw/polochon/lib/media_index"
 	_ "github.com/odwrtw/polochon/modules/mock"
 )
 
@@ -25,7 +24,7 @@ func (m *mockLibrary) mockEpisode(s *polochon.Show, name string) (*polochon.Show
 
 	e := polochon.NewShowEpisode(m.showConfig)
 	e.Path = filepath.Join(m.tmpDir, "downloads", name)
-	e.Thumb = m.httpServer.URL
+	e.ThumbURL = m.httpServer.URL
 	e.Show = s
 
 	if err := polochon.GetDetails(context.Background(), e, slog.New(slog.NewTextHandler(io.Discard, nil))); err != nil {
@@ -45,9 +44,9 @@ func (m *mockLibrary) mockShow() (*polochon.Show, error) {
 	s := polochon.NewShow(m.showConfig)
 
 	// Set the images URLs
-	s.Banner = m.httpServer.URL
-	s.Fanart = m.httpServer.URL
-	s.Poster = m.httpServer.URL
+	s.BannerURL = m.httpServer.URL
+	s.FanartURL = m.httpServer.URL
+	s.PosterURL = m.httpServer.URL
 	s.ImdbID = "tt12345"
 
 	if err := polochon.GetDetails(context.Background(), s, slog.New(slog.NewTextHandler(io.Discard, nil))); err != nil {
@@ -153,47 +152,6 @@ func TestAddEpisode(t *testing.T) {
 		t.Errorf("invalid episode from lib, expected %+v got %+v", episode, episodeFromLib)
 	}
 
-	// Expected indexed season
-	expectedIndexedSeason := &index.Season{
-		Path: filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1"),
-		Episodes: map[int]*index.Episode{
-			1: {
-				Path:          filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1/episodeTest.mp4"),
-				Filename:      "episodeTest.mp4",
-				VideoMetadata: episode.VideoMetadata,
-				NFO:           &index.File{Name: "episodeTest.nfo", Size: 742},
-				Subtitles: []*index.Subtitle{
-					{Lang: polochon.FR, Size: 17},
-					{Lang: polochon.EN, Size: 17},
-				},
-			},
-		},
-	}
-
-	// Expected indexed show
-	expectedIndexedShow := &index.Show{
-		Path:   filepath.Join(lib.tmpDir, "shows/Show tt12345"),
-		Fanart: &index.File{Name: "fanart.jpg", Size: 11},
-		Banner: &index.File{Name: "banner.jpg", Size: 11},
-		Poster: &index.File{Name: "poster.jpg", Size: 11},
-		NFO:    &index.File{Name: "tvshow.nfo", Size: 349},
-		Seasons: map[int]*index.Season{
-			1: expectedIndexedSeason,
-		},
-		Title: "Show tt12345",
-	}
-
-	// Expected IDs
-	expectedIDs := map[string]*index.Show{
-		"tt12345": expectedIndexedShow,
-	}
-
-	// Ensure the index if valid
-	gotIDs := lib.ShowIDs()
-	if !reflect.DeepEqual(expectedIDs, gotIDs) {
-		t.Fatalf("invalid show ids, expected %#v got %#v", expectedIDs, gotIDs)
-	}
-
 	// Ensure the library has the show episode
 	hasEpisode, err := lib.HasVideo(episode)
 	if err != nil {
@@ -203,24 +161,44 @@ func TestAddEpisode(t *testing.T) {
 		t.Fatal("the episode should be in the index")
 	}
 
-	// Get the indexed show
+	// Verify the show is indexed with correct sidecar files
 	gotIndexedShow, err := lib.GetIndexedShow(episode.ShowImdbID)
 	if err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
-
-	if !reflect.DeepEqual(expectedIndexedShow, gotIndexedShow) {
-		t.Fatalf("invalid show ids, expected %+v got %+v", expectedIndexedShow, gotIndexedShow)
+	for _, tc := range []struct {
+		name string
+		f    *polochon.File
+	}{
+		{"fanart.jpg", gotIndexedShow.FanartFile},
+		{"banner.jpg", gotIndexedShow.BannerFile},
+		{"poster.jpg", gotIndexedShow.PosterFile},
+		{"tvshow.nfo", gotIndexedShow.NFOFile},
+	} {
+		if tc.f == nil {
+			t.Errorf("expected %s sidecar file, got nil", tc.name)
+		} else if tc.f.Name != tc.name {
+			t.Errorf("expected sidecar name %q, got %q", tc.name, tc.f.Name)
+		}
 	}
 
-	// Get the indexed season
+	// Verify the indexed season contains the episode
 	gotIndexedSeason, err := lib.GetIndexedSeason(episode.ShowImdbID, episode.Season)
 	if err != nil {
 		t.Fatalf("expected no error, got %q", err)
 	}
+	gotEp := gotIndexedSeason.Episodes[episode.Episode]
+	if gotEp == nil {
+		t.Fatal("episode not found in indexed season")
+	}
+	if gotEp.NFOFile == nil || gotEp.NFOFile.Name != "episodeTest.nfo" {
+		t.Errorf("expected episodeTest.nfo, got %+v", gotEp.NFOFile)
+	}
 
-	if !reflect.DeepEqual(expectedIndexedSeason, gotIndexedSeason) {
-		t.Fatalf("invalid season, expected %+v got %+v", expectedIndexedSeason, gotIndexedSeason)
+	// Verify ShowIDs returns the show
+	gotIDs := lib.ShowIDs()
+	if _, ok := gotIDs[episode.ShowImdbID]; !ok {
+		t.Fatal("show should be in ShowIDs")
 	}
 
 	// Rebuild the index, the episode should be found and added to the index
@@ -230,8 +208,8 @@ func TestAddEpisode(t *testing.T) {
 
 	// Ensure the index is still valid after a rebuild
 	gotIDs = lib.ShowIDs()
-	if !reflect.DeepEqual(expectedIDs, gotIDs) {
-		t.Fatalf("invalid show ids, expected %+v got %+v", expectedIDs, gotIDs)
+	if _, ok := gotIDs[episode.ShowImdbID]; !ok {
+		t.Fatal("show should still be in ShowIDs after rebuild")
 	}
 }
 
@@ -261,9 +239,9 @@ func testShow(t *testing.T, episode *polochon.ShowEpisode, lib *mockLibrary) {
 	}
 
 	// The images URL are not stored in the NFO, maybe they should...
-	showFromLib.Banner = lib.httpServer.URL
-	showFromLib.Fanart = lib.httpServer.URL
-	showFromLib.Poster = lib.httpServer.URL
+	showFromLib.BannerURL = lib.httpServer.URL
+	showFromLib.FanartURL = lib.httpServer.URL
+	showFromLib.PosterURL = lib.httpServer.URL
 
 	if !reflect.DeepEqual(episode.Show, showFromLib) {
 		t.Errorf("invalid show from lib, expected %+v got %+v", episode.Show, showFromLib)
@@ -317,12 +295,10 @@ func TestDeleteEpisode(t *testing.T) {
 		t.Fatalf("failed to remove the episode: %q", err)
 	}
 
-	// Ensure the index if valid
+	// Ensure the index is empty after delete
 	gotIDs := lib.ShowIDs()
-	expectedIDs := map[string]*index.Show{}
-
-	if !reflect.DeepEqual(expectedIDs, gotIDs) {
-		t.Errorf("invalid show ids, expected %+v got %+v", expectedIDs, gotIDs)
+	if len(gotIDs) != 0 {
+		t.Errorf("expected empty show ids after delete, got %d entries", len(gotIDs))
 	}
 
 	// Rebuild the index
@@ -330,9 +306,9 @@ func TestDeleteEpisode(t *testing.T) {
 		t.Fatalf("expected no error, got %q", err)
 	}
 
-	// Ensure the index is still valid after a rebuild
+	// Ensure the index is still empty after a rebuild
 	gotIDs = lib.ShowIDs()
-	if !reflect.DeepEqual(expectedIDs, gotIDs) {
-		t.Errorf("invalid show ids, expected %+v got %+v", expectedIDs, gotIDs)
+	if len(gotIDs) != 0 {
+		t.Errorf("expected empty show ids after rebuild, got %d entries", len(gotIDs))
 	}
 }

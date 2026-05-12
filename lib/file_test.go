@@ -39,6 +39,10 @@ func TestFilename(t *testing.T) {
 	if got != expected {
 		t.Errorf("got %q, expected %q", got, expected)
 	}
+
+	if file.Name != expected {
+		t.Errorf("got file name %q, expected %q", file.Name, expected)
+	}
 }
 
 func TestIgnoreFile(t *testing.T) {

@@ -1,23 +1,24 @@
 package papi
 
 import (
-	index "github.com/odwrtw/polochon/lib/media_index"
+	polochon "github.com/odwrtw/polochon/lib"
 )
 
-// File represents a file
+// File represents a downloadable sidecar file (fanart, poster, nfo, etc.)
 type File struct {
-	*index.File
+	*polochon.File
 	resource Resource
 }
 
-// NewFile returns a new file
-func NewFile(from *index.File, linkedTo Resource) *File {
-	if from == nil {
+// NewFile returns a new downloadable File wrapping a polochon sidecar file.
+// Returns nil if f is nil.
+func NewFile(f *polochon.File, linkedTo Resource) *File {
+	if f == nil {
 		return nil
 	}
 
 	return &File{
-		File:     from,
+		File:     f,
 		resource: linkedTo,
 	}
 }

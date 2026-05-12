@@ -100,7 +100,7 @@ func TestGetEpisode(t *testing.T) {
 		Plot:          "Awesome plot",
 		Title:         "Book of the Stranger",
 		Runtime:       55,
-		Thumb:         "http://thetvdb.com/banners/episodes/121361/5599364.jpg",
+		ThumbURL:      "http://thetvdb.com/banners/episodes/121361/5599364.jpg",
 		Rating:        8.3,
 		Aired:         "2016-05-15",
 	}}

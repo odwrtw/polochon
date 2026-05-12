@@ -6,11 +6,10 @@ import (
 	"path/filepath"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
 // ShowIDs returns the show ids, seasons and episodes
-func (l *Library) ShowIDs() map[string]*index.Show {
+func (l *Library) ShowIDs() map[string]*polochon.Show {
 	return l.showIndex.Index()
 }
 
@@ -49,7 +48,7 @@ func (l *Library) DeleteShow(id string) error {
 }
 
 // GetIndexedShow returns an indexed Show from its id
-func (l *Library) GetIndexedShow(id string) (*index.Show, error) {
+func (l *Library) GetIndexedShow(id string) (*polochon.Show, error) {
 	s, err := l.showIndex.IndexedShow(id)
 	if err != nil {
 		return nil, err
@@ -86,7 +85,7 @@ func (l *Library) addShow(ep *polochon.ShowEpisode) error {
 	}
 
 	// Download show images
-	if s.Fanart == "" || s.Banner == "" || s.Poster == "" {
+	if s.FanartURL == "" || s.BannerURL == "" || s.PosterURL == "" {
 		return ErrMissingShowImageURL
 	}
 
@@ -96,15 +95,15 @@ func (l *Library) addShow(ep *polochon.ShowEpisode) error {
 		name string
 	}{
 		{
-			url:  s.Fanart,
+			url:  s.FanartURL,
 			name: "fanart.jpg",
 		},
 		{
-			url:  s.Poster,
+			url:  s.PosterURL,
 			name: "poster.jpg",
 		},
 		{
-			url:  s.Banner,
+			url:  s.BannerURL,
 			name: "banner.jpg",
 		},
 	} {

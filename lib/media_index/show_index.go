@@ -12,70 +12,13 @@ type ShowIndex struct {
 	// Mutex to protect reads / writes made concurrently by the http server
 	sync.RWMutex
 	// shows represents the index of the show
-	shows map[string]*Show
-}
-
-// Show represents an indexed show
-type Show struct {
-	Path    string          `json:"-"`
-	Seasons map[int]*Season `json:"-"`
-	Title   string          `json:"title"`
-
-	Fanart *File `json:"fanart_file"`
-	Banner *File `json:"banner_file"`
-	Poster *File `json:"poster_file"`
-	NFO    *File `json:"nfo_file"`
-}
-
-// NewShow returns a new show
-func NewShow(title, path string) *Show {
-	s := &Show{
-		Title:   title,
-		Path:    path,
-		Seasons: map[int]*Season{},
-	}
-
-	for _, e := range []struct {
-		name string
-		file **File
-	}{
-		{name: "fanart.jpg", file: &s.Fanart},
-		{name: "banner.jpg", file: &s.Banner},
-		{name: "poster.jpg", file: &s.Poster},
-		{name: "tvshow.nfo", file: &s.NFO},
-	} {
-		*e.file = newFile(filepath.Join(path, e.name))
-	}
-
-	return s
-}
-
-// Season represents an indexed season
-type Season struct {
-	Path     string           `json:"-"`
-	Episodes map[int]*Episode `json:"episodes"`
-}
-
-// Episode represents an indexed episode
-type Episode struct {
-	polochon.VideoMetadata
-	Path      string      `json:"-"`
-	Filename  string      `json:"filename"`
-	Size      int64       `json:"size"`
-	Subtitles []*Subtitle `json:"subtitles"`
-
-	NFO *File `json:"nfo_file"`
-}
-
-// SeasonList returns the season numbers of the indexed show
-func (si *Show) SeasonList() []int {
-	return extractAndSortIndexedSeasonsMapKeys(si.Seasons)
+	shows map[string]*polochon.Show
 }
 
 // NewShowIndex returns a new show index
 func NewShowIndex() *ShowIndex {
 	return &ShowIndex{
-		shows: map[string]*Show{},
+		shows: map[string]*polochon.Show{},
 	}
 }
 
@@ -83,11 +26,11 @@ func NewShowIndex() *ShowIndex {
 func (si *ShowIndex) Clear() {
 	si.Lock()
 	defer si.Unlock()
-	si.shows = map[string]*Show{}
+	si.shows = map[string]*polochon.Show{}
 }
 
-// Index returns the showIndex
-func (si *ShowIndex) Index() map[string]*Show {
+// Index returns the show index
+func (si *ShowIndex) Index() map[string]*polochon.Show {
 	si.RLock()
 	defer si.RUnlock()
 	return si.shows
@@ -95,32 +38,26 @@ func (si *ShowIndex) Index() map[string]*Show {
 
 // HasShow returns true if the show is already in the index
 func (si *ShowIndex) HasShow(imdbID string) (bool, error) {
-	_, err := si.ShowPath(imdbID)
-	switch err {
-	case nil:
-		return true, nil
-	case ErrNotFound:
-		return false, nil
-	default:
-		return false, err
-	}
+	si.RLock()
+	defer si.RUnlock()
+	_, ok := si.shows[imdbID]
+	return ok, nil
 }
 
-// HasSeason returns true if the show is already in the index
+// HasSeason returns true if the season is already in the index
 func (si *ShowIndex) HasSeason(imdbID string, season int) (bool, error) {
-	_, err := si.SeasonPath(imdbID, season)
-	switch err {
-	case nil:
-		return true, nil
-	case ErrNotFound:
+	si.RLock()
+	defer si.RUnlock()
+
+	show, ok := si.shows[imdbID]
+	if !ok {
 		return false, nil
-	default:
-		return false, err
 	}
+	_, ok = show.Seasons[season]
+	return ok, nil
 }
 
-// HasEpisode searches for a show episode by id, season and episode and returns true
-// if this episode is indexed
+// HasEpisode searches for a show episode and returns true if indexed
 func (si *ShowIndex) HasEpisode(imdbID string, season, episode int) (bool, error) {
 	_, err := si.Episode(imdbID, season, episode)
 	switch err {
@@ -133,8 +70,7 @@ func (si *ShowIndex) HasEpisode(imdbID string, season, episode int) (bool, error
 	}
 }
 
-// HasEpisodeSubtitle searches for a show episode by id, season and episode and
-// returns true if this episode has a subtitle indexed
+// HasEpisodeSubtitle returns true if the episode has a subtitle in the given language
 func (si *ShowIndex) HasEpisodeSubtitle(imdbID string, season, episode int, sub *polochon.Subtitle) (bool, error) {
 	e, err := si.Episode(imdbID, season, episode)
 	if err != nil {
@@ -148,8 +84,8 @@ func (si *ShowIndex) HasEpisodeSubtitle(imdbID string, season, episode int, sub 
 	return false, nil
 }
 
-// Episode returns the episode path from the index
-func (si *ShowIndex) Episode(imdbID string, sNum, eNum int) (*Episode, error) {
+// Episode returns the episode from the index
+func (si *ShowIndex) Episode(imdbID string, sNum, eNum int) (*polochon.ShowEpisode, error) {
 	si.RLock()
 	defer si.RUnlock()
 
@@ -172,7 +108,7 @@ func (si *ShowIndex) Episode(imdbID string, sNum, eNum int) (*Episode, error) {
 }
 
 // IndexedSeason returns the indexed season from the index
-func (si *ShowIndex) IndexedSeason(imdbID string, sNum int) (*Season, error) {
+func (si *ShowIndex) IndexedSeason(imdbID string, sNum int) (*polochon.ShowSeason, error) {
 	si.RLock()
 	defer si.RUnlock()
 
@@ -189,18 +125,23 @@ func (si *ShowIndex) IndexedSeason(imdbID string, sNum int) (*Season, error) {
 	return season, nil
 }
 
-// SeasonPath returns the season path from the index
+// SeasonPath returns the season path derived from its episodes
 func (si *ShowIndex) SeasonPath(imdbID string, sNum int) (string, error) {
 	season, err := si.IndexedSeason(imdbID, sNum)
 	if err != nil {
 		return "", err
 	}
 
-	return season.Path, nil
+	// Derive path from the first episode in the season
+	for _, ep := range season.Episodes {
+		return filepath.Dir(ep.Path), nil
+	}
+
+	return "", ErrNotFound
 }
 
 // IndexedShow returns the indexed show from the index
-func (si *ShowIndex) IndexedShow(imdbID string) (*Show, error) {
+func (si *ShowIndex) IndexedShow(imdbID string) (*polochon.Show, error) {
 	si.RLock()
 	defer si.RUnlock()
 
@@ -219,11 +160,29 @@ func (si *ShowIndex) ShowPath(imdbID string) (string, error) {
 		return "", err
 	}
 
-	return show.Path, nil
+	// Derive the show path from the first episode
+	for _, season := range show.Seasons {
+		for _, ep := range season.Episodes {
+			return filepath.Dir(filepath.Dir(ep.Path)), nil
+		}
+	}
+
+	// Fall back to sidecar file paths when all episodes have been removed
+	for _, f := range []*polochon.File{show.FanartFile, show.BannerFile, show.PosterFile, show.NFOFile} {
+		if f != nil && f.Path != "" {
+			return filepath.Dir(f.Path), nil
+		}
+	}
+
+	return "", ErrNotFound
 }
 
 // Add adds a show episode to the index
 func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
+	if episode.Name == "" {
+		episode.Name = episode.Filename()
+	}
+
 	// Get the parent paths
 	seasonPath := filepath.Dir(episode.Path)
 	showPath := filepath.Dir(seasonPath)
@@ -234,9 +193,19 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 		return err
 	}
 	if !hasShow {
-		// Add a whole new show
+		show := &polochon.Show{
+			ImdbID:  episode.ShowImdbID,
+			Title:   episode.ShowTitle,
+			Seasons: map[int]*polochon.ShowSeason{},
+		}
+		// Populate show sidecar files from disk
+		show.FanartFile = polochon.NewSidecarFile(filepath.Join(showPath, "fanart.jpg"))
+		show.BannerFile = polochon.NewSidecarFile(filepath.Join(showPath, "banner.jpg"))
+		show.PosterFile = polochon.NewSidecarFile(filepath.Join(showPath, "poster.jpg"))
+		show.NFOFile = polochon.NewSidecarFile(filepath.Join(showPath, "tvshow.nfo"))
+
 		si.Lock()
-		si.shows[episode.ShowImdbID] = NewShow(episode.ShowTitle, showPath)
+		si.shows[episode.ShowImdbID] = show
 		si.Unlock()
 	}
 
@@ -246,36 +215,26 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 		return err
 	}
 	if !hasSeason {
-		// Add a whole new season
 		si.Lock()
-		si.shows[episode.ShowImdbID].Seasons[episode.Season] = &Season{
-			Path:     seasonPath,
-			Episodes: map[int]*Episode{},
+		si.shows[episode.ShowImdbID].Seasons[episode.Season] = &polochon.ShowSeason{
+			Season:     episode.Season,
+			ShowImdbID: episode.ShowImdbID,
+			Episodes:   map[int]*polochon.ShowEpisode{},
 		}
 		si.Unlock()
 	}
 
-	// Add the episode
-	e := &Episode{
-		Path:          episode.Path,
-		Filename:      episode.Filename(),
-		Size:          episode.Size,
-		VideoMetadata: episode.VideoMetadata,
-		NFO:           newFile(episode.NfoPath()),
-	}
-
-	for _, s := range episode.Subtitles {
-		e.Subtitles = append(e.Subtitles, NewSubtitle(s))
-	}
+	// Populate sidecar file references on the episode
+	episode.NFOFile = polochon.NewSidecarFile(episode.NfoPath())
 
 	si.Lock()
-	si.shows[episode.ShowImdbID].Seasons[episode.Season].Episodes[episode.Episode] = e
+	si.shows[episode.ShowImdbID].Seasons[episode.Season].Episodes[episode.Episode] = episode
 	si.Unlock()
 
 	return nil
 }
 
-// UpsertSubtitle updates or insert a subtitle
+// UpsertSubtitle updates or inserts a subtitle
 func (si *ShowIndex) UpsertSubtitle(e *polochon.ShowEpisode, s *polochon.Subtitle) error {
 	episode, err := si.Episode(e.ShowImdbID, e.Season, e.Episode)
 	if err != nil {
@@ -283,53 +242,47 @@ func (si *ShowIndex) UpsertSubtitle(e *polochon.ShowEpisode, s *polochon.Subtitl
 	}
 
 	si.Lock()
-	episode.Subtitles = upsertSubtitle(episode.Subtitles, NewSubtitle(s))
+	episode.Subtitles = upsertSubtitle(episode.Subtitles, s)
 	si.Unlock()
 
 	return nil
 }
 
-// IsShowEmpty returns true if the episode is the only episode in the
-// whole show
+// IsShowEmpty returns true if the show has no indexed episodes
 func (si *ShowIndex) IsShowEmpty(imdbID string) (bool, error) {
 	si.RLock()
 	defer si.RUnlock()
 
-	if _, ok := si.shows[imdbID]; !ok {
+	show, ok := si.shows[imdbID]
+	if !ok {
 		return true, nil
 	}
 
-	// Check if there is something in the show index
-	if len(si.shows[imdbID].Seasons) != 0 {
-		return false, nil
-	}
-
-	return true, nil
+	return len(show.Seasons) == 0, nil
 }
 
-// IsSeasonEmpty returns true if the season index is empty
+// IsSeasonEmpty returns true if the season has no indexed episodes
 func (si *ShowIndex) IsSeasonEmpty(imdbID string, season int) (bool, error) {
 	si.RLock()
 	defer si.RUnlock()
 
-	if _, ok := si.shows[imdbID]; !ok {
+	show, ok := si.shows[imdbID]
+	if !ok {
 		return true, nil
 	}
 
-	if _, ok := si.shows[imdbID].Seasons[season]; !ok {
+	s, ok := show.Seasons[season]
+	if !ok {
 		return true, nil
 	}
 
-	// More than one season
-	if len(si.shows[imdbID].Seasons[season].Episodes) != 0 {
-		return false, nil
-	}
-
-	return true, nil
+	return len(s.Episodes) == 0, nil
 }
 
 // RemoveSeason removes the season from the index
 func (si *ShowIndex) RemoveSeason(show *polochon.Show, season int) error {
+	si.Lock()
+	defer si.Unlock()
 	delete(si.shows[show.ImdbID].Seasons, season)
 	return nil
 }
@@ -348,12 +301,10 @@ func (si *ShowIndex) RemoveEpisode(episode *polochon.ShowEpisode) error {
 	sNum := episode.Season
 	eNum := episode.Episode
 
-	// Check if the episode is in the index
 	if _, err := si.Episode(id, sNum, eNum); err != nil {
 		return err
 	}
 
-	// Delete the episode from the index
 	si.Lock()
 	defer si.Unlock()
 	delete(si.shows[id].Seasons[sNum].Episodes, eNum)

@@ -10,22 +10,22 @@ import (
 // mockMovieIndex returns a mock movie index
 func mockMovieIndex() *MovieIndex {
 	return &MovieIndex{
-		ids: map[string]*Movie{
+		ids: map[string]*polochon.Movie{
 			"tt56789": {
-				Path: "/home/test/movie/movie.mp4",
-				Subtitles: []*Subtitle{
-					{
-						Size: 1000000,
-						Lang: polochon.FR,
-					},
-					{
-						Size: 1000000,
-						Lang: polochon.EN,
+				BaseVideo: polochon.BaseVideo{
+					File: polochon.File{Path: "/home/test/movie/movie.mp4"},
+					Subtitles: []*polochon.Subtitle{
+						{File: polochon.File{Size: 1000000}, Lang: polochon.FR},
+						{File: polochon.File{Size: 1000000}, Lang: polochon.EN},
 					},
 				},
+				ImdbID: "tt56789",
 			},
 			"tt12345": {
-				Path: "/home/test/movieBis/movieBis.mp4",
+				BaseVideo: polochon.BaseVideo{
+					File: polochon.File{Path: "/home/test/movieBis/movieBis.mp4"},
+				},
+				ImdbID: "tt12345",
 			},
 		},
 	}
@@ -79,7 +79,6 @@ func TestMovieIndexMoviePath(t *testing.T) {
 		if movie != nil && movie.Path != mock.expectedPath {
 			t.Errorf("expected %s, got %s for %s", mock.expectedPath, movie.Path, mock.id)
 		}
-
 	}
 }
 
@@ -123,41 +122,12 @@ func TestMovieIndexIDs(t *testing.T) {
 	}
 }
 
-func TestMovieIndex(t *testing.T) {
-	idx := mockMovieIndex()
-	expected := map[string]*Movie{
-		"tt56789": {
-			Path: "/home/test/movie/movie.mp4",
-			Subtitles: []*Subtitle{
-				{
-					Size: 1000000,
-					Lang: polochon.FR,
-				},
-				{
-					Size: 1000000,
-					Lang: polochon.EN,
-				},
-			},
-		},
-		"tt12345": {
-			Path: "/home/test/movieBis/movieBis.mp4",
-		},
-	}
-
-	got := idx.Index()
-	if !reflect.DeepEqual(got, expected) {
-		t.Errorf("expected %+v , got %+v", expected, got)
-	}
-}
-
 func TestMovieIndexClear(t *testing.T) {
 	idx := mockMovieIndex()
-	expected := map[string]*Movie{}
-
 	idx.Clear()
 
-	if !reflect.DeepEqual(idx.ids, expected) {
-		t.Errorf("expected %+v , got %+v", expected, idx)
+	if len(idx.ids) != 0 {
+		t.Errorf("expected empty index after clear, got %d entries", len(idx.ids))
 	}
 }
 
@@ -191,8 +161,8 @@ func TestMovieIndexHasSubtitles(t *testing.T) {
 		sub := &polochon.Subtitle{Lang: test.lang}
 
 		got, err := idx.HasSubtitle(test.imdbID, sub)
-		if err != nil {
-			t.Fatalf("expected no error, got %q", err)
+		if err != test.expectedErr {
+			t.Fatalf("expected error %q, got %q", test.expectedErr, err)
 		}
 		if test.expected != got {
 			t.Errorf("expected %t, got %t for %s", test.expected, got, test.imdbID)

@@ -41,6 +41,7 @@ func (fc *FileConfig) IsVideo(filename string) bool {
 type File struct {
 	FileConfig `json:"-"`
 	Path       string `json:"-"`
+	Name       string `json:"name,omitempty"`
 	Size       int64  `json:"size"`
 }
 
@@ -55,7 +56,23 @@ func NewFile(path string) *File {
 
 	return &File{
 		Path: path,
+		Name: filepath.Base(path),
 		Size: size,
+	}
+}
+
+// NewSidecarFile returns a new File representing a sidecar file (fanart, poster, nfo, etc.).
+// Returns nil if the file does not exist on disk.
+func NewSidecarFile(path string) *File {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil
+	}
+
+	return &File{
+		Path: path,
+		Name: filepath.Base(path),
+		Size: info.Size(),
 	}
 }
 

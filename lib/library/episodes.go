@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	polochon "github.com/odwrtw/polochon/lib"
-	index "github.com/odwrtw/polochon/lib/media_index"
 )
 
 // HasShowEpisode returns true if the show is in the store
@@ -146,8 +145,8 @@ func (l *Library) GetEpisode(imdbID string, season, episode int) (*polochon.Show
 	return l.newEpisodeFromPath(e.Path)
 }
 
-// GetIndexedEpisode returns an index Episode
-func (l *Library) GetIndexedEpisode(imdbID string, season, episode int) (*index.Episode, error) {
+// GetIndexedEpisode returns an indexed ShowEpisode
+func (l *Library) GetIndexedEpisode(imdbID string, season, episode int) (*polochon.ShowEpisode, error) {
 	e, err := l.showIndex.Episode(imdbID, season, episode)
 	if err != nil {
 		return nil, err
@@ -164,6 +163,8 @@ func (l *Library) newEpisodeFromPath(path string) (*polochon.ShowEpisode, error)
 	if err := readNFOFile(file.NfoPath(), se); err != nil {
 		return nil, err
 	}
+
+	se.NFOFile = polochon.NewSidecarFile(se.NfoPath())
 
 	l.UpdateSubtitles(se)
 	return se, nil
