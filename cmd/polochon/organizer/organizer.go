@@ -171,7 +171,11 @@ func (o *Organizer) organizeFolder(ctx context.Context, folderPath string) error
 	o.log.Debug("organize folder", "folder_path", folderPath)
 
 	// Walk movies
-	err := filepath.Walk(folderPath, func(filePath string, file os.FileInfo, err error) error {
+	err := filepath.WalkDir(folderPath, func(filePath string, file os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
 		// Nothing to do on dir
 		if file.IsDir() {
 			return nil
