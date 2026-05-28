@@ -47,6 +47,9 @@ var (
 
 // Init implements the module interface
 func (y *YifySubs) Init(p []byte, log *slog.Logger) error {
+	if log == nil {
+		log = slog.Default()
+	}
 	y.log = log.With("module", moduleName)
 	if y.configured {
 		return nil

@@ -59,11 +59,14 @@ type Params struct {
 
 // Init implements the module interface
 func (t *TmDB) Init(p []byte, log *slog.Logger) error {
+	if log == nil {
+		log = slog.Default()
+	}
+	t.log = log.With("module", moduleName)
+
 	if t.configured {
 		return nil
 	}
-
-	t.log = log.With("module", moduleName)
 
 	params := &Params{}
 	if err := yaml.Unmarshal(p, params); err != nil {
@@ -75,8 +78,16 @@ func (t *TmDB) Init(p []byte, log *slog.Logger) error {
 
 // InitWithParams configures the module
 func (t *TmDB) InitWithParams(params *Params) error {
-	if params.APIKey == "" {
+	if t.configured {
+		return nil
+	}
+
+	if params == nil || params.APIKey == "" {
 		return ErrMissingArgument
+	}
+
+	if t.log == nil {
+		t.log = slog.Default().With("module", moduleName)
 	}
 
 	t.client = tmdb.Init(tmdb.Config{APIKey: params.APIKey})

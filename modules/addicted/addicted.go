@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/agnivade/levenshtein"
-	"github.com/odwrtw/addicted"
 	"github.com/goccy/go-yaml"
+	"github.com/odwrtw/addicted"
 
 	polochon "github.com/odwrtw/polochon/lib"
 )
@@ -51,7 +51,11 @@ type addictedProxy struct {
 
 // Init implements the module interface
 func (a *addictedProxy) Init(p []byte, log *slog.Logger) error {
+	if log == nil {
+		log = slog.Default()
+	}
 	a.log = log.With("module", moduleName)
+
 	if a.configured {
 		return nil
 	}
@@ -66,6 +70,14 @@ func (a *addictedProxy) Init(p []byte, log *slog.Logger) error {
 
 // InitWithParams configures the module
 func (a *addictedProxy) InitWithParams(params *Params) error {
+	if a.configured {
+		return nil
+	}
+
+	if a.log == nil {
+		a.log = slog.Default().With("module", moduleName)
+	}
+
 	if params.User == "" || params.Password == "" {
 		return ErrMissingCredentials
 	}

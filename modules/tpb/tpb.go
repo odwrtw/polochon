@@ -53,11 +53,14 @@ type TPB struct {
 
 // Init implements the module interface
 func (t *TPB) Init(p []byte, log *slog.Logger) error {
+	if log == nil {
+		log = slog.Default()
+	}
+	t.log = log.With("module", moduleName)
+
 	if t.configured {
 		return nil
 	}
-
-	t.log = log.With("module", moduleName)
 
 	params := &Params{}
 	if err := yaml.Unmarshal(p, params); err != nil {
@@ -69,6 +72,14 @@ func (t *TPB) Init(p []byte, log *slog.Logger) error {
 
 // InitWithParams configures the module
 func (t *TPB) InitWithParams(params *Params) error {
+	if t.configured {
+		return nil
+	}
+
+	if t.log == nil {
+		t.log = slog.Default().With("module", moduleName)
+	}
+
 	t.Client = tpb.New(params.URLs...)
 	t.MovieUsers = params.MovieUsers
 	t.ShowUsers = params.ShowUsers

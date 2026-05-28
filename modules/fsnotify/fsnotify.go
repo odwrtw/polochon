@@ -43,6 +43,9 @@ func (fs *FsNotify) Status() (polochon.ModuleStatus, error) {
 
 // Init implements the Module interface
 func (fs *FsNotify) Init(_ []byte, log *slog.Logger) error {
+	if log == nil {
+		log = slog.Default()
+	}
 	fs.log = log.With("module", moduleName)
 	return nil
 }

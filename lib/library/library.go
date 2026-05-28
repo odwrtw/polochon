@@ -33,8 +33,13 @@ type Library struct {
 
 // New returns a list of videos
 func New(config *configuration.Config) *Library {
+	log := config.Logger
+	if log == nil {
+		log = slog.Default()
+	}
+
 	return &Library{
-		log:               config.Logger.With("component", "library"),
+		log:               log.With("component", "library"),
 		movieIndex:        index.NewMovieIndex(),
 		showIndex:         index.NewShowIndex(),
 		showConfig:        config.Show,

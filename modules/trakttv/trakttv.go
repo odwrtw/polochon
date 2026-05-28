@@ -50,11 +50,14 @@ type TraktTV struct {
 
 // Init implements the module interface
 func (trakt *TraktTV) Init(p []byte, log *slog.Logger) error {
+	if log == nil {
+		log = slog.Default()
+	}
+	trakt.log = log.With("module", moduleName)
+
 	if trakt.configured {
 		return nil
 	}
-
-	trakt.log = log.With("module", moduleName)
 
 	params := &Params{}
 	if err := yaml.Unmarshal(p, params); err != nil {
@@ -66,6 +69,14 @@ func (trakt *TraktTV) Init(p []byte, log *slog.Logger) error {
 
 // InitWithParams configures the module
 func (trakt *TraktTV) InitWithParams(params *Params) error {
+	if trakt.configured {
+		return nil
+	}
+
+	if trakt.log == nil {
+		trakt.log = slog.Default().With("module", moduleName)
+	}
+
 	trakt.client = trakttv.New(params.ClientID)
 	trakt.fanartClient = fanarttv.New(params.FanartTvAPIKey)
 	trakt.configured = true

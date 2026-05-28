@@ -63,6 +63,9 @@ type Pushover struct {
 
 // Init implements the module interface
 func (p *Pushover) Init(data []byte, log *slog.Logger) error {
+	if log == nil {
+		log = slog.Default()
+	}
 	p.log = log.With("module", moduleName)
 	if p.configured {
 		return nil
