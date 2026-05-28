@@ -54,6 +54,9 @@ type WebHook struct {
 
 // Init implements the module interface
 func (w *WebHook) Init(p []byte, log *slog.Logger) error {
+	if log == nil {
+		log = slog.Default()
+	}
 	w.log = log.With("module", moduleName)
 	if w.configured {
 		return nil
@@ -69,6 +72,14 @@ func (w *WebHook) Init(p []byte, log *slog.Logger) error {
 
 // InitWithParams configures the module
 func (w *WebHook) InitWithParams(params *Params) error {
+	if w.configured {
+		return nil
+	}
+
+	if w.log == nil {
+		w.log = slog.Default().With("module", moduleName)
+	}
+
 	for _, h := range params.Hooks {
 		url, err := template.New("url").Parse(h.URL)
 		if err != nil {

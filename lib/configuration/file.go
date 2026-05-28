@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"errors"
+	"log/slog"
 
 	"github.com/robfig/cron/v3"
 
@@ -56,6 +57,11 @@ type configFile struct {
 }
 
 func loadConfig(cf *configFile, conf *Config) error {
+	log := cf.Logs.logger
+	if log == nil {
+		log = slog.Default()
+	}
+
 	// Load the configs in the module loaders
 	for _, ml := range []*ModuleLoader{
 		&cf.Downloader.ModuleLoader,
@@ -66,7 +72,7 @@ func loadConfig(cf *configFile, conf *Config) error {
 		&cf.Wishlist.ModuleLoader,
 	} {
 		ml.modulesParams = cf.modulesParams
-		if err := ml.load(cf.Logs.logger); err != nil {
+		if err := ml.load(log); err != nil {
 			return err
 		}
 	}
@@ -81,7 +87,7 @@ func loadConfig(cf *configFile, conf *Config) error {
 	}
 
 	conf.Organizer = cf.Organizer
-	conf.Logger = cf.Logs.logger
+	conf.Logger = log
 	conf.Watcher = WatcherConfig{
 		Dir:        cf.Watcher.Dir,
 		FsNotifier: cf.Watcher.fsNotifier,

@@ -56,11 +56,13 @@ type Params struct {
 
 // Init implements the module interface
 func (w *Wishlist) Init(p []byte, log *slog.Logger) error {
+	if log == nil {
+		log = slog.Default()
+	}
+	w.log = log.With("module", moduleName)
 	if w.configured {
 		return nil
 	}
-
-	w.log = log.With("module", moduleName)
 
 	params := &Params{}
 	if err := yaml.Unmarshal(p, params); err != nil {
@@ -72,7 +74,16 @@ func (w *Wishlist) Init(p []byte, log *slog.Logger) error {
 
 // InitWithParams configures the module
 func (w *Wishlist) InitWithParams(params *Params) error {
+	if w.configured {
+		return nil
+	}
+
+	if w.log == nil {
+		w.log = slog.Default().With("module", moduleName)
+	}
+
 	w.Params = params
+	w.configured = true
 	return nil
 }
 
