@@ -56,7 +56,12 @@ func TestGetMovies(t *testing.T) {
 		_, _ = fmt.Fprint(w, `
 			{
 				"tt001": {
+					"imdb_id": "tt001",
 					"title": "title_1",
+					"original_title": "original title_1",
+					"plot": "plot_1",
+					"runtime": 123,
+					"genres": ["Drama"],
 					"quality": "1080p",
 					"release_group": "R1",
 					"audio_codec": "AAC",
@@ -83,8 +88,12 @@ func TestGetMovies(t *testing.T) {
 						Container:    "mkv",
 					},
 				},
-				ImdbID: "tt001",
-				Title:  "title_1",
+				ImdbID:        "tt001",
+				Title:         "title_1",
+				OriginalTitle: "original title_1",
+				Plot:          "plot_1",
+				Runtime:       123,
+				Genres:        []string{"Drama"},
 			}},
 			"tt002": {Movie: &polochon.Movie{
 				ImdbID: "tt002",

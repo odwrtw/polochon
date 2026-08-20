@@ -158,10 +158,10 @@ func TestAddEpisode(t *testing.T) {
 		Path: filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1"),
 		Episodes: map[int]*index.Episode{
 			1: {
-				Path:          filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1/episodeTest.mp4"),
-				Filename:      "episodeTest.mp4",
-				VideoMetadata: episode.VideoMetadata,
-				NFO:           &index.File{Name: "episodeTest.nfo", Size: 742},
+				ShowEpisode: episode,
+				Path:        filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1/episodeTest.mp4"),
+				Filename:    "episodeTest.mp4",
+				NFO:         &index.File{Name: "episodeTest.nfo", Size: 742},
 				Subtitles: []*index.Subtitle{
 					{Lang: polochon.FR, Size: 17},
 					{Lang: polochon.EN, Size: 17},
@@ -172,6 +172,7 @@ func TestAddEpisode(t *testing.T) {
 
 	// Expected indexed show
 	expectedIndexedShow := &index.Show{
+		Show:   show,
 		Path:   filepath.Join(lib.tmpDir, "shows/Show tt12345"),
 		Fanart: &index.File{Name: "fanart.jpg", Size: 11},
 		Banner: &index.File{Name: "banner.jpg", Size: 11},
@@ -180,7 +181,6 @@ func TestAddEpisode(t *testing.T) {
 		Seasons: map[int]*index.Season{
 			1: expectedIndexedSeason,
 		},
-		Title: "Show tt12345",
 	}
 
 	// Expected IDs
@@ -228,10 +228,70 @@ func TestAddEpisode(t *testing.T) {
 		t.Fatalf("expected no error, got %q", err)
 	}
 
-	// Ensure the index is still valid after a rebuild
+	// Rebuilding restores the cached models from the NFO files.
+	rebuiltShow, err := lib.GetShow(episode.ShowImdbID)
+	if err != nil {
+		t.Fatalf("expected no error, got %q", err)
+	}
+	rebuiltEpisode, err := lib.GetEpisode(episode.ShowImdbID, episode.Season, episode.Episode)
+	if err != nil {
+		t.Fatalf("expected no error, got %q", err)
+	}
+	rebuiltEpisode.Show = rebuiltShow
+
+	// Ensure the NFO metadata cache is restored after a rebuild.
 	gotIDs = lib.ShowIDs()
-	if !reflect.DeepEqual(expectedIDs, gotIDs) {
-		t.Fatalf("invalid show ids, expected %+v got %+v", expectedIDs, gotIDs)
+	rebuiltIndexedShow := gotIDs[episode.ShowImdbID]
+	if rebuiltIndexedShow == nil {
+		t.Fatalf("show %q is missing after rebuild", episode.ShowImdbID)
+	}
+	if !reflect.DeepEqual(rebuiltIndexedShow.Show, rebuiltShow) {
+		t.Fatalf("invalid cached show after rebuild, expected %+v got %+v", rebuiltShow, rebuiltIndexedShow.Show)
+	}
+	rebuiltIndexedEpisode := rebuiltIndexedShow.Seasons[episode.Season].Episodes[episode.Episode]
+	if !reflect.DeepEqual(rebuiltIndexedEpisode.ShowEpisode, rebuiltEpisode) {
+		t.Fatalf("invalid cached episode after rebuild, expected %+v got %+v", rebuiltEpisode, rebuiltIndexedEpisode.ShowEpisode)
+	}
+}
+
+func TestAddEpisodeWithCorruptShowNFO(t *testing.T) {
+	lib, err := newMockLibrary()
+	if err != nil {
+		t.Fatalf("create mock library: %q", err)
+	}
+	defer lib.cleanup()
+
+	show, err := lib.mockShow()
+	if err != nil {
+		t.Fatalf("create mock show: %q", err)
+	}
+	show.Episodes = nil
+
+	showDir := filepath.Join(lib.ShowDir, show.Title)
+	if err := os.MkdirAll(showDir, os.ModePerm); err != nil {
+		t.Fatalf("create show directory: %q", err)
+	}
+	if err := os.WriteFile(filepath.Join(showDir, "tvshow.nfo"), []byte("<broken>"), 0o644); err != nil {
+		t.Fatalf("write corrupt show NFO: %q", err)
+	}
+
+	episode, err := lib.mockEpisode(show, "corrupt-nfo-episode.mp4")
+	if err != nil {
+		t.Fatalf("create mock episode: %q", err)
+	}
+	if err := lib.AddShowEpisode(episode); err != nil {
+		t.Fatalf("add episode with corrupt show NFO: %q", err)
+	}
+
+	indexed, err := lib.GetIndexedShow(show.ImdbID)
+	if err != nil {
+		t.Fatalf("get indexed show: %q", err)
+	}
+	if indexed.Show == nil {
+		t.Fatalf("supplied show metadata was not retained: %+v", indexed.Show)
+	}
+	if indexed.ImdbID != show.ImdbID {
+		t.Fatalf("cached show ID = %q, want %q", indexed.ImdbID, show.ImdbID)
 	}
 }
 

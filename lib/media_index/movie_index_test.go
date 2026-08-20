@@ -1,6 +1,7 @@
 package index
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 
@@ -85,7 +86,7 @@ func TestMovieIndexMoviePath(t *testing.T) {
 
 func TestMovieIndexAddAndRemove(t *testing.T) {
 	idx := NewMovieIndex()
-	m := &polochon.Movie{ImdbID: "tt2562232"}
+	m := &polochon.Movie{ImdbID: "tt2562232", OriginalTitle: "Original title", Plot: "Movie plot"}
 	m.Path = "/home/test/movie/movie.mp4"
 
 	if err := idx.Add(m); err != nil {
@@ -99,6 +100,13 @@ func TestMovieIndexAddAndRemove(t *testing.T) {
 	if !inIndex {
 		t.Fatalf("the movie %q should be in the index", m.ImdbID)
 	}
+	cached, err := idx.Movie(m.ImdbID)
+	if err != nil {
+		t.Fatalf("get indexed movie: %q", err)
+	}
+	if cached.Movie == nil || cached.OriginalTitle != "Original title" || cached.Plot != "Movie plot" {
+		t.Fatalf("movie NFO metadata was not cached: %+v", cached.Movie)
+	}
 
 	if err = idx.Remove(m); err != nil {
 		t.Fatalf("expected no error, got %q", err)
@@ -111,6 +119,79 @@ func TestMovieIndexAddAndRemove(t *testing.T) {
 	if inIndex {
 		t.Fatalf("the movie %q should not be in the index", m.ImdbID)
 	}
+}
+
+func TestMovieIndexJSONShape(t *testing.T) {
+	idx := NewMovieIndex()
+	movie := &polochon.Movie{
+		BaseVideo: polochon.BaseVideo{
+			File: polochon.File{
+				Path: "/home/test/movie/movie.mp4",
+				Size: 42,
+			},
+			VideoMetadata: polochon.VideoMetadata{
+				Quality: polochon.Quality1080p,
+			},
+		},
+		ImdbID:        "tt2562232",
+		OriginalTitle: "Original title",
+		Plot:          "Movie plot",
+		Title:         "Movie title",
+		Year:          2001,
+	}
+	if err := idx.Add(movie); err != nil {
+		t.Fatalf("add movie: %q", err)
+	}
+
+	indexed, err := idx.Movie(movie.ImdbID)
+	if err != nil {
+		t.Fatalf("get indexed movie: %q", err)
+	}
+	encoded, err := json.Marshal(indexed)
+	if err != nil {
+		t.Fatalf("marshal indexed movie: %q", err)
+	}
+
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(encoded, &fields); err != nil {
+		t.Fatalf("decode indexed movie JSON: %q", err)
+	}
+
+	expectedFields := map[string]struct{}{
+		"torrents": {}, "imdb_id": {}, "original_title": {}, "plot": {},
+		"rating": {}, "runtime": {}, "sort_title": {}, "tag_line": {},
+		"thumb": {}, "fanart": {}, "tmdb_id": {}, "votes": {}, "genres": {},
+		"date_added": {}, "quality": {}, "release_group": {}, "audio_codec": {},
+		"video_codec": {}, "container": {}, "embedded_subtitles": {},
+		"filename": {}, "title": {}, "year": {}, "size": {}, "subtitles": {},
+		"fanart_file": {}, "thumb_file": {}, "nfo_file": {},
+	}
+	if !reflect.DeepEqual(fieldsToSet(fields), expectedFields) {
+		t.Fatalf("unexpected movie JSON fields: %v", fieldsToSet(fields))
+	}
+
+	for field, expected := range map[string]string{
+		"imdb_id":        `"tt2562232"`,
+		"original_title": `"Original title"`,
+		"plot":           `"Movie plot"`,
+		"title":          `"Movie title"`,
+		"year":           `2001`,
+		"quality":        `"1080p"`,
+		"filename":       `"movie.mp4"`,
+		"size":           `42`,
+	} {
+		if string(fields[field]) != expected {
+			t.Errorf("%s = %s, want %s", field, fields[field], expected)
+		}
+	}
+}
+
+func fieldsToSet(fields map[string]json.RawMessage) map[string]struct{} {
+	set := make(map[string]struct{}, len(fields))
+	for field := range fields {
+		set[field] = struct{}{}
+	}
+	return set
 }
 
 func TestMovieIndexIDs(t *testing.T) {

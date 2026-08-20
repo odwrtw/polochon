@@ -111,12 +111,20 @@ func (s *Server) deleteShow(w http.ResponseWriter, req *http.Request) {
 
 func (s *Server) getShowEpisodeIDDetails(w http.ResponseWriter, req *http.Request) {
 	s.logEntry(req).Info("getting episode details")
-	e := s.getEpisode(w, req)
-	if e == nil {
+	vars := mux.Vars(req)
+
+	season, err := strconv.Atoi(vars["season"])
+	if err != nil {
+		s.renderError(w, req, fmt.Errorf("invalid season or episode"))
+		return
+	}
+	episode, err := strconv.Atoi(vars["episode"])
+	if err != nil {
+		s.renderError(w, req, fmt.Errorf("invalid season or episode"))
 		return
 	}
 
-	idxEpisode, err := s.library.GetIndexedEpisode(e.ShowImdbID, e.Season, e.Episode)
+	idxEpisode, err := s.library.GetIndexedEpisode(vars["id"], season, episode)
 	if err != nil {
 		s.renderError(w, req, err)
 		return

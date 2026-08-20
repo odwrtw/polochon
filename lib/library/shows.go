@@ -62,6 +62,12 @@ func (l *Library) addShow(ep *polochon.ShowEpisode) error {
 	dir := l.getShowDir(ep)
 	nfoPath := l.showNFOPath(dir)
 	if exists(nfoPath) {
+		s, err := l.newShowFromPath(nfoPath)
+		if err != nil {
+			l.log.Warn("failed to read show NFO, continuing with supplied show", "path", nfoPath, "error", err)
+			return nil
+		}
+		ep.Show = s
 		return nil
 	}
 
@@ -72,6 +78,7 @@ func (l *Library) addShow(ep *polochon.ShowEpisode) error {
 			return err
 		}
 	}
+	ep.Show = s
 
 	// Create show dir if necessary
 	if !exists(dir) {
@@ -120,7 +127,7 @@ func (l *Library) addShow(ep *polochon.ShowEpisode) error {
 
 // newShowFromPath returns a new Show from its path
 func (l *Library) newShowFromPath(path string) (*polochon.Show, error) {
-	s := &polochon.Show{}
+	s := polochon.NewShow(l.showConfig)
 	if err := readNFOFile(path, s); err != nil {
 		return nil, err
 	}

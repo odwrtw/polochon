@@ -16,11 +16,12 @@ type MovieIndex struct {
 
 // Movie represents a Movie in the index
 type Movie struct {
-	polochon.VideoMetadata
+	// Movie holds the decoded NFO metadata supplied by the library. The media
+	// index only caches it; NFO parsing remains the library's responsibility.
+	*polochon.Movie
+
 	Path      string      `json:"-"`
 	Filename  string      `json:"filename"`
-	Title     string      `json:"title"`
-	Year      int         `json:"year"`
 	Size      int64       `json:"size"`
 	Subtitles []*Subtitle `json:"subtitles"`
 	Fanart    *File       `json:"fanart_file"`
@@ -59,14 +60,13 @@ func (mi *MovieIndex) Movie(imdbID string) (*Movie, error) {
 
 // Add adds a movie to an index
 func (mi *MovieIndex) Add(movie *polochon.Movie) error {
+	cached := *movie
 	m := &Movie{
-		Path:          movie.Path,
-		Filename:      movie.Filename(),
-		Title:         movie.Title,
-		Year:          movie.Year,
-		Size:          movie.Size,
-		VideoMetadata: movie.VideoMetadata,
-		Subtitles:     []*Subtitle{},
+		Movie:     &cached,
+		Path:      movie.Path,
+		Filename:  movie.Filename(),
+		Size:      movie.Size,
+		Subtitles: []*Subtitle{},
 	}
 
 	for _, s := range movie.Subtitles {

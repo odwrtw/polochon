@@ -480,3 +480,108 @@ func TestShowIndexAddSubtitle(t *testing.T) {
 		}
 	}
 }
+
+func TestShowIndexAddNormalizesShowIDAndTitle(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		nfoShow *polochon.Show // embedded show metadata supplied with the episode
+	}{
+		{name: "supplied show metadata", nfoShow: &polochon.Show{ImdbID: "tt-from-nfo"}},
+		{name: "nil show fallback", nfoShow: nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			idx := NewShowIndex()
+			episode := &polochon.ShowEpisode{
+				BaseVideo:  polochon.BaseVideo{File: polochon.File{Path: "/home/shows/Show title/Season 1/episode.mp4"}},
+				ShowImdbID: "tt-authoritative",
+				ShowTitle:  "Fallback title",
+				Season:     1,
+				Episode:    1,
+				Show:       tc.nfoShow,
+			}
+
+			if err := idx.Add(episode); err != nil {
+				t.Fatalf("add episode: %q", err)
+			}
+
+			cached, err := idx.IndexedShow(episode.ShowImdbID)
+			if err != nil {
+				t.Fatalf("get indexed show: %q", err)
+			}
+			if cached.Show == nil {
+				t.Fatalf("show ID was not normalized: %+v", cached.Show)
+			}
+			if cached.ImdbID != episode.ShowImdbID {
+				t.Fatalf("cached show ID = %q, want %q", cached.ImdbID, episode.ShowImdbID)
+			}
+			if cached.Title != episode.ShowTitle {
+				t.Fatalf("show title = %q, want %q", cached.Title, episode.ShowTitle)
+			}
+			if tc.nfoShow != nil {
+				if _, err := idx.IndexedShow("tt-from-nfo"); err != ErrNotFound {
+					t.Fatalf("stale NFO ID should not be indexed, got error %q", err)
+				}
+			}
+
+			cachedEpisode, err := idx.Episode(episode.ShowImdbID, episode.Season, episode.Episode)
+			if err != nil {
+				t.Fatalf("get indexed episode: %q", err)
+			}
+			if cachedEpisode.ShowEpisode == nil {
+				t.Fatalf("episode show ID was not normalized: %+v", cachedEpisode.ShowEpisode)
+			}
+			// The cached episode's embedded show is only non-nil when NFO metadata
+			// was supplied with the episode.
+			if tc.nfoShow != nil && (cachedEpisode.Show == nil || cachedEpisode.Show.ImdbID != episode.ShowImdbID) {
+				t.Fatalf("episode show ID = %+v, want %q", cachedEpisode.Show, episode.ShowImdbID)
+			}
+		})
+	}
+}
+
+func TestShowIndexAddCachesEpisodeMetadata(t *testing.T) {
+	idx := NewShowIndex()
+	episode := &polochon.ShowEpisode{
+		BaseVideo: polochon.BaseVideo{
+			File: polochon.File{Path: "/home/shows/Show title/Season 1/episode.mp4", Size: 1234},
+			VideoMetadata: polochon.VideoMetadata{
+				Quality:      polochon.Quality1080p,
+				ReleaseGroup: "R1",
+				AudioCodec:   "AAC",
+				VideoCodec:   "H.264",
+				Container:    "mkv",
+			},
+		},
+		ShowImdbID:    "tt12345",
+		ShowTitle:     "Show title",
+		Season:        1,
+		Episode:       1,
+		Title:         "Episode title",
+		Plot:          "Episode plot",
+		Runtime:       42,
+		EpisodeImdbID: "tt-episode",
+	}
+	if err := idx.Add(episode); err != nil {
+		t.Fatalf("add episode: %q", err)
+	}
+
+	cached, err := idx.Episode(episode.ShowImdbID, episode.Season, episode.Episode)
+	if err != nil {
+		t.Fatalf("get indexed episode: %q", err)
+	}
+	if cached.ShowEpisode == nil {
+		t.Fatal("episode metadata was not cached")
+	}
+	if cached.Quality != polochon.Quality1080p || cached.ReleaseGroup != "R1" ||
+		cached.AudioCodec != "AAC" || cached.VideoCodec != "H.264" || cached.Container != "mkv" {
+		t.Fatalf("episode video metadata was not cached: quality=%q release_group=%q audio=%q video=%q container=%q",
+			cached.Quality, cached.ReleaseGroup, cached.AudioCodec, cached.VideoCodec, cached.Container)
+	}
+	if cached.Title != "Episode title" || cached.Plot != "Episode plot" ||
+		cached.Runtime != 42 || cached.EpisodeImdbID != "tt-episode" {
+		t.Fatalf("episode NFO metadata was not cached: %+v", cached.ShowEpisode)
+	}
+	if cached.Path != episode.Path || cached.Filename != "episode.mp4" || cached.Size != 1234 {
+		t.Fatalf("episode index file fields wrong: path=%q filename=%q size=%d", cached.Path, cached.Filename, cached.Size)
+	}
+}

@@ -16,6 +16,11 @@ var showByIDsResponse = `
 {
 	"tt4295140": {
 		"title": "Chef's table",
+		"rating": 9.5,
+		"plot": "A show plot",
+		"tvdb_id": 123,
+		"year": 2015,
+		"first_aired": "2015-01-01T00:00:00Z",
 		"fanart_file": {
 		  "name": "fanart.jpg",
 		  "size": 111
@@ -35,6 +40,14 @@ var showByIDsResponse = `
 		"seasons": {
 			"01": {
 				"01": {
+					"title": "Episode title",
+					"show_title": "Chef's table",
+					"tvdb_id": 456,
+					"aired": "2015-01-01",
+					"plot": "Episode plot",
+					"runtime": 42,
+					"rating": 8.5,
+					"imdb_id": "tt1234567",
 					"quality": "720p",
 					"release_group": "R1",
 					"audio_codec": "AAC",
@@ -94,17 +107,30 @@ func TestGetShows(t *testing.T) {
 				Container:    "mkv",
 			},
 		},
-		ShowImdbID: "tt4295140",
-		Season:     1,
-		Episode:    1,
+		ShowImdbID:    "tt4295140",
+		Season:        1,
+		Episode:       1,
+		Title:         "Episode title",
+		ShowTitle:     "Chef's table",
+		TvdbID:        456,
+		Aired:         "2015-01-01",
+		Plot:          "Episode plot",
+		Runtime:       42,
+		Rating:        8.5,
+		EpisodeImdbID: "tt1234567",
 	}
 
 	expected := &ShowCollection{
 		shows: map[string]*Show{
 			"tt4295140": {
 				Show: &polochon.Show{
-					ImdbID: "tt4295140",
-					Title:  "Chef's table",
+					ImdbID:     "tt4295140",
+					Title:      "Chef's table",
+					Rating:     9.5,
+					Plot:       "A show plot",
+					TvdbID:     123,
+					Year:       2015,
+					FirstAired: func() *time.Time { d := time.Date(2015, time.January, 1, 0, 0, 0, 0, time.UTC); return &d }(),
 				},
 				Fanart: &File{File: &index.File{Name: "fanart.jpg", Size: 111}},
 				Banner: &File{File: &index.File{Name: "banner.jpg", Size: 222}},

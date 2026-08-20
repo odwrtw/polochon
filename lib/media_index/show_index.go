@@ -16,10 +16,15 @@ type ShowIndex struct {
 }
 
 // Show represents an indexed show
+//
+// Title and the rest of the show metadata are provided by the embedded
+// *polochon.Show; the media index only caches it, so NFO parsing remains the
+// library's responsibility.
 type Show struct {
+	*polochon.Show
+
 	Path    string          `json:"-"`
 	Seasons map[int]*Season `json:"-"`
-	Title   string          `json:"title"`
 
 	Fanart *File `json:"fanart_file"`
 	Banner *File `json:"banner_file"`
@@ -27,10 +32,20 @@ type Show struct {
 	NFO    *File `json:"nfo_file"`
 }
 
-// NewShow returns a new show
-func NewShow(title, path string) *Show {
+// NewShow returns a new show.
+func NewShow(show *polochon.Show, path string) *Show {
+	var cached *polochon.Show
+	if show != nil {
+		cachedShow := *show
+		cached = &cachedShow
+	} else {
+		// Ensure every indexed show has a non-nil embedded domain show so that
+		// the fallback title and ID set during Add are always available.
+		cached = &polochon.Show{}
+	}
+
 	s := &Show{
-		Title:   title,
+		Show:    cached,
 		Path:    path,
 		Seasons: map[int]*Season{},
 	}
@@ -57,8 +72,13 @@ type Season struct {
 }
 
 // Episode represents an indexed episode
+//
+// The embedded *polochon.ShowEpisode provides the video metadata and all
+// other episode metadata. The media index only caches it and adds the
+// index-specific file, subtitle, and NFO fields below.
 type Episode struct {
-	polochon.VideoMetadata
+	*polochon.ShowEpisode
+
 	Path      string      `json:"-"`
 	Filename  string      `json:"filename"`
 	Size      int64       `json:"size"`
@@ -222,23 +242,41 @@ func (si *ShowIndex) ShowPath(imdbID string) (string, error) {
 	return show.Path, nil
 }
 
-// Add adds a show episode to the index
+func cloneShowWithID(show *polochon.Show, imdbID string) *polochon.Show {
+	if show == nil {
+		return nil
+	}
+
+	cached := *show
+	cached.ImdbID = imdbID
+	return &cached
+}
+
+// Add adds a show episode to the index.
 func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 	// Get the parent paths
 	seasonPath := filepath.Dir(episode.Path)
 	showPath := filepath.Dir(seasonPath)
+	cachedShow := cloneShowWithID(episode.Show, episode.ShowImdbID)
 
-	// Check if the show is in the index
-	hasShow, err := si.HasShow(episode.ShowImdbID)
-	if err != nil {
-		return err
+	// Ensure the show exists and its embedded domain metadata carries the
+	// authoritative ID and fallback title under one write lock.
+	si.Lock()
+	indexedShow, ok := si.shows[episode.ShowImdbID]
+	if !ok {
+		indexedShow = NewShow(cachedShow, showPath)
+		si.shows[episode.ShowImdbID] = indexedShow
 	}
-	if !hasShow {
-		// Add a whole new show
-		si.Lock()
-		si.shows[episode.ShowImdbID] = NewShow(episode.ShowTitle, showPath)
-		si.Unlock()
+	if indexedShow.Show == nil {
+		indexedShow.Show = &polochon.Show{}
 	}
+	if indexedShow.ImdbID == "" {
+		indexedShow.ImdbID = episode.ShowImdbID
+	}
+	if indexedShow.Title == "" && episode.ShowTitle != "" {
+		indexedShow.Title = episode.ShowTitle
+	}
+	si.Unlock()
 
 	// Check if the season is in the index
 	hasSeason, err := si.HasSeason(episode.ShowImdbID, episode.Season)
@@ -256,12 +294,14 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 	}
 
 	// Add the episode
+	cached := *episode
+	cached.Show = cachedShow
 	e := &Episode{
-		Path:          episode.Path,
-		Filename:      episode.Filename(),
-		Size:          episode.Size,
-		VideoMetadata: episode.VideoMetadata,
-		NFO:           newFile(episode.NfoPath()),
+		ShowEpisode: &cached,
+		Path:        episode.Path,
+		Filename:    episode.Filename(),
+		Size:        episode.Size,
+		NFO:         newFile(episode.NfoPath()),
 	}
 
 	for _, s := range episode.Subtitles {
