@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	polochon "github.com/odwrtw/polochon/lib"
 )
 
 // RebuildIndex rebuilds both the movie and show index
@@ -142,8 +144,7 @@ func (l *Library) buildShowIndex() error {
 			l.log.Error("failed to read tv show NFO", "error", err)
 			continue
 		}
-
-		if err := l.buildFromShowDir(show.ImdbID, showDir); err != nil {
+		if err := l.buildFromShowDir(show, showDir); err != nil {
 			l.log.Error("failed to build show index entry", "dir", d, "error", err)
 		}
 	}
@@ -151,7 +152,7 @@ func (l *Library) buildShowIndex() error {
 	return nil
 }
 
-func (l *Library) buildFromShowDir(imdbID, showDir string) error {
+func (l *Library) buildFromShowDir(show *polochon.Show, showDir string) error {
 	dir, err := os.Open(showDir)
 	if err != nil {
 		return fmt.Errorf("failed to read movie dir %w", err)
@@ -169,7 +170,7 @@ func (l *Library) buildFromShowDir(imdbID, showDir string) error {
 		}
 
 		seasonDir := filepath.Join(showDir, file)
-		if err := l.buildFromShowSeasonDir(imdbID, seasonDir); err != nil {
+		if err := l.buildFromShowSeasonDir(show, seasonDir); err != nil {
 			l.log.Error("failed to build show season index entry", "path", seasonDir, "error", err)
 			continue
 		}
@@ -178,7 +179,7 @@ func (l *Library) buildFromShowDir(imdbID, showDir string) error {
 	return nil
 }
 
-func (l *Library) buildFromShowSeasonDir(imdbID, seasonDir string) error {
+func (l *Library) buildFromShowSeasonDir(show *polochon.Show, seasonDir string) error {
 	dir, err := os.Open(seasonDir)
 	if err != nil {
 		return fmt.Errorf("failed to read movie dir %w", err)
@@ -203,7 +204,8 @@ func (l *Library) buildFromShowSeasonDir(imdbID, seasonDir string) error {
 			continue
 		}
 
-		episode.ShowImdbID = imdbID
+		episode.ShowImdbID = show.ImdbID
+		episode.Show = show
 		episode.ShowConfig = l.showConfig
 		if err := l.showIndex.Add(episode); err != nil {
 			l.log.Error("failed to add episode to the library", "error", err)

@@ -34,12 +34,8 @@ func (s *Server) getMovie(w http.ResponseWriter, req *http.Request) *polochon.Mo
 func (s *Server) getMovieDetails(w http.ResponseWriter, req *http.Request) {
 	s.logEntry(req).Info("getting movie details")
 
-	m := s.getMovie(w, req)
-	if m == nil {
-		return
-	}
-
-	idxMovie, err := s.library.GetIndexedMovie(m.ImdbID)
+	id := mux.Vars(req)["id"]
+	idxMovie, err := s.library.GetIndexedMovie(id)
 	if err != nil {
 		s.renderError(w, req, err)
 		return

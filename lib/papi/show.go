@@ -64,16 +64,22 @@ func extractSeasons(imdbID string, input map[string]map[string]*index.Episode) (
 				return nil, err
 			}
 
-			pe := &polochon.ShowEpisode{
-				ShowImdbID: imdbID,
-				Episode:    en,
-				Season:     sn,
+			// Copy the cached embedded episode metadata. The video metadata and
+			// NFO-derived fields live on the embedded ShowEpisode; only the
+			// API navigation fields and reconstructed file information are
+			// overridden below.
+			pe := &polochon.ShowEpisode{}
+			if e.ShowEpisode != nil {
+				cached := *e.ShowEpisode
+				pe = &cached
 			}
+			pe.ShowImdbID = imdbID
+			pe.Episode = en
+			pe.Season = sn
 			pe.SetFile(polochon.File{
 				Path: e.Filename,
 				Size: e.Size,
 			})
-			pe.SetMetadata(&e.VideoMetadata)
 
 			subs := []*Subtitle{}
 			for _, s := range e.Subtitles {
