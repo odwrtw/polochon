@@ -29,7 +29,7 @@ type episodeFields struct {
 	Premiered     string  `xml:"premiered"`
 	Plot          string  `xml:"plot"`
 	Runtime       int     `xml:"runtime"`
-	Thumb         string  `xml:"thumb"`
+	ThumbURL      string  `xml:"thumb"`
 	Rating        float32 `xml:"rating"`
 	ShowImdbID    string  `xml:"showimdbid"`
 	ShowTvdbID    int     `xml:"showtvdbid"`
@@ -53,7 +53,7 @@ func (e *Episode) MarshalXML(enc *xml.Encoder, start xml.StartElement) error {
 		Premiered:     e.Aired,
 		Plot:          e.Plot,
 		Runtime:       e.Runtime,
-		Thumb:         e.Thumb,
+		ThumbURL:      e.ThumbURL,
 		Rating:        e.Rating,
 		ShowImdbID:    e.ShowImdbID,
 		ShowTvdbID:    e.ShowTvdbID,
@@ -83,7 +83,7 @@ func (e *Episode) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	e.Aired = nfo.Aired
 	e.Plot = nfo.Plot
 	e.Runtime = nfo.Runtime
-	e.Thumb = nfo.Thumb
+	e.ThumbURL = nfo.ThumbURL
 	e.Rating = nfo.Rating
 	e.ShowImdbID = nfo.ShowImdbID
 	e.ShowTvdbID = nfo.ShowTvdbID

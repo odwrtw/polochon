@@ -12,16 +12,16 @@ import (
 type Show struct {
 	*polochon.Show
 
-	Fanart *File `json:"fanart_file"`
-	Banner *File `json:"banner_file"`
-	Poster *File `json:"poster_file"`
-	NFO    *File `json:"nfo_file"`
+	FanartFile *File `json:"fanart_file"`
+	BannerFile *File `json:"banner_file"`
+	PosterFile *File `json:"poster_file"`
+	NFOFile    *File `json:"nfo_file"`
 
 	Seasons map[int]*Season `json:"-"`
 }
 
 func (s *Show) linkFiles() {
-	for _, file := range []*File{s.Fanart, s.Banner, s.NFO, s.Poster} {
+	for _, file := range []*File{s.FanartFile, s.BannerFile, s.NFOFile, s.PosterFile} {
 		if file == nil {
 			continue
 		}
@@ -103,7 +103,7 @@ func extractSeasons(imdbID string, input map[string]map[string]*index.Episode) (
 			}
 
 			s.Episodes[en] = newEpisode
-			newEpisode.NFO = NewFile(e.NFO, newEpisode)
+			newEpisode.NFOFile = NewFile(e.NFOFile, newEpisode)
 		}
 
 		ret[sn] = s

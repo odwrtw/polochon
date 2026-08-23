@@ -162,8 +162,8 @@ func TestGetMovie(t *testing.T) {
 		Votes:         4721,
 		Rating:        7.3,
 		Runtime:       120,
-		Thumb:         "https://image.tmdb.org/t/p/original/kqjL17yufvn9OVLyXYpvtyrFfak.jpg",
-		Fanart:        "https://image.tmdb.org/t/p/original/tbhdm8UJAb4ViCTsulYFL3lxMCd.jpg",
+		ThumbURL:      "https://image.tmdb.org/t/p/original/kqjL17yufvn9OVLyXYpvtyrFfak.jpg",
+		FanartURL:     "https://image.tmdb.org/t/p/original/tbhdm8UJAb4ViCTsulYFL3lxMCd.jpg",
 		Genres:        []string{"Action", "Adventure", "Sci-Fi"},
 	}}
 

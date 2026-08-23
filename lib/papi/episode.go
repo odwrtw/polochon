@@ -10,7 +10,7 @@ import (
 type Episode struct {
 	*polochon.ShowEpisode
 
-	NFO       *File       `json:"nfo_file"`
+	NFOFile   *File       `json:"nfo_file"`
 	Subtitles []*Subtitle `json:"subtitles"`
 }
 

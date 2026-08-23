@@ -42,7 +42,7 @@ func (pfs *polochonfs) updateMovies() {
 		}
 
 		pfs.createSubtitlesNodes(movieDirNode, m.Path, m.Subtitles, m.DateAdded)
-		pfs.createFilesNodes(movieDirNode, []*papi.File{m.Fanart, m.Thumb, m.NFO}, m.DateAdded)
+		pfs.createFilesNodes(movieDirNode, []*papi.File{m.FanartFile, m.ThumbFile, m.NFOFile}, m.DateAdded)
 	}
 
 	movieRootDir.clear()

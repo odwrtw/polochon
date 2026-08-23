@@ -93,7 +93,7 @@ func (l *Library) addShow(ep *polochon.ShowEpisode) error {
 	}
 
 	// Download show images
-	if s.Fanart == "" || s.Banner == "" || s.Poster == "" {
+	if s.FanartURL == "" || s.BannerURL == "" || s.PosterURL == "" {
 		return ErrMissingShowImageURL
 	}
 
@@ -103,15 +103,15 @@ func (l *Library) addShow(ep *polochon.ShowEpisode) error {
 		name string
 	}{
 		{
-			url:  s.Fanart,
+			url:  s.FanartURL,
 			name: "fanart.jpg",
 		},
 		{
-			url:  s.Poster,
+			url:  s.PosterURL,
 			name: "poster.jpg",
 		},
 		{
-			url:  s.Banner,
+			url:  s.BannerURL,
 			name: "banner.jpg",
 		},
 	} {

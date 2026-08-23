@@ -5,9 +5,9 @@ type ShowSeason struct {
 	ShowConfig `json:"-"`
 	ShowImdbID string `json:"show_imdb_id"`
 	Season     int    `json:"season"`
-	Banner     string `json:"-"`
-	Fanart     string `json:"-"`
-	Poster     string `json:"-"`
+	BannerURL  string `json:"-"`
+	FanartURL  string `json:"-"`
+	PosterURL  string `json:"-"`
 }
 
 // NewShowSeason returns a new show season

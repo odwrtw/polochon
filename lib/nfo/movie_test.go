@@ -25,8 +25,8 @@ func mockMovie() *polochon.Movie {
 	m.Runtime = 119
 	m.SortTitle = "Birdman"
 	m.Tagline = "or (The Unexpected Virtue of Ignorance)"
-	m.Thumb = "https://image.tmdb.org/t/p/original/rSZs93P0LLxqlVEbI001UKoeCQC.jpg"
-	m.Fanart = "https://image.tmdb.org/t/p/original/AsJVim0Hk3KbQPbfjyijfjqmaoZ.jpg"
+	m.ThumbURL = "https://image.tmdb.org/t/p/original/rSZs93P0LLxqlVEbI001UKoeCQC.jpg"
+	m.FanartURL = "https://image.tmdb.org/t/p/original/AsJVim0Hk3KbQPbfjyijfjqmaoZ.jpg"
 	m.Title = "Birdman"
 	m.TmdbID = 194662
 	m.Votes = 747

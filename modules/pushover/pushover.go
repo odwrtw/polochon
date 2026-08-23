@@ -123,8 +123,8 @@ func (p *Pushover) notifyMovie(ctx context.Context, movie *polochon.Movie) error
 		URLTitle: "Open on imdb",
 	}
 
-	if movie.Thumb != "" {
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, movie.Thumb, nil)
+	if movie.ThumbURL != "" {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, movie.ThumbURL, nil)
 		if err != nil {
 			return err
 		}

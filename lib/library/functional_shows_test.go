@@ -25,7 +25,7 @@ func (m *mockLibrary) mockEpisode(s *polochon.Show, name string) (*polochon.Show
 
 	e := polochon.NewShowEpisode(m.showConfig)
 	e.Path = filepath.Join(m.tmpDir, "downloads", name)
-	e.Thumb = m.httpServer.URL
+	e.ThumbURL = m.httpServer.URL
 	e.Show = s
 
 	if err := polochon.GetDetails(context.Background(), e, slog.New(slog.NewTextHandler(io.Discard, nil))); err != nil {
@@ -45,9 +45,9 @@ func (m *mockLibrary) mockShow() (*polochon.Show, error) {
 	s := polochon.NewShow(m.showConfig)
 
 	// Set the images URLs
-	s.Banner = m.httpServer.URL
-	s.Fanart = m.httpServer.URL
-	s.Poster = m.httpServer.URL
+	s.BannerURL = m.httpServer.URL
+	s.FanartURL = m.httpServer.URL
+	s.PosterURL = m.httpServer.URL
 	s.ImdbID = "tt12345"
 
 	if err := polochon.GetDetails(context.Background(), s, slog.New(slog.NewTextHandler(io.Discard, nil))); err != nil {
@@ -161,7 +161,7 @@ func TestAddEpisode(t *testing.T) {
 				ShowEpisode: episode,
 				Path:        filepath.Join(lib.tmpDir, "shows/Show tt12345/Season 1/episodeTest.mp4"),
 				Filename:    "episodeTest.mp4",
-				NFO:         &index.File{Name: "episodeTest.nfo", Size: 742},
+				NFOFile:     &index.File{Name: "episodeTest.nfo", Size: 742},
 				Subtitles: []*index.Subtitle{
 					{Lang: polochon.FR, Size: 17},
 					{Lang: polochon.EN, Size: 17},
@@ -172,12 +172,12 @@ func TestAddEpisode(t *testing.T) {
 
 	// Expected indexed show
 	expectedIndexedShow := &index.Show{
-		Show:   show,
-		Path:   filepath.Join(lib.tmpDir, "shows/Show tt12345"),
-		Fanart: &index.File{Name: "fanart.jpg", Size: 11},
-		Banner: &index.File{Name: "banner.jpg", Size: 11},
-		Poster: &index.File{Name: "poster.jpg", Size: 11},
-		NFO:    &index.File{Name: "tvshow.nfo", Size: 349},
+		Show:       show,
+		Path:       filepath.Join(lib.tmpDir, "shows/Show tt12345"),
+		FanartFile: &index.File{Name: "fanart.jpg", Size: 11},
+		BannerFile: &index.File{Name: "banner.jpg", Size: 11},
+		PosterFile: &index.File{Name: "poster.jpg", Size: 11},
+		NFOFile:    &index.File{Name: "tvshow.nfo", Size: 349},
 		Seasons: map[int]*index.Season{
 			1: expectedIndexedSeason,
 		},
@@ -321,9 +321,9 @@ func testShow(t *testing.T, episode *polochon.ShowEpisode, lib *mockLibrary) {
 	}
 
 	// The images URL are not stored in the NFO, maybe they should...
-	showFromLib.Banner = lib.httpServer.URL
-	showFromLib.Fanart = lib.httpServer.URL
-	showFromLib.Poster = lib.httpServer.URL
+	showFromLib.BannerURL = lib.httpServer.URL
+	showFromLib.FanartURL = lib.httpServer.URL
+	showFromLib.PosterURL = lib.httpServer.URL
 
 	if !reflect.DeepEqual(episode.Show, showFromLib) {
 		t.Errorf("invalid show from lib, expected %+v got %+v", episode.Show, showFromLib)

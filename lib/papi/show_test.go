@@ -132,10 +132,10 @@ func TestGetShows(t *testing.T) {
 					Year:       2015,
 					FirstAired: func() *time.Time { d := time.Date(2015, time.January, 1, 0, 0, 0, 0, time.UTC); return &d }(),
 				},
-				Fanart: &File{File: &index.File{Name: "fanart.jpg", Size: 111}},
-				Banner: &File{File: &index.File{Name: "banner.jpg", Size: 222}},
-				Poster: &File{File: &index.File{Name: "poster.jpg", Size: 333}},
-				NFO:    &File{File: &index.File{Name: "tvshow.nfo", Size: 444}},
+				FanartFile: &File{File: &index.File{Name: "fanart.jpg", Size: 111}},
+				BannerFile: &File{File: &index.File{Name: "banner.jpg", Size: 222}},
+				PosterFile: &File{File: &index.File{Name: "poster.jpg", Size: 333}},
+				NFOFile:    &File{File: &index.File{Name: "tvshow.nfo", Size: 444}},
 				Seasons: map[int]*Season{
 					1: {
 						ShowImdbID: "tt4295140",
@@ -143,7 +143,7 @@ func TestGetShows(t *testing.T) {
 						Episodes: map[int]*Episode{
 							1: {
 								ShowEpisode: expectedShowEpisode,
-								NFO: &File{
+								NFOFile: &File{
 									File: &index.File{
 										Name: "Chefs.table.S01E01.nfo",
 										Size: 555,
@@ -195,12 +195,12 @@ func TestGetShows(t *testing.T) {
 
 	// Files hacks
 	show := expected.shows["tt4295140"]
-	show.Banner.resource = show
-	show.Poster.resource = show
-	show.Fanart.resource = show
-	show.NFO.resource = show
+	show.BannerFile.resource = show
+	show.PosterFile.resource = show
+	show.FanartFile.resource = show
+	show.NFOFile.resource = show
 	episode := show.Seasons[1].Episodes[1]
-	episode.NFO.resource = episode
+	episode.NFOFile.resource = episode
 
 	c, err := New(ts.URL)
 	if err != nil {

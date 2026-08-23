@@ -20,13 +20,13 @@ type Movie struct {
 	// index only caches it; NFO parsing remains the library's responsibility.
 	*polochon.Movie
 
-	Path      string      `json:"-"`
-	Filename  string      `json:"filename"`
-	Size      int64       `json:"size"`
-	Subtitles []*Subtitle `json:"subtitles"`
-	Fanart    *File       `json:"fanart_file"`
-	Thumb     *File       `json:"thumb_file"`
-	NFO       *File       `json:"nfo_file"`
+	Path       string      `json:"-"`
+	Filename   string      `json:"filename"`
+	Size       int64       `json:"size"`
+	Subtitles  []*Subtitle `json:"subtitles"`
+	FanartFile *File       `json:"fanart_file"`
+	ThumbFile  *File       `json:"thumb_file"`
+	NFOFile    *File       `json:"nfo_file"`
 }
 
 // NewMovieIndex returns a new movie index
@@ -77,9 +77,9 @@ func (mi *MovieIndex) Add(movie *polochon.Movie) error {
 		path string
 		file **File
 	}{
-		{path: movie.MovieFanartPath(), file: &m.Fanart},
-		{path: movie.MovieThumbPath(), file: &m.Thumb},
-		{path: movie.NfoPath(), file: &m.NFO},
+		{path: movie.MovieFanartPath(), file: &m.FanartFile},
+		{path: movie.MovieThumbPath(), file: &m.ThumbFile},
+		{path: movie.NfoPath(), file: &m.NFOFile},
 	} {
 		*e.file = newFile(e.path)
 	}

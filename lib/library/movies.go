@@ -119,7 +119,7 @@ func (l *Library) AddMovie(movie *polochon.Movie) error {
 		return err
 	}
 
-	if movie.Fanart == "" || movie.Thumb == "" {
+	if movie.FanartURL == "" || movie.ThumbURL == "" {
 		return ErrMissingMovieImageURL
 	}
 
@@ -131,12 +131,12 @@ func (l *Library) AddMovie(movie *polochon.Movie) error {
 	}{
 		{
 			name:     "fanart",
-			url:      movie.Fanart,
+			url:      movie.FanartURL,
 			savePath: movie.MovieFanartPath(),
 		},
 		{
 			name:     "thumb",
-			url:      movie.Thumb,
+			url:      movie.ThumbURL,
 			savePath: movie.MovieThumbPath(),
 		},
 	} {
