@@ -10,7 +10,7 @@ type VideoMetadata struct {
 	AudioCodec        string     `json:"audio_codec"`
 	VideoCodec        string     `json:"video_codec"`
 	Container         string     `json:"container"`
-	EmbeddedSubtitles []Language `json:"embedded_subtitles"`
+	EmbeddedSubtitles []Language `json:"-"`
 }
 
 // Update updates the metadata with new values
