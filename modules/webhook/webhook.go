@@ -63,7 +63,7 @@ func (w *WebHook) Init(p []byte, log *slog.Logger) error {
 	}
 
 	params := &Params{}
-	if err := yaml.Unmarshal(p, &params); err != nil {
+	if err := yaml.Unmarshal(p, params); err != nil {
 		return err
 	}
 
