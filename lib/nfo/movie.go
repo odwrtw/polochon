@@ -26,8 +26,8 @@ type movieFields struct {
 	Runtime       int      `xml:"runtime"`
 	SortTitle     string   `xml:"sorttitle"`
 	Tagline       string   `xml:"tagline"`
-	Thumb         string   `xml:"thumb"`
-	Fanart        string   `xml:"customfanart"`
+	ThumbURL      string   `xml:"thumb"`
+	FanartURL     string   `xml:"customfanart"`
 	Title         string   `xml:"title"`
 	TmdbID        int      `xml:"tmdbid"`
 	Votes         int      `xml:"votes"`
@@ -50,8 +50,8 @@ func (m *Movie) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 		Runtime:       m.Runtime,
 		SortTitle:     m.SortTitle,
 		Tagline:       m.Tagline,
-		Thumb:         m.Thumb,
-		Fanart:        m.Fanart,
+		ThumbURL:      m.ThumbURL,
+		FanartURL:     m.FanartURL,
 		Title:         m.Title,
 		TmdbID:        m.TmdbID,
 		Votes:         m.Votes,
@@ -81,8 +81,8 @@ func (m *Movie) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	m.Runtime = nfo.Runtime
 	m.SortTitle = nfo.SortTitle
 	m.Tagline = nfo.Tagline
-	m.Thumb = nfo.Thumb
-	m.Fanart = nfo.Fanart
+	m.ThumbURL = nfo.ThumbURL
+	m.FanartURL = nfo.FanartURL
 	m.Title = nfo.Title
 	m.TmdbID = nfo.TmdbID
 	m.Votes = nfo.Votes

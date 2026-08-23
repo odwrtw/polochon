@@ -12,13 +12,13 @@ type Movie struct {
 
 	Subtitles []*Subtitle `json:"subtitles"`
 
-	Fanart *File `json:"fanart_file"`
-	Thumb  *File `json:"thumb_file"`
-	NFO    *File `json:"nfo_file"`
+	FanartFile *File `json:"fanart_file"`
+	ThumbFile  *File `json:"thumb_file"`
+	NFOFile    *File `json:"nfo_file"`
 }
 
 func (m *Movie) linkFiles() {
-	for _, file := range []*File{m.Fanart, m.Thumb, m.NFO} {
+	for _, file := range []*File{m.FanartFile, m.ThumbFile, m.NFOFile} {
 		if file == nil {
 			continue
 		}

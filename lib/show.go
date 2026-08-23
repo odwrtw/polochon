@@ -16,9 +16,9 @@ type Show struct {
 	ImdbID     string         `json:"imdb_id"`
 	Year       int            `json:"year"`
 	FirstAired *time.Time     `json:"first_aired"`
-	Banner     string         `json:"-"`
-	Fanart     string         `json:"-"`
-	Poster     string         `json:"-"`
+	BannerURL  string         `json:"-"`
+	FanartURL  string         `json:"-"`
+	PosterURL  string         `json:"-"`
 	Episodes   []*ShowEpisode `json:"-"`
 }
 

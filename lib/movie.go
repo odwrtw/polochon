@@ -21,8 +21,8 @@ type Movie struct {
 	Runtime       int      `json:"runtime"`
 	SortTitle     string   `json:"sort_title"`
 	Tagline       string   `json:"tag_line"`
-	Thumb         string   `json:"thumb"`
-	Fanart        string   `json:"fanart"`
+	ThumbURL      string   `json:"thumb"`
+	FanartURL     string   `json:"fanart"`
 	Title         string   `json:"title"`
 	TmdbID        int      `json:"tmdb_id"`
 	Votes         int      `json:"votes"`

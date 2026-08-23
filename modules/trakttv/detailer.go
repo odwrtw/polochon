@@ -56,12 +56,12 @@ func (trakt *TraktTV) getMovieDetails(movie *polochon.Movie) error {
 
 	thumb := fanarttv.Best(res.Posters)
 	if thumb != nil {
-		movie.Thumb = thumb.URL
+		movie.ThumbURL = thumb.URL
 	}
 
 	fanart := fanarttv.Best(res.Backgrounds)
 	if fanart != nil {
-		movie.Fanart = fanart.URL
+		movie.FanartURL = fanart.URL
 	}
 
 	return nil
@@ -96,17 +96,17 @@ func (trakt *TraktTV) getShowDetails(show *polochon.Show) error {
 
 	fanart := fanarttv.Best(res.Backgrounds)
 	if fanart != nil {
-		show.Fanart = fanart.URL
+		show.FanartURL = fanart.URL
 	}
 
 	poster := fanarttv.Best(res.Posters)
 	if poster != nil {
-		show.Poster = poster.URL
+		show.PosterURL = poster.URL
 	}
 
 	banner := fanarttv.Best(res.Banners)
 	if banner != nil {
-		show.Banner = banner.URL
+		show.BannerURL = banner.URL
 	}
 
 	return nil

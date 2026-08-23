@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -31,7 +32,7 @@ func writeTestNFO(t *testing.T, path string, value any) {
 	}
 }
 
-func newCatalogueServer(t *testing.T) *Server {
+func newLibraryServer(t *testing.T) *Server {
 	t.Helper()
 
 	root := t.TempDir()
@@ -114,7 +115,7 @@ func newCatalogueServer(t *testing.T) *Server {
 		t.Fatalf("rebuild index: %v", err)
 	}
 
-	// Catalogue responses must use the in-memory index, not read NFO files.
+	// Library responses must use the in-memory index, not read NFO files.
 	for _, path := range []string{
 		polochon.NewFile(moviePath).NfoPath(),
 		filepath.Join(showPath, "tvshow.nfo"),
@@ -132,8 +133,8 @@ func newCatalogueServer(t *testing.T) *Server {
 	return srv
 }
 
-func TestCatalogueResponsesUseCachedNFOMetadata(t *testing.T) {
-	srv := newCatalogueServer(t)
+func TestLibraryResponsesUseCachedNFOMetadata(t *testing.T) {
+	srv := newLibraryServer(t)
 
 	t.Run("movies", func(t *testing.T) {
 		rr := httptest.NewRecorder()
@@ -219,8 +220,8 @@ func TestCatalogueResponsesUseCachedNFOMetadata(t *testing.T) {
 	})
 }
 
-func TestCatalogueShowJSONContract(t *testing.T) {
-	srv := newCatalogueServer(t)
+func TestLibraryShowJSONContract(t *testing.T) {
+	srv := newLibraryServer(t)
 
 	expectedShowFields := map[string]struct{}{
 		"title": {}, "rating": {}, "plot": {}, "tvdb_id": {}, "imdb_id": {},
@@ -236,7 +237,7 @@ func TestCatalogueShowJSONContract(t *testing.T) {
 		"torrents": {}, "filename": {}, "size": {}, "subtitles": {}, "nfo_file": {},
 	}
 
-	t.Run("catalogue", func(t *testing.T) {
+	t.Run("index", func(t *testing.T) {
 		rr := httptest.NewRecorder()
 		srv.showIds(rr, httptest.NewRequest(http.MethodGet, "/shows", nil))
 		if rr.Code != http.StatusOK {
@@ -310,8 +311,89 @@ func TestCatalogueShowJSONContract(t *testing.T) {
 	})
 }
 
-func TestCatalogueEpisodeJSONContract(t *testing.T) {
-	srv := newCatalogueServer(t)
+func TestLibraryJSONIsBackwardCompatibleWithMaster(t *testing.T) {
+	srv := newLibraryServer(t)
+
+	// These snapshots are the fields and values emitted by master before the
+	// metadata was added to the indexes. date_added is checked with a marker
+	// because the test NFO writer timestamps it at runtime; the marker verifies
+	// that the field remains present and remains a string.
+	legacyMovie := `{"tt0000001":{"date_added":"<runtime>","quality":"1080p","release_group":"","audio_codec":"","video_codec":"","container":"","embedded_subtitles":null,"filename":"movie.mp4","title":"Movie","year":2001,"size":0,"subtitles":[],"fanart_file":null,"thumb_file":null,"nfo_file":{"name":"movie.nfo","size":595}}}`
+	legacyShow := `{"tt0000002":{"title":"Show","fanart_file":null,"banner_file":null,"poster_file":null,"nfo_file":{"name":"tvshow.nfo","size":301},"seasons":{"01":{"01":{"date_added":"<runtime>","quality":"720p","release_group":"","audio_codec":"","video_codec":"","container":"","embedded_subtitles":null,"filename":"episode.mp4","size":0,"subtitles":null,"nfo_file":{"name":"episode.nfo","size":635}}}}}}`
+	legacyMovieDetail := `{"date_added":"<runtime>","quality":"1080p","release_group":"","audio_codec":"","video_codec":"","container":"","embedded_subtitles":null,"filename":"movie.mp4","size":0,"subtitles":[],"fanart_file":null,"thumb_file":null,"nfo_file":{"name":"movie.nfo","size":595}}`
+	legacyShowDetail := `{"title":"Show","fanart_file":null,"banner_file":null,"poster_file":null,"nfo_file":{"name":"tvshow.nfo","size":301},"seasons":{"01":{"01":{"date_added":"<runtime>","quality":"720p","release_group":"","audio_codec":"","video_codec":"","container":"","embedded_subtitles":null,"filename":"episode.mp4","size":0,"subtitles":null,"nfo_file":{"name":"episode.nfo","size":635}}}}}`
+	legacySeasonDetail := `{"show_imdb_id":"tt0000002","season":1,"episodes":{"1":{"date_added":"<runtime>","quality":"720p","release_group":"","audio_codec":"","video_codec":"","container":"","embedded_subtitles":null,"filename":"episode.mp4","size":0,"subtitles":null,"nfo_file":{"name":"episode.nfo","size":635}}}}`
+	legacyEpisodeDetail := `{"date_added":"<runtime>","quality":"720p","release_group":"","audio_codec":"","video_codec":"","container":"","embedded_subtitles":null,"filename":"episode.mp4","size":0,"subtitles":null,"nfo_file":{"name":"episode.nfo","size":635}}`
+
+	decode := func(t *testing.T, body []byte) any {
+		t.Helper()
+		var value any
+		if err := json.Unmarshal(body, &value); err != nil {
+			t.Fatalf("decode response: %v", err)
+		}
+		return value
+	}
+	legacy := func(t *testing.T, snapshot string) any {
+		t.Helper()
+		return decode(t, []byte(snapshot))
+	}
+	request := func(t *testing.T, fn http.HandlerFunc, path string, vars map[string]string) any {
+		t.Helper()
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		if vars != nil {
+			req = mux.SetURLVars(req, vars)
+		}
+		fn(rr, req)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("status = %d, want %d", rr.Code, http.StatusOK)
+		}
+		return decode(t, rr.Body.Bytes())
+	}
+
+	assertJSONSubset(t, legacy(t, legacyMovie), request(t, srv.movieIndex, "/movies", nil), "movies")
+	assertJSONSubset(t, legacy(t, legacyShow), request(t, srv.showIds, "/shows", nil), "shows")
+	assertJSONSubset(t, legacy(t, legacyMovieDetail), request(t, srv.getMovieDetails, "/movies/tt0000001", map[string]string{"id": "tt0000001"}), "movie detail")
+	assertJSONSubset(t, legacy(t, legacyShowDetail), request(t, srv.getShowDetails, "/shows/tt0000002", map[string]string{"id": "tt0000002"}), "show detail")
+	assertJSONSubset(t, legacy(t, legacySeasonDetail), request(t, srv.getSeasonDetails, "/shows/tt0000002/seasons/1", map[string]string{"id": "tt0000002", "season": "1"}), "season detail")
+	assertJSONSubset(t, legacy(t, legacyEpisodeDetail), request(t, srv.getShowEpisodeIDDetails, "/shows/tt0000002/seasons/1/episodes/1", map[string]string{
+		"id": "tt0000002", "season": "1", "episode": "1",
+	}), "episode detail")
+}
+
+func assertJSONSubset(t *testing.T, want, got any, path string) {
+	t.Helper()
+
+	if wantString, ok := want.(string); ok && wantString == "<runtime>" {
+		if _, ok := got.(string); !ok {
+			t.Fatalf("%s changed type: got %#v, want string", path, got)
+		}
+		return
+	}
+
+	wantObject, wantIsObject := want.(map[string]any)
+	if !wantIsObject {
+		if !reflect.DeepEqual(want, got) {
+			t.Fatalf("%s changed: got %#v, want %#v", path, got, want)
+		}
+		return
+	}
+
+	gotObject, ok := got.(map[string]any)
+	if !ok {
+		t.Fatalf("%s changed type: got %#v, want object", path, got)
+	}
+	for field, wantValue := range wantObject {
+		gotValue, ok := gotObject[field]
+		if !ok {
+			t.Fatalf("%s.%s was removed", path, field)
+		}
+		assertJSONSubset(t, wantValue, gotValue, path+"."+field)
+	}
+}
+
+func TestLibraryEpisodeJSONContract(t *testing.T) {
+	srv := newLibraryServer(t)
 
 	expectedEpisodeFields := map[string]struct{}{
 		"title": {}, "show_title": {}, "season": {}, "episode": {},

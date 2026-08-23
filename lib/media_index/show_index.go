@@ -26,10 +26,10 @@ type Show struct {
 	Path    string          `json:"-"`
 	Seasons map[int]*Season `json:"-"`
 
-	Fanart *File `json:"fanart_file"`
-	Banner *File `json:"banner_file"`
-	Poster *File `json:"poster_file"`
-	NFO    *File `json:"nfo_file"`
+	FanartFile *File `json:"fanart_file"`
+	BannerFile *File `json:"banner_file"`
+	PosterFile *File `json:"poster_file"`
+	NFOFile    *File `json:"nfo_file"`
 }
 
 // NewShow returns a new show.
@@ -54,10 +54,10 @@ func NewShow(show *polochon.Show, path string) *Show {
 		name string
 		file **File
 	}{
-		{name: "fanart.jpg", file: &s.Fanart},
-		{name: "banner.jpg", file: &s.Banner},
-		{name: "poster.jpg", file: &s.Poster},
-		{name: "tvshow.nfo", file: &s.NFO},
+		{name: "fanart.jpg", file: &s.FanartFile},
+		{name: "banner.jpg", file: &s.BannerFile},
+		{name: "poster.jpg", file: &s.PosterFile},
+		{name: "tvshow.nfo", file: &s.NFOFile},
 	} {
 		*e.file = newFile(filepath.Join(path, e.name))
 	}
@@ -84,7 +84,7 @@ type Episode struct {
 	Size      int64       `json:"size"`
 	Subtitles []*Subtitle `json:"subtitles"`
 
-	NFO *File `json:"nfo_file"`
+	NFOFile *File `json:"nfo_file"`
 }
 
 // SeasonList returns the season numbers of the indexed show
@@ -301,7 +301,7 @@ func (si *ShowIndex) Add(episode *polochon.ShowEpisode) error {
 		Path:        episode.Path,
 		Filename:    episode.Filename(),
 		Size:        episode.Size,
-		NFO:         newFile(episode.NfoPath()),
+		NFOFile:     newFile(episode.NfoPath()),
 	}
 
 	for _, s := range episode.Subtitles {

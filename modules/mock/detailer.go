@@ -38,11 +38,11 @@ func (mock *Mock) getMovieDetails(m *polochon.Movie) {
 	if m.SortTitle == "" {
 		m.SortTitle = m.Title
 	}
-	if m.Thumb == "" {
-		m.Thumb = fmt.Sprintf("http://base-photo.com/thumb/%s.jpg", m.ImdbID)
+	if m.ThumbURL == "" {
+		m.ThumbURL = fmt.Sprintf("http://base-photo.com/thumb/%s.jpg", m.ImdbID)
 	}
-	if m.Fanart == "" {
-		m.Fanart = fmt.Sprintf("http://base-photo.com/fanart/%s.jpg", m.ImdbID)
+	if m.FanartURL == "" {
+		m.FanartURL = fmt.Sprintf("http://base-photo.com/fanart/%s.jpg", m.ImdbID)
 	}
 
 	m.Plot = fmt.Sprintf("This is the plot of the movie %s", m.Title)
@@ -92,8 +92,8 @@ func (mock *Mock) getShowEpisodeDetails(s *polochon.ShowEpisode) {
 	if s.EpisodeImdbID == "" {
 		s.EpisodeImdbID = randomImdbID()
 	}
-	if s.Thumb == "" {
-		s.Thumb = fmt.Sprintf("http://base-photo.com/thumb/%s.jpg", s.ShowImdbID)
+	if s.ThumbURL == "" {
+		s.ThumbURL = fmt.Sprintf("http://base-photo.com/thumb/%s.jpg", s.ShowImdbID)
 	}
 
 	s.Aired = "Already aired"
@@ -113,14 +113,14 @@ func (mock *Mock) getShowDetails(s *polochon.Show) {
 	if s.Title == "" {
 		s.Title = fmt.Sprintf("Show %s", s.ImdbID)
 	}
-	if s.Banner == "" {
-		s.Banner = fmt.Sprintf("http://base-photo.com/banner/%s.jpg", s.ImdbID)
+	if s.BannerURL == "" {
+		s.BannerURL = fmt.Sprintf("http://base-photo.com/banner/%s.jpg", s.ImdbID)
 	}
-	if s.Fanart == "" {
-		s.Fanart = fmt.Sprintf("http://base-photo.com/fanart/%s.jpg", s.ImdbID)
+	if s.FanartURL == "" {
+		s.FanartURL = fmt.Sprintf("http://base-photo.com/fanart/%s.jpg", s.ImdbID)
 	}
-	if s.Poster == "" {
-		s.Poster = fmt.Sprintf("http://base-photo.com/poster/%s.jpg", s.ImdbID)
+	if s.PosterURL == "" {
+		s.PosterURL = fmt.Sprintf("http://base-photo.com/poster/%s.jpg", s.ImdbID)
 	}
 
 	s.Plot = fmt.Sprintf("This is the plot of the show of %s", s.Title)
