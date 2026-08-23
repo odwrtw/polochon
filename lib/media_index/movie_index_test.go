@@ -130,8 +130,10 @@ func TestMovieIndexJSONShape(t *testing.T) {
 				Size: 42,
 			},
 			VideoMetadata: polochon.VideoMetadata{
-				Quality: polochon.Quality1080p,
+				Quality:           polochon.Quality1080p,
+				EmbeddedSubtitles: []polochon.Language{polochon.FR},
 			},
+			Subtitles: []*polochon.Subtitle{{Embedded: true, Lang: polochon.FR}},
 		},
 		ImdbID:        "tt2562232",
 		OriginalTitle: "Original title",
@@ -162,12 +164,20 @@ func TestMovieIndexJSONShape(t *testing.T) {
 		"rating": {}, "runtime": {}, "sort_title": {}, "tag_line": {},
 		"thumb": {}, "fanart": {}, "tmdb_id": {}, "votes": {}, "genres": {},
 		"date_added": {}, "quality": {}, "release_group": {}, "audio_codec": {},
-		"video_codec": {}, "container": {}, "embedded_subtitles": {},
+		"video_codec": {}, "container": {},
 		"filename": {}, "title": {}, "year": {}, "size": {}, "subtitles": {},
 		"fanart_file": {}, "thumb_file": {}, "nfo_file": {},
 	}
 	if !reflect.DeepEqual(fieldsToSet(fields), expectedFields) {
 		t.Fatalf("unexpected movie JSON fields: %v", fieldsToSet(fields))
+	}
+
+	var subtitles []*Subtitle
+	if err := json.Unmarshal(fields["subtitles"], &subtitles); err != nil {
+		t.Fatalf("decode subtitles: %q", err)
+	}
+	if len(subtitles) != 1 || !subtitles[0].Embedded || subtitles[0].Lang != polochon.FR {
+		t.Fatalf("embedded subtitle was not represented by subtitles: %+v", subtitles)
 	}
 
 	for field, expected := range map[string]string{
