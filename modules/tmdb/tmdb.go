@@ -223,8 +223,21 @@ func (t *TmDB) Status() (polochon.ModuleStatus, error) {
 
 // GetDetails implements the Detailer interface
 func (t *TmDB) GetDetails(_ context.Context, i any) error {
+	switch value := i.(type) {
+	case *polochon.Show:
+		if value == nil {
+			return ErrInvalidArgument
+		}
+		return t.getShowDetails(value)
+	case *polochon.ShowEpisode:
+		if value == nil {
+			return ErrInvalidArgument
+		}
+		return t.getEpisodeDetails(value)
+	}
+
 	m, ok := i.(*polochon.Movie)
-	if !ok {
+	if !ok || m == nil {
 		return ErrInvalidArgument
 	}
 
