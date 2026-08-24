@@ -13,6 +13,7 @@ type Show struct {
 	Plot       string         `json:"plot"`
 	URL        string         `json:"-"`
 	TvdbID     int            `json:"tvdb_id"`
+	TmdbID     int            `json:"tmdb_id"`
 	ImdbID     string         `json:"imdb_id"`
 	Year       int            `json:"year"`
 	FirstAired *time.Time     `json:"first_aired"`

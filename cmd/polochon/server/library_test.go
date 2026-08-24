@@ -224,7 +224,7 @@ func TestLibraryShowJSONContract(t *testing.T) {
 	srv := newLibraryServer(t)
 
 	expectedShowFields := map[string]struct{}{
-		"title": {}, "rating": {}, "plot": {}, "tvdb_id": {}, "imdb_id": {},
+		"title": {}, "rating": {}, "plot": {}, "tvdb_id": {}, "tmdb_id": {}, "imdb_id": {},
 		"year": {}, "first_aired": {},
 		"fanart_file": {}, "banner_file": {}, "poster_file": {}, "nfo_file": {},
 	}
@@ -319,9 +319,9 @@ func TestLibraryJSONRetainsExistingFields(t *testing.T) {
 	// with a marker because the test NFO writer timestamps it at runtime; the
 	// marker verifies that the field remains present and remains a string.
 	legacyMovie := `{"tt0000001":{"date_added":"<runtime>","quality":"1080p","release_group":"","audio_codec":"","video_codec":"","container":"","filename":"movie.mp4","title":"Movie","year":2001,"size":0,"subtitles":[],"fanart_file":null,"thumb_file":null,"nfo_file":{"name":"movie.nfo","size":595}}}`
-	legacyShow := `{"tt0000002":{"title":"Show","fanart_file":null,"banner_file":null,"poster_file":null,"nfo_file":{"name":"tvshow.nfo","size":301},"seasons":{"01":{"01":{"date_added":"<runtime>","quality":"720p","release_group":"","audio_codec":"","video_codec":"","container":"","filename":"episode.mp4","size":0,"subtitles":null,"nfo_file":{"name":"episode.nfo","size":635}}}}}}`
+	legacyShow := `{"tt0000002":{"title":"Show","fanart_file":null,"banner_file":null,"poster_file":null,"nfo_file":{"name":"tvshow.nfo","size":322},"seasons":{"01":{"01":{"date_added":"<runtime>","quality":"720p","release_group":"","audio_codec":"","video_codec":"","container":"","filename":"episode.mp4","size":0,"subtitles":null,"nfo_file":{"name":"episode.nfo","size":635}}}}}}`
 	legacyMovieDetail := `{"date_added":"<runtime>","quality":"1080p","release_group":"","audio_codec":"","video_codec":"","container":"","filename":"movie.mp4","size":0,"subtitles":[],"fanart_file":null,"thumb_file":null,"nfo_file":{"name":"movie.nfo","size":595}}`
-	legacyShowDetail := `{"title":"Show","fanart_file":null,"banner_file":null,"poster_file":null,"nfo_file":{"name":"tvshow.nfo","size":301},"seasons":{"01":{"01":{"date_added":"<runtime>","quality":"720p","release_group":"","audio_codec":"","video_codec":"","container":"","filename":"episode.mp4","size":0,"subtitles":null,"nfo_file":{"name":"episode.nfo","size":635}}}}}`
+	legacyShowDetail := `{"title":"Show","fanart_file":null,"banner_file":null,"poster_file":null,"nfo_file":{"name":"tvshow.nfo","size":322},"seasons":{"01":{"01":{"date_added":"<runtime>","quality":"720p","release_group":"","audio_codec":"","video_codec":"","container":"","filename":"episode.mp4","size":0,"subtitles":null,"nfo_file":{"name":"episode.nfo","size":635}}}}}`
 	legacySeasonDetail := `{"show_imdb_id":"tt0000002","season":1,"episodes":{"1":{"date_added":"<runtime>","quality":"720p","release_group":"","audio_codec":"","video_codec":"","container":"","filename":"episode.mp4","size":0,"subtitles":null,"nfo_file":{"name":"episode.nfo","size":635}}}}`
 	legacyEpisodeDetail := `{"date_added":"<runtime>","quality":"720p","release_group":"","audio_codec":"","video_codec":"","container":"","filename":"episode.mp4","size":0,"subtitles":null,"nfo_file":{"name":"episode.nfo","size":635}}`
 

@@ -25,6 +25,7 @@ type showFields struct {
 	Plot      string  `xml:"plot"`
 	URL       string  `xml:"episodeguide>url"`
 	TvdbID    int     `xml:"tvdbid"`
+	TmdbID    int     `xml:"tmdbid"`
 	ImdbID    string  `xml:"imdbid"`
 	Year      int     `xml:"year"`
 	Premiered string  `xml:"premiered"`
@@ -41,6 +42,7 @@ func (s *Show) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 		Plot:      s.Plot,
 		URL:       s.URL,
 		TvdbID:    s.TvdbID,
+		TmdbID:    s.TmdbID,
 		ImdbID:    s.ImdbID,
 		Year:      s.Year,
 	}
@@ -64,6 +66,7 @@ func (s *Show) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	s.Plot = nfo.Plot
 	s.URL = nfo.URL
 	s.TvdbID = nfo.TvdbID
+	s.TmdbID = nfo.TmdbID
 	s.ImdbID = nfo.ImdbID
 	s.Year = nfo.Year
 

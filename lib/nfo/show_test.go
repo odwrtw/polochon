@@ -19,6 +19,7 @@ var showNFOContent = []byte(`<tvshow>
     <url>http://www.thetvdb.com/api/1D62F2F90030C444/series/73141/all/en.zip</url>
   </episodeguide>
   <tvdbid>73141</tvdbid>
+  <tmdbid>1433</tmdbid>
   <imdbid>tt0397306</imdbid>
   <year>2005</year>
   <premiered>2015-09-24</premiered>
@@ -32,6 +33,7 @@ func mockShow() *polochon.Show {
 		Plot:       "Awesome plot",
 		URL:        "http://www.thetvdb.com/api/1D62F2F90030C444/series/73141/all/en.zip",
 		TvdbID:     73141,
+		TmdbID:     1433,
 		ImdbID:     "tt0397306",
 		Year:       2005,
 		FirstAired: &premiered,
@@ -61,5 +63,18 @@ func TestShowReadNFO(t *testing.T) {
 
 	if !reflect.DeepEqual(got, expected) {
 		t.Errorf("Failed to deserialize show season NFO.\nGot: %#v\nExpected: %#v", got, expected)
+	}
+}
+
+func TestLegacyShowReadNFO(t *testing.T) {
+	legacy := bytes.Replace(showNFOContent, []byte("  <tmdbid>1433</tmdbid>\n"), nil, 1)
+
+	got := &polochon.Show{}
+	if err := Read(bytes.NewReader(legacy), got); err != nil {
+		t.Fatal(err)
+	}
+
+	if got.TmdbID != 0 {
+		t.Fatalf("legacy show NFO TMDB ID = %d, want 0", got.TmdbID)
 	}
 }

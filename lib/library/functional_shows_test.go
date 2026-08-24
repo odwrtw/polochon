@@ -177,7 +177,7 @@ func TestAddEpisode(t *testing.T) {
 		FanartFile: &index.File{Name: "fanart.jpg", Size: 11},
 		BannerFile: &index.File{Name: "banner.jpg", Size: 11},
 		PosterFile: &index.File{Name: "poster.jpg", Size: 11},
-		NFOFile:    &index.File{Name: "tvshow.nfo", Size: 349},
+		NFOFile:    &index.File{Name: "tvshow.nfo", Size: 370},
 		Seasons: map[int]*index.Season{
 			1: expectedIndexedSeason,
 		},
