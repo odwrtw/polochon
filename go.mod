@@ -4,6 +4,7 @@ go 1.26.1
 
 require (
 	github.com/agnivade/levenshtein v1.2.1
+	github.com/cyruzin/golang-tmdb v1.9.4
 	github.com/dustin/go-humanize v1.0.1
 	github.com/goccy/go-yaml v1.19.2
 	github.com/gorilla/mux v1.8.1
@@ -26,7 +27,6 @@ require (
 	github.com/prometheus/client_golang v1.24.1
 	github.com/remko/go-mkvparse v0.14.0
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/ryanbradynd05/go-tmdb v0.0.0-20230108222638-2a68dc6ff40c
 	github.com/urfave/negroni v1.0.0
 	golang.org/x/sync v0.22.0
 	gopkg.in/fsnotify.v1 v1.4.7
@@ -45,14 +45,13 @@ require (
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
+	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gocolly/colly/v2 v2.3.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/gorilla/rpc v1.2.1 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/kennygrant/sanitize v1.2.4 // indirect
-	github.com/kr/text v0.2.0 // indirect
-	github.com/kylelemons/go-gypsy v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/nlnwa/whatwg-url v0.6.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
@@ -65,5 +64,4 @@ require (
 	golang.org/x/text v0.41.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )

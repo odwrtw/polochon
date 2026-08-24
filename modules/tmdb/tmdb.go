@@ -10,8 +10,8 @@ import (
 	yaml "github.com/goccy/go-yaml"
 
 	"github.com/agnivade/levenshtein"
+	tmdb "github.com/cyruzin/golang-tmdb"
 	polochon "github.com/odwrtw/polochon/lib"
-	tmdb "github.com/ryanbradynd05/go-tmdb"
 )
 
 // Make sure that the module is a detailer and a searcher
@@ -47,7 +47,7 @@ var (
 
 // TmDB implents the Detailer interface
 type TmDB struct {
-	client     *tmdb.TMDb
+	client     *tmdb.Client
 	log        *slog.Logger
 	configured bool
 }
@@ -90,7 +90,12 @@ func (t *TmDB) InitWithParams(params *Params) error {
 		t.log = slog.Default().With("module", moduleName)
 	}
 
-	t.client = tmdb.Init(tmdb.Config{APIKey: params.APIKey})
+	client, err := tmdb.Init(params.APIKey)
+	if err != nil {
+		return err
+	}
+
+	t.client = client
 	t.configured = true
 
 	return nil
@@ -102,8 +107,8 @@ func (t *TmDB) Name() string {
 }
 
 // Function to be overwritten during the tests
-var tmdbSearchMovie = func(t *tmdb.TMDb, title string, options map[string]string) (*tmdb.MovieSearchResults, error) {
-	return t.SearchMovie(title, options)
+var tmdbSearchMovie = func(t *tmdb.Client, title string, options map[string]string) (*tmdb.SearchMovies, error) {
+	return t.GetSearchMovies(title, options)
 }
 
 // SearchByTitle searches a movie by its title. It adds the tmdb id into the
@@ -138,7 +143,7 @@ func (t *TmDB) searchByTitle(m *polochon.Movie) error {
 	}
 
 	// Find the most accurate serie based on the levenshtein distance
-	var movieShort tmdb.MovieShort
+	var movieShort tmdb.MovieResult
 	minDistance := 100
 	for _, result := range r.Results {
 		d := levenshtein.ComputeDistance(m.Title, result.Title)
@@ -148,7 +153,7 @@ func (t *TmDB) searchByTitle(m *polochon.Movie) error {
 		}
 	}
 
-	m.TmdbID = movieShort.ID
+	m.TmdbID = int(movieShort.ID)
 
 	t.log.Debug("Found movie from title", "title", m.Title)
 
@@ -156,8 +161,12 @@ func (t *TmDB) searchByTitle(m *polochon.Movie) error {
 }
 
 // Function to be overwritten during the tests
-var tmdbSearchByImdbID = func(t *tmdb.TMDb, id, source string, options map[string]string) (*tmdb.FindResults, error) {
-	return t.GetFind(id, "imdb_id", options)
+var tmdbSearchByImdbID = func(t *tmdb.Client, id, source string, options map[string]string) (*tmdb.FindByID, error) {
+	if options == nil {
+		options = map[string]string{}
+	}
+	options["external_source"] = source
+	return t.GetFindByID(id, options)
 }
 
 // searchByImdbID searches on tmdb based on the imdb id
@@ -184,7 +193,7 @@ func (t *TmDB) searchByImdbID(m *polochon.Movie) error {
 		return ErrNoMovieFound
 	}
 
-	m.TmdbID = results.MovieResults[0].ID
+	m.TmdbID = int(results.MovieResults[0].ID)
 
 	t.log.Debug("Found movie from imdb ID", "imdb_id", m.ImdbID)
 
@@ -192,8 +201,8 @@ func (t *TmDB) searchByImdbID(m *polochon.Movie) error {
 }
 
 // Function to be overwritten during the tests
-var tmdbGetMovieInfo = func(t *tmdb.TMDb, tmdbID int, options map[string]string) (*tmdb.Movie, error) {
-	return t.GetMovieInfo(tmdbID, options)
+var tmdbGetMovieInfo = func(t *tmdb.Client, tmdbID int, options map[string]string) (*tmdb.MovieDetails, error) {
+	return t.GetMovieDetails(tmdbID, options)
 }
 
 // Status implements the Module interface
@@ -276,7 +285,7 @@ func (t *TmDB) getMovieDetails(movie *polochon.Movie) error {
 	}
 
 	// Update movie details
-	movie.ImdbID = details.ImdbID
+	movie.ImdbID = details.IMDbID
 	movie.OriginalTitle = details.OriginalTitle
 	movie.Plot = details.Overview
 	movie.Rating = details.VoteAverage

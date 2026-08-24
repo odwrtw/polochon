@@ -28,7 +28,7 @@ func (t *TmDB) SearchMovie(_ context.Context, key string) ([]*polochon.Movie, er
 	result := []*polochon.Movie{}
 	for _, tMovie := range r.Results {
 		m := polochon.NewMovie(polochon.MovieConfig{})
-		m.TmdbID = tMovie.ID
+		m.TmdbID = int(tMovie.ID)
 		err = t.getMovieDetails(m)
 		if err != nil {
 			t.log.Warn("error while getting tmdb movie details", "error", err)
