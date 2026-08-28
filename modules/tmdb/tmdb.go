@@ -14,10 +14,11 @@ import (
 	polochon "github.com/odwrtw/polochon/lib"
 )
 
-// Make sure that the module is a detailer and a searcher
+// Make sure that the module is a detailer, a searcher and an explorer
 var (
 	_ polochon.Detailer = (*TmDB)(nil)
 	_ polochon.Searcher = (*TmDB)(nil)
+	_ polochon.Explorer = (*TmDB)(nil)
 )
 
 // Register tvdb as a Detailer
