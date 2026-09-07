@@ -265,6 +265,22 @@ func TestTmdbGetDetails(t *testing.T) {
 	}
 }
 
+func TestTmdbGetDetailsRetainsImdbIDWhenTMDBOmitsIt(t *testing.T) {
+	oldInfo := tmdbGetMovieInfo
+	t.Cleanup(func() { tmdbGetMovieInfo = oldInfo })
+	tmdbGetMovieInfo = func(_ *tmdb.Client, _ int, _ map[string]string) (*tmdb.MovieDetails, error) {
+		return &tmdb.MovieDetails{Title: "The Matrix"}, nil
+	}
+
+	movie := &polochon.Movie{TmdbID: 603, ImdbID: "tt0133093"}
+	if err := (&TmDB{}).GetDetails(context.Background(), movie); err != nil {
+		t.Fatalf("get details: %v", err)
+	}
+	if movie.ImdbID != "tt0133093" {
+		t.Fatalf("IMDb ID = %q, want %q", movie.ImdbID, "tt0133093")
+	}
+}
+
 func TestTmdbGetDetailsWithoutArtwork(t *testing.T) {
 	oldInfo := tmdbGetMovieInfo
 	t.Cleanup(func() { tmdbGetMovieInfo = oldInfo })

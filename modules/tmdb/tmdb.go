@@ -206,6 +206,10 @@ var tmdbGetMovieInfo = func(t *tmdb.Client, tmdbID int, options map[string]strin
 	return t.GetMovieDetails(tmdbID, options)
 }
 
+var tmdbGetMovieExternalIDs = func(t *tmdb.Client, tmdbID int, options map[string]string) (*tmdb.MovieExternalIDs, error) {
+	return t.GetMovieExternalIDs(tmdbID, options)
+}
+
 // Status implements the Module interface
 func (t *TmDB) Status() (polochon.ModuleStatus, error) {
 	// Search for The Matrix on tmdb via imdbID
@@ -301,8 +305,11 @@ func (t *TmDB) getMovieDetails(movie *polochon.Movie) error {
 		genres = append(genres, g.Name)
 	}
 
-	// Update movie details
-	movie.ImdbID = details.IMDbID
+	// IMDb is Polochon's canonical identifier. TMDB occasionally omits it
+	// from a details response, so never discard an identifier we already had.
+	if details.IMDbID != "" {
+		movie.ImdbID = details.IMDbID
+	}
 	movie.OriginalTitle = details.OriginalTitle
 	movie.Plot = details.Overview
 	movie.Rating = details.VoteAverage

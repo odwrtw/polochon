@@ -162,10 +162,11 @@ func TestTmdbExplorerInvalidOptions(t *testing.T) {
 }
 
 func TestTmdbExplorerMovieListMapping(t *testing.T) {
-	oldPopular, oldInfo := tmdbGetMoviePopular, tmdbGetMovieInfo
+	oldPopular, oldInfo, oldExternal := tmdbGetMoviePopular, tmdbGetMovieInfo, tmdbGetMovieExternalIDs
 	t.Cleanup(func() {
 		tmdbGetMoviePopular = oldPopular
 		tmdbGetMovieInfo = oldInfo
+		tmdbGetMovieExternalIDs = oldExternal
 	})
 	tmdbGetMoviePopular = func(_ *tmdb.Client, _ map[string]string) (*tmdb.MoviePopular, error) {
 		return moviePopularJSON(t), nil
@@ -173,6 +174,12 @@ func TestTmdbExplorerMovieListMapping(t *testing.T) {
 	tmdbGetMovieInfo = func(_ *tmdb.Client, _ int, _ map[string]string) (*tmdb.MovieDetails, error) {
 		t.Fatal("detail wrapper must not be called by the explorer")
 		return nil, nil
+	}
+	tmdbGetMovieExternalIDs = func(_ *tmdb.Client, id int, _ map[string]string) (*tmdb.MovieExternalIDs, error) {
+		if id != 42 {
+			t.Fatalf("TMDB ID = %d, want 42", id)
+		}
+		return &tmdb.MovieExternalIDs{IMDbID: "tt0133093"}, nil
 	}
 
 	res, err := mockTmdb.GetMovieList(context.Background(), movieOptionPopular)
@@ -183,7 +190,7 @@ func TestTmdbExplorerMovieListMapping(t *testing.T) {
 		t.Fatalf("expected 1 result, got %d", len(res))
 	}
 	m := res[0]
-	if m.TmdbID != 42 || m.Title != "The Matrix" || m.Plot != "A plot" || m.Year != 1999 || m.Rating == 0 {
+	if m.TmdbID != 42 || m.ImdbID != "tt0133093" || m.Title != "The Matrix" || m.Plot != "A plot" || m.Year != 1999 || m.Rating == 0 {
 		t.Fatalf("movie explorer fields not mapped: %+v", m)
 	}
 	if m.ThumbURL != TmDBimageBaseURL+"/p.jpg" || m.FanartURL != TmDBimageBaseURL+"/b.jpg" {
@@ -192,10 +199,11 @@ func TestTmdbExplorerMovieListMapping(t *testing.T) {
 }
 
 func TestTmdbExplorerShowListMapping(t *testing.T) {
-	oldAiring, oldInfo := tmdbGetTVAiringToday, tmdbGetTVInfo
+	oldAiring, oldInfo, oldExternal := tmdbGetTVAiringToday, tmdbGetTVInfo, tmdbGetTVExternalIDs
 	t.Cleanup(func() {
 		tmdbGetTVAiringToday = oldAiring
 		tmdbGetTVInfo = oldInfo
+		tmdbGetTVExternalIDs = oldExternal
 	})
 	tmdbGetTVAiringToday = func(_ *tmdb.Client, _ map[string]string) (*tmdb.TVAiringToday, error) {
 		return tvAiringTodayJSON(t), nil
@@ -203,6 +211,12 @@ func TestTmdbExplorerShowListMapping(t *testing.T) {
 	tmdbGetTVInfo = func(_ *tmdb.Client, _ int, _ map[string]string) (*tmdb.TVDetails, error) {
 		t.Fatal("detail wrapper must not be called by the explorer")
 		return nil, nil
+	}
+	tmdbGetTVExternalIDs = func(_ *tmdb.Client, id int, _ map[string]string) (*tmdb.TVExternalIDs, error) {
+		if id != 7 {
+			t.Fatalf("TMDB ID = %d, want 7", id)
+		}
+		return &tmdb.TVExternalIDs{IMDbID: "tt-example"}, nil
 	}
 
 	res, err := mockTmdb.GetShowList(context.Background(), showOptionAiringToday)
@@ -213,11 +227,33 @@ func TestTmdbExplorerShowListMapping(t *testing.T) {
 		t.Fatalf("expected 1 result, got %d", len(res))
 	}
 	s := res[0]
-	if s.TmdbID != 7 || s.Title != "Example" || s.Plot != "Show plot" || s.Year != 2020 || s.Rating == 0 {
+	if s.TmdbID != 7 || s.ImdbID != "tt-example" || s.Title != "Example" || s.Plot != "Show plot" || s.Year != 2020 || s.Rating == 0 {
 		t.Fatalf("show explorer fields not mapped: %+v", s)
 	}
 	if s.PosterURL != TmDBimageBaseURL+"/s.jpg" || s.FanartURL != TmDBimageBaseURL+"/sb.jpg" || s.BannerURL != s.FanartURL {
 		t.Fatalf("show explorer artwork not mapped: %+v", s)
+	}
+}
+
+func TestTmdbExplorerSkipsMovieWithoutIMDbID(t *testing.T) {
+	oldPopular, oldExternal := tmdbGetMoviePopular, tmdbGetMovieExternalIDs
+	t.Cleanup(func() {
+		tmdbGetMoviePopular = oldPopular
+		tmdbGetMovieExternalIDs = oldExternal
+	})
+	tmdbGetMoviePopular = func(_ *tmdb.Client, _ map[string]string) (*tmdb.MoviePopular, error) {
+		return moviePopularJSON(t), nil
+	}
+	tmdbGetMovieExternalIDs = func(_ *tmdb.Client, _ int, _ map[string]string) (*tmdb.MovieExternalIDs, error) {
+		return &tmdb.MovieExternalIDs{}, nil
+	}
+
+	res, err := mockTmdb.GetMovieList(context.Background(), movieOptionPopular)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res) != 0 {
+		t.Fatalf("expected no IMDb-less results, got %d", len(res))
 	}
 }
 

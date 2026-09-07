@@ -98,6 +98,44 @@ func mapShowListItem(id int64, name, overview, firstAirDate, poster, backdrop st
 	return s
 }
 
+// movieListWithIMDbIDs resolves the identifiers omitted by TMDB list
+// endpoints. Canape persists explorer items by IMDb ID, so movies without one
+// cannot be returned usefully.
+func (t *TmDB) movieListWithIMDbIDs(movies []*polochon.Movie) ([]*polochon.Movie, error) {
+	result := make([]*polochon.Movie, 0, len(movies))
+	for _, movie := range movies {
+		external, err := tmdbGetMovieExternalIDs(t.client, movie.TmdbID, map[string]string{})
+		if err != nil {
+			return nil, err
+		}
+		if external == nil || external.IMDbID == "" {
+			continue
+		}
+		movie.ImdbID = external.IMDbID
+		result = append(result, movie)
+	}
+	return result, nil
+}
+
+// showListWithIMDbIDs resolves the identifiers omitted by TMDB list
+// endpoints. Canape persists explorer items by IMDb ID, so shows without one
+// cannot be returned usefully.
+func (t *TmDB) showListWithIMDbIDs(shows []*polochon.Show) ([]*polochon.Show, error) {
+	result := make([]*polochon.Show, 0, len(shows))
+	for _, show := range shows {
+		external, err := tmdbGetTVExternalIDs(t.client, show.TmdbID, map[string]string{})
+		if err != nil {
+			return nil, err
+		}
+		if external == nil || external.IMDbID == "" {
+			continue
+		}
+		show.ImdbID = external.IMDbID
+		result = append(result, show)
+	}
+	return result, nil
+}
+
 // AvailableMovieOptions implements the Explorer interface
 func (t *TmDB) AvailableMovieOptions() []string {
 	return []string{
@@ -119,8 +157,8 @@ func (t *TmDB) AvailableShowOptions() []string {
 }
 
 // GetMovieList implements the Explorer interface. Each native category maps
-// to exactly one TMDB list request; items stay lightweight and are hydrated
-// only after selection.
+// to a TMDB list request followed by external-ID requests, because Canape
+// persists explorer items by IMDb ID.
 func (t *TmDB) GetMovieList(_ context.Context, option string) ([]*polochon.Movie, error) {
 	switch option {
 	case movieOptionPopular:
@@ -135,9 +173,9 @@ func (t *TmDB) GetMovieList(_ context.Context, option string) ([]*polochon.Movie
 	return nil, ErrInvalidOption
 }
 
-// GetShowList implements the Explorer interface. Each native category maps to
-// exactly one TMDB list request; items stay lightweight and are hydrated only
-// after selection.
+// GetShowList implements the Explorer interface. Each native category maps
+// to a TMDB list request followed by external-ID requests, because Canape
+// persists explorer items by IMDb ID.
 func (t *TmDB) GetShowList(_ context.Context, option string) ([]*polochon.Show, error) {
 	switch option {
 	case showOptionPopular:
@@ -164,7 +202,7 @@ func (t *TmDB) listMoviePopular() ([]*polochon.Movie, error) {
 	for _, item := range r.Results {
 		result = append(result, mapMovieListItem(item.ID, item.Title, item.Overview, item.ReleaseDate, item.PosterPath, item.BackdropPath, item.VoteAverage))
 	}
-	return result, nil
+	return t.movieListWithIMDbIDs(result)
 }
 
 func (t *TmDB) listMovieTopRated() ([]*polochon.Movie, error) {
@@ -179,7 +217,7 @@ func (t *TmDB) listMovieTopRated() ([]*polochon.Movie, error) {
 	for _, item := range r.Results {
 		result = append(result, mapMovieListItem(item.ID, item.Title, item.Overview, item.ReleaseDate, item.PosterPath, item.BackdropPath, item.VoteAverage))
 	}
-	return result, nil
+	return t.movieListWithIMDbIDs(result)
 }
 
 func (t *TmDB) listMovieUpcoming() ([]*polochon.Movie, error) {
@@ -194,7 +232,7 @@ func (t *TmDB) listMovieUpcoming() ([]*polochon.Movie, error) {
 	for _, item := range r.Results {
 		result = append(result, mapMovieListItem(item.ID, item.Title, item.Overview, item.ReleaseDate, item.PosterPath, item.BackdropPath, item.VoteAverage))
 	}
-	return result, nil
+	return t.movieListWithIMDbIDs(result)
 }
 
 func (t *TmDB) listMovieNowPlaying() ([]*polochon.Movie, error) {
@@ -209,7 +247,7 @@ func (t *TmDB) listMovieNowPlaying() ([]*polochon.Movie, error) {
 	for _, item := range r.Results {
 		result = append(result, mapMovieListItem(item.ID, item.Title, item.Overview, item.ReleaseDate, item.PosterPath, item.BackdropPath, item.VoteAverage))
 	}
-	return result, nil
+	return t.movieListWithIMDbIDs(result)
 }
 
 func (t *TmDB) listShowPopular() ([]*polochon.Show, error) {
@@ -224,7 +262,7 @@ func (t *TmDB) listShowPopular() ([]*polochon.Show, error) {
 	for _, item := range r.Results {
 		result = append(result, mapShowListItem(item.ID, item.Name, item.Overview, item.FirstAirDate, item.PosterPath, item.BackdropPath, item.VoteAverage))
 	}
-	return result, nil
+	return t.showListWithIMDbIDs(result)
 }
 
 func (t *TmDB) listShowTopRated() ([]*polochon.Show, error) {
@@ -239,7 +277,7 @@ func (t *TmDB) listShowTopRated() ([]*polochon.Show, error) {
 	for _, item := range r.Results {
 		result = append(result, mapShowListItem(item.ID, item.Name, item.Overview, item.FirstAirDate, item.PosterPath, item.BackdropPath, item.VoteAverage))
 	}
-	return result, nil
+	return t.showListWithIMDbIDs(result)
 }
 
 func (t *TmDB) listShowAiringToday() ([]*polochon.Show, error) {
@@ -254,7 +292,7 @@ func (t *TmDB) listShowAiringToday() ([]*polochon.Show, error) {
 	for _, item := range r.Results {
 		result = append(result, mapShowListItem(item.ID, item.Name, item.Overview, item.FirstAirDate, item.PosterPath, item.BackdropPath, item.VoteAverage))
 	}
-	return result, nil
+	return t.showListWithIMDbIDs(result)
 }
 
 func (t *TmDB) listShowOnTheAir() ([]*polochon.Show, error) {
@@ -269,5 +307,5 @@ func (t *TmDB) listShowOnTheAir() ([]*polochon.Show, error) {
 	for _, item := range r.Results {
 		result = append(result, mapShowListItem(item.ID, item.Name, item.Overview, item.FirstAirDate, item.PosterPath, item.BackdropPath, item.VoteAverage))
 	}
-	return result, nil
+	return t.showListWithIMDbIDs(result)
 }

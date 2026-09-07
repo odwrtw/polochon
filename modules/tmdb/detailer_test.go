@@ -2,12 +2,56 @@ package tmdb
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
 	"testing"
 
 	tmdb "github.com/cyruzin/golang-tmdb"
 	polochon "github.com/odwrtw/polochon/lib"
 )
+
+func fakeTVFindByID(t *testing.T, id int64) *tmdb.FindByID {
+	t.Helper()
+
+	result := &tmdb.FindByID{}
+	if err := json.Unmarshal([]byte(`{"tv_results":[{"id":42}]}`), result); err != nil {
+		t.Fatalf("decode TMDB find response: %v", err)
+	}
+	result.TvResults[0].ID = id
+	return result
+}
+
+func TestTmdbGetShowDetailsUsesImdbWhenTMDBIDIsMissing(t *testing.T) {
+	oldFind, oldInfo, oldExternal := tmdbFindTVByExternalID, tmdbGetTVInfo, tmdbGetTVExternalIDs
+	t.Cleanup(func() {
+		tmdbFindTVByExternalID = oldFind
+		tmdbGetTVInfo = oldInfo
+		tmdbGetTVExternalIDs = oldExternal
+	})
+	tmdbFindTVByExternalID = func(_ *tmdb.Client, id, source string, _ map[string]string) (*tmdb.FindByID, error) {
+		if id != "tt0133093" || source != "imdb_id" {
+			t.Fatalf("external lookup = (%q, %q), want (%q, %q)", id, source, "tt0133093", "imdb_id")
+		}
+		return fakeTVFindByID(t, 42), nil
+	}
+	tmdbGetTVInfo = func(_ *tmdb.Client, id int, _ map[string]string) (*tmdb.TVDetails, error) {
+		if id != 42 {
+			t.Fatalf("show TMDB ID = %d, want 42", id)
+		}
+		return &tmdb.TVDetails{ID: 42, Name: "The Matrix"}, nil
+	}
+	tmdbGetTVExternalIDs = func(_ *tmdb.Client, _ int, _ map[string]string) (*tmdb.TVExternalIDs, error) {
+		return &tmdb.TVExternalIDs{}, nil
+	}
+
+	show := &polochon.Show{ImdbID: "tt0133093"}
+	if err := (&TmDB{}).GetDetails(context.Background(), show); err != nil {
+		t.Fatal(err)
+	}
+	if show.TmdbID != 42 || show.ImdbID != "tt0133093" {
+		t.Fatalf("show identifiers = (tmdb=%d, imdb=%q), want (tmdb=%d, imdb=%q)", show.TmdbID, show.ImdbID, 42, "tt0133093")
+	}
+}
 
 func TestTmdbGetShowDetails(t *testing.T) {
 	oldInfo, oldExternal := tmdbGetTVInfo, tmdbGetTVExternalIDs
