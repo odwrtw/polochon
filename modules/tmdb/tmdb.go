@@ -281,6 +281,9 @@ func (t *TmDB) getMovieDetails(movie *polochon.Movie) error {
 	if err != nil {
 		return err
 	}
+	if details == nil {
+		return ErrFailedToGetDetails
+	}
 
 	// Get the year from the release date
 	var year int
@@ -306,8 +309,8 @@ func (t *TmDB) getMovieDetails(movie *polochon.Movie) error {
 	movie.Runtime = int(details.Runtime)
 	movie.SortTitle = details.Title
 	movie.Tagline = details.Tagline
-	movie.ThumbURL = TmDBimageBaseURL + details.PosterPath
-	movie.FanartURL = TmDBimageBaseURL + details.BackdropPath
+	movie.ThumbURL = imageURL(details.PosterPath)
+	movie.FanartURL = imageURL(details.BackdropPath)
 	movie.Title = details.Title
 	movie.Votes = int(details.VoteCount)
 	movie.Year = year

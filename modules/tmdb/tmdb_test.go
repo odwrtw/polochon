@@ -49,6 +49,8 @@ func TestTmdbInit(t *testing.T) {
 }
 
 func TestTmdbStatus(t *testing.T) {
+	oldSearch := tmdbSearchByImdbID
+	t.Cleanup(func() { tmdbSearchByImdbID = oldSearch })
 	tmdbSearchByImdbID = func(_ *tmdb.Client, _, _ string, _ map[string]string) (*tmdb.FindByID, error) {
 		return fakeFindByID(603), nil
 	}
@@ -65,6 +67,8 @@ func TestTmdbStatus(t *testing.T) {
 func TestTmdbSearchByTitleArguments(t *testing.T) {
 	m := polochon.NewMovie(polochon.MovieConfig{})
 
+	oldSearch := tmdbSearchMovie
+	t.Cleanup(func() { tmdbSearchMovie = oldSearch })
 	tmdbSearchMovie = func(_ *tmdb.Client, _ string, _ map[string]string) (*tmdb.SearchMovies, error) {
 		return &tmdb.SearchMovies{}, nil
 	}
@@ -87,6 +91,8 @@ func TestTmdbSearchByTitleArguments(t *testing.T) {
 func TestTmdbSearchByTitle(t *testing.T) {
 	m := &polochon.Movie{Title: "Matrix"}
 
+	oldSearch := tmdbSearchMovie
+	t.Cleanup(func() { tmdbSearchMovie = oldSearch })
 	tmdbSearchMovie = func(_ *tmdb.Client, _ string, _ map[string]string) (*tmdb.SearchMovies, error) {
 		return &tmdb.SearchMovies{
 			SearchMoviesResults: &tmdb.SearchMoviesResults{
@@ -112,6 +118,8 @@ func TestTmdbSearchByTitle(t *testing.T) {
 func TestTmdbSearchByTitleNoResult(t *testing.T) {
 	m := &polochon.Movie{Title: "Matrix"}
 
+	oldSearch := tmdbSearchMovie
+	t.Cleanup(func() { tmdbSearchMovie = oldSearch })
 	tmdbSearchMovie = func(_ *tmdb.Client, _ string, _ map[string]string) (*tmdb.SearchMovies, error) {
 		return &tmdb.SearchMovies{SearchMoviesResults: &tmdb.SearchMoviesResults{}}, nil
 	}
@@ -125,6 +133,8 @@ func TestTmdbSearchByTitleNoResult(t *testing.T) {
 func TestTmdbSearchByImdbIDArguments(t *testing.T) {
 	m := polochon.NewMovie(polochon.MovieConfig{})
 
+	oldSearch := tmdbSearchByImdbID
+	t.Cleanup(func() { tmdbSearchByImdbID = oldSearch })
 	tmdbSearchByImdbID = func(_ *tmdb.Client, _, _ string, _ map[string]string) (*tmdb.FindByID, error) {
 		return &tmdb.FindByID{}, nil
 	}
@@ -145,6 +155,8 @@ func TestTmdbSearchByImdbIDArguments(t *testing.T) {
 func TestTmdbSearchByImdbIDNoResults(t *testing.T) {
 	m := &polochon.Movie{ImdbID: "tt0133093"}
 
+	oldSearch := tmdbSearchByImdbID
+	t.Cleanup(func() { tmdbSearchByImdbID = oldSearch })
 	tmdbSearchByImdbID = func(_ *tmdb.Client, _, _ string, _ map[string]string) (*tmdb.FindByID, error) {
 		return &tmdb.FindByID{}, nil
 	}
@@ -158,6 +170,8 @@ func TestTmdbSearchByImdbIDNoResults(t *testing.T) {
 func TestTmdbSearchByImdbID(t *testing.T) {
 	m := &polochon.Movie{ImdbID: "tt0133093"}
 
+	oldSearch := tmdbSearchByImdbID
+	t.Cleanup(func() { tmdbSearchByImdbID = oldSearch })
 	tmdbSearchByImdbID = func(_ *tmdb.Client, _, _ string, _ map[string]string) (*tmdb.FindByID, error) {
 		return fakeFindByID(1000), nil
 	}
@@ -175,6 +189,11 @@ func TestTmdbSearchByImdbID(t *testing.T) {
 func TestTmdbFailedToGetDetails(t *testing.T) {
 	m := &polochon.Movie{Title: "The Matrix", ImdbID: "tt0133093"}
 
+	oldImdbSearch, oldMovieSearch := tmdbSearchByImdbID, tmdbSearchMovie
+	t.Cleanup(func() {
+		tmdbSearchByImdbID = oldImdbSearch
+		tmdbSearchMovie = oldMovieSearch
+	})
 	tmdbSearchByImdbID = func(_ *tmdb.Client, _, _ string, _ map[string]string) (*tmdb.FindByID, error) {
 		return &tmdb.FindByID{}, nil
 	}
@@ -193,6 +212,8 @@ func TestTmdbGetDetails(t *testing.T) {
 	m := &polochon.Movie{TmdbID: 603}
 	tm := &TmDB{}
 
+	oldInfo := tmdbGetMovieInfo
+	t.Cleanup(func() { tmdbGetMovieInfo = oldInfo })
 	tmdbGetMovieInfo = func(_ *tmdb.Client, _ int, _ map[string]string) (*tmdb.MovieDetails, error) {
 		return &tmdb.MovieDetails{
 			ID:               603,
@@ -241,5 +262,34 @@ func TestTmdbGetDetails(t *testing.T) {
 
 	if !reflect.DeepEqual(m, expected) {
 		t.Errorf("Failed to get movie details\nGot: %+v\nExpected: %+v", m, expected)
+	}
+}
+
+func TestTmdbGetDetailsWithoutArtwork(t *testing.T) {
+	oldInfo := tmdbGetMovieInfo
+	t.Cleanup(func() { tmdbGetMovieInfo = oldInfo })
+	tmdbGetMovieInfo = func(_ *tmdb.Client, _ int, _ map[string]string) (*tmdb.MovieDetails, error) {
+		return &tmdb.MovieDetails{Title: "The Matrix"}, nil
+	}
+
+	movie := &polochon.Movie{TmdbID: 603}
+	if err := (&TmDB{}).GetDetails(context.Background(), movie); err != nil {
+		t.Fatalf("get details: %v", err)
+	}
+	if movie.ThumbURL != "" || movie.FanartURL != "" {
+		t.Fatalf("missing artwork produced URLs: thumb=%q fanart=%q", movie.ThumbURL, movie.FanartURL)
+	}
+}
+
+func TestTmdbGetDetailsNilResponse(t *testing.T) {
+	oldInfo := tmdbGetMovieInfo
+	t.Cleanup(func() { tmdbGetMovieInfo = oldInfo })
+	tmdbGetMovieInfo = func(_ *tmdb.Client, _ int, _ map[string]string) (*tmdb.MovieDetails, error) {
+		return nil, nil
+	}
+
+	movie := &polochon.Movie{TmdbID: 603}
+	if err := (&TmDB{}).GetDetails(context.Background(), movie); err != ErrFailedToGetDetails {
+		t.Fatalf("got %v, want %v", err, ErrFailedToGetDetails)
 	}
 }

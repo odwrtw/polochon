@@ -61,14 +61,14 @@ func (l *Library) GetIndexedShow(id string) (*index.Show, error) {
 func (l *Library) addShow(ep *polochon.ShowEpisode) error {
 	dir := l.getShowDir(ep)
 	nfoPath := l.showNFOPath(dir)
-	if exists(nfoPath) {
+	nfoExists := exists(nfoPath)
+	if nfoExists {
 		s, err := l.newShowFromPath(nfoPath)
-		if err != nil {
-			l.log.Warn("failed to read show NFO, continuing with supplied show", "path", nfoPath, "error", err)
+		if err == nil {
+			ep.Show = s
 			return nil
 		}
-		ep.Show = s
-		return nil
+		l.log.Warn("failed to read show NFO, repairing it", "path", nfoPath, "error", err)
 	}
 
 	s := ep.Show
@@ -90,6 +90,9 @@ func (l *Library) addShow(ep *polochon.ShowEpisode) error {
 	// Write NFO into the file
 	if err := writeNFOFile(nfoPath, s); err != nil {
 		return err
+	}
+	if nfoExists {
+		return nil
 	}
 
 	// Download show images

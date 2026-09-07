@@ -293,6 +293,32 @@ func TestAddEpisodeWithCorruptShowNFO(t *testing.T) {
 	if indexed.ImdbID != show.ImdbID {
 		t.Fatalf("cached show ID = %q, want %q", indexed.ImdbID, show.ImdbID)
 	}
+
+	repaired, err := lib.GetShow(show.ImdbID)
+	if err != nil {
+		t.Fatalf("read repaired show NFO: %q", err)
+	}
+	if repaired.ImdbID != show.ImdbID {
+		t.Fatalf("repaired show ID = %q, want %q", repaired.ImdbID, show.ImdbID)
+	}
+
+	if err := lib.RebuildIndex(); err != nil {
+		t.Fatalf("rebuild index: %q", err)
+	}
+	rebuilt, err := lib.GetIndexedShow(show.ImdbID)
+	if err != nil {
+		t.Fatalf("get rebuilt show: %q", err)
+	}
+	if rebuilt.Show == nil || rebuilt.ImdbID != show.ImdbID {
+		t.Fatalf("show metadata was lost after rebuild: %+v", rebuilt.Show)
+	}
+	season := rebuilt.Seasons[episode.Season]
+	if season == nil {
+		t.Fatalf("season was lost after rebuild: %+v", rebuilt.Seasons)
+	}
+	if _, ok := season.Episodes[episode.Episode]; !ok {
+		t.Fatalf("episode was lost after rebuild: %+v", rebuilt.Seasons)
+	}
 }
 
 func testShow(t *testing.T, episode *polochon.ShowEpisode, lib *mockLibrary) {
