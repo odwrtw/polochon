@@ -2,6 +2,7 @@ package main
 
 import (
 	// Modules
+	_ "github.com/odwrtw/polochon/modules/1337x"
 	_ "github.com/odwrtw/polochon/modules/addicted"
 	_ "github.com/odwrtw/polochon/modules/aria2"
 	_ "github.com/odwrtw/polochon/modules/bsplayer"

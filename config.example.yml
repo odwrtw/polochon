@@ -125,6 +125,7 @@ show:
   torrenters:
     - eztv
     - thepiratebay
+    - 1337x
   # The detailer is where the informations for an episode are fetched.
   detailers:
     - tvdb
@@ -139,6 +140,7 @@ movie:
   torrenters:
     - yts
     - thepiratebay
+    - 1337x
   detailers:
     - tmdb
   subtitlers:
@@ -204,6 +206,19 @@ modules_params:
     - EtHD
     movie_users:
     - YIFY
+    # 1337x is a source of torrents for movies and episodes. Endpoints are
+    # tried in order; the last one that returns a valid result is preferred.
+  - name: 1337x
+    timeout: 30s
+    urls:
+    - https://www.1377x.to
+    - https://1337x.to
+    - https://1337x.st
+    # Optionally only use results whose guessed release group matches one of
+    # these values (case-insensitive).
+    release_groups:
+    - NTb
+    - FraMeSToR
     # Webhook configuration to send a request to an external service once a
     # video is added to the library.
   - name: webhook

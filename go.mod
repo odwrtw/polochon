@@ -4,6 +4,7 @@ go 1.26.1
 
 require (
 	github.com/agnivade/levenshtein v1.2.1
+	github.com/PuerkitoBio/goquery v1.12.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/goccy/go-yaml v1.19.2
 	github.com/gorilla/mux v1.8.1
@@ -34,7 +35,6 @@ require (
 )
 
 require (
-	github.com/PuerkitoBio/goquery v1.12.0 // indirect
 	github.com/andybalholm/cascadia v1.3.4 // indirect
 	github.com/antchfx/htmlquery v1.3.6 // indirect
 	github.com/antchfx/xmlquery v1.5.1 // indirect
