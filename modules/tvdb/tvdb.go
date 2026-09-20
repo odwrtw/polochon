@@ -3,21 +3,18 @@ package tvdb
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
-	"net/url"
-	"sort"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/agnivade/levenshtein"
 	"github.com/goccy/go-yaml"
+
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/pioz/tvdb"
 )
 
-// Make sure that the module is a detailer and a calendar
 var (
 	_ polochon.Detailer = (*TvDB)(nil)
 	_ polochon.Calendar = (*TvDB)(nil)
@@ -27,37 +24,36 @@ func init() {
 	polochon.RegisterModule(&TvDB{})
 }
 
-// Module constants
 const (
-	moduleName      = "tvdb"
-	tokenExpiration = 24 * time.Hour
+	moduleName = "tvdb"
+
+	seriesBannerArtwork     = 1
+	seriesPosterArtwork     = 2
+	seriesBackgroundArtwork = 3
 )
 
-// Errors
 var (
 	ErrShowNotFound                   = errors.New("tvdb: show not found")
 	ErrShowImageNotFound              = errors.New("tvdb: show image not found")
 	ErrNotEnoughArguments             = errors.New("tvdb: not enough arguments to perform search")
 	ErrInvalidArgument                = errors.New("tvdb: invalid argument type")
+	ErrMissingAPIKey                  = errors.New("tvdb: missing API key")
 	ErrMissingShowEpisodeInformations = errors.New("tvdb: missing show episode informations to get details")
 	ErrFailedToUpdateEpisode          = errors.New("tvdb: failed to update episode details")
 )
 
-// Params represents the module params
+// Params represents the module parameters for TheTVDB API v4.
 type Params struct {
-	APIKey   string `yaml:"api_key"`
-	UserID   string `yaml:"user_id"`
-	Username string `yaml:"username"`
+	APIKey string `yaml:"api_key"`
+	Pin    string `yaml:"pin"`
 }
 
-// TvDB implents the Detailer interface
+// TvDB implements the Detailer and Calendar interfaces using TheTVDB API v4.
 type TvDB struct {
-	client           *tvdb.Client
-	lastTokenRefresh *time.Time
-	configured       bool
+	client     *apiClient
+	configured bool
 }
 
-// Init implements the module interface
 func (t *TvDB) Init(p []byte, _ *slog.Logger) error {
 	if t.configured {
 		return nil
@@ -67,435 +63,344 @@ func (t *TvDB) Init(p []byte, _ *slog.Logger) error {
 	if err := yaml.Unmarshal(p, params); err != nil {
 		return err
 	}
-
 	return t.InitWithParams(params)
 }
 
-// InitWithParams configures the module
 func (t *TvDB) InitWithParams(params *Params) error {
-	t.client = &tvdb.Client{
-		Apikey:   params.APIKey,
-		Username: params.Username,
-		Userkey:  params.UserID,
+	if params.APIKey == "" {
+		return ErrMissingAPIKey
 	}
+
+	t.client = newAPIClient(params.APIKey, params.Pin)
 	t.configured = true
 	return nil
 }
 
-// Name implements the Module interface
 func (t *TvDB) Name() string {
 	return moduleName
 }
 
-// login handles the token refresh
-func (t *TvDB) login() error {
-	if t.lastTokenRefresh != nil && time.Since(*t.lastTokenRefresh) < tokenExpiration/2 {
-		// The token is still valid
-		return nil
-	}
-
-	// Never logged in or the token has expired
-	var f func() error
-	if t.lastTokenRefresh == nil || time.Since(*t.lastTokenRefresh) > tokenExpiration {
-		f = t.client.Login
-	} else {
-		f = t.client.RefreshToken
-	}
-
-	if err := f(); err != nil {
-		t.lastTokenRefresh = nil
-		return err
-	}
-
-	now := time.Now()
-	t.lastTokenRefresh = &now
-	return nil
-}
-
-// Status implements the Module interface
 func (t *TvDB) Status() (polochon.ModuleStatus, error) {
-	// Search for The Matrix on trakttv via imdbID
-	_, err := t.searchByImdbID("tt2085059")
+	_, err := t.searchByImdbID(context.Background(), "tt2085059")
 	if err != nil {
 		return polochon.StatusFail, err
 	}
-
 	return polochon.StatusOK, nil
 }
 
-func (t *TvDB) searchByImdbID(id string) (*tvdb.Series, error) {
-	if err := t.login(); err != nil {
-		return nil, err
-	}
-
-	series, err := t.client.SearchByImdbID(id)
+func (t *TvDB) searchByImdbID(ctx context.Context, id string) (*series, error) {
+	shows, err := t.client.searchSeriesByRemoteID(ctx, id)
 	if err != nil {
-		if tvdb.HaveCodeError(404, err) {
+		if isHTTPStatus(err, http.StatusNotFound) {
 			return nil, ErrShowNotFound
 		}
-
 		return nil, err
 	}
-
-	if len(series) == 0 {
+	if len(shows) == 0 {
 		return nil, ErrShowNotFound
 	}
-
-	return &series[0], nil
+	return &shows[0], nil
 }
 
-func (t *TvDB) searchByTvdbID(id int) (*tvdb.Series, error) {
-	if err := t.login(); err != nil {
-		return nil, err
-	}
-
-	show := &tvdb.Series{
-		ID: id,
-	}
-	err := t.client.GetSeries(show)
+func (t *TvDB) searchByTvdbID(ctx context.Context, id int) (*series, error) {
+	show, err := t.client.getSeries(ctx, id)
 	if err != nil {
-		if tvdb.HaveCodeError(404, err) {
+		if isHTTPStatus(err, http.StatusNotFound) {
 			return nil, ErrShowNotFound
 		}
-
 		return nil, err
 	}
-
 	return show, nil
 }
 
-func (t *TvDB) searchByName(query string) (*tvdb.Series, error) {
-	if err := t.login(); err != nil {
-		return nil, err
-	}
-
-	shows, err := t.client.SearchByName(query)
+func (t *TvDB) searchByName(ctx context.Context, query string, year int) (*series, error) {
+	shows, err := t.client.searchSeries(ctx, query, year)
 	if err != nil {
-		if tvdb.HaveCodeError(404, err) {
+		if isHTTPStatus(err, http.StatusNotFound) {
 			return nil, ErrShowNotFound
 		}
-
 		return nil, err
 	}
 
-	// Check if the name matches the query
-	for _, show := range shows {
-		if strings.EqualFold(show.SeriesName, query) {
-			return &show, nil
-		}
+	show := bestShowMatch(shows, query, year)
+	if show == nil {
+		return nil, ErrShowNotFound
 	}
+	return show, nil
+}
 
-	// Check if one of the aliases matches the query
-	for _, show := range shows {
-		for _, alias := range show.Aliases {
-			if strings.EqualFold(alias, query) {
-				return &show, nil
+func bestShowMatch(shows []series, query string, year int) *series {
+	if year != 0 {
+		for _, show := range shows {
+			if strings.EqualFold(show.Name, query) && showYear(show) == year {
+				return &show
+			}
+		}
+
+		for _, show := range shows {
+			if showYear(show) != year {
+				continue
+			}
+			for _, alias := range show.Aliases {
+				if strings.EqualFold(alias.Name, query) {
+					return &show
+				}
 			}
 		}
 	}
 
-	// Get the best match from the levenshtein distance between the query and
-	// the title
-	var bestMatch *tvdb.Series
-	var bestDistance int
 	for _, show := range shows {
-		dist := levenshtein.ComputeDistance(
-			strings.ToLower(show.SeriesName),
-			strings.ToLower(query),
-		)
-
-		if bestMatch == nil || dist < bestDistance {
-			bestMatch = &show
-			bestDistance = dist
+		if strings.EqualFold(show.Name, query) {
+			return &show
+		}
+	}
+	for _, show := range shows {
+		for _, alias := range show.Aliases {
+			if strings.EqualFold(alias.Name, query) {
+				return &show
+			}
 		}
 	}
 
-	return bestMatch, nil
+	var bestMatch *series
+	var bestDistance int
+	for _, show := range shows {
+		distance := levenshtein.ComputeDistance(
+			strings.ToLower(show.Name),
+			strings.ToLower(query),
+		)
+		if bestMatch == nil || distance < bestDistance ||
+			(year != 0 && distance == bestDistance && showYear(show) == year && showYear(*bestMatch) != year) {
+			bestMatch = &show
+			bestDistance = distance
+		}
+	}
+	return bestMatch
 }
 
-// GetDetails implements the Detailer interface
-func (t *TvDB) GetDetails(_ context.Context, i any) error {
-	switch v := i.(type) {
+func showYear(show series) int {
+	year, _ := strconv.Atoi(show.Year)
+	if year != 0 {
+		return year
+	}
+	date, err := time.Parse("2006-01-02", show.FirstAired)
+	if err != nil {
+		return 0
+	}
+	return date.Year()
+}
+
+func (t *TvDB) GetDetails(ctx context.Context, value any) error {
+	switch video := value.(type) {
 	case *polochon.Show:
-		return t.getShowDetails(v, nil)
+		return t.getShowDetails(ctx, video, 0, 0)
 	case *polochon.ShowEpisode:
-		return t.getEpisodeDetails(v)
+		return t.getEpisodeDetails(ctx, video)
 	default:
 		return ErrInvalidArgument
 	}
 }
 
-func (t *TvDB) searchShow(s *polochon.Show) (*tvdb.Series, error) {
-	var show *tvdb.Series
-	var err error
-
+func (t *TvDB) searchShow(ctx context.Context, show *polochon.Show) (*series, error) {
 	switch {
-	case s.TvdbID != 0:
-		show, err = t.searchByTvdbID(s.TvdbID)
-	case s.ImdbID != "":
-		show, err = t.searchByImdbID(s.ImdbID)
-	case s.Title != "":
-		// Add the year to the search if defined
-		query := s.Title
-		if s.Year != 0 {
-			query = fmt.Sprintf("%s (%d)", query, s.Year)
-		}
-
-		show, err = t.searchByName(query)
+	case show.TvdbID != 0:
+		return t.searchByTvdbID(ctx, show.TvdbID)
+	case show.ImdbID != "":
+		return t.searchByImdbID(ctx, show.ImdbID)
+	case show.Title != "":
+		return t.searchByName(ctx, show.Title, show.Year)
 	default:
 		return nil, ErrNotEnoughArguments
 	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	if show == nil {
-		return nil, ErrShowNotFound
-	}
-
-	// If TvDB doesn't have the ImdbID, restore it
-	if show.ImdbID == "" && s.ImdbID != "" {
-		show.ImdbID = s.ImdbID
-	}
-
-	return show, nil
 }
 
-func (t *TvDB) getShowEpisodes(s *polochon.Show, show *tvdb.Series, params url.Values) error {
-	err := t.client.GetSeriesEpisodes(show, params)
+func (t *TvDB) getShowEpisodes(
+	ctx context.Context,
+	show *polochon.Show,
+	details *series,
+	season, number int,
+) error {
+	episodes, err := t.client.getEpisodes(ctx, details.ID, season, number)
 	if err != nil {
 		return err
 	}
 
-	// Get runtime
-	var runtime int
-	if show.Runtime != "" {
-		r, err := strconv.Atoi(show.Runtime)
-		if err != nil {
-			return err
+	show.Episodes = make([]*polochon.ShowEpisode, 0, len(episodes))
+	for _, item := range episodes {
+		runtime := 0
+		if item.Runtime != nil {
+			runtime = *item.Runtime
+		} else if details.AverageRuntime != nil {
+			runtime = *details.AverageRuntime
 		}
-		runtime = r
-	}
 
-	// Go through each episode from the list
-	s.Episodes = []*polochon.ShowEpisode{}
-	for _, e := range show.Episodes {
 		episode := polochon.NewShowEpisode(polochon.ShowConfig{})
-		episode.Title = e.EpisodeName
-		episode.ShowTitle = s.Title
-		episode.Season = e.AiredSeason
-		episode.Episode = e.AiredEpisodeNumber
-		episode.TvdbID = e.ID
-		episode.Aired = e.FirstAired
-		episode.Plot = e.Overview
+		episode.Title = item.Name
+		episode.ShowTitle = show.Title
+		episode.Season = item.SeasonNumber
+		episode.Episode = item.Number
+		episode.TvdbID = item.ID
+		episode.Aired = item.Aired
+		episode.Plot = item.Overview
 		episode.Runtime = runtime
-		episode.ThumbURL = tvdb.ImageURL(e.Filename)
-		episode.ShowImdbID = s.ImdbID
-		episode.ShowTvdbID = s.TvdbID
-		episode.EpisodeImdbID = e.ImdbID
-		episode.Rating = e.SiteRating
-
-		// Add the episode to the list
-		s.Episodes = append(s.Episodes, episode)
+		episode.ThumbURL = item.Image
+		episode.ShowImdbID = show.ImdbID
+		episode.ShowTvdbID = show.TvdbID
+		episode.EpisodeImdbID = imdbID(item.RemoteIDs)
+		show.Episodes = append(show.Episodes, episode)
 	}
-
 	return nil
 }
 
-func (t *TvDB) getShowImages(s *polochon.Show, show *tvdb.Series) error {
-	// Update the banner
-	s.BannerURL = show.BannerURL()
+func (t *TvDB) getShowImages(show *polochon.Show, details *series) error {
+	show.BannerURL = bestArtwork(details.Artworks, seriesBannerArtwork)
+	show.PosterURL = bestArtwork(details.Artworks, seriesPosterArtwork)
+	show.FanartURL = bestArtwork(details.Artworks, seriesBackgroundArtwork)
 
-	// Update the poster and fannart
-	for _, imageType := range []struct {
-		f   func(s *tvdb.Series) error
-		url *string
-		t   string
-	}{
-		{
-			t:   "fanart",
-			url: &s.FanartURL,
-			f:   t.client.GetSeriesFanartImages,
-		},
-		{
-			t:   "poster",
-			url: &s.PosterURL,
-			f:   t.client.GetSeriesPosterImages,
-		},
-	} {
-		// Fetch the image
-		if err := imageType.f(show); err != nil {
-			if tvdb.HaveCodeError(404, err) {
-				continue
-			}
-			return err
-		}
-
-		images := []*tvdb.Image{}
-		for _, i := range show.Images {
-			if i.KeyType != imageType.t {
-				continue
-			}
-			images = append(images, &i)
-		}
-
-		if len(images) == 0 {
-			return ErrShowImageNotFound
-		}
-
-		// Sort images by ratings and count
-		sort.Slice(images, func(i, j int) bool {
-			avgI := images[i].RatingsInfo.Average
-			avgJ := images[j].RatingsInfo.Average
-			if avgI == avgJ {
-				countI := images[i].RatingsInfo.Count
-				countJ := images[j].RatingsInfo.Count
-				return countI > countJ
-			}
-			return avgI > avgJ
-		})
-
-		// Update the image url
-		*imageType.url = tvdb.ImageURL(images[0].FileName)
+	if show.PosterURL == "" {
+		show.PosterURL = details.Image
 	}
-
+	if show.BannerURL == "" || show.PosterURL == "" || show.FanartURL == "" {
+		return ErrShowImageNotFound
+	}
 	return nil
 }
 
-func (t *TvDB) getShowDetails(s *polochon.Show, params url.Values) error {
-	// Search for the show
-	show, err := t.searchShow(s)
+func bestArtwork(artworks []artwork, artworkType int) string {
+	var best *artwork
+	for i := range artworks {
+		candidate := &artworks[i]
+		if candidate.Type != artworkType || candidate.Image == "" {
+			continue
+		}
+		if best == nil || candidate.Score > best.Score {
+			best = candidate
+		}
+	}
+	if best == nil {
+		return ""
+	}
+	return best.Image
+}
+
+func (t *TvDB) getShowDetails(
+	ctx context.Context,
+	show *polochon.Show,
+	season, number int,
+) error {
+	found, err := t.searchShow(ctx, show)
 	if err != nil {
 		return err
 	}
 
-	// Get the show details
-	err = t.client.GetSeries(show)
+	details, err := t.client.getSeries(ctx, found.ID)
 	if err != nil {
 		return err
 	}
 
-	s.Title = show.SeriesName
-	s.Plot = show.Overview
-	s.TvdbID = show.ID
-	s.Rating = show.SiteRating
-	// Only override the imdbID if it's defined
-	if show.ImdbID != "" {
-		s.ImdbID = show.ImdbID
+	show.Title = details.Name
+	show.Plot = details.Overview
+	show.TvdbID = details.ID
+	if id := imdbID(details.RemoteIDs); id != "" {
+		show.ImdbID = id
 	}
-
-	// Get the year from the first aired date
-	if show.FirstAired != "" {
-		date, err := time.Parse("2006-01-02", show.FirstAired)
+	if details.FirstAired != "" {
+		date, err := time.Parse("2006-01-02", details.FirstAired)
 		if err != nil {
 			return err
 		}
-		s.Year = date.Year()
-		s.FirstAired = &date
+		show.Year = date.Year()
+		show.FirstAired = &date
 	}
 
-	// Get show images
-	if err := t.getShowImages(s, show); err != nil {
+	if err := t.getShowImages(show, details); err != nil {
 		return err
 	}
-
-	return t.getShowEpisodes(s, show, params)
+	return t.getShowEpisodes(ctx, show, details, season, number)
 }
 
-func (t *TvDB) getEpisodeDetails(s *polochon.ShowEpisode) error {
-	// The season / episode infos are needed
-	if s.Season == 0 || s.Episode == 0 {
+func (t *TvDB) getEpisodeDetails(ctx context.Context, target *polochon.ShowEpisode) error {
+	if target.Season == 0 || target.Episode == 0 {
+		return ErrMissingShowEpisodeInformations
+	}
+	if target.ShowTitle == "" && target.ShowImdbID == "" {
 		return ErrMissingShowEpisodeInformations
 	}
 
-	// The show should be found by title or imdb id
-	if s.ShowTitle == "" && s.ShowImdbID == "" {
-		return ErrMissingShowEpisodeInformations
-	}
-
-	// Use the show included in the episode if present
-	var show *polochon.Show
-	if s.Show != nil {
-		show = s.Show
-	} else {
+	show := target.Show
+	if show == nil {
 		show = polochon.NewShow(polochon.ShowConfig{})
 	}
-	// Copy missing informations
-	if show.Title == "" && s.ShowTitle != "" {
-		show.Title = s.ShowTitle
+	if show.Title == "" {
+		show.Title = target.ShowTitle
 	}
-	if show.ImdbID == "" && s.ShowImdbID != "" {
-		show.ImdbID = s.ShowImdbID
+	if show.ImdbID == "" {
+		show.ImdbID = target.ShowImdbID
 	}
-
-	params := url.Values{
-		"airedSeason":  {strconv.Itoa(s.Season)},
-		"airedEpisode": {strconv.Itoa(s.Episode)},
-	}
-
-	err := t.getShowDetails(show, params)
-	if err != nil {
+	if err := t.getShowDetails(ctx, show, target.Season, target.Episode); err != nil {
 		return err
 	}
 
-	var updated bool
-	for _, e := range show.Episodes {
-		if e.Season == s.Season && e.Episode == s.Episode {
-			s.Title = e.Title
-			s.ShowTitle = e.ShowTitle
-			s.Season = e.Season
-			s.Episode = e.Episode
-			s.TvdbID = e.TvdbID
-			s.Aired = e.Aired
-			s.Plot = e.Plot
-			s.Runtime = e.Runtime
-			s.ThumbURL = e.ThumbURL
-			s.Rating = e.Rating
-			s.ShowImdbID = e.ShowImdbID
-			s.ShowTvdbID = e.ShowTvdbID
-			s.EpisodeImdbID = e.EpisodeImdbID
-
-			updated = true
-			break
+	for _, item := range show.Episodes {
+		if item.Season != target.Season || item.Episode != target.Episode {
+			continue
 		}
+		target.Title = item.Title
+		target.ShowTitle = item.ShowTitle
+		target.Season = item.Season
+		target.Episode = item.Episode
+		target.TvdbID = item.TvdbID
+		target.Aired = item.Aired
+		target.Plot = item.Plot
+		target.Runtime = item.Runtime
+		target.ThumbURL = item.ThumbURL
+		target.Rating = item.Rating
+		target.ShowImdbID = item.ShowImdbID
+		target.ShowTvdbID = item.ShowTvdbID
+		target.EpisodeImdbID = item.EpisodeImdbID
+		target.Show = show
+		return nil
 	}
-
-	if !updated {
-		return ErrFailedToUpdateEpisode
-	}
-
-	return nil
+	return ErrFailedToUpdateEpisode
 }
 
-// GetShowCalendar implements the Calendar interface
-func (t *TvDB) GetShowCalendar(_ context.Context, show *polochon.Show) (*polochon.ShowCalendar, error) {
-	if err := t.getShowDetails(show, nil); err != nil {
+func imdbID(ids []remoteID) string {
+	for _, id := range ids {
+		if strings.EqualFold(id.SourceName, "IMDB") || strings.HasPrefix(id.ID, "tt") {
+			return id.ID
+		}
+	}
+	return ""
+}
+
+func isHTTPStatus(err error, status int) bool {
+	var apiErr *apiError
+	return errors.As(err, &apiErr) && apiErr.statusCode == status
+}
+
+func (t *TvDB) GetShowCalendar(ctx context.Context, show *polochon.Show) (*polochon.ShowCalendar, error) {
+	if err := t.getShowDetails(ctx, show, 0, 0); err != nil {
 		return nil, err
 	}
-
 	if show == nil || show.ImdbID == "" {
 		return nil, polochon.ErrCalendarNotFound
 	}
-	calendar := polochon.NewShowCalendar(show.ImdbID)
 
-	// Get show details
-	for _, e := range show.Episodes {
-		var aired time.Time
-		var err error
-		if e.Aired != "" {
-			aired, err = time.Parse("2006-01-02", e.Aired)
+	calendar := polochon.NewShowCalendar(show.ImdbID)
+	for _, episode := range show.Episodes {
+		var airedDate *time.Time
+		if episode.Aired != "" {
+			aired, err := time.Parse("2006-01-02", episode.Aired)
 			if err != nil {
 				return nil, err
 			}
+			airedDate = &aired
 		}
-
 		calendar.Episodes = append(calendar.Episodes, &polochon.ShowCalendarEpisode{
-			Season:    e.Season,
-			Episode:   e.Episode,
-			AiredDate: &aired,
+			Season:    episode.Season,
+			Episode:   episode.Episode,
+			AiredDate: airedDate,
 		})
 	}
-
 	return calendar, nil
 }
