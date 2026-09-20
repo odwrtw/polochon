@@ -30,9 +30,12 @@ func GetDetails(ctx context.Context, v Detailable, log *slog.Logger) error {
 	}
 
 	for _, d := range detailers {
-		if err := d.GetDetails(ctx, v); err == nil {
+		err := d.GetDetails(ctx, v)
+		if err == nil {
 			return nil
 		}
+
+		log.Warn("detailer failed", "detailer", d.Name(), "error", err)
 	}
 
 	log.Info("all detailers failed")
