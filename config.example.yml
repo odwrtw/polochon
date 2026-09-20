@@ -182,11 +182,12 @@ modules_params:
     wishlists:
     - url: https://canapeapp.com/polochons/11111-2222222-333333333-444444
       token: 11111111-1320-41d6-8b23-27e3e7976272
-    # tvdb is used as a show detailer and calendar. It requires API credentials.
+    # tvdb is used as a show detailer and calendar. It requires a v4 API key.
   - name: tvdb
     api_key: my_api_key
-    user_id: my_user_id
-    username: my_username
+    # A subscriber-supported API key also requires the subscriber PIN.
+    # This is optional for the basic, free token.
+    # pin: my_subscriber_pin
     # tmdb is used as a movie detailer and requires an API key.
   - name: tmdb
     apikey: my@w3$0m3@pIk3y

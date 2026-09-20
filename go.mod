@@ -22,7 +22,6 @@ require (
 	github.com/odwrtw/yifysubs v0.0.0-20260324231500-2a22e2158ed9
 	github.com/odwrtw/yts v0.0.0-20231024130053-dfa826fee7b6
 	github.com/phyber/negroni-gzip v1.0.0
-	github.com/pioz/tvdb v0.0.0-20221212235421-03519fb7a0e2
 	github.com/prometheus/client_golang v1.24.1
 	github.com/remko/go-mkvparse v0.14.0
 	github.com/robfig/cron/v3 v3.0.1
