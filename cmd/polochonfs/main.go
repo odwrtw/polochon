@@ -34,7 +34,6 @@ var (
 	uid, gid uint32
 )
 
-
 func main() {
 	if err := run(); err != nil {
 		slog.Error(err.Error())

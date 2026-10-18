@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/goccy/go-yaml"
 	"github.com/odwrtw/eztv"
 	polochon "github.com/odwrtw/polochon/lib"
-	"github.com/goccy/go-yaml"
 )
 
 // Make sure that the module is a torrenter, an explorer and a searcher
