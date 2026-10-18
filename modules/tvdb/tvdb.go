@@ -18,6 +18,7 @@ import (
 var (
 	_ polochon.Detailer = (*TvDB)(nil)
 	_ polochon.Calendar = (*TvDB)(nil)
+	_ polochon.Searcher = (*TvDB)(nil)
 )
 
 func init() {
@@ -33,6 +34,7 @@ const (
 )
 
 var (
+	ErrMovieNotFound                  = errors.New("tvdb: movie not found")
 	ErrShowNotFound                   = errors.New("tvdb: show not found")
 	ErrShowImageNotFound              = errors.New("tvdb: show image not found")
 	ErrNotEnoughArguments             = errors.New("tvdb: not enough arguments to perform search")
@@ -48,7 +50,7 @@ type Params struct {
 	Pin    string `yaml:"pin"`
 }
 
-// TvDB implements the Detailer and Calendar interfaces using TheTVDB API v4.
+// TvDB implements the Detailer, Calendar, and Searcher interfaces using TheTVDB API v4.
 type TvDB struct {
 	client     *apiClient
 	configured bool

@@ -85,10 +85,14 @@ type episode struct {
 }
 
 type searchResult struct {
-	Aliases []string `json:"aliases"`
-	Name    string   `json:"name"`
-	TVDBID  string   `json:"tvdb_id"`
-	Year    string   `json:"year"`
+	Aliases    []string   `json:"aliases"`
+	FirstAired string     `json:"first_air_time"`
+	Image      string     `json:"image_url"`
+	Name       string     `json:"name"`
+	Overview   string     `json:"overview"`
+	RemoteIDs  []remoteID `json:"remote_ids"`
+	TVDBID     string     `json:"tvdb_id"`
+	Year       string     `json:"year"`
 }
 
 type response[T any] struct {
@@ -140,10 +144,10 @@ func (c *apiClient) login(ctx context.Context) error {
 	return nil
 }
 
-func (c *apiClient) searchSeries(ctx context.Context, query string, year int) ([]series, error) {
+func (c *apiClient) search(ctx context.Context, query, kind string, year int) ([]searchResult, error) {
 	params := url.Values{
 		"query": {query},
-		"type":  {"series"},
+		"type":  {kind},
 	}
 	if year != 0 {
 		params.Set("year", strconv.Itoa(year))
@@ -153,14 +157,30 @@ func (c *apiClient) searchSeries(ctx context.Context, query string, year int) ([
 	if err := c.get(ctx, "/search", params, &result); err != nil {
 		return nil, err
 	}
+	return result.Data, nil
+}
 
-	shows := make([]series, 0, len(result.Data))
-	for _, item := range result.Data {
+func (c *apiClient) searchSeries(ctx context.Context, query string, year int) ([]series, error) {
+	items, err := c.search(ctx, query, "series", year)
+	if err != nil {
+		return nil, err
+	}
+
+	shows := make([]series, 0, len(items))
+	for _, item := range items {
 		id, err := strconv.Atoi(item.TVDBID)
 		if err != nil || id == 0 {
 			continue
 		}
-		show := series{ID: id, Name: item.Name, Year: item.Year}
+		show := series{
+			FirstAired: item.FirstAired,
+			ID:         id,
+			Image:      item.Image,
+			Name:       item.Name,
+			Overview:   item.Overview,
+			RemoteIDs:  item.RemoteIDs,
+			Year:       item.Year,
+		}
 		for _, name := range item.Aliases {
 			show.Aliases = append(show.Aliases, alias{Name: name})
 		}
