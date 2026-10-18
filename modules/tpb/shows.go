@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/whatsthis"
+
+	polochon "github.com/odwrtw/polochon/lib"
 )
 
 type showSearcher struct {
@@ -46,16 +47,17 @@ func (sS *showSearcher) imdbID() string {
 
 func (sS *showSearcher) isValidGuess(guess whatsthis.Info) bool {
 	// Check the video type
-	if guess.Type != whatsthis.Episode {
+	if guess.Type != whatsthis.Episode || guess.Episode <= 0 {
 		return false
 	}
 
-	if !strings.EqualFold(guess.Title, sS.Episode.ShowTitle) {
+	if guess.Title == "" || !strings.EqualFold(guess.Title, sS.Episode.ShowTitle) {
 		return false
 	}
 	// Check if the data matches the episode
 	if guess.Season != sS.Episode.Season || guess.Episode != sS.Episode.Episode {
 		return false
 	}
-	return true
+	show := sS.Episode.Show
+	return show == nil || guess.Year == 0 || show.Year == 0 || guess.Year == show.Year
 }

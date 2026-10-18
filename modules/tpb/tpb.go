@@ -6,12 +6,13 @@ import (
 	"log/slog"
 	"strings"
 	"time"
+	"unicode"
 
 	yaml "github.com/goccy/go-yaml"
-
-	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/tpb"
 	"github.com/odwrtw/whatsthis"
+
+	polochon "github.com/odwrtw/polochon/lib"
 )
 
 // Make sure that the module is a torrenter and an explorer
@@ -224,8 +225,7 @@ func filterTorrents(torrents []*tpb.Torrent, allowedUsers []string) []*tpb.Torre
 func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent) []*polochon.Torrent {
 	torrents := []*polochon.Torrent{}
 	for _, torrent := range filterTorrents(list, s.users()) {
-		torrentStr := torrentGuessitStr(torrent)
-		guess := whatsthis.Video(torrentStr)
+		guess := whatsthis.File(torrent.Name)
 
 		// Check the guess validity
 		if !s.isValidGuess(guess) {
@@ -239,20 +239,19 @@ func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent) []*polochon.Tor
 		}
 
 		// Set the default quality if none is defined
-		screenSize := guess.ScreenSize
-		if screenSize == "" {
+		torrentQuality := qualityFromGuess(torrent.Name, guess)
+		if torrentQuality == "" {
 			t.log.Debug("tpb: default quality", "torrent", torrent.Name)
-			screenSize = s.defaultQuality()
+			torrentQuality = polochon.Quality(s.defaultQuality())
 		}
 
 		// Check that the Quality is valid
-		torrentQuality := polochon.Quality(screenSize)
 		if !torrentQuality.IsAllowed() {
 			t.log.Debug("tpb: unhandled quality", "quality", torrentQuality)
 			continue
 		}
 
-		t.log.Debug("Adding torrent to the list", "torrent_quality", screenSize, "torrent_name", torrentStr)
+		t.log.Debug("Adding torrent to the list", "torrent_quality", torrentQuality, "torrent_name", torrent.Name)
 
 		torrents = append(torrents, &polochon.Torrent{
 			Quality: torrentQuality,
@@ -271,22 +270,36 @@ func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent) []*polochon.Tor
 	return polochon.FilterTorrents(torrents)
 }
 
-func torrentGuessitStr(t *tpb.Torrent) string {
-	// Hack to make the torrent name look like a video name so that guessit
-	// can guess the title, year and quality
-	return strings.ReplaceAll(t.Name, " ", ".")
+func getQuality(name string) polochon.Quality {
+	quality := qualityFromGuess(name, whatsthis.File(name))
+	if !quality.IsAllowed() {
+		return polochon.Quality("unknown")
+	}
+	return quality
 }
 
-func getQuality(s string) polochon.Quality {
-	for _, q := range []polochon.Quality{
-		polochon.Quality480p,
-		polochon.Quality720p,
-		polochon.Quality1080p,
-		polochon.Quality3D,
-	} {
-		if strings.Contains(s, string(q)) {
-			return q
+func qualityFromGuess(name string, guess whatsthis.Info) polochon.Quality {
+	if guess.ScreenSize != "" {
+		// Preserve unsupported resolutions so callers cannot mistake them for
+		// missing metadata and apply a lower-resolution default.
+		return polochon.Quality(guess.ScreenSize)
+	}
+	// whatsthis has no presentation field. Retain the legacy 3D quality only
+	// for a standalone marker that is neither title text nor a release credit.
+	if has3DToken(name) && !has3DToken(guess.Title) && !has3DToken(guess.ReleaseGroup) {
+		return polochon.Quality3D
+	}
+	return ""
+}
+
+func has3DToken(s string) bool {
+	for _, token := range strings.FieldsFunc(s, func(r rune) bool {
+		// Keep compact hyphenated credits (x264-3D) out of the fallback.
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '-'
+	}) {
+		if strings.EqualFold(token, "3D") {
+			return true
 		}
 	}
-	return polochon.Quality("unknown")
+	return false
 }

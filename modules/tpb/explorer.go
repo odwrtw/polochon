@@ -5,9 +5,10 @@ import (
 	"errors"
 	"time"
 
-	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/tpb"
 	"github.com/odwrtw/whatsthis"
+
+	polochon "github.com/odwrtw/polochon/lib"
 )
 
 var (
@@ -44,8 +45,10 @@ func (t *TPB) GetMovieList(_ context.Context, option string) ([]*polochon.Movie,
 
 	result := []*polochon.Movie{}
 	for _, torrent := range torrents {
-		torrentStr := torrentGuessitStr(torrent)
-		guess := whatsthis.Video(torrentStr)
+		guess := whatsthis.File(torrent.Name)
+		if guess.Type != whatsthis.Movie || guess.Title == "" {
+			continue
+		}
 
 		// Create the movie
 		m := polochon.NewMovie(polochon.MovieConfig{})
@@ -54,12 +57,10 @@ func (t *TPB) GetMovieList(_ context.Context, option string) ([]*polochon.Movie,
 		m.ImdbID = torrent.ImdbID
 
 		// Set the default quality if none is defined
-		screenSize := guess.ScreenSize
-		if screenSize == "" {
-			screenSize = string(polochon.Quality720p)
+		torrentQuality := qualityFromGuess(torrent.Name, guess)
+		if torrentQuality == "" {
+			torrentQuality = polochon.Quality720p
 		}
-
-		torrentQuality := polochon.Quality(screenSize)
 		if !torrentQuality.IsAllowed() {
 			t.log.Debug("tpb: unhandled quality", "quality", torrentQuality)
 			continue
@@ -110,8 +111,15 @@ func (t *TPB) GetShowList(_ context.Context, option string) ([]*polochon.Show, e
 
 	result := []*polochon.Show{}
 	for _, torrent := range torrents {
-		torrentStr := torrentGuessitStr(torrent)
-		guess := whatsthis.Video(torrentStr)
+		guess := whatsthis.File(torrent.Name)
+		if guess.Title == "" {
+			continue
+		}
+		switch guess.Type {
+		case whatsthis.Episode, whatsthis.ShowSeason, whatsthis.Show:
+		default:
+			continue
+		}
 
 		// Create the show
 		s := polochon.NewShow(polochon.ShowConfig{})

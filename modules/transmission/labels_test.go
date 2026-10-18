@@ -7,6 +7,21 @@ import (
 	polochon "github.com/odwrtw/polochon/lib"
 )
 
+func TestUHDLabelsRoundTrip(t *testing.T) {
+	for _, torrent := range []*polochon.Torrent{
+		{ImdbID: "tt1", Type: polochon.TypeMovie, Quality: polochon.Quality2160p},
+		{ImdbID: "tt2", Type: polochon.TypeEpisode, Season: 2, Episode: 3, Quality: polochon.Quality2160p},
+	} {
+		t.Run(string(torrent.Type), func(t *testing.T) {
+			got := &polochon.Torrent{}
+			updateFromLabel(got, labels(torrent))
+			if !reflect.DeepEqual(got, torrent) {
+				t.Fatalf("label round-trip = %+v, want %+v", got, torrent)
+			}
+		})
+	}
+}
+
 func TestLabels(t *testing.T) {
 	tt := []struct {
 		name     string
