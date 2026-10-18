@@ -18,7 +18,7 @@ require (
 	github.com/odwrtw/tpb v0.0.0-20260324184152-590534670773
 	github.com/odwrtw/trakttv v0.0.0-20260303085205-6da049dbce68
 	github.com/odwrtw/transmission v0.0.0-20221028215408-b11d7d55c759
-	github.com/odwrtw/whatsthis v0.0.0-20260324183316-86994131f0d2
+	github.com/odwrtw/whatsthis v0.0.0-20261018120706-71d904f1cee7
 	github.com/odwrtw/yifysubs v0.0.0-20260324231500-2a22e2158ed9
 	github.com/odwrtw/yts v0.0.0-20231024130053-dfa826fee7b6
 	github.com/phyber/negroni-gzip v1.0.0

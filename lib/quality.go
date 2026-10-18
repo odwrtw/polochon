@@ -23,6 +23,7 @@ func StringToQuality(q string) (*Quality, error) {
 		Quality480p,
 		Quality720p,
 		Quality1080p,
+		Quality2160p,
 		Quality3D,
 	} {
 		if string(quality) == q {

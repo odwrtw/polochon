@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log/slog"
 	"path/filepath"
-	"strings"
 
 	"github.com/odwrtw/whatsthis"
+
 	polochon "github.com/odwrtw/polochon/lib"
 )
 
@@ -23,7 +23,7 @@ const (
 	moduleName = "guessit"
 )
 
-// Guessit implements the Guesser interface using go-guessit
+// Guessit implements the Guesser interface using whatsthis
 type Guessit struct{}
 
 // Init implements the module interface
@@ -43,25 +43,18 @@ func (g *Guessit) Status() (polochon.ModuleStatus, error) {
 
 // GuessMetadata guess the metadata of a file
 func (g *Guessit) GuessMetadata(file *polochon.File) (*polochon.VideoMetadata, error) {
-	filePath := filepath.Base(file.Path)
-	guess := whatsthis.Video(filePath)
-
-	return &polochon.VideoMetadata{
-		Quality:      polochon.Quality(guess.ScreenSize),
-		ReleaseGroup: guess.ReleaseGroup,
-		AudioCodec:   guess.AudioCodec,
-		VideoCodec:   guess.VideoCodec,
-		Container:    guess.Container,
-	}, nil
+	guess := whatsthis.File(filepath.Base(file.Path))
+	return metadata(guess), nil
 }
 
 // Guess implements the Guesser interface
 func (g *Guessit) Guess(file polochon.File, movieConf polochon.MovieConfig, showConf polochon.ShowConfig) (polochon.Video, error) {
 	filename := filepath.Base(file.Path)
-	guess := whatsthis.Video(filename)
-
-	// Format the title
-	title := toUpperCaseFirst(guess.Title)
+	guess := whatsthis.File(filename)
+	if guess.Title == "" {
+		return nil, polochon.ErrGuessingVideo
+	}
+	title := guess.Title
 
 	var video polochon.Video
 
@@ -73,6 +66,9 @@ func (g *Guessit) Guess(file polochon.File, movieConf polochon.MovieConfig, show
 			Year:        guess.Year,
 		}
 	case whatsthis.Episode:
+		if guess.Episode <= 0 {
+			return nil, polochon.ErrGuessingVideo
+		}
 		show := polochon.NewShow(showConf)
 		show.Year = guess.Year
 		show.Title = title
@@ -88,26 +84,17 @@ func (g *Guessit) Guess(file polochon.File, movieConf polochon.MovieConfig, show
 	}
 
 	video.SetFile(file)
-	video.SetMetadata(&polochon.VideoMetadata{
+	video.SetMetadata(metadata(guess))
+
+	return video, nil
+}
+
+func metadata(guess whatsthis.Info) *polochon.VideoMetadata {
+	return &polochon.VideoMetadata{
 		Quality:      polochon.Quality(guess.ScreenSize),
 		ReleaseGroup: guess.ReleaseGroup,
 		AudioCodec:   guess.AudioCodec,
 		VideoCodec:   guess.VideoCodec,
 		Container:    guess.Container,
-	})
-
-	return video, nil
-}
-
-// toUpperCaseFirst is an helper to get the uppercase first of a string
-func toUpperCaseFirst(s string) string {
-	retStr := []string{}
-	for str := range strings.SplitSeq(s, " ") {
-		if len(str) > 1 {
-			str = strings.ToUpper(string(str[0])) + str[1:]
-		}
-		retStr = append(retStr, str)
 	}
-
-	return strings.Join(retStr, " ")
 }

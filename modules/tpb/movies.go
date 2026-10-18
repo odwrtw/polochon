@@ -3,8 +3,9 @@ package tpb
 import (
 	"strings"
 
-	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/whatsthis"
+
+	polochon "github.com/odwrtw/polochon/lib"
 )
 
 type movieSearcher struct {
@@ -37,7 +38,7 @@ func (mS *movieSearcher) imdbID() string {
 }
 
 func (mS *movieSearcher) isValidGuess(guess whatsthis.Info) bool {
-	if !strings.EqualFold(guess.Title, mS.Movie.Title) {
+	if guess.Title == "" || !strings.EqualFold(guess.Title, mS.Movie.Title) {
 		return false
 	}
 
@@ -46,5 +47,5 @@ func (mS *movieSearcher) isValidGuess(guess whatsthis.Info) bool {
 		return false
 	}
 
-	return true
+	return guess.Year == 0 || mS.Movie.Year == 0 || guess.Year == mS.Movie.Year
 }
