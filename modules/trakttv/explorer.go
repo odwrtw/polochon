@@ -34,7 +34,7 @@ func (trakt *TraktTV) GetMovieList(_ context.Context, option string) ([]*polocho
 		for _, tMovie := range trendingMovies {
 			movies = append(movies, &tMovie.Movie)
 		}
-	case "anticicpated":
+	case "anticipated":
 		anticipatedMovies, err := trakt.client.AnticipatedMovies(queryOption)
 		if err != nil {
 			return nil, err
@@ -119,7 +119,7 @@ func (trakt *TraktTV) GetShowList(_ context.Context, option string) ([]*polochon
 		for _, tShow := range trendingShows {
 			shows = append(shows, &tShow.Show)
 		}
-	case "anticicpated":
+	case "anticipated":
 		anticipatedShows, err := trakt.client.AnticipatedShows(queryOption)
 		if err != nil {
 			return nil, err
