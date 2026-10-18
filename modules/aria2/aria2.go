@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	yaml "github.com/goccy/go-yaml"
 	"github.com/gregdel/argo/rpc"
 	polochon "github.com/odwrtw/polochon/lib"
-	yaml "github.com/goccy/go-yaml"
 )
 
 // Make sure that the module is a downloader

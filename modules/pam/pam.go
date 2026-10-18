@@ -4,9 +4,9 @@ import (
 	"errors"
 	"log/slog"
 
+	"github.com/goccy/go-yaml"
 	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/odwrtw/polochon/lib/papi"
-	"github.com/goccy/go-yaml"
 )
 
 // Make sure that the module is a detailer

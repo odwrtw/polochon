@@ -13,7 +13,6 @@ import (
 	polochon "github.com/odwrtw/polochon/lib"
 )
 
-
 // makeZip builds an in-memory zip archive containing the given files.
 func makeZip(files map[string]string) []byte {
 	var buf bytes.Buffer

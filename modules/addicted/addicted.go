@@ -153,7 +153,11 @@ func (a *addictedProxy) getShowSubtitle(ctx context.Context, reqEpisode *polocho
 		if err != nil {
 			return nil, err
 		}
-		defer r.Close()
+		defer func() {
+			if err := r.Close(); err != nil {
+				a.log.Warn("failed to close subtitle response", "error", err)
+			}
+		}()
 		if _, err = data.ReadFrom(r); err != nil {
 			return nil, err
 		}
@@ -183,7 +187,11 @@ func (a *addictedProxy) getShowSubtitle(ctx context.Context, reqEpisode *polocho
 	if err != nil {
 		return nil, err
 	}
-	defer r.Close()
+	defer func() {
+		if err := r.Close(); err != nil {
+			a.log.Warn("failed to close subtitle response", "error", err)
+		}
+	}()
 	if _, err = data.ReadFrom(r); err != nil {
 		return nil, err
 	}
@@ -231,7 +239,11 @@ func (a *addictedProxy) DownloadSubtitle(ctx context.Context, i any, entry *polo
 	if err != nil {
 		return nil, err
 	}
-	defer r.Close()
+	defer func() {
+		if err := r.Close(); err != nil {
+			a.log.Warn("failed to close subtitle response", "error", err)
+		}
+	}()
 
 	data := &bytes.Buffer{}
 	if _, err := data.ReadFrom(r); err != nil {
