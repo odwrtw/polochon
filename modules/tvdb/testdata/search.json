@@ -1,0 +1,61 @@
+{
+  "status": "success",
+  "data": [
+    {
+      "aliases": [
+        "Al este del Edén"
+      ],
+      "image_url": "https://artworks.thetvdb.com/banners/v4/series/430034/posters/6aa5d2429b5f2.jpg",
+      "name": "East of Eden (2026)",
+      "first_air_time": "2026-10-01",
+      "overview": "In the farmlands of the Salinas Valley in California, successive generations of two families, the Trasks and the Hamiltons, are destined to reenact the fateful story of Cain and Abel.",
+      "tvdb_id": "430034",
+      "year": "2026",
+      "remote_ids": [
+        {
+          "id": "tt21097264",
+          "type": 2,
+          "sourceName": "IMDB"
+        },
+        {
+          "id": "https://www.netflix.com/title/81611854",
+          "type": 4,
+          "sourceName": "Official Website"
+        },
+        {
+          "id": "258165",
+          "type": 12,
+          "sourceName": "TheMovieDB.com"
+        },
+        {
+          "id": "79399",
+          "type": 19,
+          "sourceName": "TV Maze"
+        }
+      ]
+    },
+    {
+      "image_url": "https://artworks.thetvdb.com/banners/posters/180961-2.jpg",
+      "name": "East of Eden (1981)",
+      "first_air_time": "1981-02-08",
+      "overview": "A powerful eight-hour adaptation of John Steinbeck's 1952 generational saga stars Bruce Boxleitner and Timothy Bottoms as battling brothers reminiscent of Cain and Abel, and Jane Seymour as the malevolent young woman who toys with their emotions.",
+      "tvdb_id": "180961",
+      "year": "1981",
+      "remote_ids": [
+        {
+          "id": "tt0083409",
+          "type": 2,
+          "sourceName": "IMDB"
+        },
+        {
+          "id": "27291",
+          "type": 12,
+          "sourceName": "TheMovieDB.com"
+        }
+      ]
+    }
+  ],
+  "links": {
+    "next": null
+  }
+}
