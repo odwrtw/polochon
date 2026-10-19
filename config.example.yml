@@ -127,6 +127,7 @@ show:
     - thepiratebay
   # The detailer is where the informations for an episode are fetched.
   detailers:
+    - libimdb
     - tvdb
   # Where to download the subtitles.
   subtitlers:
@@ -140,6 +141,7 @@ movie:
     - yts
     - thepiratebay
   detailers:
+    - libimdb
     - tmdb
   subtitlers:
     - mkvinfo
@@ -149,6 +151,9 @@ movie:
     - podnapisi
 
 modules_params:
+    # Use libimdb to match name -> imdb id
+  - name: libimdb
+    db_path: /home/user/.local/share/libimdb/imdb.sqlite
     # Required for the transmission client, if the downloader is enabled.
   - name: transmission
     url: http://mytransmission.com/transmission/rpc

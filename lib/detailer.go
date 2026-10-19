@@ -15,6 +15,14 @@ type Detailer interface {
 	GetDetails(ctx context.Context, i any) error
 }
 
+// ContinuingDetailer contributes partial details. A successful call does not
+// complete GetDetails when ContinueOnSuccess returns true. Existing detailers
+// need not implement this interface.
+type ContinuingDetailer interface {
+	Detailer
+	ContinueOnSuccess() bool
+}
+
 // Detailable represents a ressource which can be detailed
 type Detailable interface {
 	GetDetailers() []Detailer
@@ -30,8 +38,17 @@ func GetDetails(ctx context.Context, v Detailable, log *slog.Logger) error {
 	}
 
 	for _, d := range detailers {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		err := d.GetDetails(ctx, v)
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		if err == nil {
+			if continuing, ok := d.(ContinuingDetailer); ok && continuing.ContinueOnSuccess() {
+				continue
+			}
 			return nil
 		}
 
