@@ -30,15 +30,14 @@ type rating struct {
 }
 
 type listing struct {
-	Title        string            `json:"title"`
-	Year         int               `json:"year"`
-	Type         string            `json:"type"`
-	EndpointType string            `json:"endpoint_type"`
-	IDs          mediaIDs          `json:"ids"`
-	Poster       string            `json:"poster"`
-	Fanart       string            `json:"fanart"`
-	Overview     string            `json:"overview"`
-	Ratings      map[string]rating `json:"ratings"`
+	Title    string            `json:"title"`
+	Year     int               `json:"year"`
+	Type     string            `json:"type"`
+	IDs      mediaIDs          `json:"ids"`
+	Poster   string            `json:"poster"`
+	Fanart   string            `json:"fanart"`
+	Overview string            `json:"overview"`
+	Ratings  map[string]rating `json:"ratings"`
 }
 
 type feedItem struct {

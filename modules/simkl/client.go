@@ -125,13 +125,6 @@ func (c *apiClient) get(ctx context.Context, base, path string, params url.Value
 	return json.Unmarshal(data, dst)
 }
 
-func (c *apiClient) search(ctx context.Context, kind, query string) ([]listing, error) {
-	var items []listing
-	params := url.Values{"q": {query}, "page": {"1"}, "limit": {"20"}}
-	err := c.get(ctx, c.baseURL, "/search/"+kind, params, true, &items)
-	return items, err
-}
-
 func (c *apiClient) detail(ctx context.Context, kind string, id int) (*mediaDetail, error) {
 	if id <= 0 {
 		return nil, ErrInvalidArgument

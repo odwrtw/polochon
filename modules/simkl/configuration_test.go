@@ -10,14 +10,16 @@ import (
 )
 
 func TestRegistration(t *testing.T) {
-	for _, kind := range []polochon.ModuleType{polochon.TypeExplorer, polochon.TypeSearcher, polochon.TypeDetailer, polochon.TypeCalendar} {
+	for _, kind := range []polochon.ModuleType{polochon.TypeExplorer, polochon.TypeDetailer, polochon.TypeCalendar} {
 		module, err := polochon.GetModule("simkl", kind)
 		if err != nil || module.Name() != "simkl" {
 			t.Errorf("GetModule(%s) = %v, %v", kind, module, err)
 		}
 	}
-	if _, err := polochon.GetModule("simkl", polochon.TypeWishlister); err == nil {
-		t.Error("SIMKL should not implement an authenticated wishlister")
+	for _, kind := range []polochon.ModuleType{polochon.TypeSearcher, polochon.TypeWishlister} {
+		if _, err := polochon.GetModule("simkl", kind); err == nil {
+			t.Errorf("SIMKL should not implement %s", kind)
+		}
 	}
 }
 
@@ -27,12 +29,10 @@ func TestConfiguration(t *testing.T) {
 movie:
   dir: %q
   explorers: [simkl]
-  searchers: [simkl]
   detailers: [simkl]
 show:
   dir: %q
   explorers: [simkl]
-  searchers: [simkl]
   detailers: [simkl]
   calendar: simkl
 modules_params:
@@ -44,11 +44,19 @@ modules_params:
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(conf.Movie.Explorers) != 1 || len(conf.Movie.Searchers) != 1 || len(conf.Movie.Detailers) != 1 || len(conf.Show.Explorers) != 1 || len(conf.Show.Searchers) != 1 || len(conf.Show.Detailers) != 1 || conf.Show.Calendar == nil {
+	if len(conf.Movie.Explorers) != 1 || len(conf.Movie.Searchers) != 0 || len(conf.Movie.Detailers) != 1 || len(conf.Show.Explorers) != 1 || len(conf.Show.Searchers) != 0 || len(conf.Show.Detailers) != 1 || conf.Show.Calendar == nil {
 		t.Fatalf("missing configured roles: %+v", conf)
 	}
 	module := conf.Movie.Explorers[0].(*Simkl)
 	if module.client.clientID != "test-client" || module.client.appVersion != "test" || conf.Show.Calendar != module {
 		t.Errorf("configuration did not initialize one shared module: %+v", module)
+	}
+	for _, kind := range []string{"movie", "show"} {
+		t.Run("reject searcher/"+kind, func(t *testing.T) {
+			invalid := strings.Replace(data, kind+":\n", kind+":\n  searchers: [simkl]\n", 1)
+			if _, err := configuration.LoadConfig(strings.NewReader(invalid)); err == nil {
+				t.Fatal("accepted SIMKL as a searcher")
+			}
+		})
 	}
 }

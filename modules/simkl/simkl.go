@@ -72,12 +72,9 @@ func (s *Simkl) Status() (polochon.ModuleStatus, error) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	// Search is uncached and validates the client ID, unlike the public CDN feeds.
-	items, err := s.client.search(ctx, "movie", "The Matrix")
-	if err == nil && len(items) == 0 {
-		err = ErrNotFound
-	}
-	if err != nil {
+	// Probe public metadata without a user token. Cached responses do not
+	// necessarily validate the client ID, so this only checks service health.
+	if _, err := s.client.detail(ctx, "movies", 53992); err != nil {
 		return polochon.StatusFail, err
 	}
 	return polochon.StatusOK, nil
