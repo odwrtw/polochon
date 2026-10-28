@@ -1,0 +1,7 @@
+[
+  {"title": "Winter Is Coming", "type": "episode", "season": 1, "episode": 1, "description": "The first episode.", "runtime": 62, "aired": true, "date": "2011-04-17T21:00:00-05:00", "img": "26/still", "ids": {"simkl_id": 101}},
+  {"title": "Duplicate", "type": "episode", "season": 1, "episode": 1, "date": "invalid"},
+  {"title": "The Kingsroad", "type": "episode", "season": 1, "episode": 2, "description": null, "runtime": null, "aired": true, "date": "2011-04-24T21:00:00-05:00", "img": null, "ids": {"simkl_id": 102}},
+  {"title": "Unnumbered special", "type": "special", "date": "invalid", "ids": {"simkl_id": 103}},
+  {"title": "Unnumbered episode", "type": "episode", "ids": {"simkl_id": 104}}
+]
