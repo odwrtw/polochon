@@ -1,0 +1,12 @@
+{
+  "title": "Game of Thrones",
+  "year": 2011,
+  "type": "show",
+  "ids": {"simkl": 84, "slug": "game-of-thrones", "imdb": "tt002", "tvdb": "121361", "tmdb": "1399"},
+  "poster": "57/poster",
+  "fanart": "65/background",
+  "first_aired": "2011-04-17T00:00:00Z",
+  "runtime": 52,
+  "overview": "Seven noble families.",
+  "ratings": {"simkl": {"rating": 9.1, "votes": 1270}}
+}

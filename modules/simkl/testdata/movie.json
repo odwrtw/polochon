@@ -1,0 +1,13 @@
+{
+  "title": "Inception",
+  "year": 2010,
+  "type": "movie",
+  "ids": {"simkl": 42, "slug": "inception", "imdb": "tt001", "tmdb": "27205"},
+  "poster": "14/poster",
+  "fanart": "27/background",
+  "released": "2010-07-15",
+  "runtime": 148,
+  "overview": "A dream within a dream.",
+  "genres": ["Action", "Science Fiction"],
+  "ratings": {"simkl": {"rating": 8.6, "votes": 11454}, "imdb": {"rating": 8.8, "votes": 2816410}}
+}

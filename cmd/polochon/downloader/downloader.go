@@ -176,7 +176,7 @@ func (d *Downloader) downloadMissingShows(ctx context.Context, wl *polochon.Wish
 			}
 
 			// Check if the episode should be downloaded
-			if calEpisode.IsOlder(wishedShow) {
+			if !calEpisode.IsAvailable() || calEpisode.IsOlder(wishedShow) {
 				continue
 			}
 
