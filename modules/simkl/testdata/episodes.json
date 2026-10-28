@@ -1,0 +1,47 @@
+[
+  {
+    "title": "Winter Is Coming",
+    "description": "Lord Ned Stark is troubled by disturbing reports form a Night's Watch deserter; King Robert arrives at Winterfell.",
+    "runtime": 61,
+    "season": 1,
+    "episode": 1,
+    "type": "episode",
+    "finale_type": null,
+    "aired": true,
+    "img": "31/318121421ca3e9c34",
+    "date": "2011-04-17T21:00:00-04:00",
+    "ids": {
+      "simkl_id": 247720
+    }
+  },
+  {
+    "title": "The Kingsroad",
+    "description": "The Lannisters plot to ensure Bran's silence; Jon and Tyrion head to the Wall; Ned faces a family crisis en route to King's Landing.",
+    "runtime": 55,
+    "season": 1,
+    "episode": 2,
+    "type": "episode",
+    "finale_type": null,
+    "aired": true,
+    "img": "31/3181114e8a5a44d52",
+    "date": "2011-04-24T21:00:00-04:00",
+    "ids": {
+      "simkl_id": 247721
+    }
+  },
+  {
+    "title": "Lord Snow",
+    "description": "Jon impresses Tyrion at Castle Black; Ned confronts his past and future at King's Landing; Daenerys finds herself at odds with Viserys.",
+    "runtime": 57,
+    "season": 1,
+    "episode": 3,
+    "type": "episode",
+    "finale_type": null,
+    "aired": true,
+    "img": "31/3181014e40e7139d0",
+    "date": "2011-05-01T21:00:00-04:00",
+    "ids": {
+      "simkl_id": 247722
+    }
+  }
+]

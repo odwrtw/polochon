@@ -65,7 +65,9 @@ wishlist:
   # Supported wishlisters:
   # imdb: using a public URL
   # canape: using a canapeapp.com to add things to the wishlist
-  # Both of theses modules should be configured in the module section.
+  # simkl: authenticated movie/TV Plan-to-Watch snapshot; restart to refresh.
+  # See modules/simkl/README.md for setup and import limitations.
+  # Configure authenticated wishlisters in the module section.
   wishlisters:
   - imdb
   - canape
@@ -149,6 +151,14 @@ movie:
     - podnapisi
 
 modules_params:
+    # Optional Simkl AUTH V2 connection. Public explorers need no entry here.
+    # Select simkl under movie/show explorers, detailers, searchers, calendar,
+    # or wishlist wishlisters as needed; existing defaults below are unchanged.
+    # Obtain credentials with: go run ./modules/simkl/cmd/setup -client-id YOUR_ID
+    # - name: simkl
+    #   client_id: "YOUR_SIMKL_V2_CLIENT_ID"
+    #   refresh_token: "YOUR_SIMKL_REFRESH_TOKEN"
+    #   client_secret: "YOUR_CONFIDENTIAL_CLIENT_SECRET" # confidential apps only
     # Required for the transmission client, if the downloader is enabled.
   - name: transmission
     url: http://mytransmission.com/transmission/rpc

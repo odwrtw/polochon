@@ -1,0 +1,40 @@
+{
+  "title": "Game of Thrones",
+  "year": 2011,
+  "type": "show",
+  "ids": {
+    "simkl": 17465,
+    "slug": "game-of-thrones",
+    "tvdb": "121361",
+    "imdb": "tt0944947",
+    "tmdb": "1399",
+    "tvdbslug": "game-of-thrones",
+    "traktslug": "game-of-thrones"
+  },
+  "poster": "57/5742576cd8f59fcb0",
+  "fanart": "65/6517069dc223b367",
+  "first_aired": "2011-04-18T01:00:00Z",
+  "airs": {
+    "day": "Sunday",
+    "time": "09:00 PM",
+    "timezone": "America/New_York"
+  },
+  "runtime": 52,
+  "overview": "Seven noble families fight for control of the mythical land of Westeros. Friction between the houses leads to full-scale war. All while a very ancient evil awakens in the farthest north. Amidst the war, a neglected military order of misfits, the Night's Watch, is all that stands between the realms of men and the icy horrors beyond.",
+  "genres": [
+    "Action",
+    "Adventure",
+    "Drama",
+    "Fantasy"
+  ],
+  "ratings": {
+    "simkl": {
+      "rating": 8.8,
+      "votes": 15492
+    },
+    "imdb": {
+      "rating": 9.2,
+      "votes": 2678483
+    }
+  }
+}

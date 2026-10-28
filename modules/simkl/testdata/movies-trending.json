@@ -1,0 +1,71 @@
+[
+  {
+    "title": "The Dog Stars",
+    "url": "/movies/2630825/the-dog-stars",
+    "poster": "20/20230813229b8a2cfb",
+    "fanart": "19/198811955764cc7a08",
+    "ids": {
+      "simkl_id": 2630825,
+      "slug": "the-dog-stars",
+      "imdb": "tt21285562",
+      "tmdb": "1384216",
+      "tvdb": "361645",
+      "tvdbslug": "the-dogs-stars",
+      "traktslug": "the-dog-stars-2026",
+      "letterboxd": "the-dog-stars"
+    },
+    "release_date": "08/26/2026",
+    "ratings": {
+      "simkl": {
+        "rating": 6.53,
+        "votes": 121
+      },
+      "imdb": {
+        "rating": 6.4,
+        "votes": 18880
+      }
+    },
+    "runtime": "1h 59m",
+    "overview": "After the world's population has been ravaged by a pandemic, a man lives a lonesome existence in a Colorado airplane hangar with his dog and a dour gunman he has befriended. When a mysterious transmission comes through on the radio while he’s flying his old Cessna, it sparks a hunt for the provenance of the sound.",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Science Fiction",
+      "Thriller"
+    ]
+  },
+  {
+    "title": "Spider-Man: Brand New Day",
+    "url": "/movies/1902343/spider-man-brand-new-day",
+    "poster": "20/204275190b49d24215",
+    "fanart": "20/20178851e05e4c247e",
+    "ids": {
+      "simkl_id": 1902343,
+      "slug": "spider-man-brand-new-day",
+      "imdb": "tt22084616",
+      "tmdb": "969681",
+      "tvdb": "135896",
+      "tvdbslug": "untitled-spider-man-sequel-2",
+      "traktslug": "spider-man-brand-new-day-2026",
+      "letterboxd": "spider-man-brand-new-day"
+    },
+    "release_date": "07/29/2026",
+    "ratings": {
+      "simkl": {
+        "rating": 8.25,
+        "votes": 4572
+      },
+      "imdb": {
+        "rating": 7.9,
+        "votes": 367749
+      }
+    },
+    "runtime": "2h 25m",
+    "overview": "Fighting crime full-time as Spider-Man in a world that doesn't remember him—and the pressure of seeing his old friends move on without him—sparks a change in Peter Parker he may not have the power to control. But that transformation might also be the only thing that can stop a shocking new threat to the city and those he loves - a powerful villain no one can even see.",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Science Fiction"
+    ]
+  }
+]
