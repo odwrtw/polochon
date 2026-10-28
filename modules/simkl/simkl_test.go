@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"sync"
 	"testing"
 	"time"
@@ -25,7 +26,7 @@ func testModule(t *testing.T, handler http.HandlerFunc) *Simkl {
 				t.Errorf("%s = %q, want %q", key, got, want)
 			}
 		}
-		if r.Header.Get("Authorization") != "" || r.Header.Get("User-Agent") != "polochon/test" {
+		if r.Header.Get("Authorization") != "" || r.Header.Get("Cookie") != "" || r.Header.Get("User-Agent") != "polochon/test" {
 			t.Errorf("unexpected headers: %v", r.Header)
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -81,13 +82,17 @@ func TestStatus(t *testing.T) {
 		status int
 		want   polochon.ModuleStatus
 	}{
-		{"ok", `[{"title":"The Matrix","ids":{"simkl_id":1}}]`, 200, polochon.StatusOK},
+		{"ok", `{"title":"The Matrix","type":"movie","ids":{"simkl":53992}}`, 200, polochon.StatusOK},
 		{"empty", `[]`, 200, polochon.StatusFail},
+		{"null", `null`, 200, polochon.StatusFail},
+		{"invalid metadata", `{}`, 200, polochon.StatusFail},
+		{"malformed metadata", `{`, 200, polochon.StatusFail},
 		{"invalid key", `{"error":"client_id_failed"}`, 412, polochon.StatusFail},
+		{"server error", `failure`, 500, polochon.StatusFail},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			s := testModule(t, func(w http.ResponseWriter, r *http.Request) {
-				if r.URL.Path != "/search/movie" || r.URL.Query().Get("q") != "The Matrix" {
+				if r.URL.Path != "/movies/53992" || len(r.URL.Query()) != 3 {
 					t.Errorf("unexpected status request: %s", r.URL)
 				}
 				w.WriteHeader(tc.status)
@@ -143,17 +148,21 @@ func TestClientErrors(t *testing.T) {
 func TestClientPacing(t *testing.T) {
 	var mu sync.Mutex
 	var times []time.Time
-	s := testModule(t, func(w http.ResponseWriter, _ *http.Request) {
+	s := testModule(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/redirect" {
+			t.Errorf("unexpected pacing request: %s", r.URL)
+		}
 		mu.Lock()
 		times = append(times, time.Now())
 		mu.Unlock()
-		_, _ = w.Write([]byte(`[]`))
+		w.Header().Set("Location", "https://simkl.com/movies/42/example")
+		w.WriteHeader(http.StatusMovedPermanently)
 	})
 	s.client.interval = 20 * time.Millisecond
 	var wg sync.WaitGroup
 	for range 3 {
 		wg.Go(func() {
-			if _, err := s.client.search(context.Background(), "movie", "test"); err != nil {
+			if _, err := s.client.resolve(context.Background(), "movies", url.Values{"imdb": {"tt001"}}); err != nil {
 				t.Error(err)
 			}
 		})
@@ -182,14 +191,14 @@ func TestClientCancellation(t *testing.T) {
 	}
 	ctx, cancel = context.WithTimeout(context.Background(), 20*time.Millisecond)
 	defer cancel()
-	if _, err := s.client.search(ctx, "movie", "test"); !errors.Is(err, context.DeadlineExceeded) {
+	if _, err := s.client.resolve(ctx, "movies", url.Values{"imdb": {"tt001"}}); !errors.Is(err, context.DeadlineExceeded) {
 		t.Errorf("in-flight cancellation = %v", err)
 	}
 	// Cancellation while queued behind another dynamic call.
 	s.client.gate <- struct{}{}
 	ctx, cancel = context.WithTimeout(context.Background(), 20*time.Millisecond)
 	defer cancel()
-	if _, err := s.client.search(ctx, "movie", "test"); !errors.Is(err, context.DeadlineExceeded) {
+	if _, err := s.client.resolve(ctx, "movies", url.Values{"imdb": {"tt001"}}); !errors.Is(err, context.DeadlineExceeded) {
 		t.Errorf("queued cancellation = %v", err)
 	}
 	<-s.client.gate
@@ -197,7 +206,7 @@ func TestClientCancellation(t *testing.T) {
 	s.client.next = time.Now().Add(time.Hour)
 	ctx, cancel = context.WithTimeout(context.Background(), 20*time.Millisecond)
 	defer cancel()
-	if _, err := s.client.search(ctx, "movie", "test"); !errors.Is(err, context.DeadlineExceeded) {
+	if _, err := s.client.resolve(ctx, "movies", url.Values{"imdb": {"tt001"}}); !errors.Is(err, context.DeadlineExceeded) {
 		t.Errorf("pacing cancellation = %v", err)
 	}
 }

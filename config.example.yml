@@ -122,7 +122,6 @@ show:
   # Optional public SIMKL provider (requires client_id in modules_params):
   # calendar: simkl
   # explorers: [simkl]
-  # searchers: [simkl]
   # Directory to store the tv shows.
   dir: /home/user/tvshows
   # Torrenters are the source for the episode torrents.
@@ -144,9 +143,8 @@ movie:
   torrenters:
     - yts
     - thepiratebay
-  # Optional public SIMKL exploration and title search:
+  # Optional public SIMKL exploration (trending and DVD releases):
   # explorers: [simkl]
-  # searchers: [simkl]
   detailers:
     - tmdb
     # - simkl
@@ -200,7 +198,7 @@ modules_params:
     # tmdb is used as a movie detailer and requires an API key.
   - name: tmdb
     apikey: my@w3$0m3@pIk3y
-    # SIMKL supports movie/TV exploration, search, details, and show calendars.
+    # SIMKL supports trending feeds, movie DVD releases, details, and show calendars.
     # Register an app at https://simkl.com/settings/developer/; no user login,
     # OAuth, client secret, or bearer token is required. Anime is not supported.
   - name: simkl

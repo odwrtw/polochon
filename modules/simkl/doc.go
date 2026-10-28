@@ -1,23 +1,21 @@
-// Package simkl implements Polochon's Explorer, Searcher, Detailer and Calendar
-// interfaces using the public Simkl movie and TV APIs. The separate anime
-// catalog, user lists, sync, and scrobbling are deliberately unsupported.
+// Package simkl implements Polochon's Explorer, Detailer and Calendar interfaces
+// using Simkl movie and TV endpoints that require only a client ID. Search and
+// other browse lists require a user token for AUTH V2 clients and are not supported.
+// The separate anime catalog, user lists, sync, and scrobbling are unsupported.
 //
 // Configuration requires client_id from https://simkl.com/settings/developer/.
 // No client secret, user credentials, OAuth flow or bearer token is used.
 // app_version is optional (default "dev"); set it to the application's version
 // when distributing a release. All requests identify the app as "polochon".
 //
-// Exploration returns up to 40 entries, search up to 20, preserving source order.
-// Only the first page is fetched because Polochon's interfaces have no paginator.
-// Search and sparse discovery entries are enriched with cached detail lookups
-// to obtain the IMDb IDs required by Polochon. Unidentified items are omitted.
+// Exploration returns up to 40 feed entries, preserving source order. Sparse
+// entries are enriched with public detail lookups to obtain the IMDb IDs required
+// by Polochon. Unidentified items are omitted.
 // Runtime display strings in trending feeds are not parsed; details supply minutes.
 //
-// Movie options: trending (today), trending-week, trending-month, dvd,
-// popular-this-week, popular-this-month, popular-all-time, rank, release-date,
-// voted, watched. TV supports the same options except dvd, plus best, best-year,
-// best-month, best-voted, best-watched, premieres, upcoming, airing (today), and
-// airing-tomorrow. There are no aliases for unsupported Trakt-only lists.
+// Movie options: trending (today), trending-week, trending-month, dvd.
+// TV supports the same options except dvd. Details can still be resolved by title
+// through the public redirect endpoint; no search endpoint is used.
 //
 // Details preserve fields Simkl cannot provide, including external episode IDs.
 // Unnumbered specials are omitted rather than assigned invented coordinates.
