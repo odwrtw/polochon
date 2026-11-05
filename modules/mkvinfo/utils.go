@@ -49,9 +49,13 @@ func Metadata(tracks []*TrackEntry) *polochon.VideoMetadata {
 				subtitles[lang] = struct{}{}
 			}
 		case TrackTypeVideo:
-			m.VideoCodec = track.PrettyCodec()
+			if codec := track.PrettyCodec(); codec != "" {
+				m.VideoCodec = codec
+			}
 		case TrackTypeAudio:
-			m.AudioCodec = track.PrettyCodec()
+			if codec := track.PrettyCodec(); codec != "" {
+				m.AudioCodec = codec
+			}
 		}
 	}
 

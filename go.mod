@@ -28,6 +28,7 @@ require (
 	github.com/ryanbradynd05/go-tmdb v0.0.0-20230108222638-2a68dc6ff40c
 	github.com/urfave/negroni v1.0.0
 	golang.org/x/sync v0.22.0
+	golang.org/x/text v0.41.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/unrolled/render.v1 v1.0.0
 )
@@ -61,7 +62,6 @@ require (
 	github.com/temoto/robotstxt v1.1.2 // indirect
 	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/text v0.41.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect

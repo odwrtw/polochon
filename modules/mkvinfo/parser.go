@@ -5,8 +5,9 @@ import (
 	"os"
 	"time"
 
-	polochon "github.com/odwrtw/polochon/lib"
 	"github.com/remko/go-mkvparse"
+
+	polochon "github.com/odwrtw/polochon/lib"
 )
 
 // Parser errors
@@ -27,7 +28,8 @@ func (p *parser) HandleMasterBegin(id mkvparse.ElementID, info mkvparse.ElementI
 	}
 
 	if p.current == nil {
-		p.current = &TrackEntry{}
+		// Matroska defaults an omitted Language element to English.
+		p.current = &TrackEntry{Language: "eng"}
 	}
 
 	return true, nil
@@ -57,6 +59,8 @@ func (p *parser) HandleString(id mkvparse.ElementID, value string, info mkvparse
 	switch id {
 	case mkvparse.LanguageElement:
 		p.current.Language = value
+	case mkvparse.LanguageIETFElement:
+		p.current.LanguageIETF = &value
 	case mkvparse.CodecIDElement:
 		p.current.Codec = value
 	case mkvparse.NameElement:

@@ -2,6 +2,7 @@ package mkvinfo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -10,6 +11,8 @@ import (
 
 var _ polochon.Guesser = (*MKVInfo)(nil)
 var _ polochon.Subtitler = (*MKVInfo)(nil)
+
+var ErrInvalidSubtitleEntry = errors.New("mkvinfo: invalid subtitle entry")
 
 // Register guessit as a Guesser
 func init() {
@@ -82,16 +85,19 @@ func (m *MKVInfo) ListSubtitles(_ context.Context, v any, lang polochon.Language
 }
 
 // DownloadSubtitle implements the Subtitler interface.
-func (m *MKVInfo) DownloadSubtitle(_ context.Context, v any, entry *polochon.SubtitleEntry) (*polochon.Subtitle, error) {
+func (m *MKVInfo) DownloadSubtitle(ctx context.Context, v any, entry *polochon.SubtitleEntry) (*polochon.Subtitle, error) {
 	video, ok := v.(polochon.Video)
 	if !ok {
 		return nil, ErrNotAVideo
 	}
-	return &polochon.Subtitle{
-		Embedded: true,
-		Lang:     entry.Language,
-		Video:    video,
-	}, nil
+	if entry == nil || entry.ID == "" || entry.ID != string(entry.Language) {
+		return nil, ErrInvalidSubtitleEntry
+	}
+	if _, err := polochon.NewLanguage(string(entry.Language)); err != nil {
+		return nil, ErrInvalidSubtitleEntry
+	}
+
+	return m.GetSubtitle(ctx, video, entry.Language)
 }
 
 // GetSubtitle implements the Subtitler interface
