@@ -3,6 +3,8 @@ package mkvinfo
 import (
 	"strings"
 
+	"golang.org/x/text/language"
+
 	polochon "github.com/odwrtw/polochon/lib"
 )
 
@@ -44,6 +46,10 @@ type TrackEntry struct {
 	Type     TrackType
 	Language string
 	Forced   bool
+
+	// LanguageIETF is nil when the BCP47 element is absent. When present,
+	// it overrides Language, even if empty or unsupported.
+	LanguageIETF *string
 }
 
 // IsForced returns true if the track is a forced subtitle track.
@@ -57,6 +63,24 @@ func (t *TrackEntry) IsForced() bool {
 
 // Lang tries to return the lang of the track entry
 func (t *TrackEntry) Lang() (polochon.Language, bool) {
+	if t.LanguageIETF != nil {
+		tag, err := language.Parse(*t.LanguageIETF)
+		if err != nil {
+			return "", false
+		}
+
+		// Do not infer a language for undefined or private-use tags.
+		base, _, _ := tag.Raw()
+		switch base.String() {
+		case "en":
+			return polochon.EN, true
+		case "fr":
+			return polochon.FR, true
+		default:
+			return "", false
+		}
+	}
+
 	if t.Language != "" {
 		l, err := polochon.NewLanguageFromISO6392(t.Language)
 		if err == nil {
