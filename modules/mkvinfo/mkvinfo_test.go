@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/remko/go-mkvparse"
-
 	polochon "github.com/odwrtw/polochon/lib"
 )
 
@@ -23,7 +21,7 @@ func TestSubtitleRoundTrip(t *testing.T) {
 			path := filepath.Join(t.TempDir(), "video.mkv")
 			writeTestMKV(t, path,
 				subtitleTrack(1),
-				subtitleTrack(2, testElement(mkvparse.LanguageIETFElement, []byte("fr-FR"))),
+				subtitleTrack(2, testElement(languageIETFElement, []byte("fr-FR"))),
 			)
 			tc.video.SetFile(polochon.File{Path: path})
 			m := &MKVInfo{}
@@ -83,11 +81,11 @@ func TestSubtitleErrors(t *testing.T) {
 	withoutSubtitle := filepath.Join(dir, "without-subtitle.mkv")
 	writeTestMKV(t, withoutSubtitle)
 	forced := filepath.Join(dir, "forced.mkv")
-	writeTestMKV(t, forced, subtitleTrack(1, testElement(mkvparse.FlagForcedElement, []byte{1})))
+	writeTestMKV(t, forced, subtitleTrack(1, testElement(flagForcedElement, []byte{1})))
 	forcedName := filepath.Join(dir, "forced-name.mkv")
-	writeTestMKV(t, forcedName, subtitleTrack(1, testElement(mkvparse.NameElement, []byte("English Forced"))))
+	writeTestMKV(t, forcedName, subtitleTrack(1, testElement(nameElement, []byte("English Forced"))))
 	french := filepath.Join(dir, "french.mkv")
-	writeTestMKV(t, french, subtitleTrack(1, testElement(mkvparse.LanguageElement, []byte("fre"))))
+	writeTestMKV(t, french, subtitleTrack(1, testElement(languageElement, []byte("fre"))))
 	broken := filepath.Join(dir, "broken.mkv")
 	if err := os.WriteFile(broken, []byte{0x18, 0x53, 0x80, 0x67}, 0o600); err != nil {
 		t.Fatal(err)
