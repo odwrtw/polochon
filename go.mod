@@ -23,7 +23,6 @@ require (
 	github.com/odwrtw/yts v0.0.0-20231024130053-dfa826fee7b6
 	github.com/phyber/negroni-gzip v1.0.0
 	github.com/prometheus/client_golang v1.24.1
-	github.com/remko/go-mkvparse v0.14.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/ryanbradynd05/go-tmdb v0.0.0-20230108222638-2a68dc6ff40c
 	github.com/urfave/negroni v1.0.0
