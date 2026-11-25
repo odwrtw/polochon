@@ -15,6 +15,13 @@ type Detailer interface {
 	GetDetails(ctx context.Context, i any) error
 }
 
+// PartialDetailer contributes partial details: a successful call does not
+// complete GetDetails.
+type PartialDetailer interface {
+	Detailer
+	PartialDetails()
+}
+
 // Detailable represents a ressource which can be detailed
 type Detailable interface {
 	GetDetailers() []Detailer
@@ -30,8 +37,18 @@ func GetDetails(ctx context.Context, v Detailable, log *slog.Logger) error {
 	}
 
 	for _, d := range detailers {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		_, partial := d.(PartialDetailer)
 		err := d.GetDetails(ctx, v)
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		if err == nil {
+			if partial {
+				continue
+			}
 			return nil
 		}
 
