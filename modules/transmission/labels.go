@@ -8,6 +8,15 @@ import (
 )
 
 func labels(torrent *polochon.Torrent) []string {
+	if torrent.Type == polochon.TypeSeason && torrent.ImdbID != "" && torrent.Season != 0 {
+		return []string{
+			"type=season",
+			"imdb_id=" + torrent.ImdbID,
+			"quality=" + string(torrent.Quality),
+			"season=" + strconv.Itoa(torrent.Season),
+		}
+	}
+
 	if !torrent.HasVideo() {
 		return nil
 	}
@@ -54,6 +63,9 @@ func updateFromLabel(torrent *polochon.Torrent, labels []string) {
 			}
 			if v == "episode" {
 				torrent.Type = polochon.TypeEpisode
+			}
+			if v == "season" {
+				torrent.Type = polochon.TypeSeason
 			}
 		case "imdb_id":
 			torrent.ImdbID = v

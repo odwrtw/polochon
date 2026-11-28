@@ -7,6 +7,7 @@ type VideoType string
 const (
 	TypeMovie   VideoType = "movie"
 	TypeEpisode VideoType = "episode"
+	TypeSeason  VideoType = "season"
 )
 
 // Video represents a generic video type

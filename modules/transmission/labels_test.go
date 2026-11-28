@@ -70,6 +70,29 @@ func TestLabels(t *testing.T) {
 			expected: nil,
 		},
 		{
+			name: "invalid season",
+			torrent: &polochon.Torrent{
+				ImdbID: "tt000000",
+				Type:   polochon.TypeSeason,
+			},
+			expected: nil,
+		},
+		{
+			name: "valid season",
+			torrent: &polochon.Torrent{
+				ImdbID:  "tt000000",
+				Quality: polochon.Quality720p,
+				Type:    polochon.TypeSeason,
+				Season:  2,
+			},
+			expected: []string{
+				"type=season",
+				"imdb_id=tt000000",
+				"quality=720p",
+				"season=2",
+			},
+		},
+		{
 			name: "valid episode",
 			torrent: &polochon.Torrent{
 				ImdbID:  "tt000000",
@@ -95,6 +118,15 @@ func TestLabels(t *testing.T) {
 				t.Fatalf("expected %+v, got %+v", tc.expected, got)
 			}
 		})
+	}
+}
+
+func TestSeasonLabelRoundTrip(t *testing.T) {
+	original := &polochon.Torrent{ImdbID: "tt000000", Type: polochon.TypeSeason, Quality: polochon.Quality720p, Season: 2}
+	got := &polochon.Torrent{}
+	updateFromLabel(got, labels(original))
+	if !reflect.DeepEqual(got, original) {
+		t.Fatalf("expected %+v, got %+v", original, got)
 	}
 }
 

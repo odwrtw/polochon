@@ -14,13 +14,13 @@ type showSearcher struct {
 	Users   []string
 }
 
-func (sS *showSearcher) key() string {
-	return fmt.Sprintf(
+func (sS *showSearcher) keys() []string {
+	return []string{fmt.Sprintf(
 		"%s S%02dE%02d",
 		sS.Episode.ShowTitle,
 		sS.Episode.Season,
 		sS.Episode.Episode,
-	)
+	)}
 }
 
 func (sS *showSearcher) users() []string {
@@ -28,6 +28,7 @@ func (sS *showSearcher) users() []string {
 }
 
 func (sS *showSearcher) setTorrents(torrents []*polochon.Torrent) {
+	torrents = polochon.FilterTorrents(torrents)
 	for _, t := range torrents {
 		t.ImdbID = sS.Episode.ShowImdbID
 		t.Season = sS.Episode.Season
@@ -60,4 +61,49 @@ func (sS *showSearcher) isValidGuess(guess whatsthis.Info) bool {
 	}
 	show := sS.Episode.Show
 	return show == nil || guess.Year == 0 || show.Year == 0 || guess.Year == show.Year
+}
+
+type seasonSearcher struct {
+	Season *polochon.ShowSeason
+	Users  []string
+}
+
+func (sS *seasonSearcher) keys() []string {
+	return []string{
+		fmt.Sprintf("%s Season %d", sS.Season.ShowTitle, sS.Season.Season),
+		fmt.Sprintf("%s S%02d", sS.Season.ShowTitle, sS.Season.Season),
+	}
+}
+
+func (sS *seasonSearcher) users() []string {
+	return sS.Users
+}
+
+// setTorrents keeps every result: the downloader picks the best pack once it
+// knows which ones hold the whole season
+func (sS *seasonSearcher) setTorrents(torrents []*polochon.Torrent) {
+	for _, t := range torrents {
+		t.ImdbID = sS.Season.ShowImdbID
+		t.Season = sS.Season.Season
+		t.Type = polochon.TypeSeason
+	}
+	sS.Season.Torrents = torrents
+}
+
+func (sS *seasonSearcher) defaultQuality() string {
+	return string(polochon.Quality480p)
+}
+
+func (sS *seasonSearcher) imdbID() string {
+	return sS.Season.ShowImdbID
+}
+
+// isValidGuess accepts season packs and episode ranges of the season, the
+// downloader checks which episodes they hold
+func (sS *seasonSearcher) isValidGuess(guess whatsthis.Info) bool {
+	if guess.Type != whatsthis.ShowSeason && (guess.Type != whatsthis.Episode || len(guess.Episodes) == 0) {
+		return false
+	}
+
+	return guess.Season == sS.Season.Season && guess.Title != "" && strings.EqualFold(guess.Title, sS.Season.ShowTitle)
 }
