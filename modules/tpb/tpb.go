@@ -117,7 +117,7 @@ func (t *TPB) Status() (polochon.ModuleStatus, error) {
 
 // searcher represents an interface to search torrent
 type searcher interface {
-	key() string
+	keys() []string
 	users() []string
 	defaultQuality() string
 	setTorrents([]*polochon.Torrent)
@@ -132,6 +132,11 @@ func (t *TPB) newSearcher(i any) (searcher, error) {
 		return &showSearcher{
 			Episode: v,
 			Users:   t.ShowUsers,
+		}, nil
+	case *polochon.ShowSeason:
+		return &seasonSearcher{
+			Season: v,
+			Users:  t.ShowUsers,
 		}, nil
 	case *polochon.Movie:
 		return &movieSearcher{
@@ -161,8 +166,14 @@ func (t *TPB) GetTorrents(_ context.Context, i any) error {
 		return err
 	}
 
-	torrents, err := t.search(searcher.key())
-	if err != nil {
+	// A failing search is only an error when nothing was found
+	var torrents []*tpb.Torrent
+	for _, key := range searcher.keys() {
+		var results []*tpb.Torrent
+		results, err = t.search(key)
+		torrents = append(torrents, results...)
+	}
+	if len(torrents) == 0 && err != nil {
 		return err
 	}
 
@@ -266,8 +277,7 @@ func (t *TPB) transformTorrents(s searcher, list []*tpb.Torrent) []*polochon.Tor
 			},
 		})
 	}
-	// Filter the torrents to keep only the best ones
-	return polochon.FilterTorrents(torrents)
+	return torrents
 }
 
 func getQuality(name string) polochon.Quality {

@@ -25,8 +25,11 @@ func (m *calendarModule) GetShowCalendar(_ context.Context, show *polochon.Show)
 }
 
 func (m *calendarModule) GetTorrents(_ context.Context, value any) error {
+	episode, ok := value.(*polochon.ShowEpisode)
+	if !ok {
+		return polochon.ErrTorrentNotFound
+	}
 	m.searches++
-	episode := value.(*polochon.ShowEpisode)
 	episode.Torrents = []*polochon.Torrent{{Quality: polochon.Quality720p}}
 	return nil
 }

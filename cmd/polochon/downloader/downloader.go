@@ -14,11 +14,18 @@ import (
 // AppName is the application name
 const AppName = "downloader"
 
+// videoLibrary is the part of the library used by the downloader, it exists
+// so tests can replace the library with a fake
+type videoLibrary interface {
+	HasMovie(imdbID string) (bool, error)
+	HasShowEpisode(imdbID string, season, episode int) (bool, error)
+}
+
 // Downloader represents the downloader
 type Downloader struct {
 	log     *slog.Logger
 	config  *configuration.Config
-	library *library.Library
+	library videoLibrary
 }
 
 // New returns a new downloader
@@ -144,6 +151,7 @@ func (d *Downloader) downloadMissingMovies(ctx context.Context, wl *polochon.Wis
 
 func (d *Downloader) downloadMissingShows(ctx context.Context, wl *polochon.Wishlist) {
 	log := d.log.With("function", "download_shows")
+	queued := d.queuedShowTorrents(log)
 
 	for _, wishedShow := range wl.Shows {
 		log := log.With("imdb_id", wishedShow.ImdbID)
@@ -169,64 +177,48 @@ func (d *Downloader) downloadMissingShows(ctx context.Context, wl *polochon.Wish
 			continue
 		}
 
-		for _, calEpisode := range calendar.Episodes {
-			if calEpisode.Season == 0 {
-				// Skip the show "Specials" episodes
-				continue
-			}
-
-			// Check if the episode should be downloaded
-			if !calEpisode.IsAvailable() || calEpisode.IsOlder(wishedShow) {
-				continue
-			}
-
-			// Check if the episode has already been downloaded
-			ok, err := d.library.HasShowEpisode(wishedShow.ImdbID, calEpisode.Season, calEpisode.Episode)
-			if err != nil {
-				log.Error(err.Error())
-				continue
-			}
-
-			if ok {
-				continue
-			}
-
-			// Setup the episode
-			e := polochon.NewShowEpisode(d.config.Show)
-			e.ShowImdbID = wishedShow.ImdbID
-			e.ShowTitle = s.Title
-			e.Season = calEpisode.Season
-			e.Episode = calEpisode.Episode
-			log = log.With(
-				"show_imdb_id", e.ShowImdbID,
-				"show_title", e.ShowTitle,
-				"season", e.Season,
-				"episode", e.Episode,
-			)
-
-			err = polochon.GetTorrents(ctx, e)
-			if err != nil {
-				if err != polochon.ErrTorrentNotFound {
-					log.Error(err.Error())
-				}
-
-				continue
-			}
-
-			torrent := polochon.ChooseTorrentFromQualities(e.Torrents, wishedShow.Qualities)
-			if torrent == nil {
-				log.Debug("no torrent found")
-				continue
-			}
-
-			torrent.Type = polochon.TypeEpisode
-			torrent.ImdbID = e.ShowImdbID
-			torrent.Season = e.Season
-			torrent.Episode = e.Episode
-			if err := d.config.Downloader.Client.Download(torrent); err != nil {
-				log.Error(err.Error())
-				continue
-			}
+		for _, season := range calendarSeasons(calendar) {
+			d.downloadMissingSeason(ctx, log, s, wishedShow, season, queued)
 		}
+	}
+}
+
+// chooseEpisodeTorrent returns the best torrent for an episode, or nil
+func (d *Downloader) chooseEpisodeTorrent(ctx context.Context, log *slog.Logger, s *polochon.Show, wishedShow *polochon.WishedShow, season, episode int) *polochon.Torrent {
+	e := polochon.NewShowEpisode(d.config.Show)
+	e.ShowImdbID = wishedShow.ImdbID
+	e.ShowTitle = s.Title
+	e.Season = season
+	e.Episode = episode
+	log = log.With(
+		"show_imdb_id", e.ShowImdbID,
+		"show_title", e.ShowTitle,
+		"season", e.Season,
+		"episode", e.Episode,
+	)
+
+	if err := polochon.GetTorrents(ctx, e); err != nil {
+		if err != polochon.ErrTorrentNotFound {
+			log.Error(err.Error())
+		}
+		return nil
+	}
+
+	torrent := polochon.ChooseTorrentFromQualities(e.Torrents, wishedShow.Qualities)
+	if torrent == nil {
+		log.Debug("no torrent found")
+		return nil
+	}
+
+	torrent.Type = polochon.TypeEpisode
+	torrent.ImdbID = e.ShowImdbID
+	torrent.Season = e.Season
+	torrent.Episode = e.Episode
+	return torrent
+}
+
+func (d *Downloader) download(log *slog.Logger, torrent *polochon.Torrent) {
+	if err := d.config.Downloader.Client.Download(torrent); err != nil {
+		log.Error(err.Error())
 	}
 }

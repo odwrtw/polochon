@@ -66,6 +66,11 @@ func (dm *DownloadManager) run(ctx context.Context) {
 			continue
 		}
 
+		if torrent.Type == polochon.TypeSeason {
+			dm.organizeSeasonPack(ctx, tlog, torrent)
+			continue
+		}
+
 		video := torrent.Video()
 		if video == nil {
 			tlog.Debug("torrent is not a video")
@@ -79,7 +84,6 @@ func (dm *DownloadManager) run(ctx context.Context) {
 			dm.moveToWatcherDirectory(torrent)
 			continue
 		}
-		video.SetFile(*file)
 
 		if file.IsSymlink() {
 			if torrent.RatioReached(dm.config.DownloadManager.Ratio) {
@@ -88,53 +92,100 @@ func (dm *DownloadManager) run(ctx context.Context) {
 			continue
 		}
 
-		metadata, err := file.GuessMetadata(tlog)
-		if err != nil {
-			tlog.Warn("failed to guess metadata", "error", err)
-		}
-		video.SetMetadata(metadata)
-
-		// TODO: update the lib to handle this
-		switch v := video.(type) {
-		case *polochon.Movie:
-			v.MovieConfig = dm.config.Movie
-		case *polochon.ShowEpisode:
-			v.ShowConfig = dm.config.Show
-		default:
+		if !dm.organizeVideo(ctx, tlog, video, file) {
 			dm.moveToWatcherDirectory(torrent)
-			continue
 		}
-
-		// Get the video details
-		if err := polochon.GetDetails(ctx, video, tlog); err != nil {
-			if err != polochon.ErrGettingDetails {
-				tlog.Error(err.Error())
-			}
-
-			dm.moveToWatcherDirectory(torrent)
-			continue
-		}
-
-		// Get the video subtitles
-		for _, lang := range dm.config.SubtitleLanguages {
-			_, err := polochon.GetSubtitle(ctx, video, lang, tlog)
-			if err != nil && err != polochon.ErrNoSubtitleFound {
-				tlog.Error(err.Error())
-			}
-		}
-
-		// Store the video
-		if err := dm.library.Add(video); err != nil {
-			tlog.Error(err.Error())
-			dm.moveToWatcherDirectory(torrent)
-			continue
-		}
-
-		// Notify
-		dm.Notify(ctx, video)
-
-		tlog.Debug("torrent organized")
 	}
+}
+
+// organizeSeasonPack organizes each episode of a season pack using the show
+// and season from the torrent labels. Organized episodes are left as symlinks
+// to keep seeding, so a pack is retried until every episode is organized.
+func (dm *DownloadManager) organizeSeasonPack(ctx context.Context, log *slog.Logger, torrent *polochon.Torrent) {
+	if dm.findVideoFile(torrent) == nil {
+		dm.moveToWatcherDirectory(torrent)
+		return
+	}
+
+	organized := true
+	for _, p := range torrent.Status.FilePaths {
+		file := polochon.NewFileWithConfig(filepath.Join(dm.config.DownloadManager.Dir, p), dm.config.File)
+		if !file.Exists() || !file.IsVideo() || file.IsExcluded() || file.IsSymlink() {
+			continue
+		}
+		organized = false
+
+		guess, err := file.Guess(dm.config.Movie, dm.config.Show, log)
+		e, ok := guess.(*polochon.ShowEpisode)
+		if err != nil || !ok || e.Season != torrent.Season || e.Episode == 0 {
+			log.Warn("season pack file is not an episode of the season", "file", p)
+			dm.moveToWatcherDirectory(torrent)
+			return
+		}
+
+		// Build the episode from the labels like single episode torrents
+		label := *torrent
+		label.Type = polochon.TypeEpisode
+		label.Episode = e.Episode
+		if !dm.organizeVideo(ctx, log, label.Video(), file) {
+			dm.moveToWatcherDirectory(torrent)
+			return
+		}
+	}
+
+	if organized && torrent.RatioReached(dm.config.DownloadManager.Ratio) {
+		dm.cleanTorrent(torrent)
+	}
+}
+
+// organizeVideo adds a downloaded video to the library, it returns false if
+// the video could not be organized
+func (dm *DownloadManager) organizeVideo(ctx context.Context, log *slog.Logger, video polochon.Video, file *polochon.File) bool {
+	video.SetFile(*file)
+
+	metadata, err := file.GuessMetadata(log)
+	if err != nil {
+		log.Warn("failed to guess metadata", "error", err)
+	}
+	video.SetMetadata(metadata)
+
+	// TODO: update the lib to handle this
+	switch v := video.(type) {
+	case *polochon.Movie:
+		v.MovieConfig = dm.config.Movie
+	case *polochon.ShowEpisode:
+		v.ShowConfig = dm.config.Show
+	default:
+		return false
+	}
+
+	// Get the video details
+	if err := polochon.GetDetails(ctx, video, log); err != nil {
+		if err != polochon.ErrGettingDetails {
+			log.Error(err.Error())
+		}
+		return false
+	}
+
+	// Get the video subtitles
+	for _, lang := range dm.config.SubtitleLanguages {
+		_, err := polochon.GetSubtitle(ctx, video, lang, log)
+		if err != nil && err != polochon.ErrNoSubtitleFound {
+			log.Error(err.Error())
+		}
+	}
+
+	// Store the video
+	if err := dm.library.Add(video); err != nil {
+		log.Error(err.Error())
+		return false
+	}
+
+	// Notify
+	dm.Notify(ctx, video)
+
+	log.Debug("torrent organized")
+	return true
 }
 
 func (dm *DownloadManager) findVideoFile(torrent *polochon.Torrent) *polochon.File {
@@ -161,6 +212,13 @@ func (dm *DownloadManager) moveToWatcherDirectory(torrent *polochon.Torrent) {
 	// Extract the top path of the directories and the path of the files
 	fileMap := map[string]struct{}{}
 	for _, p := range torrent.Status.FilePaths {
+		// Organized files are symlinks to the library, drop them
+		if file := polochon.NewFile(filepath.Join(dm.config.DownloadManager.Dir, p)); file.IsSymlink() {
+			if err := dm.remove(file.Path); err != nil {
+				log.Warn("error while removing symlink", "error", err)
+			}
+		}
+
 		top := p
 		for filepath.Dir(top) != "." {
 			top = filepath.Dir(top)

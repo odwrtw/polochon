@@ -230,3 +230,46 @@ func TestExplorerTypesAndQuality(t *testing.T) {
 		t.Fatalf("unexpected show option error: %v", err)
 	}
 }
+
+func TestGetSeasonTorrents(t *testing.T) {
+	module, requests := newTestTPB(t, []*tpb.Torrent{
+		{Name: "Example.S01.1080p.x264-GROUP", User: "trusted", Seeders: 10},
+		{Name: "Example.S01E01-04.1080p.x264-GROUP", User: "trusted", Seeders: 50},
+		{Name: "Example.Season.1.Complete.720p.x264-GROUP", User: "trusted", Seeders: 5},
+		{Name: "Example.S01E01-08.480p.x264-GROUP", User: "trusted", Seeders: 3},
+		{Name: "Example.S01.2160p.x264-GROUP", User: "untrusted", Seeders: 100},
+		{Name: "Example.S01E03.2160p.x264-GROUP", User: "trusted", Seeders: 100},
+		{Name: "Example.S02.2160p.x264-GROUP", User: "trusted", Seeders: 100},
+		{Name: "Other.S01.2160p.x264-GROUP", User: "trusted", Seeders: 100},
+	})
+	season := &polochon.ShowSeason{ShowTitle: "Example", ShowImdbID: "tt1", Season: 1}
+	if err := module.GetTorrents(context.Background(), season); err != nil {
+		t.Fatal(err)
+	}
+
+	// Every pack is kept, even a less seeded one of the same quality, since
+	// only the downloader knows which ones hold the whole season. Both
+	// queries return the same results, hence the set.
+	got := map[string]polochon.Quality{}
+	for _, torrent := range season.Torrents {
+		if torrent.Type != polochon.TypeSeason || torrent.ImdbID != "tt1" || torrent.Season != 1 || torrent.Episode != 0 {
+			t.Fatalf("unexpected identity: %+v", torrent)
+		}
+		got[torrent.Result.Name] = torrent.Quality
+	}
+	want := map[string]polochon.Quality{
+		"Example.S01.1080p.x264-GROUP":              polochon.Quality1080p,
+		"Example.S01E01-04.1080p.x264-GROUP":        polochon.Quality1080p,
+		"Example.Season.1.Complete.720p.x264-GROUP": polochon.Quality720p,
+		"Example.S01E01-08.480p.x264-GROUP":         polochon.Quality480p,
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("torrents = %q, want %q", got, want)
+	}
+
+	for _, q := range []string{"/q.php?cat=200&q=Example+Season+1", "/q.php?cat=200&q=Example+S01"} {
+		if path := <-requests; path != q {
+			t.Fatalf("query = %s, want %s", path, q)
+		}
+	}
+}

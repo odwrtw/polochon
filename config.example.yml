@@ -24,8 +24,8 @@ downloader:
   # When to schedule the downloader, it accepts the CRON job format
   # https://en.wikipedia.org/wiki/Cron and "@every _golang duration_"
   schedule: "@every 6h"
-  # Which client would you like to use to download torrents. Transmission and
-  # aria2 are supported.
+  # Which client would you like to use to download torrents. Only transmission
+  # is supported.
   client: transmission
 
 # The downloader manager manages the torrents and organise the files.
@@ -168,10 +168,6 @@ modules_params:
     basic_auth: true
     user: myUser
     password: myPassword
-    # Required for the aria2 client, if the downloader is enabled.
-  - name: aria2
-    url: http://myaria2.com:6800/jsonrpc
-    secret: Riu5aedieghuSei2uucheeth0ahr8e
     # Required if pushover is used to notify new movies
   - name: pushover
     key: sdf7as8f8ds7f9sf

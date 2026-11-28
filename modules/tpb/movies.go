@@ -13,8 +13,8 @@ type movieSearcher struct {
 	Users []string
 }
 
-func (mS *movieSearcher) key() string {
-	return mS.Movie.Title
+func (mS *movieSearcher) keys() []string {
+	return []string{mS.Movie.Title}
 }
 
 func (mS *movieSearcher) users() []string {
@@ -22,6 +22,7 @@ func (mS *movieSearcher) users() []string {
 }
 
 func (mS *movieSearcher) setTorrents(torrents []*polochon.Torrent) {
+	torrents = polochon.FilterTorrents(torrents)
 	for _, t := range torrents {
 		t.ImdbID = mS.Movie.ImdbID
 		t.Type = polochon.TypeMovie

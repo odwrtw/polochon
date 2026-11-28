@@ -7,7 +7,6 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/goccy/go-yaml v1.19.2
 	github.com/gorilla/mux v1.8.1
-	github.com/gregdel/argo v0.0.0-20190104143955-4ac365771987
 	github.com/gregdel/pushover v1.4.0
 	github.com/hanwen/go-fuse/v2 v2.11.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
@@ -19,7 +18,7 @@ require (
 	github.com/odwrtw/tpb v0.0.0-20260324184152-590534670773
 	github.com/odwrtw/trakttv v0.0.0-20260303085205-6da049dbce68
 	github.com/odwrtw/transmission v0.0.0-20221028215408-b11d7d55c759
-	github.com/odwrtw/whatsthis v0.0.0-20261018120706-71d904f1cee7
+	github.com/odwrtw/whatsthis v0.0.0-20261124211118-182ee8ca7436
 	github.com/odwrtw/yifysubs v0.0.0-20260324231500-2a22e2158ed9
 	github.com/odwrtw/yts v0.0.0-20231024130053-dfa826fee7b6
 	github.com/phyber/negroni-gzip v1.0.0
@@ -49,8 +48,6 @@ require (
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/gorilla/rpc v1.2.1 // indirect
-	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/kennygrant/sanitize v1.2.4 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/kylelemons/go-gypsy v1.0.0 // indirect
